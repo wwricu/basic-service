@@ -12,8 +12,9 @@ def alchemy_session(method):
     @functools.wraps(method)
     def wrapper(*args, **kwargs):
         db = Database.get_session()
-        method(*args, db, **kwargs)
+        ret = method(*args, db, **kwargs)
         db.close()
+        return ret
     return wrapper
 
 
