@@ -5,7 +5,7 @@ from sqlalchemy_utils import database_exists, create_database
 import functools
 
 from core.config import Config
-from models import Base, SysUser
+from models import Base, SysUser, SysRole
 
 
 def alchemy_session(method):
@@ -48,11 +48,16 @@ class Database:
     @alchemy_session
     def insert_admin(cls, db):
         try:
+            admin_role = SysRole(name='admin',
+                                 description='Admin role')
             admin = SysUser(username=Config.admin_username,
                             email=Config.admin_email,
                             password_hash=Config.admin_password_hash,
                             salt=Config.admin_password_salt)
+            db.add(admin_role)
             db.add(admin)
+            admin.roles.append(admin_role)
+
             db.commit()
         except Exception as e:
             print(e)
