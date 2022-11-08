@@ -5,7 +5,7 @@ from sqlalchemy_utils import database_exists, create_database
 import functools
 
 from core.config import Config
-from models import Base, SysUser, SysRole
+from models import Base, SysUser
 
 
 def alchemy_session(method):
@@ -23,7 +23,7 @@ class Database:
     @classmethod
     def get_engine(cls):
         if not cls.__engine:
-            engine = create_engine(Config.DB_URL, echo=True)
+            engine = create_engine(Config.DB_URL)
             cls.__engine = engine
         return cls.__engine
 
@@ -47,9 +47,12 @@ class Database:
     @classmethod
     @alchemy_session
     def insert_admin(cls, db):
-        admin = SysUser(username=Config.admin_username,
-                        email=Config.admin_email,
-                        password_hash=Config.admin_password_hash,
-                        salt=Config.admin_password_salt)
-        db.add(admin)
-        db.commit()
+        try:
+            admin = SysUser(username=Config.admin_username,
+                            email=Config.admin_email,
+                            password_hash=Config.admin_password_hash,
+                            salt=Config.admin_password_salt)
+            db.add(admin)
+            db.commit()
+        except Exception as e:
+            print(e)
