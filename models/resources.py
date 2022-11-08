@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Integer, Column, String, DateTime, ForeignKey
+from sqlalchemy import Integer, Column, String, DateTime, ForeignKey, LargeBinary
 from sqlalchemy.orm import relationship
 
 from . import Base
@@ -34,13 +34,27 @@ class Content(Resource):
     __tablename__ = 'content'
     id = Column(Integer, ForeignKey('resource.id'), primary_key=True)
 
-    sub_title = Column(String(255), comment="post summary")
-    status = Column(String(255), comment="post summary")
+    sub_title = Column(String(255), comment="content summary")
+    status = Column(String(255), comment="content status")
+    content = Column(LargeBinary, comment="content html")
 
     parent_id = Column(Integer, ForeignKey('resource.id'))
     sub_resource = relationship("resource", backref="resource")
 
     __mapper_args__ = {
         'polymorphic_identity': 'content',
+        'inherit_condition': id == Resource.id,
+    }
+
+
+class Folder(Resource):
+    __tablename__ = 'folder'
+    id = Column(Integer, ForeignKey('resource.id'), primary_key=True)
+
+    parent_id = Column(Integer, ForeignKey('resource.id'))
+    sub_resource = relationship("resource", backref="resource")
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'folder',
         'inherit_condition': id == Resource.id,
     }
