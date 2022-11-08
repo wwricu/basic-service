@@ -8,9 +8,12 @@ class SysUser(Base):
     __tablename__ = 'sys_user'
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(20), unique=True, comment="username")
+    email = Column(String(128), unique=True, comment="email")
     password_hash = Column(String(128), comment="password hash")
     salt = Column(String(128), comment="salt")
-    roles = relationship('sys_role', secondary='user_role')
+    roles = relationship('SysRole',
+                         secondary='user_role',
+                         back_populates='users')
 
 
 class SysRole(Base):
@@ -18,8 +21,12 @@ class SysRole(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(20), unique=True, comment="role name")
     description = Column(String(255), comment="role description")
-    users = relationship('SysUser', secondary='UserRole')
-    permissions = relationship('sys_permission', secondary='role_permission')
+    users = relationship('SysUser',
+                         secondary='user_role',
+                         back_populates='roles')
+    permissions = relationship('SysPermission',
+                               secondary='role_permission',
+                               back_populates='roles')
 
 
 class SysPermission(Base):
@@ -27,4 +34,6 @@ class SysPermission(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(20), unique=True, comment="permission name")
     description = Column(String(255), comment="permission description")
-    roles = relationship('sys_role', secondary='role_permission')
+    roles = relationship('SysRole',
+                         secondary='role_permission',
+                         back_populates='permissions')

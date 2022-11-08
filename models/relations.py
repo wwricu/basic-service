@@ -20,8 +20,10 @@ class RolePermission(Base):
     role_id = Column(
         Integer,
         ForeignKey('sys_role.id'),
+        nullable=False,
         primary_key=True)
     permission_id = Column(
         Integer,
         ForeignKey('sys_permission.id'),
+        nullable=False,
         primary_key=True)

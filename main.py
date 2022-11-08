@@ -1,7 +1,8 @@
 from fastapi import FastAPI
-from models import init_db
+from core import Database
 
-init_db()
+Database.init_db()
+
 app = FastAPI()
 
 

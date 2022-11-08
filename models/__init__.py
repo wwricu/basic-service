@@ -1,4 +1,4 @@
-from .base import Base, init_db
+from .base import Base, engine, session, init_db
+from .relations import UserRole, RolePermission
 from .sys_user import SysUser, SysRole, SysPermission
 from .resources import Resource
-from .relations import UserRole, RolePermission

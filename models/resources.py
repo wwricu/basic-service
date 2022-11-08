@@ -21,7 +21,7 @@ class Resource(Base):
                            comment="update time")
 
     parent_id = Column(Integer, ForeignKey('resource.id'))
-    sub_resource = relationship("resource", backref="resource")
+    sub_resource = relationship("Resource", foreign_keys=parent_id)
 
     type = Column(String(50))
     __mapper_args__ = {
@@ -39,7 +39,7 @@ class Content(Resource):
     content = Column(LargeBinary, comment="content html")
 
     parent_id = Column(Integer, ForeignKey('resource.id'))
-    sub_resource = relationship("resource", backref="resource")
+    sub_resource = relationship("Resource", foreign_keys=parent_id)
 
     __mapper_args__ = {
         'polymorphic_identity': 'content',
@@ -52,7 +52,7 @@ class Folder(Resource):
     id = Column(Integer, ForeignKey('resource.id'), primary_key=True)
 
     parent_id = Column(Integer, ForeignKey('resource.id'))
-    sub_resource = relationship("resource", backref="resource")
+    sub_resource = relationship("Resource", foreign_keys=parent_id)
 
     __mapper_args__ = {
         'polymorphic_identity': 'folder',

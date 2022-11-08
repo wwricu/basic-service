@@ -6,9 +6,9 @@ from core.config import Config
 
 Base = declarative_base()
 engine = create_engine(Config.DB_URL, echo=True)
-SessionLocal = sessionmaker(autocommit=False,
-                            autoflush=False,
-                            bind=engine)
+session = sessionmaker(autocommit=False,
+                       autoflush=False,
+                       bind=engine)
 
 
 def init_db():
