@@ -12,9 +12,8 @@ def alchemy_session(method):
     @functools.wraps(method)
     def wrapper(*args, **kwargs):
         db = DatabaseService.get_session()
-        ret = method(*args, db, **kwargs)
-        db.close()
-        return ret
+        db.expire_on_commit = False
+        return method(*args, db, **kwargs)
     return wrapper
 
 
