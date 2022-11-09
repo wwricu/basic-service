@@ -1,14 +1,11 @@
-from service import alchemy_session
+from dao import UserDao
 from schemas import AuthInfo, UserInfo
 from models import SysUser
 from .security_service import verify_password, generate_salt, get_password_hash
 
 
-@alchemy_session
-def user_login(auth_info: AuthInfo, db):
-    sys_user = db.query(SysUser)\
-                 .filter(SysUser.username == auth_info.username)\
-                 .one()
+def user_login(auth_info: AuthInfo):
+    sys_user = UserDao.query_users(auth_info).first()
 
     if not verify_password(auth_info.password,
                            sys_user.salt,
@@ -20,8 +17,7 @@ def user_login(auth_info: AuthInfo, db):
                     email=sys_user.email)
 
 
-@alchemy_session
-def add_user(auth_info: AuthInfo, db):
+def add_user(auth_info: AuthInfo):
     sys_user = SysUser(id=auth_info.id,
                        username=auth_info.username,
                        email=auth_info.email)
@@ -30,29 +26,18 @@ def add_user(auth_info: AuthInfo, db):
     sys_user.password_hash = get_password_hash(auth_info.password,
                                                sys_user.salt)
 
-    db.add(sys_user)
-    db.flush()
-    db.commit()
+    sys_user = UserDao.insert_user(sys_user)
 
     return UserInfo(id=sys_user.id,
                     username=sys_user.username,
                     email=sys_user.email)
 
 
-@alchemy_session
-def find_user(user_info: UserInfo, db):
-    res = db.query(SysUser)
-
-    if user_info.id != 0:
-        res = res.filter(SysUser.id == user_info.id)
-    if user_info.username is not None:
-        res = res.filter(SysUser.username == user_info.username)
-    if user_info.email is not None:
-        res = res.filter(SysUser.email == user_info.email)
+def find_user(user_info: UserInfo):
 
     users = map(lambda it: UserInfo(id=it.id,
                                     username=it.username,
                                     email=it.email,
                                     roles=[x.name for x in it.roles]),
-                res.all())
+                UserDao.query_users(user_info))
     return list(users)
