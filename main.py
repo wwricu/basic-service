@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from core import Database
+from service import DatabaseService
 from apis import router
 
-Database.init_db()
+DatabaseService.init_db()
 
 app = FastAPI()
 

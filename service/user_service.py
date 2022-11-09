@@ -1,7 +1,7 @@
-from core import alchemy_session
+from service import alchemy_session
 from schemas import AuthInfo, UserInfo
 from models import SysUser
-from .security import verify_password, generate_salt, get_password_hash
+from .security_service import verify_password, generate_salt, get_password_hash
 
 
 @alchemy_session

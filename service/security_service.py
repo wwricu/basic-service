@@ -4,7 +4,7 @@ import hashlib
 from jwt import JWT
 from datetime import datetime, timedelta
 
-from core import Config
+from service import Config
 from schemas import UserInfo
 
 

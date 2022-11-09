@@ -4,21 +4,21 @@ from sqlalchemy_utils import database_exists, create_database
 
 import functools
 
-from core.config import Config
+from service.config import Config
 from models import Base, SysUser, SysRole
 
 
 def alchemy_session(method):
     @functools.wraps(method)
     def wrapper(*args, **kwargs):
-        db = Database.get_session()
+        db = DatabaseService.get_session()
         ret = method(*args, db, **kwargs)
         db.close()
         return ret
     return wrapper
 
 
-class Database:
+class DatabaseService:
     __engine = None
 
     @classmethod
