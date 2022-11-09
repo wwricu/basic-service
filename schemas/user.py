@@ -13,4 +13,4 @@ class UserInfo(BaseModel):
     id: int = None
     username: str = None
     email: str = None
-    roles: List[str] = []
+    roles: List[str] = None

@@ -1,11 +1,20 @@
 # Test your FastAPI endpoints
 
-GET http://127.0.0.1:8000/
-Accept: application/json
+POST http://127.0.0.1:8000/user/auth
+Content-Type: application/json
+
+{
+  "username": "wwr",
+  "password": "d49f8881148139a77be5d7d5b6561c58"
+}
 
 ###
 
-GET http://127.0.0.1:8000/hello/User
-Accept: application/json
+POST http://127.0.0.1:8000/user/add
+Content-Type: application/json
 
-###
+{
+  "username": "wwr2",
+  "password": "d49f8881148139a77be5d7d5b6561c58",
+  "email": "wang.wei.ran@outlook.com"
+}
