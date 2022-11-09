@@ -15,7 +15,9 @@ def user_login(auth_info: AuthInfo, db):
                            sys_user.password_hash):
         raise Exception('Password Mismatch')
 
-    return sys_user
+    return UserInfo(id=sys_user.id,
+                    username=sys_user.username,
+                    email=sys_user.email)
 
 
 @alchemy_session
@@ -28,11 +30,10 @@ def add_user(auth_info: AuthInfo, db):
     sys_user.password_hash = get_password_hash(auth_info.password,
                                                sys_user.salt)
 
-    print(sys_user.password_hash)
-    print(sys_user.salt)
-
     db.add(sys_user)
     db.flush()
     db.commit()
 
-    return sys_user
+    return UserInfo(id=sys_user.id,
+                    username=sys_user.username,
+                    email=sys_user.email)

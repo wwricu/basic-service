@@ -3,13 +3,9 @@ import hashlib
 
 from jwt import JWT
 from datetime import datetime, timedelta
-from passlib.context import CryptContext
 
 from core import Config
 from schemas import UserInfo
-
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def generate_salt():
