@@ -17,7 +17,8 @@ class UserService:
 
         return UserInfo(id=sys_user.id,
                         username=sys_user.username,
-                        email=sys_user.email)
+                        email=sys_user.email,
+                        roles=[x.name for x in sys_user.roles])
 
     @staticmethod
     def add_user(auth_info: AuthInfo):
