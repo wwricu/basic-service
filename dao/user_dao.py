@@ -17,9 +17,10 @@ class UserDao:
     def query_users(sys_user: SysUser, db):
         res = db.query(SysUser)
 
-        if sys_user.id != 0:
+        if sys_user.id is not None and sys_user.id != 0:
             res = res.filter(SysUser.id == sys_user.id)
         if sys_user.username is not None:
+            print('find by username')
             res = res.filter(SysUser.username == sys_user.username)
         if sys_user.email is not None:
             res = res.filter(SysUser.email == sys_user.email)

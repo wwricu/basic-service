@@ -7,7 +7,7 @@ from .security_service import SecurityService
 class UserService:
     @staticmethod
     def user_login(auth_info: AuthInfo):
-        sys_user = UserDao.query_users(auth_info).first()
+        sys_user = UserDao.query_users(auth_info)[0]
 
         if not SecurityService\
                 .verify_password(auth_info.password,
