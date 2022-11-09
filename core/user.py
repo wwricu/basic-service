@@ -37,3 +37,20 @@ def add_user(auth_info: AuthInfo, db):
     return UserInfo(id=sys_user.id,
                     username=sys_user.username,
                     email=sys_user.email)
+
+
+@alchemy_session
+def find_user(user_info: UserInfo, db):
+    res = db.query(SysUser)
+
+    if user_info.id != 0:
+        res = res.filter(SysUser.id == user_info.id)
+    if user_info.username is not None:
+        res = res.filter(SysUser.username == user_info.username)
+    if user_info.email is not None:
+        res = res.filter(SysUser.email == user_info.email)
+
+    users = map(lambda it: UserInfo(id=it.id,
+                                    username=it.username,
+                                    email=it.email), res.all())
+    return list(users)

@@ -24,7 +24,7 @@ class Database:
     @classmethod
     def get_engine(cls):
         if not cls.__engine:
-            engine = create_engine(Config.DB_URL)
+            engine = create_engine(Config.DB_URL, echo=True)
             cls.__engine = engine
         return cls.__engine
 

@@ -18,3 +18,9 @@ Content-Type: application/json
   "password": "d49f8881148139a77be5d7d5b6561c58",
   "email": "wang.wei.ran@outlook.com"
 }
+
+###
+
+GET http://127.0.0.1:8000/user/1
+Content-Type: application/json
+
