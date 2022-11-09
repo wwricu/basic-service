@@ -1,7 +1,7 @@
 from dao import UserDao
 from schemas import AuthInfo, UserInfo
 from models import SysUser
-from .security_service import verify_password, generate_salt, get_password_hash
+from .security_service import SecurityService
 
 
 class UserService:
@@ -9,9 +9,10 @@ class UserService:
     def user_login(auth_info: AuthInfo):
         sys_user = UserDao.query_users(auth_info).first()
 
-        if not verify_password(auth_info.password,
-                               sys_user.salt,
-                               sys_user.password_hash):
+        if not SecurityService\
+                .verify_password(auth_info.password,
+                                 sys_user.salt,
+                                 sys_user.password_hash):
             raise Exception('Password Mismatch')
 
         return UserInfo(id=sys_user.id,
@@ -24,9 +25,10 @@ class UserService:
                            username=auth_info.username,
                            email=auth_info.email)
 
-        sys_user.salt = generate_salt()
-        sys_user.password_hash = get_password_hash(auth_info.password,
-                                                   sys_user.salt)
+        sys_user.salt = SecurityService.generate_salt()
+        sys_user.password_hash = SecurityService.\
+            get_password_hash(auth_info.password,
+                              sys_user.salt)
 
         sys_user = UserDao.insert_user(sys_user)
 
