@@ -52,5 +52,7 @@ def find_user(user_info: UserInfo, db):
 
     users = map(lambda it: UserInfo(id=it.id,
                                     username=it.username,
-                                    email=it.email), res.all())
+                                    email=it.email,
+                                    roles=[x.name for x in it.roles]),
+                res.all())
     return list(users)
