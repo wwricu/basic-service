@@ -13,7 +13,8 @@ class SysUser(Base):
     salt = Column(String(128), comment="salt")
     roles = relationship('SysRole',
                          secondary='user_role',
-                         back_populates='users')
+                         back_populates='users',
+                         lazy="joined")
 
 
 class SysRole(Base):
@@ -26,7 +27,8 @@ class SysRole(Base):
                          back_populates='roles')
     permissions = relationship('SysPermission',
                                secondary='role_permission',
-                               back_populates='roles')
+                               back_populates='roles',
+                               lazy="joined")
 
 
 class SysPermission(Base):
