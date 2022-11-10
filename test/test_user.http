@@ -14,9 +14,9 @@ POST http://127.0.0.1:8000/user
 Content-Type: application/json
 
 {
-  "username": "wwr2",
+  "username": "wwr3",
   "password": "d49f8881148139a77be5d7d5b6561c58",
-  "email": "wang.wei.ran@outlook.com"
+  "email": "wang.wei.ran@outlook.com2"
 }
 
 ### search user
@@ -26,6 +26,15 @@ Content-Type: application/json
 
 ### update user
 
+POST http://127.0.0.1:8000/user/update
+Content-Type: application/json
+
+{
+  "id":37,
+  "username": "wwr3",
+  "password": "d49f8881148139a77be5d7d5b6561c58",
+  "email": "test@email.com"
+}
 
 ### delete user
 

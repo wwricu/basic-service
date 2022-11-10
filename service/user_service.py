@@ -37,7 +37,7 @@ class UserService:
 
     @staticmethod
     def modify_user(user_input: UserInput):
-        sys_user = UserDao.query_users(user_input)[0]
+        sys_user = UserDao.query_users(SysUser(id=user_input.id))[0]
 
         if user_input.username is not None:
             sys_user.username = user_input.username
@@ -47,8 +47,8 @@ class UserService:
             sys_user.password_hash = SecurityService \
                 .get_password_hash(user_input.password,
                                    sys_user.salt)
-
-        return UserOutput(UserDao.update_user(sys_user))
+        UserDao.update_user(sys_user)
+        return UserOutput(sys_user)
 
     @staticmethod
     def remove_user(user_input: UserInput):

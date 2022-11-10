@@ -39,11 +39,14 @@ class UserDao:
             return
 
         try:
-            sys_user = db.query(sys_user) \
-                         .filter_by(id=sys_user.id) \
-                         .update(sys_user)
+            origin_user = db.query(SysUser).filter_by(id=sys_user.id).one()
+            if sys_user.username is not None:
+                origin_user.username = sys_user.username
+            if sys_user.username is not None:
+                origin_user.email = sys_user.email
+            if sys_user.password_hash is not None:
+                origin_user.password_hash = sys_user.password_hash
             db.commit()
-            return sys_user
         finally:
             db.close()
 

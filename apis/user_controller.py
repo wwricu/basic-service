@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from schemas import UserInput, UserOutput, Response
+from schemas import UserInput, Response
 from service import UserService, SecurityService
 
 
@@ -29,11 +29,11 @@ async def add_user(user_input: UserInput):
                         message=e.__str__())
 
 
-@user_router.put("/", response_model=Response)
+@user_router.post("/update", response_model=Response)
 async def modify_users(user_input: UserInput):
     try:
         return Response(data=UserService
-                        .find_user(user_input),
+                        .modify_user(user_input),
                         status='success')
     except Exception as e:
         return Response(status='failure',
