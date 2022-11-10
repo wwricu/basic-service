@@ -4,7 +4,7 @@ import jwt
 
 from datetime import datetime, timedelta
 from core.config import Config
-from schemas import UserSchema
+from schemas import UserOutput
 
 
 class SecurityService:
@@ -26,7 +26,7 @@ class SecurityService:
                                        .hexdigest()
 
     @staticmethod
-    def create_access_token(user_info: UserSchema):
+    def create_access_token(user_info: UserOutput):
         data = user_info.dict()
 
         data.update({"exp": datetime.utcnow() + timedelta(minutes=60)})
@@ -47,7 +47,7 @@ class SecurityService:
         if data['exp'] > datetime.utcnow():
             raise Exception('token expire')
 
-        return UserSchema(id=data['id'],
+        return UserOutput(id=data['id'],
                           username=data['username'],
                           email=data['email'],
                           roles=data['roles'])

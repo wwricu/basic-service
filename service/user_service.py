@@ -1,12 +1,12 @@
 from dao import UserDao
-from schemas import AuthSchema, UserSchema
+from schemas import UserInput, UserOutput
 from models import SysUser
 from .security_service import SecurityService
 
 
 class UserService:
     @staticmethod
-    def user_login(auth_info: AuthSchema):
+    def user_login(auth_info: UserInput):
         sys_user = UserDao.query_users(auth_info)[0]
 
         if not SecurityService\
@@ -15,13 +15,13 @@ class UserService:
                                  sys_user.password_hash):
             raise Exception('Password Mismatch')
 
-        return UserSchema(id=sys_user.id,
+        return UserOutput(id=sys_user.id,
                           username=sys_user.username,
                           email=sys_user.email,
                           roles=[x.name for x in sys_user.roles])
 
     @staticmethod
-    def add_user(auth_info: AuthSchema):
+    def add_user(auth_info: UserInput):
         sys_user = SysUser(id=auth_info.id,
                            username=auth_info.username,
                            email=auth_info.email)
@@ -33,14 +33,14 @@ class UserService:
 
         sys_user = UserDao.insert_user(sys_user)
 
-        return UserSchema(id=sys_user.id,
+        return UserOutput(id=sys_user.id,
                           username=sys_user.username,
                           email=sys_user.email)
 
     @staticmethod
-    def find_user(user_info: UserSchema):
+    def find_user(user_info: UserOutput):
 
-        users = map(lambda it: UserSchema(id=it.id,
+        users = map(lambda it: UserOutput(id=it.id,
                                           username=it.username,
                                           email=it.email,
                                           roles=[x.name for x in it.roles]),
@@ -48,7 +48,7 @@ class UserService:
         return list(users)
 
     @staticmethod
-    def modify_user(auth_info: AuthSchema):
+    def modify_user(auth_info: UserInput):
         sys_user = UserDao.query_users(auth_info)[0]
 
         sys_user.username = auth_info.username
@@ -60,5 +60,5 @@ class UserService:
         return UserDao.update_user(sys_user)
 
     @staticmethod
-    def remove_user(auth_info: AuthSchema):
+    def remove_user(auth_info: UserInput):
         return UserDao.delete_user(SysUser(id=auth_info.id))

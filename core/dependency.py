@@ -2,7 +2,7 @@ import jwt
 from fastapi import HTTPException
 
 from service import Config
-from schemas import UserSchema
+from schemas import UserOutput
 
 
 def get_user(token: str):
@@ -15,7 +15,7 @@ def get_user(token: str):
     if username == '-1':
         raise HTTPException(status_code=400, detail='user access denied')
 
-    return UserSchema(id=data['id'],
+    return UserOutput(id=data['id'],
                       username=data['username'],
                       email=data['email'],
                       roles=data['roles'])
