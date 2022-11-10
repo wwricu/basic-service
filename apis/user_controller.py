@@ -1,7 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from schemas import UserInput, Response
+from schemas import UserInput, UserOutput, Response
 from service import UserService, SecurityService
+from core.dependency import login_user
 
 
 user_router = APIRouter(prefix="/user")
@@ -43,8 +44,10 @@ async def modify_users(user_input: UserInput):
 @user_router.get("/{user_id}", response_model=Response)
 async def get_users(user_id: int,
                     username: str = None,
-                    email: str = None):
+                    email: str = None,
+                    cur_user: UserOutput = Depends(login_user)):
     try:
+        print(cur_user.username)
         return Response(data=UserService
                         .find_user(UserInput(id=user_id,
                                              username=username,
