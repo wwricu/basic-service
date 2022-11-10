@@ -3,7 +3,7 @@ import hashlib
 import jwt
 
 from datetime import datetime, timedelta
-from .config import Config
+from core.config import Config
 from schemas import UserInfo
 
 

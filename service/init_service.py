@@ -2,8 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import database_exists, create_database
 
-from core.decorator import alchemy_session
-from service.config import Config
+from core.config import Config
 from models import Base, SysUser, SysRole
 
 
@@ -35,9 +34,10 @@ class DatabaseService:
         cls.insert_admin()
 
     @classmethod
-    @alchemy_session
-    def insert_admin(cls, db):
+    def insert_admin(cls):
         try:
+            db = DatabaseService.get_session()
+
             admin_role = SysRole(name='admin',
                                  description='Admin role')
             admin = SysUser(username=Config.admin_username,
