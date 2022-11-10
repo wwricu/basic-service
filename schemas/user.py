@@ -17,7 +17,8 @@ class UserOutput(BaseModel):
         self.id = sys_user.id
         self.username = sys_user.username
         self.email = sys_user.email
-        self.roles = [x.name for x in sys_user.roles]
+        if sys_user.roles is not None:
+            self.roles = [x.name for x in sys_user.roles]
 
     id: int = None
     username: str = None

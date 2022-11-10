@@ -8,8 +8,9 @@ class UserDao:
     def insert_user(sys_user: SysUser, db):
         try:
             db.add(sys_user)
-            db.flush()
             db.commit()
+            db.refresh(sys_user)
+            db.expunge(sys_user)
             return sys_user
         finally:
             db.close()

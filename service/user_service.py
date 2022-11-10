@@ -43,7 +43,7 @@ class UserService:
             sys_user.username = user_input.username
         if user_input.email is not None:
             sys_user.email = user_input.email
-        if user_input.password_hash is not None:
+        if user_input.password is not None:
             sys_user.password_hash = SecurityService \
                 .get_password_hash(user_input.password,
                                    sys_user.salt)
