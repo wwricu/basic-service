@@ -2,19 +2,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import database_exists, create_database
 
-import functools
-
+from core.decorator import alchemy_session
 from service.config import Config
 from models import Base, SysUser, SysRole
-
-
-def alchemy_session(method):
-    @functools.wraps(method)
-    def wrapper(*args, **kwargs):
-        db = DatabaseService.get_session()
-        db.expire_on_commit = False
-        return method(*args, db, **kwargs)
-    return wrapper
 
 
 class DatabaseService:

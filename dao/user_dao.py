@@ -1,5 +1,5 @@
 from models import SysUser
-from service import alchemy_session
+from core.decorator import alchemy_session
 
 
 class UserDao:
