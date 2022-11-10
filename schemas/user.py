@@ -13,6 +13,7 @@ class UserInput(BaseModel):
 
 class UserOutput(BaseModel):
     def __init__(self, sys_user: SysUser):
+        BaseModel.__init__(self)
         self.id = sys_user.id
         self.username = sys_user.username
         self.email = sys_user.email
