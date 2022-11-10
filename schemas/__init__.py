@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Any
 
-from .user import UserInfo, AuthInfo
+from .user import UserSchema, AuthSchema
 
 
 class Response(BaseModel):

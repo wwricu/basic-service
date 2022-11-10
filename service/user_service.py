@@ -1,12 +1,12 @@
 from dao import UserDao
-from schemas import AuthInfo, UserInfo
+from schemas import AuthSchema, UserSchema
 from models import SysUser
 from .security_service import SecurityService
 
 
 class UserService:
     @staticmethod
-    def user_login(auth_info: AuthInfo):
+    def user_login(auth_info: AuthSchema):
         sys_user = UserDao.query_users(auth_info)[0]
 
         if not SecurityService\
@@ -15,13 +15,13 @@ class UserService:
                                  sys_user.password_hash):
             raise Exception('Password Mismatch')
 
-        return UserInfo(id=sys_user.id,
-                        username=sys_user.username,
-                        email=sys_user.email,
-                        roles=[x.name for x in sys_user.roles])
+        return UserSchema(id=sys_user.id,
+                          username=sys_user.username,
+                          email=sys_user.email,
+                          roles=[x.name for x in sys_user.roles])
 
     @staticmethod
-    def add_user(auth_info: AuthInfo):
+    def add_user(auth_info: AuthSchema):
         sys_user = SysUser(id=auth_info.id,
                            username=auth_info.username,
                            email=auth_info.email)
@@ -33,22 +33,22 @@ class UserService:
 
         sys_user = UserDao.insert_user(sys_user)
 
-        return UserInfo(id=sys_user.id,
-                        username=sys_user.username,
-                        email=sys_user.email)
+        return UserSchema(id=sys_user.id,
+                          username=sys_user.username,
+                          email=sys_user.email)
 
     @staticmethod
-    def find_user(user_info: UserInfo):
+    def find_user(user_info: UserSchema):
 
-        users = map(lambda it: UserInfo(id=it.id,
-                                        username=it.username,
-                                        email=it.email,
-                                        roles=[x.name for x in it.roles]),
+        users = map(lambda it: UserSchema(id=it.id,
+                                          username=it.username,
+                                          email=it.email,
+                                          roles=[x.name for x in it.roles]),
                     UserDao.query_users(user_info))
         return list(users)
 
     @staticmethod
-    def modify_user(auth_info: AuthInfo):
+    def modify_user(auth_info: AuthSchema):
         sys_user = UserDao.query_users(auth_info)[0]
 
         sys_user.username = auth_info.username
@@ -60,5 +60,5 @@ class UserService:
         return UserDao.update_user(sys_user)
 
     @staticmethod
-    def remove_user(auth_info: AuthInfo):
+    def remove_user(auth_info: AuthSchema):
         return UserDao.delete_user(SysUser(id=auth_info.id))

@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from schemas import AuthInfo, UserInfo, Response
+from schemas import AuthSchema, UserSchema, Response
 from service import UserService, SecurityService
 
 
@@ -8,7 +8,7 @@ user_router = APIRouter(prefix="/user")
 
 
 @user_router.post("/auth", response_model=Response)
-async def login(auth_info: AuthInfo):
+async def login(auth_info: AuthSchema):
     try:
         user_info = UserService.user_login(auth_info)
         jwt = SecurityService.create_access_token(user_info)
@@ -21,7 +21,7 @@ async def login(auth_info: AuthInfo):
 
 
 @user_router.post("/", response_model=Response)
-async def add_user(auth_info: AuthInfo):
+async def add_user(auth_info: AuthSchema):
     try:
         return Response(data=UserService.add_user(auth_info),
                         status='success')
@@ -31,12 +31,12 @@ async def add_user(auth_info: AuthInfo):
 
 
 @user_router.put("/", response_model=Response)
-async def modify_users(user_info: UserInfo):
+async def modify_users(user_info: UserSchema):
     try:
         return Response(data=UserService
-                        .find_user(UserInfo(id=user_id,
-                                            username=username,
-                                            email=email)),
+                        .find_user(UserSchema(id=user_id,
+                                              username=username,
+                                              email=email)),
                         status='success')
     except Exception as e:
         return Response(status='failure',
@@ -49,9 +49,9 @@ async def get_users(user_id: int,
                     email: str = None):
     try:
         return Response(data=UserService
-                        .find_user(UserInfo(id=user_id,
-                                            username=username,
-                                            email=email)),
+                        .find_user(UserSchema(id=user_id,
+                                              username=username,
+                                              email=email)),
                         status='success')
     except Exception as e:
         return Response(status='failure',

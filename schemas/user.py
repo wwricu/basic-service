@@ -2,14 +2,14 @@ from pydantic import BaseModel
 from typing import List
 
 
-class AuthInfo(BaseModel):
+class AuthSchema(BaseModel):
     id: int = None
     username: str = None
     password: str = None
     email: str = None
 
 
-class UserInfo(BaseModel):
+class UserSchema(BaseModel):
     id: int = None
     username: str = None
     email: str = None
