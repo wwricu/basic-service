@@ -15,10 +15,7 @@ class UserService:
                                  sys_user.password_hash):
             raise Exception('Password Mismatch')
 
-        return UserOutput(id=sys_user.id,
-                          username=sys_user.username,
-                          email=sys_user.email,
-                          roles=[x.name for x in sys_user.roles])
+        return UserOutput(sys_user)
 
     @staticmethod
     def add_user(auth_info: UserInput):
@@ -33,19 +30,12 @@ class UserService:
 
         sys_user = UserDao.insert_user(sys_user)
 
-        return UserOutput(id=sys_user.id,
-                          username=sys_user.username,
-                          email=sys_user.email)
+        return UserOutput(sys_user)
 
     @staticmethod
-    def find_user(user_info: UserOutput):
-
-        users = map(lambda it: UserOutput(id=it.id,
-                                          username=it.username,
-                                          email=it.email,
-                                          roles=[x.name for x in it.roles]),
-                    UserDao.query_users(user_info))
-        return list(users)
+    def find_user(user_info: UserInput):
+        return list(map(lambda it: UserOutput(it),
+                        UserDao.query_users(user_info)))
 
     @staticmethod
     def modify_user(auth_info: UserInput):
@@ -57,8 +47,9 @@ class UserService:
             .get_password_hash(auth_info.password,
                                sys_user.salt)
 
-        return UserDao.update_user(sys_user)
+        sys_user = UserDao.update_user(sys_user)
+        return UserOutput(sys_user)
 
     @staticmethod
     def remove_user(auth_info: UserInput):
-        return UserDao.delete_user(SysUser(id=auth_info.id))
+        return UserOutput(UserDao.delete_user(SysUser(id=auth_info.id)))

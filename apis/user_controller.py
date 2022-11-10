@@ -12,8 +12,7 @@ async def login(auth_info: UserInput):
     try:
         user_info = UserService.user_login(auth_info)
         jwt = SecurityService.create_access_token(user_info)
-        data = [user_info, jwt]
-        return Response(data=data,
+        return Response(data=[user_info, jwt],
                         status='success')
     except Exception as e:
         return Response(status='failure',
@@ -31,12 +30,10 @@ async def add_user(auth_info: UserInput):
 
 
 @user_router.put("/", response_model=Response)
-async def modify_users(user_info: UserOutput):
+async def modify_users(user_info: UserInput):
     try:
         return Response(data=UserService
-                        .find_user(UserOutput(id=user_id,
-                                              username=username,
-                                              email=email)),
+                        .find_user(user_info),
                         status='success')
     except Exception as e:
         return Response(status='failure',
