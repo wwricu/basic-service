@@ -44,8 +44,8 @@ class SecurityService:
                           key=Config.jwt_secret,
                           algorithms=['HS256'])
 
-        if data['exp'] > datetime.utcnow():
-            raise Exception('token expire')
+        # if data['exp'] > datetime.utcnow():
+        #     raise Exception('token expire')
 
         return UserOutput(id=data['id'],
                           username=data['username'],
