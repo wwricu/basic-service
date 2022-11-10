@@ -46,3 +46,19 @@ class UserService:
                                         roles=[x.name for x in it.roles]),
                     UserDao.query_users(user_info))
         return list(users)
+
+    @staticmethod
+    def modify_user(auth_info: AuthInfo):
+        sys_user = UserDao.query_users(auth_info)[0]
+
+        sys_user.username = auth_info.username
+        sys_user.email = auth_info.email
+        sys_user.password_hash = SecurityService \
+            .get_password_hash(auth_info.password,
+                               sys_user.salt)
+
+        return UserDao.update_user(sys_user)
+
+    @staticmethod
+    def remove_user(auth_info: AuthInfo):
+        return UserDao.delete_user(SysUser(id=auth_info.id))
