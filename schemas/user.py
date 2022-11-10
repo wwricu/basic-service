@@ -12,13 +12,12 @@ class UserInput(BaseModel):
 
 
 class UserOutput(BaseModel):
-    def __init__(self, sys_user: SysUser):
-        BaseModel.__init__(self)
-        self.id = sys_user.id
-        self.username = sys_user.username
-        self.email = sys_user.email
-        if sys_user.roles is not None:
-            self.roles = [x.name for x in sys_user.roles]
+    @classmethod
+    def init(cls, sys_user):
+        return UserOutput(id=sys_user.id,
+                          username=sys_user.username,
+                          email=sys_user.email,
+                          roles=[x.name for x in sys_user.roles])
 
     id: int = None
     username: str = None
