@@ -9,7 +9,8 @@ user_router = APIRouter(prefix="/user")
 
 
 @user_router.post("", response_model=Response)
-async def add_user(user_input: UserInput):
+async def add_user(user_input: UserInput,
+                   cur_user: UserOutput = Depends(RequiresRoles('admin'))):
     try:
         return Response(data=UserService.add_user(user_input),
                         status='success')
@@ -35,7 +36,8 @@ async def get_users(user_id: int,
 
 
 @user_router.put("", response_model=Response)
-async def modify_users(user_input: UserInput):
+async def modify_users(user_input: UserInput,
+                       cur_user: UserOutput = Depends(RequiresRoles('admin'))):
     try:
         return Response(data=UserService
                         .modify_user(user_input),
@@ -46,7 +48,8 @@ async def modify_users(user_input: UserInput):
 
 
 @user_router.delete("/{user_id}", response_model=Response)
-async def remove_users(user_id: int):
+async def remove_users(user_id: int,
+                       cur_user: UserOutput = Depends(RequiresRoles('admin'))):
     try:
         return Response(data=UserService
                         .remove_user(UserInput(id=user_id)),
