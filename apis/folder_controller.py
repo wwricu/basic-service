@@ -16,6 +16,15 @@ async def add_folder(folder: FolderInput):
                                                parent_id=folder.parent_id))
 
 
+@content_router.get("")
+async def get_folder(folder_id: int = None,
+                     url: str = None,
+                     parent_id: int = None):
+    return ResourceService.find_resources(Folder(id=folder_id,
+                                                 url=url,
+                                                 parent_id=parent_id))
+
+
 @content_router.put("")
 async def modify_folder(folder: FolderInput):
     return ResourceService.modify_resource(Folder(id=folder.id,

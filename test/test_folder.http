@@ -10,8 +10,7 @@ Content-Type: application/json
 
 ### search user
 
-GET http://127.0.0.1:8000/user/1
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ3d3IiLCJlbWFpbCI6Imlzd2FuZ3dyQGdtYWlsLmNvbSIsInJvbGVzIjpbImFkbWluIl0sImV4cCI6MTY2ODE2NjA5M30.w5IWg9fWt2mJwtRESo8IgNQY7j4ZwgXs1zER9_UYXzA
+GET http://127.0.0.1:8000/folder?parent_id=1
 Content-Type: application/json
 
 ### update folder

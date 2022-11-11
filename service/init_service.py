@@ -57,7 +57,7 @@ class DatabaseService:
     def insert_root_folder(cls):
         db = DatabaseService.get_session()
         try:
-            folder = Folder(title='root folder', url='')
+            folder = Folder(title='root_folder', url='')
             db.add(folder)
             db.commit()
         except Exception as e:
