@@ -1,4 +1,4 @@
-from dao import UserDao, BaseDao
+from dao import BaseDao
 from schemas import UserInput, UserOutput
 from models import SysUser
 from .security_service import SecurityService
@@ -7,7 +7,7 @@ from .security_service import SecurityService
 class UserService:
     @staticmethod
     def user_login(user_input: UserInput):
-        sys_user = UserDao.query_users(user_input)[0]
+        sys_user = BaseDao.select(user_input, SysUser)[0]
 
         if not SecurityService\
                 .verify_password(user_input.password,
@@ -37,7 +37,7 @@ class UserService:
 
     @staticmethod
     def modify_user(user_input: UserInput):
-        sys_user = UserDao.query_users(SysUser(id=user_input.id))[0]
+        sys_user = BaseDao.select(SysUser(id=user_input.id), SysUser)[0]
 
         if user_input.username is not None:
             sys_user.username = user_input.username
@@ -47,7 +47,7 @@ class UserService:
             sys_user.password_hash = SecurityService \
                 .get_password_hash(user_input.password,
                                    sys_user.salt)
-        # UserDao.update_user(sys_user)
+
         BaseDao.update(sys_user, SysUser)
         return UserOutput.init(sys_user)
 
