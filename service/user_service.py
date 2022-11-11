@@ -1,4 +1,4 @@
-from dao import UserDao
+from dao import UserDao, BaseDao
 from schemas import UserInput, UserOutput
 from models import SysUser
 from .security_service import SecurityService
@@ -28,12 +28,12 @@ class UserService:
             get_password_hash(user_input.password,
                               sys_user.salt)
 
-        return UserOutput.init(UserDao.insert_user(sys_user))
+        return UserOutput.init(BaseDao.insert(sys_user))
 
     @staticmethod
     def find_user(user_input: UserInput):
         return list(map(lambda it: UserOutput.init(it),
-                        UserDao.query_users(user_input)))
+                        BaseDao.select(user_input, SysUser)))
 
     @staticmethod
     def modify_user(user_input: UserInput):
@@ -47,9 +47,10 @@ class UserService:
             sys_user.password_hash = SecurityService \
                 .get_password_hash(user_input.password,
                                    sys_user.salt)
-        UserDao.update_user(sys_user)
+        # UserDao.update_user(sys_user)
+        BaseDao.update(sys_user, SysUser)
         return UserOutput.init(sys_user)
 
     @staticmethod
     def remove_user(user_input: UserInput):
-        return UserDao.delete_user(SysUser(id=user_input.id))
+        return BaseDao.delete(SysUser(id=user_input.id), SysUser)

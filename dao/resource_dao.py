@@ -14,3 +14,20 @@ class ResourceDao:
             return resource
         finally:
             db.close()
+
+    @staticmethod
+    @alchemy_session
+    def select_resources(resource: Resource, db):
+        try:
+            res = db.query(resource)
+
+            if resource.url is not None:
+                res = res.filter(Resource.url == resource.url)
+            if resource.id is not None and resource.id != 0:
+                res = res.filter(Resource.id == resource.id)
+            if resource.title is not None:
+                res = res.filter(Resource.title == resource.title)
+
+            return res.all()
+        finally:
+            db.close()

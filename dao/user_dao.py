@@ -34,27 +34,6 @@ class UserDao:
 
     @staticmethod
     @alchemy_session
-    def update_user(sys_user: SysUser, db):
-        if sys_user.id is None or sys_user.id == 0:
-            return
-
-        try:
-            origin_user = db.query(SysUser).filter_by(id=sys_user.id).one()
-            for key in sys_user.__dict__:
-                if key != '_sa_instance_state':
-                    setattr(origin_user, key, getattr(sys_user, key))
-            # if sys_user.username is not None:
-            #     origin_user.username = sys_user.username
-            # if sys_user.username is not None:
-            #     origin_user.email = sys_user.email
-            # if sys_user.password_hash is not None:
-            #     origin_user.password_hash = sys_user.password_hash
-            db.commit()
-        finally:
-            db.close()
-
-    @staticmethod
-    @alchemy_session
     def delete_user(sys_user: SysUser, db):
         if sys_user.id is None or sys_user.id == 0:
             return

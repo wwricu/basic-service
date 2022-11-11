@@ -2,6 +2,7 @@
 
 POST http://127.0.0.1:8000/user/auth
 Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ3d3IiLCJlbWFpbCI6Imlzd2FuZ3dyQGdtYWlsLmNvbSIsInJvbGVzIjpbImFkbWluIl0sImV4cCI6MTY2ODE2NjA5M30.w5IWg9fWt2mJwtRESo8IgNQY7j4ZwgXs1zER9_UYXzA
 
 {
   "username": "wwr",
@@ -12,6 +13,7 @@ Content-Type: application/json
 
 POST http://127.0.0.1:8000/user
 Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ3d3IiLCJlbWFpbCI6Imlzd2FuZ3dyQGdtYWlsLmNvbSIsInJvbGVzIjpbImFkbWluIl0sImV4cCI6MTY2ODE2NjA5M30.w5IWg9fWt2mJwtRESo8IgNQY7j4ZwgXs1zER9_UYXzA
 
 {
   "username": "wwr3",
@@ -22,21 +24,24 @@ Content-Type: application/json
 ### search user
 
 GET http://127.0.0.1:8000/user/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ3d3IiLCJlbWFpbCI6Imlzd2FuZ3dyQGdtYWlsLmNvbSIsInJvbGVzIjpbImFkbWluIl0sImV4cCI6MTY2ODE2NjA5M30.w5IWg9fWt2mJwtRESo8IgNQY7j4ZwgXs1zER9_UYXzA
+
 Content-Type: application/json
 
 ### update user
 
 PUT http://127.0.0.1:8000/user
 Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ3d3IiLCJlbWFpbCI6Imlzd2FuZ3dyQGdtYWlsLmNvbSIsInJvbGVzIjpbImFkbWluIl0sImV4cCI6MTY2ODE2NjA5M30.w5IWg9fWt2mJwtRESo8IgNQY7j4ZwgXs1zER9_UYXzA
 
 {
-  "id":37,
-  "username": "wwr6",
-  "password": "d49f8881148139a77be5d7d5b6561c58",
-  "email": "te1@aa.com"
+  "id":2,
+  "username": "2222",
+  "email": "test email"
 }
 
 ### delete user
 
-DELETE http://127.0.0.1:8000/user/39
+DELETE http://127.0.0.1:8000/user/2
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ3d3IiLCJlbWFpbCI6Imlzd2FuZ3dyQGdtYWlsLmNvbSIsInJvbGVzIjpbImFkbWluIl0sImV4cCI6MTY2ODE2NjA5M30.w5IWg9fWt2mJwtRESo8IgNQY7j4ZwgXs1zER9_UYXzA
 Content-Type: application/json
