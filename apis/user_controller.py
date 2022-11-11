@@ -1,23 +1,11 @@
 from fastapi import APIRouter, Depends
 
 from schemas import UserInput, UserOutput, Response
-from service import UserService, SecurityService
+from service import UserService
 from core.dependency import RequiresRoles
 
 
 user_router = APIRouter(prefix="/user")
-
-
-@user_router.post("/auth", response_model=Response)
-async def login(user_input: UserInput):
-    try:
-        user_output = UserService.user_login(user_input)
-        jwt = SecurityService.create_access_token(user_output)
-        return Response(data=[user_output, jwt],
-                        status='success')
-    except Exception as e:
-        return Response(status='failure',
-                        message=e.__str__())
 
 
 @user_router.post("/", response_model=Response)

@@ -2,7 +2,8 @@ from fastapi import Depends, APIRouter
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from service import SecurityService, UserService
-from schemas import Response, UserInput
+from schemas import Response, UserInput, UserOutput
+from core.dependency import requires_login
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
@@ -10,8 +11,8 @@ auth_router = APIRouter(prefix="/auth")
 
 
 @auth_router.get("/user_info")
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    return SecurityService.verify_token(token)
+async def get_current_user(user_output: UserOutput = Depends(requires_login)):
+    return user_output
 
 
 @auth_router.post("/token")
