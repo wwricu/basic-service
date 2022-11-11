@@ -2,28 +2,33 @@ from pydantic import BaseModel
 from datetime import datetime
 
 
-class ResourceSchema(BaseModel):
+class ResourceBase(BaseModel):
     id: int = None
     title: str = None
-    url: str = None
-    created_time: datetime = None
-    modified_time: datetime = None
     parent_id: int = None
 
-    class Config:
-        orm_mode = True
 
-
-class ContentSchema(ResourceSchema):
+class ContentInput(ResourceBase):
     sub_title: str = None
     status: str = None
     content: str = None
 
-    class Config:
-        orm_mode = True
+
+class FolderInput(ResourceBase):
+    pass
 
 
-class FolderSchema(ResourceSchema):
+class ResourceOutput(ResourceBase):
+    url: str = None
+    created_time: datetime = None
+    modified_time: datetime = None
 
-    class Config:
-        orm_mode = True
+
+class ContentOutput(ResourceOutput):
+    sub_title: str = None
+    status: str = None
+    content: str = None
+
+
+class FolderOutput(ResourceBase):
+    pass

@@ -25,14 +25,16 @@ class Resource(Base):
 
     type = Column(String(50))
     __mapper_args__ = {
-        'polymorphic_identity': 'resource',
+        # 'polymorphic_identity': 'resource',
         'polymorphic_on': type
     }
 
 
 class Content(Resource):
     __tablename__ = 'content'
-    id = Column(Integer, ForeignKey('resource.id'), primary_key=True)
+    id = Column(Integer,
+                ForeignKey('resource.id', ondelete='CASCADE'),
+                primary_key=True)
 
     sub_title = Column(String(255), nullable=True, comment="content summary")
     status = Column(String(255), nullable=True, comment="content status")
@@ -49,7 +51,9 @@ class Content(Resource):
 
 class Folder(Resource):
     __tablename__ = 'folder'
-    id = Column(Integer, ForeignKey('resource.id'), primary_key=True)
+    id = Column(Integer,
+                ForeignKey('resource.id', ondelete='CASCADE'),
+                primary_key=True)
 
     # parent_id = Column(Integer, ForeignKey('resource.id'))
     # sub_resource = relationship("Resource", foreign_keys=parent_id)

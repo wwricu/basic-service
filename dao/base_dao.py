@@ -18,15 +18,18 @@ class BaseDao:
     @alchemy_session
     def select(obj, class_name, db):
         try:
-            print(obj.__class__)
             res = db.query(class_name)
 
             for key in class_name.__dict__:
                 if key[0] == '_':
                     continue
-                if hasattr(obj, key) and getattr(obj, key) is not None:
-                    print(key)
-                    res = res.filter(getattr(class_name, key) == getattr(obj, key))
+                if not hasattr(obj, key):
+                    continue
+                attr = getattr(obj, key)
+                if attr is None:
+                    continue
+                if isinstance(attr, int) or isinstance(attr, str):
+                    res = res.filter(getattr(class_name, key) == attr)
 
             return res.all()
         finally:
@@ -42,8 +45,10 @@ class BaseDao:
             origin_obj = db.query(class_name) \
                            .filter_by(id=obj.id).one()
             for key in obj.__dict__:
-                if key != '_sa_instance_state':
-                    setattr(origin_obj, key, getattr(obj, key))
+                if key[0] == '_' or getattr(obj, key) is None:
+                    continue
+                # if key != '_sa_instance_state':
+                setattr(origin_obj, key, getattr(obj, key))
 
             db.commit()
         finally:
