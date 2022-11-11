@@ -1,0 +1,34 @@
+### password login
+
+POST http://127.0.0.1:8000/user/auth
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ3d3IiLCJlbWFpbCI6Imlzd2FuZ3dyQGdtYWlsLmNvbSIsInJvbGVzIjpbImFkbWluIl0sImV4cCI6MTY2ODE2NjA5M30.w5IWg9fWt2mJwtRESo8IgNQY7j4ZwgXs1zER9_UYXzA
+
+{
+  "username": "wwr",
+  "password": "d49f8881148139a77be5d7d5b6561c58"
+}
+
+### add folder
+
+POST http://127.0.0.1:8000/folder
+Content-Type: application/json
+
+{
+  "title": "tech",
+  "url": "/Tech",
+  "parent_id": 1
+}
+
+### search user
+
+GET http://127.0.0.1:8000/user/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ3d3IiLCJlbWFpbCI6Imlzd2FuZ3dyQGdtYWlsLmNvbSIsInJvbGVzIjpbImFkbWluIl0sImV4cCI6MTY2ODE2NjA5M30.w5IWg9fWt2mJwtRESo8IgNQY7j4ZwgXs1zER9_UYXzA
+
+Content-Type: application/json
+
+### delete user
+
+DELETE http://127.0.0.1:8000/user/2
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ3d3IiLCJlbWFpbCI6Imlzd2FuZ3dyQGdtYWlsLmNvbSIsInJvbGVzIjpbImFkbWluIl0sImV4cCI6MTY2ODE2NjA5M30.w5IWg9fWt2mJwtRESo8IgNQY7j4ZwgXs1zER9_UYXzA
+Content-Type: application/json

@@ -1,7 +1,4 @@
 from pydantic import BaseModel
-from typing import List
-
-from models import SysUser
 
 
 class UserInput(BaseModel):
@@ -22,4 +19,4 @@ class UserOutput(BaseModel):
     id: int = None
     username: str = None
     email: str = None
-    roles: List[str] = None
+    roles: list[str] = None
