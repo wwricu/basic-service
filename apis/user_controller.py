@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from schemas import UserInput, UserOutput, Response
 from service import UserService, SecurityService
-from core.dependency import login_user
+from core.dependency import RequiresRoles
 
 
 user_router = APIRouter(prefix="/user")
@@ -45,7 +45,7 @@ async def modify_users(user_input: UserInput):
 async def get_users(user_id: int,
                     username: str = None,
                     email: str = None,
-                    cur_user: UserOutput = Depends(login_user)):
+                    cur_user: UserOutput = Depends(RequiresRoles('admin'))):
     try:
         print(cur_user.username)
         return Response(data=UserService

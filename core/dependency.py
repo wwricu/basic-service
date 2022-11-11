@@ -1,7 +1,8 @@
 import jwt
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
+
 from schemas import UserOutput
 from core.config import Config
 
@@ -9,7 +10,7 @@ from core.config import Config
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 
-async def login_user(token: str = Depends(oauth2_scheme)):
+async def requires_login(token: str = Depends(oauth2_scheme)):
     data = jwt.decode(token,
                       key=Config.jwt_secret,
                       algorithms=['HS256'])
@@ -23,11 +24,15 @@ async def login_user(token: str = Depends(oauth2_scheme)):
                       roles=data['roles'])
 
 
-def requires_roles(role: str,
-                   user_output: UserOutput = Depends(login_user)):
-    print(role)
-    for r in user_output.roles:
-        if r == role:
-            return user_output
+class RequiresRoles:
+    def __init__(self, required_role: str):
+        self.required_role = required_role
 
-    raise Exception('no permission!')
+    def __call__(self,
+                 user: UserOutput = Depends(requires_login)) -> UserOutput:
+
+        for role in user.roles:
+            if role == 'admin' or self.required_role == role:
+                return user
+
+        raise HTTPException(status_code=403, detail="no permission")
