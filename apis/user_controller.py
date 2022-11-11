@@ -8,7 +8,7 @@ from core.dependency import RequiresRoles
 user_router = APIRouter(prefix="/user")
 
 
-@user_router.post("/", response_model=Response)
+@user_router.post("", response_model=Response)
 async def add_user(user_input: UserInput):
     try:
         return Response(data=UserService.add_user(user_input),
@@ -18,7 +18,7 @@ async def add_user(user_input: UserInput):
                         message=e.__str__())
 
 
-@user_router.post("/update", response_model=Response)
+@user_router.put("", response_model=Response)
 async def modify_users(user_input: UserInput):
     try:
         return Response(data=UserService

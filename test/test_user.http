@@ -26,14 +26,14 @@ Content-Type: application/json
 
 ### update user
 
-POST http://127.0.0.1:8000/user/update
+PUT http://127.0.0.1:8000/user
 Content-Type: application/json
 
 {
   "id":37,
-  "username": "wwr3",
+  "username": "wwr6",
   "password": "d49f8881148139a77be5d7d5b6561c58",
-  "email": "test@email.com"
+  "email": "te1@aa.com"
 }
 
 ### delete user
