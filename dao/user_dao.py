@@ -40,12 +40,15 @@ class UserDao:
 
         try:
             origin_user = db.query(SysUser).filter_by(id=sys_user.id).one()
-            if sys_user.username is not None:
-                origin_user.username = sys_user.username
-            if sys_user.username is not None:
-                origin_user.email = sys_user.email
-            if sys_user.password_hash is not None:
-                origin_user.password_hash = sys_user.password_hash
+            for key in sys_user.__dict__:
+                if key != '_sa_instance_state':
+                    setattr(origin_user, key, getattr(sys_user, key))
+            # if sys_user.username is not None:
+            #     origin_user.username = sys_user.username
+            # if sys_user.username is not None:
+            #     origin_user.email = sys_user.email
+            # if sys_user.password_hash is not None:
+            #     origin_user.password_hash = sys_user.password_hash
             db.commit()
         finally:
             db.close()
