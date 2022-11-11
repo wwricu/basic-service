@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import database_exists, create_database
 
 from core.config import Config
-from models import Base, SysUser, SysRole
+from models import Base, SysUser, SysRole, Folder
 
 
 class DatabaseService:
@@ -19,10 +19,9 @@ class DatabaseService:
     @classmethod
     def get_session(cls):
         engine = cls.get_engine()
-        db = sessionmaker(autocommit=False,
-                          autoflush=False,
-                          bind=engine)()
-        return db
+        return sessionmaker(autocommit=False,
+                            autoflush=False,
+                            bind=engine)()
 
     @classmethod
     def init_db(cls):
@@ -32,12 +31,12 @@ class DatabaseService:
         Base.metadata.create_all(engine)
 
         cls.insert_admin()
+        cls.insert_root_folder()
 
     @classmethod
     def insert_admin(cls):
+        db = DatabaseService.get_session()
         try:
-            db = DatabaseService.get_session()
-
             admin_role = SysRole(name='admin',
                                  description='Admin role')
             admin = SysUser(username=Config.admin_username,
@@ -51,3 +50,17 @@ class DatabaseService:
             db.commit()
         except Exception as e:
             print(e)
+        finally:
+            db.close()
+
+    @classmethod
+    def insert_root_folder(cls):
+        db = DatabaseService.get_session()
+        try:
+            folder = Folder(title='root folder', url='')
+            db.add(folder)
+            db.commit()
+        except Exception as e:
+            print(e)
+        finally:
+            db.close()

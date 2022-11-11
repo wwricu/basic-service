@@ -20,7 +20,7 @@ class Resource(Base):
                            onupdate=datetime.now,
                            comment="update time")
 
-    parent_id = Column(Integer, ForeignKey('resource.id'))
+    parent_id = Column(Integer, ForeignKey('resource.id'), nullable=True)
     sub_resource = relationship("Resource", foreign_keys=parent_id)
 
     type = Column(String(50))
@@ -34,9 +34,9 @@ class Content(Resource):
     __tablename__ = 'content'
     id = Column(Integer, ForeignKey('resource.id'), primary_key=True)
 
-    sub_title = Column(String(255), comment="content summary")
-    status = Column(String(255), comment="content status")
-    content = Column(LargeBinary, comment="content html")
+    sub_title = Column(String(255), nullable=True, comment="content summary")
+    status = Column(String(255), nullable=True, comment="content status")
+    content = Column(LargeBinary, nullable=True, comment="content html")
 
     # parent_id = Column(Integer, ForeignKey('resource.id'))
     # sub_resource = relationship("Resource", foreign_keys=parent_id)
