@@ -52,4 +52,4 @@ class UserService:
 
     @staticmethod
     def remove_user(user_input: UserInput):
-        return UserOutput.init(UserDao.delete_user(SysUser(id=user_input.id)))
+        return UserDao.delete_user(SysUser(id=user_input.id))

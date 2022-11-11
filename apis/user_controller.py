@@ -18,6 +18,22 @@ async def add_user(user_input: UserInput):
                         message=e.__str__())
 
 
+@user_router.get("/{user_id}", response_model=Response)
+async def get_users(user_id: int,
+                    username: str = None,
+                    email: str = None,
+                    cur_user: UserOutput = Depends(RequiresRoles('admin'))):
+    try:
+        return Response(data=UserService
+                        .find_user(UserInput(id=user_id,
+                                             username=username,
+                                             email=email)),
+                        status='success')
+    except Exception as e:
+        return Response(status='failure',
+                        message=e.__str__())
+
+
 @user_router.put("", response_model=Response)
 async def modify_users(user_input: UserInput):
     try:
@@ -29,17 +45,11 @@ async def modify_users(user_input: UserInput):
                         message=e.__str__())
 
 
-@user_router.get("/{user_id}", response_model=Response)
-async def get_users(user_id: int,
-                    username: str = None,
-                    email: str = None,
-                    cur_user: UserOutput = Depends(RequiresRoles('admin'))):
+@user_router.delete("/{user_id}", response_model=Response)
+async def remove_users(user_id: int):
     try:
-        print(cur_user.username)
         return Response(data=UserService
-                        .find_user(UserInput(id=user_id,
-                                             username=username,
-                                             email=email)),
+                        .remove_user(UserInput(id=user_id)),
                         status='success')
     except Exception as e:
         return Response(status='failure',

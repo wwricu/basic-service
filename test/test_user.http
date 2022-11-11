@@ -38,3 +38,5 @@ Content-Type: application/json
 
 ### delete user
 
+DELETE http://127.0.0.1:8000/user/39
+Content-Type: application/json

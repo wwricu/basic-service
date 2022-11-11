@@ -55,12 +55,11 @@ class UserDao:
     def delete_user(sys_user: SysUser, db):
         if sys_user.id is None or sys_user.id == 0:
             return
-
         try:
-            sys_user = db.query(sys_user)\
-                         .filter_by(id=sys_user.id)\
-                         .delete()
+            count = db.query(SysUser)\
+                      .filter_by(id=sys_user.id)\
+                      .delete()
             db.commit()
-            return sys_user
+            return count
         finally:
             db.close()
