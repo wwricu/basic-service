@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter
+from fastapi import APIRouter
 
 from models import Folder
 from schemas import FolderInput, FolderOutput
@@ -14,7 +14,7 @@ async def add_folder(folder: FolderInput):
                                                parent_id=folder.parent_id))
 
 
-@content_router.get("",   response_model=list[FolderOutput])
+@content_router.get("",  response_model=list[FolderOutput])
 async def get_folder(folder_id: int = None,
                      url: str = None,
                      parent_id: int = None):
