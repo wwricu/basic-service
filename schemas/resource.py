@@ -18,17 +18,14 @@ class FolderInput(ResourceBase):
     pass
 
 
-class ResourceOutput(ResourceBase):
+class FolderOutput(ResourceBase):
     url: str = None
     created_time: datetime = None
     modified_time: datetime = None
 
 
-class ContentOutput(ResourceOutput):
+class ContentOutput(FolderOutput):
     sub_title: str = None
     status: str = None
     content: str = None
 
-
-class FolderOutput(ResourceBase):
-    pass

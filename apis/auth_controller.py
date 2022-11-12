@@ -10,7 +10,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 auth_router = APIRouter(prefix="/auth")
 
 
-@auth_router.get("/user_info")
+@auth_router.get("/user_info", response_model=UserOutput)
 async def get_current_user(user_output: UserOutput = Depends(requires_login)):
     return user_output
 
