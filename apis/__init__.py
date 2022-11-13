@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
 from .user_controller import user_router
 from .auth_controller import auth_router

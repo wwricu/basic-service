@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from schemas import UserInput, UserOutput, Response
+from schemas import UserInput, UserOutput
 from service import UserService
 from core.dependency import RequiresRoles
 

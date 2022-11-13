@@ -28,4 +28,3 @@ class ContentOutput(FolderOutput):
     sub_title: str = None
     status: str = None
     content: str = None
-
