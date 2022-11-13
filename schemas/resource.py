@@ -24,6 +24,7 @@ class FolderOutput(ResourceBase):
     def init(cls, folder: Folder):
         return FolderOutput(id=folder.id,
                             url=folder.url,
+                            title=folder.title,
                             parent_id=folder.parent_id,
                             created_time=folder.created_time,
                             modified_time=folder.modified_time)

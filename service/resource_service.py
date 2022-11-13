@@ -26,8 +26,7 @@ class ResourceService:
 
     @staticmethod
     def modify_resource(resource: Resource):
-        BaseDao.update(resource, resource.__class__)
-        return resource
+        return BaseDao.update(resource, resource.__class__)
 
     @staticmethod
     def remove_resource(resource: Resource):

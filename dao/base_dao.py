@@ -1,4 +1,5 @@
 from core.decorator import alchemy_session
+from copy import copy
 
 
 class BaseDao:
@@ -49,8 +50,8 @@ class BaseDao:
                     continue
                 # if key != '_sa_instance_state':
                 setattr(origin_obj, key, getattr(obj, key))
-
             db.commit()
+            return copy(origin_obj)
         finally:
             db.close()
 
