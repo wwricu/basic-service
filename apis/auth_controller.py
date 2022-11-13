@@ -1,8 +1,8 @@
 from fastapi import Depends, APIRouter
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 
 from service import SecurityService, UserService
-from schemas import Response, UserInput, UserOutput
+from schemas import UserInput, UserOutput
 from core.dependency import requires_login
 
 
@@ -16,12 +16,8 @@ async def get_current_user(user_output: UserOutput = Depends(requires_login)):
 
 @auth_router.post("")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    try:
-        user_output = UserService \
-            .user_login(UserInput(username=form_data.username,
-                                  password=form_data.password))
-        jwt = SecurityService.create_access_token(user_output)
-        return {"access_token": jwt, "token_type": "bearer"}
-    except Exception as e:
-        return Response(status='failure',
-                        message=e.__str__())
+    user_output = UserService \
+        .user_login(UserInput(username=form_data.username,
+                              password=form_data.password))
+    jwt = SecurityService.create_access_token(user_output)
+    return {"access_token": jwt, "token_type": "bearer"}

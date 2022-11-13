@@ -9,9 +9,3 @@ engine = create_engine(Config.DB_URL, echo=True)
 session = sessionmaker(autocommit=False,
                        autoflush=False,
                        bind=engine)
-
-
-def init_db():
-    if not database_exists(engine.url):
-        create_database(engine.url)
-    Base.metadata.create_all(engine)

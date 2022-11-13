@@ -15,9 +15,6 @@ async def requires_login(token: str = Depends(oauth2_scheme)):
                       key=Config.jwt_secret,
                       algorithms=['HS256'])
 
-    # if data['exp'] > datetime.utcnow():
-    #     raise Exception('token expire')
-
     return UserOutput(id=data['id'],
                       username=data['username'],
                       email=data['email'],
