@@ -6,16 +6,15 @@ from schemas import Response, UserInput, UserOutput
 from core.dependency import requires_login
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@auth_router.get("/user_info", response_model=UserOutput)
+@auth_router.get("", response_model=UserOutput)
 async def get_current_user(user_output: UserOutput = Depends(requires_login)):
     return user_output
 
 
-@auth_router.post("/token")
+@auth_router.post("")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     try:
         user_output = UserService \

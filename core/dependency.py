@@ -7,7 +7,7 @@ from schemas import UserOutput
 from core.config import Config
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth")
 
 
 async def requires_login(token: str = Depends(oauth2_scheme)):
