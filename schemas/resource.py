@@ -16,7 +16,7 @@ class FolderInput(ResourceBase):
 class ContentInput(FolderInput):
     sub_title: str = None
     status: str = None
-    content: str = None
+    content: bytes = None
 
 
 class FolderOutput(ResourceBase):
@@ -48,4 +48,4 @@ class ContentOutput(FolderOutput):
 
     sub_title: str = None
     status: str = None
-    content: str = None
+    content: bytes = None
