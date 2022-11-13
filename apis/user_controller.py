@@ -5,7 +5,7 @@ from service import UserService
 from core.dependency import RequiresRoles
 
 
-user_router = APIRouter(prefix="/user")
+user_router = APIRouter(prefix="/user", tags=["user"])
 
 
 @user_router.post("", response_model=UserOutput)

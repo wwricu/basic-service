@@ -5,7 +5,7 @@ from schemas import FolderInput, FolderOutput
 from service import ResourceService
 
 
-folder_router = APIRouter(prefix="/folder")
+folder_router = APIRouter(prefix="/folder", tags=["folder"])
 
 
 @folder_router.post("", response_model=FolderOutput)

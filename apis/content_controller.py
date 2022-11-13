@@ -5,7 +5,7 @@ from schemas import ContentInput, ContentOutput
 from service import ResourceService
 
 
-content_router = APIRouter(prefix="/content")
+content_router = APIRouter(prefix="/content", tags=["content"])
 
 
 @content_router.post("", response_model=ContentOutput)

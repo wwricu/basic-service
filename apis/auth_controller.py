@@ -7,7 +7,7 @@ from core.dependency import requires_login
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
-auth_router = APIRouter(prefix="/auth")
+auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @auth_router.get("/user_info", response_model=UserOutput)
