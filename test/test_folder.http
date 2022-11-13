@@ -19,7 +19,7 @@ PUT http://127.0.0.1:8000/folder
 Content-Type: application/json
 
 {
-  "id": 6,
+  "id": 16,
   "title": "test_title"
 }
 

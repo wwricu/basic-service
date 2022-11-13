@@ -30,6 +30,27 @@ class Resource(Base):
     }
 
 
+class Folder(Resource):
+    @classmethod
+    def init(cls, folder):
+        return Folder(id=folder.id,
+                      title=folder.title,
+                      parent_id=folder.parent_id)
+
+    __tablename__ = 'folder'
+    id = Column(Integer,
+                ForeignKey('resource.id', ondelete='CASCADE'),
+                primary_key=True)
+
+    # parent_id = Column(Integer, ForeignKey('resource.id'))
+    # sub_resource = relationship("Resource", foreign_keys=parent_id)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'folder',
+        'inherit_condition': id == Resource.id,
+    }
+
+
 class Content(Resource):
     @classmethod
     def init(cls, content):
@@ -54,20 +75,5 @@ class Content(Resource):
 
     __mapper_args__ = {
         'polymorphic_identity': 'content',
-        'inherit_condition': id == Resource.id,
-    }
-
-
-class Folder(Resource):
-    __tablename__ = 'folder'
-    id = Column(Integer,
-                ForeignKey('resource.id', ondelete='CASCADE'),
-                primary_key=True)
-
-    # parent_id = Column(Integer, ForeignKey('resource.id'))
-    # sub_resource = relationship("Resource", foreign_keys=parent_id)
-
-    __mapper_args__ = {
-        'polymorphic_identity': 'folder',
         'inherit_condition': id == Resource.id,
     }
