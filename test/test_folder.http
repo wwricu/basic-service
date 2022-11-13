@@ -25,5 +25,5 @@ Content-Type: application/json
 
 ### delete folder
 
-DELETE http://127.0.0.1:8000/folder/2
+DELETE http://127.0.0.1:8000/folder/7
 Content-Type: application/json

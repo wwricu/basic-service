@@ -3,7 +3,6 @@ from sqlalchemy import Integer, Column, String, DateTime, ForeignKey, LargeBinar
 from sqlalchemy.orm import relationship
 
 from . import Base
-from schemas import ContentInput
 
 
 class Resource(Base):
@@ -33,7 +32,7 @@ class Resource(Base):
 
 class Content(Resource):
     @classmethod
-    def init(cls, content: ContentInput):
+    def init(cls, content):
         return Content(id=content.id,
                        title=content.title,
                        parent_id=content.parent_id,
