@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
 
 from models import Content
 from schemas import ContentInput, ContentOutput
@@ -31,6 +31,7 @@ async def modify_content(content: ContentInput):
     return ContentOutput.init(ResourceService.modify_resource(Content.init(content)))
 
 
-@content_router.delete("/{folder_id}", response_model=int)
+@content_router.delete("/{content_id}")
 async def delete_content(content_id: int):
-    return ResourceService.remove_resource(Content(id=content_id))
+    ResourceService.remove_resource(Content(id=content_id))
+    return Response(status_code=200)
