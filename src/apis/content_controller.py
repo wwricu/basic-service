@@ -16,11 +16,13 @@ async def add_content(content: ContentInput):
 @content_router.get("",  response_model=list[ContentOutput])
 async def get_content(content_id: int = None,
                       url: str = None,
-                      parent_id: int = None):
+                      parent_id: int = None,
+                      author_id: int = None):
 
     contents = ResourceService.find_resources(Content(id=content_id,
                                                       url=url,
-                                                      parent_id=parent_id))
+                                                      parent_id=parent_id,
+                                                      author_id=author_id))
     return [ContentOutput.init(x) for x in contents]
 
 

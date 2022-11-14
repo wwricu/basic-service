@@ -70,6 +70,8 @@ class Content(Resource):
     status = Column(String(255), nullable=True, comment="content status")
     content = Column(LargeBinary, nullable=True, comment="content html")
 
+    author_id = Column(Integer, ForeignKey('sys_user.id'))
+    author = relationship("SysUser", back_populates="contents")
     # parent_id = Column(Integer, ForeignKey('resource.id'))
     # sub_resource = relationship("Resource", foreign_keys=parent_id)
 

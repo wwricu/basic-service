@@ -11,6 +11,8 @@ class SysUser(Base):
     email = Column(String(128), unique=True, comment="email")
     password_hash = Column(String(128), comment="password hash")
     salt = Column(String(128), comment="salt")
+
+    contents = relationship("Content", back_populates="author")
     roles = relationship('SysRole',
                          secondary='user_role',
                          back_populates='users',
