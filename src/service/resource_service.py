@@ -7,16 +7,16 @@ from dao import BaseDao
 class ResourceService:
     @staticmethod
     def add_resource(resource: Resource):
-        if resource.parent_id is None or resource.parent_id == 0:
-            resource.parent_id = 1
-
-        parent = BaseDao.select(Resource(id=resource.parent_id),
-                                Resource)[0]
+        resource.url = ''
+        if resource.parent_id is not None and resource.parent_id != 0:
+            parent = BaseDao.select(Resource(id=resource.parent_id),
+                                    Resource)[0]
+            resource.url = parent.url
 
         if isinstance(resource, Folder):
-            resource.url = parent.url + '/' + resource.title
+            resource.url += '/' + resource.title
         else:
-            resource.url = parent.url + '/' + str(uuid.uuid4())
+            resource.url += '/' + str(uuid.uuid4())
 
         return BaseDao.insert(resource)
 
