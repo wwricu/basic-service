@@ -38,6 +38,7 @@ class ContentOutput(FolderOutput):
     @classmethod
     def init(cls, content: Content):
         return ContentOutput(id=content.id,
+                             title=content.title,
                              url=content.url,
                              parent_id=content.parent_id,
                              created_time=content.created_time,
