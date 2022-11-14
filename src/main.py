@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from service import DatabaseService
@@ -17,3 +17,12 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*'],
 )
+
+
+@app.router.get("/test")
+def test():
+    try:
+        print('here')
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=404, detail=e.__str__())
