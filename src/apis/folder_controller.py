@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
+from starlette.status import HTTP_200_OK
 
 from models import Folder
 from schemas import FolderInput, FolderOutput
@@ -33,3 +34,4 @@ async def modify_folder(folder: FolderInput):
 @folder_router.delete("/{folder_id}", response_model=None)
 async def delete_folder(folder_id: int):
     ResourceService.remove_resource(Folder(id=folder_id))
+    return Response(status_code=200)
