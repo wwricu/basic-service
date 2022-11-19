@@ -5,6 +5,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 from schemas import UserOutput
 from core.config import Config
+from service import DatabaseService
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth")
@@ -33,3 +34,11 @@ class RequiresRoles:
                 return user
 
         raise HTTPException(status_code=403, detail="no permission")
+
+
+def get_db():
+    db = DatabaseService.get_session()
+    try:
+        yield db
+    finally:
+        db.close()
