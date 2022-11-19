@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Response
-from starlette.status import HTTP_200_OK
 
 from models import Folder
 from schemas import FolderInput, FolderOutput
