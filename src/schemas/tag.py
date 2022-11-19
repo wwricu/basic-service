@@ -11,11 +11,11 @@ class ContentTags(BaseModel):
     content_id: int = None
     remove_tag_ids: list[int] = None
     add_tag_ids: list[int] = None
-    current_tags: list[Tag] = None
+    current_tags: list[TagSchema] = None
 
 
 class TagContents(BaseModel):
     tag_id: int = None
     remove_content_ids: list[int] = None
     add_content_ids: list[int] = None
-    current_contents: list[Tag] = None
+    current_contents: list[TagSchema] = None

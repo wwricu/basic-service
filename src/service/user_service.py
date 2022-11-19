@@ -18,7 +18,7 @@ class UserService:
         return UserOutput.init(sys_user)
 
     @staticmethod
-    def add_user(user_input: UserInput):
+    def add_user(user_input: UserInput, db):
         sys_user = SysUser(id=user_input.id,
                            username=user_input.username,
                            email=user_input.email)
@@ -31,7 +31,7 @@ class UserService:
         return UserOutput.init(BaseDao.insert(sys_user, db))
 
     @staticmethod
-    def find_user(user_input: UserInput):
+    def find_user(user_input: UserInput, db):
         return list(map(lambda it: UserOutput.init(it),
                         BaseDao.select(user_input, SysUser, db)))
 
