@@ -17,14 +17,21 @@ class BaseDao:
 
     @staticmethod
     @alchemy_session
+    def insert_all(obj, db):
+        try:
+            db.add_all(obj)
+            db.commit()
+        finally:
+            db.close()
+
+    @staticmethod
+    @alchemy_session
     def select(obj, class_name, db):
         try:
             res = db.query(class_name)
 
             for key in class_name.__dict__:
-                if key[0] == '_':
-                    continue
-                if not hasattr(obj, key):
+                if key[0] == '_' or not hasattr(obj, key):
                     continue
                 attr = getattr(obj, key)
                 if attr is None:
