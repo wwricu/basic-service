@@ -72,10 +72,22 @@ class Content(Resource):
 
     author_id = Column(Integer, ForeignKey('sys_user.id'))
     author = relationship("SysUser", back_populates="contents")
-    # parent_id = Column(Integer, ForeignKey('resource.id'))
-    # sub_resource = relationship("Resource", foreign_keys=parent_id)
+
+    tags = relationship('Tag',
+                        secondary='content_tag',
+                        back_populates='contents',
+                        lazy="joined")
 
     __mapper_args__ = {
         'polymorphic_identity': 'content',
         'inherit_condition': id == Resource.id,
     }
+
+
+class Tag(Base):
+    __tablename__ = 'tag'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(128), unique=True)
+    contents = relationship('Content',
+                            secondary='content_tag',
+                            back_populates='tags')

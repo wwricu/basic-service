@@ -27,3 +27,17 @@ class RolePermission(Base):
         ForeignKey('sys_permission.id'),
         nullable=False,
         primary_key=True)
+
+
+class ContentTag(Base):
+    __tablename__ = 'content_tag'
+    content_id = Column(
+        Integer,
+        ForeignKey('content.id'),
+        nullable=False,
+        primary_key=True)
+    tag_id = Column(
+        Integer,
+        ForeignKey('tag.id'),
+        nullable=False,
+        primary_key=True)
