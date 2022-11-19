@@ -4,7 +4,6 @@ from copy import copy
 
 class BaseDao:
     @staticmethod
-    @alchemy_session
     def insert(obj, db):
         try:
             db.add(obj)
@@ -16,7 +15,6 @@ class BaseDao:
             db.close()
 
     @staticmethod
-    @alchemy_session
     def insert_all(obj, db):
         try:
             db.add_all(obj)
@@ -25,7 +23,6 @@ class BaseDao:
             db.close()
 
     @staticmethod
-    @alchemy_session
     def select(obj, class_name, db):
         try:
             res = db.query(class_name)
@@ -44,7 +41,6 @@ class BaseDao:
             db.close()
 
     @staticmethod
-    @alchemy_session
     def update(obj, class_name, db):
         if obj.id is None or obj.id == 0:
             return
@@ -63,7 +59,6 @@ class BaseDao:
             db.close()
 
     @staticmethod
-    @alchemy_session
     def delete(obj, class_name, db):
         if obj.id is None or obj.id == 0:
             return

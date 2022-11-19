@@ -6,11 +6,11 @@ from dao import BaseDao
 
 class ResourceService:
     @staticmethod
-    def add_resource(resource: Resource):
+    def add_resource(resource: Resource, db):
         resource.url = ''
         if resource.parent_id is not None and resource.parent_id != 0:
             parent = BaseDao.select(Resource(id=resource.parent_id),
-                                    Resource)[0]
+                                    Resource, db)[0]
             resource.url = parent.url
 
         if isinstance(resource, Folder):
@@ -18,16 +18,16 @@ class ResourceService:
         else:
             resource.url += '/' + str(uuid.uuid4())
 
-        return BaseDao.insert(resource)
+        return BaseDao.insert(resource, db)
 
     @staticmethod
-    def find_resources(resource: Resource):
-        return BaseDao.select(resource, resource.__class__)
+    def find_resources(resource: Resource, db):
+        return BaseDao.select(resource, resource.__class__, db)
 
     @staticmethod
-    def modify_resource(resource: Resource):
-        return BaseDao.update(resource, resource.__class__)
+    def modify_resource(resource: Resource, db):
+        return BaseDao.update(resource, resource.__class__, db)
 
     @staticmethod
-    def remove_resource(resource: Resource):
-        BaseDao.delete(resource, Resource)
+    def remove_resource(resource: Resource, db):
+        BaseDao.delete(resource, Resource, db)

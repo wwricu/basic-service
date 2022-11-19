@@ -6,8 +6,8 @@ from .security_service import SecurityService
 
 class UserService:
     @staticmethod
-    def user_login(user_input: UserInput):
-        sys_user = BaseDao.select(user_input, SysUser)[0]
+    def user_login(user_input: UserInput, db):
+        sys_user = BaseDao.select(user_input, SysUser, db)[0]
 
         if not SecurityService\
                 .verify_password(user_input.password,
@@ -28,16 +28,16 @@ class UserService:
             get_password_hash(user_input.password,
                               sys_user.salt)
 
-        return UserOutput.init(BaseDao.insert(sys_user))
+        return UserOutput.init(BaseDao.insert(sys_user, db))
 
     @staticmethod
     def find_user(user_input: UserInput):
         return list(map(lambda it: UserOutput.init(it),
-                        BaseDao.select(user_input, SysUser)))
+                        BaseDao.select(user_input, SysUser, db)))
 
     @staticmethod
-    def modify_user(user_input: UserInput):
-        sys_user = BaseDao.select(SysUser(id=user_input.id), SysUser)[0]
+    def modify_user(user_input: UserInput, db):
+        sys_user = BaseDao.select(SysUser(id=user_input.id), SysUser, db)[0]
 
         if user_input.username is not None:
             sys_user.username = user_input.username
@@ -48,9 +48,9 @@ class UserService:
                 .get_password_hash(user_input.password,
                                    sys_user.salt)
 
-        BaseDao.update(sys_user, SysUser)
+        BaseDao.update(sys_user, SysUser, db)
         return UserOutput.init(sys_user)
 
     @staticmethod
-    def remove_user(user_input: UserInput):
-        return BaseDao.delete(SysUser(id=user_input.id), SysUser)
+    def remove_user(user_input: UserInput, db):
+        return BaseDao.delete(SysUser(id=user_input.id), SysUser, db)
