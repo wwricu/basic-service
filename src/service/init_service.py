@@ -21,6 +21,7 @@ class DatabaseService:
         engine = cls.get_engine()
         return sessionmaker(autocommit=False,
                             autoflush=False,
+                            expire_on_commit=False,
                             bind=engine)()
 
     @classmethod

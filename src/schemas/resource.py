@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from models import Folder, Content
+from models import Folder, Content, Tag
 
 
 class ResourceBase(BaseModel):
@@ -46,9 +46,11 @@ class ContentOutput(FolderOutput):
                              author_id=content.author_id,
                              sub_title=content.sub_title,
                              status=content.status,
+                             tags=content.tags,
                              content=content.content)
 
     author_id: int = None
     sub_title: str = None
     status: str = None
+    tags: list[Tag] = None
     content: bytes = None
