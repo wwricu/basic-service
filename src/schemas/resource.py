@@ -27,7 +27,7 @@ class FolderOutput(ResourceBase):
                             title=folder.title,
                             parent_id=folder.parent_id,
                             created_time=folder.created_time,
-                            modified_time=folder.modified_time)
+                            modified_time=folder.updated_time)
 
     url: str = None
     created_time: datetime = None
@@ -42,7 +42,7 @@ class ContentOutput(FolderOutput):
                              url=content.url,
                              parent_id=content.parent_id,
                              created_time=content.created_time,
-                             modified_time=content.modified_time,
+                             modified_time=content.updated_time,
                              author_id=content.author_id,
                              sub_title=content.sub_title,
                              status=content.status,

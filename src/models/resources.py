@@ -15,10 +15,10 @@ class Resource(Base):
                           default=datetime.now,
                           comment="create time")
 
-    modified_time = Column(DateTime,
-                           default=datetime.now,
-                           onupdate=datetime.now,
-                           comment="update time")
+    updated_time = Column(DateTime,
+                          default=datetime.now,
+                          onupdate=datetime.now,
+                          comment="update time")
 
     parent_id = Column(Integer, ForeignKey('resource.id'), nullable=True)
     sub_resource = relationship("Resource", foreign_keys=parent_id)
