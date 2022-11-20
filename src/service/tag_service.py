@@ -7,31 +7,30 @@ from dao import BaseDao
 class TagService:
     @staticmethod
     def add_tag(tag: Tag, db: Session) -> Tag:
-        db.add(tag)
-        db.commit()
-        return tag
+        return BaseDao.insert(tag, db)
 
     @staticmethod
     def find_tag(tag: Tag, db: Session) -> list[Tag]:
-        res = db.query(Tag)
-        if tag.id != 0:
-            res = res.filter(Tag.id == tag.id)
-        if tag.name is not None:
-            res = res.filter(Tag.name == tag.name)
-
-        return res.all()
-
-    @staticmethod
-    def modify_tag(tag: Tag, db: Session):
-        return BaseDao.update(tag, Tag)
+        return BaseDao.select(tag, Tag, db)
 
     @staticmethod
     def remove_tag(tag: Tag, db: Session):
-        return BaseDao.delete(tag, Tag)
+        return BaseDao.delete(tag, Tag, db)
 
     @staticmethod
-    def modify_tag_content(tag: Tag,
-                           add_contents: list[Content],
-                           remove_contents: list[Content]):
-        BaseDao.insert()
-        return BaseDao.delete(tag, Tag)
+    def modify_tag_content(tag_id: int,
+                           add_content_ids: list[int],
+                           remove_content_ids: list[int],
+                           db: Session):
+        if add_content_ids is not None and len(add_content_ids) != 0:
+            add_content_tags = [ContentTag(tag_id=tag_id,
+                                           content_id=x)
+                                for x in add_content_ids]
+            BaseDao.insert_all(add_content_tags, db)
+
+        if remove_content_ids is not None and len(remove_content_ids) != 0:
+            remove_content_tags = [ContentTag(tag_id=tag_id,
+                                              content_id=x)
+                                   for x in remove_content_ids]
+
+            BaseDao.delete_all(remove_content_tags, ContentTag, db)
