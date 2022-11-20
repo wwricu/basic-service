@@ -22,12 +22,12 @@ PUT http://127.0.0.1:8000/content
 Content-Type: application/json
 
 {
-  "id": 2,
+  "id": 4,
   "title": "test_title",
   "sub_title": "after update"
 }
 
 ### delete folder
 
-DELETE http://127.0.0.1:8000/folder/2
+DELETE http://127.0.0.1:8000/folder/4
 Content-Type: application/json
