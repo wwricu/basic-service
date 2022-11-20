@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Response, Depends
 from sqlalchemy.orm import Session
 
+import dao
 from models import Content
-from schemas import ContentInput, ContentOutput, ContentTags
+from schemas import ContentInput, ContentOutput, ContentPreview, ContentTags
 from service import ResourceService
 from core.dependency import get_db
 
@@ -31,6 +32,15 @@ async def get_content(content_id: int = None,
                                                       author_id=author_id),
                                               db)
     return [ContentOutput.init(x) for x in contents]
+
+
+@content_router.get("/preview",  response_model=list[ContentPreview])
+async def get_preview(parent_id: int = None,
+                      tag_id: int = None,
+                      db: Session = Depends(get_db)):
+
+    contents = dao.RelationDao.get_contents_by_parent_tag(parent_id, tag_id, db)
+    return [ContentPreview.init(x) for x in contents]
 
 
 @content_router.put("", response_model=ContentOutput)
