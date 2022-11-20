@@ -40,7 +40,10 @@ async def get_preview(parent_id: int = None,
                       tag_id: int = None,
                       db: Session = Depends(get_db)):
 
-    contents = dao.RelationDao.get_contents_by_parent_tag(parent_id, tag_id, db)
+    contents = dao.RelationDao.get_contents_by_parent_tag(parent_id,
+                                                          status,
+                                                          tag_id,
+                                                          db)
     return [ContentPreview.init(x) for x in contents]
 
 

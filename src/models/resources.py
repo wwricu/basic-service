@@ -68,7 +68,7 @@ class Content(Resource):
 
     sub_title = Column(String(255), nullable=True, comment="content summary")
     status = Column(String(255), nullable=True, comment="content status")
-    content = Column(LargeBinary, nullable=True, comment="content html")
+    content = Column(LargeBinary(length=65536), nullable=True, comment="content html")
 
     author_id = Column(Integer, ForeignKey('sys_user.id'))
     author = relationship("SysUser", back_populates="contents")
