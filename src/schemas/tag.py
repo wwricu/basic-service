@@ -1,9 +1,14 @@
 from pydantic import BaseModel
-from models import Folder, Content, Tag
+from models import Tag
 
 
 class TagSchema(BaseModel):
-    id: int = None,
+    @classmethod
+    def init(cls, tag: Tag):
+        return TagSchema(id=tag.id,
+                         name=tag.name)
+
+    id: int = None
     name: str = None
 
 
