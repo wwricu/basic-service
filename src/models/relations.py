@@ -7,11 +7,11 @@ class UserRole(Base):
     __tablename__ = 'user_role'
     user_id = Column(
         Integer,
-        ForeignKey('sys_user.id'),
+        ForeignKey('sys_user.id', ondelete='CASCADE'),
         primary_key=True)
     role_id = Column(
         Integer,
-        ForeignKey('sys_role.id'),
+        ForeignKey('sys_role.id', ondelete='CASCADE'),
         primary_key=True)
 
 
@@ -19,12 +19,12 @@ class RolePermission(Base):
     __tablename__ = 'role_permission'
     role_id = Column(
         Integer,
-        ForeignKey('sys_role.id'),
+        ForeignKey('sys_role.id', ondelete='CASCADE'),
         nullable=False,
         primary_key=True)
     permission_id = Column(
         Integer,
-        ForeignKey('sys_permission.id'),
+        ForeignKey('sys_permission.id', ondelete='CASCADE'),
         nullable=False,
         primary_key=True)
 
@@ -33,11 +33,11 @@ class ContentTag(Base):
     __tablename__ = 'content_tag'
     content_id = Column(
         Integer,
-        ForeignKey('content.id'),
+        ForeignKey('content.id', ondelete='CASCADE'),
         nullable=False,
         primary_key=True)
     tag_id = Column(
         Integer,
-        ForeignKey('tag.id'),
+        ForeignKey('tag.id', ondelete='CASCADE'),
         nullable=False,
         primary_key=True)

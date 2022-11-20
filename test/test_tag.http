@@ -1,0 +1,8 @@
+### add tag
+
+POST http://127.0.0.1:8000/tag
+Content-Type: application/json
+
+{
+  "name": "test tag name"
+}

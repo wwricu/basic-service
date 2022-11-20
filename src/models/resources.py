@@ -85,8 +85,13 @@ class Content(Resource):
 
 
 class Tag(Base):
+    @classmethod
+    def init(cls, tag_schema):
+        return Tag(id=tag_schema.id,
+                   name=tag_schema.name)
+
     __tablename__ = 'tag'
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(128), unique=True)
     contents = relationship('Content',
                             secondary='content_tag',
