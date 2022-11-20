@@ -35,7 +35,29 @@ class FolderOutput(ResourceBase):
     modified_time: datetime = None
 
 
-class ContentOutput(FolderOutput):
+class ContentPreview(FolderOutput):
+    @classmethod
+    def init(cls, content: Content):
+        return ContentOutput(id=content.id,
+                             title=content.title,
+                             url=content.url,
+                             parent_id=content.parent_id,
+                             created_time=content.created_time,
+                             modified_time=content.updated_time,
+                             author_id=content.author_id,
+                             sub_title=content.sub_title,
+                             status=content.status,
+                             tags=[TagSchema(id=x.id,
+                                             name=x.name)
+                                   for x in content.tags])
+
+    author_id: int = None
+    sub_title: str = None
+    status: str = None
+    tags: list[TagSchema] = None
+
+
+class ContentOutput(ContentPreview):
     @classmethod
     def init(cls, content: Content):
         return ContentOutput(id=content.id,
@@ -52,8 +74,4 @@ class ContentOutput(FolderOutput):
                                    for x in content.tags],
                              content=content.content)
 
-    author_id: int = None
-    sub_title: str = None
-    status: str = None
-    tags: list[TagSchema] = None
     content: bytes = None
