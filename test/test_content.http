@@ -31,3 +31,8 @@ Content-Type: application/json
 
 DELETE http://127.0.0.1:8000/folder/4
 Content-Type: application/json
+
+### get preview by parent_id and tag_id
+
+GET http://127.0.0.1:8000/content/preview?tag_id=1
+Content-Type: application/json
