@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
-from models import Folder, Content, Tag
+from models import Folder, Content
+from .tag import TagSchema
 
 
 class ResourceBase(BaseModel):
@@ -46,9 +47,13 @@ class ContentOutput(FolderOutput):
                              author_id=content.author_id,
                              sub_title=content.sub_title,
                              status=content.status,
+                             tags=[TagSchema(id=x.id,
+                                             name=x.name)
+                                   for x in content.tags],
                              content=content.content)
 
     author_id: int = None
     sub_title: str = None
     status: str = None
+    tags: list[TagSchema] = None
     content: bytes = None
