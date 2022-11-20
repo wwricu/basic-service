@@ -36,6 +36,7 @@ async def get_content(content_id: int = None,
 
 @content_router.get("/preview",  response_model=list[ContentPreview])
 async def get_preview(parent_id: int = None,
+                      status: str = None,
                       tag_id: int = None,
                       db: Session = Depends(get_db)):
 
