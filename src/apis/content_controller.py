@@ -2,7 +2,7 @@ from fastapi import APIRouter, Response, Depends
 from sqlalchemy.orm import Session
 
 from models import Content
-from schemas import ContentInput, ContentOutput
+from schemas import ContentInput, ContentOutput, ContentTags
 from service import ResourceService
 from core.dependency import get_db
 
@@ -45,3 +45,13 @@ async def delete_content(content_id: int,
                          db: Session = Depends(get_db)):
     ResourceService.remove_resource(Content(id=content_id), db)
     return Response(status_code=200)
+
+
+@content_router.put("/tag", response_model=ContentOutput)
+async def modify_content_tag(content_tags: ContentTags,
+                             db: Session = Depends(get_db)):
+    ResourceService.modify_content_tags(content_tags.content_id,
+                                        content_tags.add_tag_ids,
+                                        content_tags.remove_tag_ids,
+                                        db)
+    return "success"

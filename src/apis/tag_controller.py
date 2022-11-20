@@ -17,14 +17,14 @@ async def add_tag(tag: TagSchema,
 
 
 @tag_router.delete("/{tag_id}", response_model=int)
-async def delete_tag(tag_id: int,
+async def remove_tag(tag_id: int,
                      db: Session = Depends(get_db)):
     return TagService.remove_tag(Tag(id=tag_id), db)
 
 
 @tag_router.put("")
-async def add_tag(tag_content: TagContents,
-                  db: Session = Depends(get_db)):
+async def modify_tag(tag_content: TagContents,
+                     db: Session = Depends(get_db)):
     TagService.modify_tag_content(tag_content.tag_id,
                                   tag_content.add_content_ids,
                                   tag_content.remove_content_ids,

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from models import Tag, Content, ContentTag
+from models import Tag, ContentTag
 from dao import BaseDao
 
 
