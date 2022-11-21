@@ -10,7 +10,8 @@ class RelationDao:
                                    tag_id: Optional[int] = 0,
                                    page_idx:  Optional[int] = 0,
                                    page_size:  Optional[int] = 0):
-        res = db.query(Content)
+        res = db.query(Content).order_by(Content.created_time.desc())
+
         if parent_id != 0:
             res = res.filter(Content.parent_id == parent_id)
         if status is not None:
@@ -21,7 +22,6 @@ class RelationDao:
             # res = res.offset(page_idx * page_size).limit(page_size)
             res = res.slice(page_idx * page_size, (page_idx + 1) * page_size)
 
-        res.order_by(Content.created_time.desc())
         db.commit()
         return res.all()
 

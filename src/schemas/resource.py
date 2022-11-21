@@ -32,7 +32,7 @@ class FolderOutput(ResourceBase):
 
     url: str = None
     created_time: datetime = None
-    modified_time: datetime = None
+    updated_time: datetime = None
 
 
 class ContentPreview(FolderOutput):
@@ -43,7 +43,7 @@ class ContentPreview(FolderOutput):
                              url=content.url,
                              parent_id=content.parent_id,
                              created_time=content.created_time,
-                             modified_time=content.updated_time,
+                             updated_time=content.updated_time,
                              author_id=content.author_id,
                              sub_title=content.sub_title,
                              status=content.status,
@@ -65,7 +65,7 @@ class ContentOutput(ContentPreview):
                              url=content.url,
                              parent_id=content.parent_id,
                              created_time=content.created_time,
-                             modified_time=content.updated_time,
+                             updated_time=content.updated_time,
                              author_id=content.author_id,
                              sub_title=content.sub_title,
                              status=content.status,
