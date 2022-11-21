@@ -40,6 +40,16 @@ class ResourceService:
                                                       page_size)
 
     @staticmethod
+    def find_count(db,
+                   parent_id: Optional[int] = 0,
+                   status: Optional[str] = None,
+                   tag_id: Optional[int] = 0) -> int:
+        return RelationDao.get_content_count(db,
+                                             parent_id,
+                                             status,
+                                             tag_id)
+
+    @staticmethod
     def modify_resource(resource: Resource, db):
         return BaseDao.update(resource, resource.__class__, db)
 

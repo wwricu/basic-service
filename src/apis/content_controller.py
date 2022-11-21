@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Response, Depends
 from sqlalchemy.orm import Session
 
-import dao
 from models import Content
 from schemas import ContentInput, ContentOutput, ContentPreview, ContentTags
 from service import ResourceService
@@ -49,6 +48,18 @@ async def get_preview(parent_id: int = 0,
                                             page_idx,
                                             page_size)
     return [ContentPreview.init(x) for x in contents]
+
+
+@content_router.get("/count",  response_model=int)
+async def get_preview(parent_id: int = 0,
+                      status: str = None,
+                      tag_id: int = 0,
+                      db: Session = Depends(get_db)):
+
+    return ResourceService.find_count(db,
+                                      parent_id,
+                                      status,
+                                      tag_id)
 
 
 @content_router.put("", response_model=ContentOutput)

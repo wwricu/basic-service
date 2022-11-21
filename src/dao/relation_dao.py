@@ -24,3 +24,18 @@ class RelationDao:
         res.order_by(Content.created_time.desc())
         db.commit()
         return res.all()
+
+    @staticmethod
+    def get_content_count(db,
+                          parent_id: Optional[int] = 0,
+                          status: Optional[str] = None,
+                          tag_id: Optional[int] = 0):
+        res = db.query(Content)
+        if parent_id != 0:
+            res = res.filter(Content.parent_id == parent_id)
+        if status is not None:
+            res = res.filter(Content.status == status)
+        if tag_id != 0:
+            res = res.filter(Content.tags.any(Tag.id == tag_id))
+        db.commit()
+        return res.count()
