@@ -14,6 +14,10 @@ class TagService:
         return BaseDao.select(tag, Tag, db)
 
     @staticmethod
+    def rename_tag(tag: Tag, db: Session):
+        return BaseDao.update(tag, Tag, db)
+
+    @staticmethod
     def remove_tag(tag: Tag, db: Session):
         return BaseDao.delete(tag, Tag, db)
 

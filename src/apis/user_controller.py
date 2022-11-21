@@ -17,7 +17,7 @@ async def add_user(user_input: UserInput,
 
 
 @user_router.get("/{user_id}", response_model=list[UserOutput])
-async def get_users(user_id: int,
+async def get_users(user_id: int = None,
                     username: str = None,
                     email: str = None,
                     db: Session = Depends(get_db),
