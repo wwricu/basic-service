@@ -38,12 +38,15 @@ class FolderOutput(ResourceBase):
 class ContentPreview(FolderOutput):
     @classmethod
     def init(cls, content: Content):
+        for key in content.parent.__dict__:
+            print(key)
         return ContentOutput(id=content.id,
                              title=content.title,
                              url=content.url,
                              parent_id=content.parent_id,
                              created_time=content.created_time,
                              updated_time=content.updated_time,
+                             parent=FolderOutput.init(content.parent),
                              author_id=content.author_id,
                              sub_title=content.sub_title,
                              status=content.status,
@@ -51,6 +54,7 @@ class ContentPreview(FolderOutput):
                                              name=x.name)
                                    for x in content.tags])
 
+    parent: FolderOutput = None
     author_id: int = None
     sub_title: str = None
     status: str = None

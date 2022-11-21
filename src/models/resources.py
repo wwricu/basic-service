@@ -21,7 +21,13 @@ class Resource(Base):
                           comment="update time")
 
     parent_id = Column(Integer, ForeignKey('resource.id'), nullable=True)
-    sub_resource = relationship("Resource", foreign_keys=parent_id)
+    parent = relationship('Resource',
+                          remote_side=[id],
+                          back_populates='sub_resource',
+                          uselist=False)
+    sub_resource = relationship("Resource",
+                                foreign_keys=parent_id,
+                                back_populates='parent')
 
     type = Column(String(50))
     __mapper_args__ = {
