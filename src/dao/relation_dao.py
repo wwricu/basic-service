@@ -1,17 +1,26 @@
+from typing import Optional
 from models import Content, Tag
 
 
 class RelationDao:
     @staticmethod
-    def get_contents_by_parent_tag(parent_id: int,
-                                   status: str,
-                                   tag_id: int, db):
+    def get_contents_by_parent_tag(db,
+                                   parent_id: Optional[int] = 0,
+                                   status: Optional[str] = None,
+                                   tag_id: Optional[int] = 0,
+                                   page_idx:  Optional[int] = 0,
+                                   page_size:  Optional[int] = 0):
         res = db.query(Content)
-        if parent_id is not None and parent_id != 0:
+        if parent_id != 0:
             res = res.filter(Content.parent_id == parent_id)
         if status is not None:
             res = res.filter(Content.status == status)
-        if tag_id is not None and tag_id != 0:
+        if tag_id != 0:
             res = res.filter(Content.tags.any(Tag.id == tag_id))
+        if page_size != 0:
+            # res = res.offset(page_idx * page_size).limit(page_size)
+            res = res.slice(page_idx * page_size, (page_idx + 1) * page_size)
+
+        res.order_by(Content.created_time.desc())
         db.commit()
         return res.all()

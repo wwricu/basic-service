@@ -35,15 +35,19 @@ async def get_content(content_id: int = None,
 
 
 @content_router.get("/preview",  response_model=list[ContentPreview])
-async def get_preview(parent_id: int = None,
+async def get_preview(parent_id: int = 0,
                       status: str = None,
-                      tag_id: int = None,
+                      tag_id: int = 0,
+                      page_idx: int = 0,
+                      page_size: int = 0,
                       db: Session = Depends(get_db)):
 
-    contents = dao.RelationDao.get_contents_by_parent_tag(parent_id,
-                                                          status,
-                                                          tag_id,
-                                                          db)
+    contents = ResourceService.find_preview(db,
+                                            parent_id,
+                                            status,
+                                            tag_id,
+                                            page_idx,
+                                            page_size)
     return [ContentPreview.init(x) for x in contents]
 
 

@@ -1,7 +1,8 @@
 import uuid
+from typing import Optional
 
 from models import Resource, Folder, ContentTag
-from dao import BaseDao
+from dao import BaseDao, RelationDao
 
 
 class ResourceService:
@@ -23,6 +24,20 @@ class ResourceService:
     @staticmethod
     def find_resources(resource: Resource, db):
         return BaseDao.select(resource, resource.__class__, db)
+
+    @staticmethod
+    def find_preview(db,
+                     parent_id:  Optional[int] = 0,
+                     status: Optional[str] = None,
+                     tag_id:  Optional[int] = 0,
+                     page_idx:  Optional[int] = 0,
+                     page_size:  Optional[int] = 0):
+        return RelationDao.get_contents_by_parent_tag(db,
+                                                      parent_id,
+                                                      status,
+                                                      tag_id,
+                                                      page_idx,
+                                                      page_size)
 
     @staticmethod
     def modify_resource(resource: Resource, db):
