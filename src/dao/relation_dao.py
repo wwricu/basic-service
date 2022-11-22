@@ -9,7 +9,7 @@ class RelationDao:
                                    status: Optional[str] = None,
                                    tag_id: Optional[int] = 0,
                                    page_idx:  Optional[int] = 0,
-                                   page_size:  Optional[int] = 0):
+                                   page_size:  Optional[int] = 0) -> list[Content]:
         res = db.query(Content).order_by(Content.created_time.desc())
 
         if parent_id != 0:

@@ -23,6 +23,8 @@ class ContentInput(FolderInput):
 class FolderOutput(ResourceBase):
     @classmethod
     def init(cls, folder: Folder):
+        if not isinstance(folder, Folder):
+            return None
         return FolderOutput(id=folder.id,
                             url=folder.url,
                             title=folder.title,
@@ -38,8 +40,8 @@ class FolderOutput(ResourceBase):
 class ContentPreview(FolderOutput):
     @classmethod
     def init(cls, content: Content):
-        for key in content.parent.__dict__:
-            print(key)
+        if not isinstance(content, Content):
+            return None
         return ContentOutput(id=content.id,
                              title=content.title,
                              url=content.url,
@@ -64,6 +66,8 @@ class ContentPreview(FolderOutput):
 class ContentOutput(ContentPreview):
     @classmethod
     def init(cls, content: Content):
+        if not isinstance(content, Content):
+            return None
         return ContentOutput(id=content.id,
                              title=content.title,
                              url=content.url,

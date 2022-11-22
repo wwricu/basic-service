@@ -42,10 +42,10 @@ async def get_preview(parent_id: int = 0,
 
 
 @content_router.get("/count",  response_model=int)
-async def get_preview(parent_id: int = 0,
-                      status: str = 'publish',
-                      tag_id: int = 0,
-                      db: Session = Depends(get_db)):
+async def get_preview_count(parent_id: int = 0,
+                            status: str = 'publish',
+                            tag_id: int = 0,
+                            db: Session = Depends(get_db)):
 
     return ResourceService.find_count(db,
                                       parent_id,
