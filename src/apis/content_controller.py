@@ -19,23 +19,14 @@ async def add_content(content: ContentInput,
 
 
 @content_router.get("",  response_model=list[ContentOutput])
-async def get_content(content_id: int = None,
-                      url: str = None,
-                      parent_id: int = None,
-                      author_id: int = None,
-                      db: Session = Depends(get_db)):
-
-    contents = ResourceService.find_resources(Content(id=content_id,
-                                                      url=url,
-                                                      parent_id=parent_id,
-                                                      author_id=author_id),
-                                              db)
+async def get_content(content_id: int, db: Session = Depends(get_db)):
+    contents = ResourceService.find_resources(Content(id=content_id), db)
     return [ContentOutput.init(x) for x in contents]
 
 
 @content_router.get("/preview",  response_model=list[ContentPreview])
 async def get_preview(parent_id: int = 0,
-                      status: str = None,
+                      status: str = 'publish',
                       tag_id: int = 0,
                       page_idx: int = 0,
                       page_size: int = 0,
@@ -52,7 +43,7 @@ async def get_preview(parent_id: int = 0,
 
 @content_router.get("/count",  response_model=int)
 async def get_preview(parent_id: int = 0,
-                      status: str = None,
+                      status: str = 'publish',
                       tag_id: int = 0,
                       db: Session = Depends(get_db)):
 
