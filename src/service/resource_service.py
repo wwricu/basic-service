@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
 
-from models import Resource, Folder, ContentTag
+from models import Resource, Folder, ContentTag, Content
 from dao import BaseDao, RelationDao
 
 
@@ -74,3 +74,12 @@ class ResourceService:
                                    for x in remove_tag_ids]
 
             BaseDao.delete_all(remove_content_tags, ContentTag, db)
+
+    @staticmethod
+    def reset_content_tags(content: Content, db):
+        BaseDao.delete_all([ContentTag(content_id=content.id)], ContentTag, db)
+        add_content_tags = [ContentTag(content_id=content.id,
+                                       tag_id=x.id)
+                            for x in content.tags]
+        if len(add_content_tags) > 0:
+            BaseDao.insert_all(add_content_tags, db)

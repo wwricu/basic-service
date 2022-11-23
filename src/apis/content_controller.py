@@ -56,6 +56,7 @@ async def get_preview_count(parent_id: int = 0,
 @content_router.put("", response_model=ContentOutput)
 async def modify_content(content: ContentInput,
                          db: Session = Depends(get_db)):
+    ResourceService.reset_content_tags(Content.init(content), db)
     return ContentOutput.init(ResourceService
                               .modify_resource(Content.init(content), db))
 
