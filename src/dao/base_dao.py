@@ -43,7 +43,9 @@ class BaseDao:
             if key[0] == '_' or getattr(obj, key) is None:
                 continue
             # if key != '_sa_instance_state':
-            setattr(origin_obj, key, getattr(obj, key))
+            attr = getattr(obj, key)
+            if not isinstance(attr, list):
+                setattr(origin_obj, key, attr)
         db.commit()
         return origin_obj
 

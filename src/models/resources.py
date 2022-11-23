@@ -65,6 +65,7 @@ class Content(Resource):
                        parent_id=content.parent_id,
                        sub_title=content.sub_title,
                        status=content.status,
+                       tags=[Tag.init(tag) for tag in content.tags],
                        content=content.content)
 
     __tablename__ = 'content'
@@ -82,6 +83,7 @@ class Content(Resource):
     tags = relationship('Tag',
                         secondary='content_tag',
                         back_populates='contents',
+                        cascade="save-update",
                         lazy="joined")
 
     __mapper_args__ = {
@@ -93,6 +95,8 @@ class Content(Resource):
 class Tag(Base):
     @classmethod
     def init(cls, tag_schema):
+        if tag_schema is None:
+            return None
         return Tag(id=tag_schema.id,
                    name=tag_schema.name)
 

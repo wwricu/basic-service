@@ -15,6 +15,7 @@ class FolderInput(ResourceBase):
 
 
 class ContentInput(FolderInput):
+    tags: list[TagSchema] = []
     sub_title: str = None
     status: str = None
     content: bytes = None
