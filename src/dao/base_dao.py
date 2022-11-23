@@ -42,7 +42,7 @@ class BaseDao:
         for key in obj.__dict__:
             if key[0] == '_' or getattr(obj, key) is None:
                 continue
-            # if key != '_sa_instance_state':
+            # TODO: change relations on update
             attr = getattr(obj, key)
             if not isinstance(attr, list):
                 setattr(origin_obj, key, attr)
