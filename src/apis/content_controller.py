@@ -18,10 +18,10 @@ async def add_content(content: ContentInput,
                                             db))
 
 
-@content_router.get("",  response_model=list[ContentOutput])
+@content_router.get("",  response_model=ContentOutput)
 async def get_content(content_id: int, db: Session = Depends(get_db)):
     contents = ResourceService.find_resources(Content(id=content_id), db)
-    return [ContentOutput.init(x) for x in contents]
+    return ContentOutput.init(contents[0]) if len(contents) == 1 else {}
 
 
 @content_router.get("/preview",  response_model=list[ContentPreview])

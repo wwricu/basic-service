@@ -73,6 +73,7 @@ class ContentOutput(ContentPreview):
                              title=content.title,
                              url=content.url,
                              parent_id=content.parent_id,
+                             parent=FolderOutput.init(content.parent),
                              created_time=content.created_time,
                              updated_time=content.updated_time,
                              author_id=content.author_id,
