@@ -30,7 +30,7 @@ class RequiresRoles:
                  user: UserOutput = Depends(requires_login)) -> UserOutput:
 
         for role in user.roles:
-            if role == 'admin' or self.required_role == role:
+            if role.name == 'admin' or self.required_role == role:
                 return user
 
         raise HTTPException(status_code=403, detail="no permission")
