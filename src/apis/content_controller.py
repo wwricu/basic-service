@@ -2,7 +2,7 @@ from fastapi import APIRouter, Response, Depends
 from sqlalchemy.orm import Session
 
 from models import Content
-from schemas import ContentInput, ContentOutput, ContentPreview, ContentTags, UserOutput
+from schemas import ContentInput, ContentOutput, ContentPreview, ContentTags
 from service import ResourceService
 from core.dependency import get_db, RequiresRoles
 
