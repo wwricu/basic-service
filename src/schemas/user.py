@@ -31,3 +31,9 @@ class UserOutput(BaseModel):
     username: str = None
     email: str = None
     roles: list[RoleSchema] = None
+
+
+class TokenResponse(BaseModel):
+    access_token: str = None
+    refresh_token: str = None
+    token_type: str = 'bearer'

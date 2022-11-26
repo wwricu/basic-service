@@ -21,10 +21,14 @@ async def requires_login(response: Response,
                           key=Config.jwt_secret,
                           algorithms=['HS256'])
     except jwt.ExpiredSignatureError:
-        data = jwt.decode(refresh_token,
-                          key=Config.jwt_secret,
-                          algorithms=['HS256'])
-        response.headers['X-token-need-refresh'] = 'true'
+        try:
+            data = jwt.decode(refresh_token,
+                              key=Config.jwt_secret,
+                              algorithms=['HS256'])
+            response.headers['X-token-need-refresh'] = 'true'
+        except Exception as e:
+            print(e)
+            raise HTTPException(status_code=403, detail="token expired")
 
     return UserOutput(id=data['id'],
                       username=data['username'],

@@ -29,9 +29,9 @@ class SecurityService:
     @staticmethod
     def create_jwt_token(user_info: UserOutput, refresh: Optional[bool] = False):
         data = user_info.dict()
-        delta = timedelta(minutes=2)
+        delta = timedelta(minutes=60)
         if refresh:
-            delta = timedelta(minutes=10)
+            delta = timedelta(days=7)
 
         data.update({"exp": datetime.utcnow() + delta})
         return jwt.encode(payload=data,

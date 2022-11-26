@@ -1,9 +1,9 @@
-from fastapi import Depends, APIRouter
+from fastapi import Depends, APIRouter, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from service import SecurityService, UserService
-from schemas import UserInput, UserOutput
+from schemas import UserInput, UserOutput, TokenResponse
 from core.dependency import requires_login, get_db
 
 
@@ -15,7 +15,7 @@ async def get_current_user(user_output: UserOutput = Depends(requires_login)):
     return user_output
 
 
-@auth_router.post("")
+@auth_router.post("", response_model=TokenResponse)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(),
                 db: Session = Depends(get_db)):
     user_output = UserService \
@@ -24,4 +24,15 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(),
                     db)
     access_token = SecurityService.create_jwt_token(user_output)
     refresh_token = SecurityService.create_jwt_token(user_output, True)
-    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
+    return TokenResponse(access_token=access_token,
+                         refresh_token=refresh_token)
+
+
+@auth_router.post("/refresh", response_model=TokenResponse)
+async def refresh(response: Response,
+                  cur_user: UserOutput = Depends(requires_login)):
+    access_token = SecurityService.create_jwt_token(cur_user)
+    refresh_token = SecurityService.create_jwt_token(cur_user, True)
+    response.headers['X-token-need-refresh'] = 'false'
+    return TokenResponse(access_token=access_token,
+                         refresh_token=refresh_token)
