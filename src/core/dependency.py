@@ -1,7 +1,8 @@
 import jwt
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Header
 from fastapi.security import OAuth2PasswordBearer
+from typing import Optional
 
 from schemas import UserOutput
 from core.config import Config
@@ -11,15 +12,23 @@ from service import DatabaseService
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth")
 
 
-async def requires_login(token: str = Depends(oauth2_scheme)):
-    data = jwt.decode(token,
-                      key=Config.jwt_secret,
-                      algorithms=['HS256'])
+async def requires_login(access_token: str = Depends(oauth2_scheme),
+                         refresh_token: Optional[str] = Header(default=None)):
+    need_refresh = False
+    try:
+        data = jwt.decode(access_token,
+                          key=Config.jwt_secret,
+                          algorithms=['HS256'])
+    except jwt.ExpiredSignatureError:
+        data = jwt.decode(refresh_token,
+                          key=Config.jwt_secret,
+                          algorithms=['HS256'])
+        need_refresh = True
 
     return UserOutput(id=data['id'],
                       username=data['username'],
                       email=data['email'],
-                      roles=data['roles'])
+                      roles=data['roles']), need_refresh
 
 
 class RequiresRoles:

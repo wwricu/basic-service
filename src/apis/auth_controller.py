@@ -11,8 +11,8 @@ auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @auth_router.get("", response_model=UserOutput)
-async def get_current_user(user_output: UserOutput = Depends(requires_login)):
-    return user_output
+async def get_current_user(auth_result: (UserOutput, bool) = Depends(requires_login)):
+    return auth_result[0]
 
 
 @auth_router.post("")
@@ -23,4 +23,4 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(),
                               password=form_data.password),
                     db)
     jwt = SecurityService.create_access_token(user_output)
-    return {"access_token": jwt, "token_type": "bearer"}
+    return {"access_token": jwt, "refresh_token": jwt, "token_type": "bearer"}

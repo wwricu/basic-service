@@ -7,11 +7,9 @@ class RoleSchema(BaseModel):
         if role is None:
             return None
         return RoleSchema(id=role.id,
-                          name=role.name,
-                          description=role.description)
+                          name=role.name)
     id: int = None
     name: str = None
-    description: str = None
 
 
 class UserInput(BaseModel):
