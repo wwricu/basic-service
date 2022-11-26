@@ -2,15 +2,17 @@ from fastapi import APIRouter, Response, Depends
 from sqlalchemy.orm import Session
 
 from models import Content
-from schemas import ContentInput, ContentOutput, ContentPreview, ContentTags
+from schemas import ContentInput, ContentOutput, ContentPreview, ContentTags, UserOutput
 from service import ResourceService
-from core.dependency import get_db
+from core.dependency import get_db, RequiresRoles
 
 
 content_router = APIRouter(prefix="/content", tags=["content"])
 
 
-@content_router.post("", response_model=ContentOutput)
+@content_router.post("",
+                     dependencies=[Depends(RequiresRoles('admin'))],
+                     response_model=ContentOutput)
 async def add_content(content: ContentInput,
                       db: Session = Depends(get_db)):
     return ContentOutput.init(ResourceService
@@ -18,13 +20,13 @@ async def add_content(content: ContentInput,
                                             db))
 
 
-@content_router.get("",  response_model=ContentOutput)
+@content_router.get("", response_model=ContentOutput)
 async def get_content(content_id: int, db: Session = Depends(get_db)):
     contents = ResourceService.find_resources(Content(id=content_id), db)
     return ContentOutput.init(contents[0]) if len(contents) == 1 else {}
 
 
-@content_router.get("/preview",  response_model=list[ContentPreview])
+@content_router.get("/preview", response_model=list[ContentPreview])
 async def get_preview(parent_id: int = 0,
                       status: str = 'publish',
                       tag_id: int = 0,
@@ -41,7 +43,7 @@ async def get_preview(parent_id: int = 0,
     return [ContentPreview.init(x) for x in contents]
 
 
-@content_router.get("/count",  response_model=int)
+@content_router.get("/count", response_model=int)
 async def get_preview_count(parent_id: int = 0,
                             status: str = 'publish',
                             tag_id: int = 0,
@@ -53,7 +55,9 @@ async def get_preview_count(parent_id: int = 0,
                                       tag_id)
 
 
-@content_router.put("", response_model=ContentOutput)
+@content_router.put("",
+                    dependencies=[Depends(RequiresRoles('admin'))],
+                    response_model=ContentOutput)
 async def modify_content(content: ContentInput,
                          db: Session = Depends(get_db)):
     ResourceService.reset_content_tags(Content.init(content), db)
@@ -61,14 +65,17 @@ async def modify_content(content: ContentInput,
                               .modify_resource(Content.init(content), db))
 
 
-@content_router.delete("/{content_id}")
+@content_router.delete("/{content_id}",
+                       dependencies=[Depends(RequiresRoles('admin'))])
 async def delete_content(content_id: int,
                          db: Session = Depends(get_db)):
     ResourceService.remove_resource(Content(id=content_id), db)
     return Response(status_code=200)
 
 
-@content_router.put("/tag", response_model=ContentOutput)
+@content_router.put("/tag",
+                    dependencies=[Depends(RequiresRoles('admin'))],
+                    response_model=ContentOutput)
 async def modify_content_tag(content_tags: ContentTags,
                              db: Session = Depends(get_db)):
     ResourceService.modify_content_tags(content_tags.content_id,
