@@ -1,6 +1,6 @@
 import jwt
 
-from fastapi import Depends, HTTPException, Header
+from fastapi import Depends, HTTPException, Header, Response
 from fastapi.security import OAuth2PasswordBearer
 from typing import Optional
 
@@ -12,9 +12,10 @@ from service import DatabaseService
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth")
 
 
-async def requires_login(access_token: str = Depends(oauth2_scheme),
-                         refresh_token: Optional[str] = Header(default=None)):
-    need_refresh = False
+async def requires_login(response: Response,
+                         access_token: str = Depends(oauth2_scheme),
+                         refresh_token: Optional[str] = Header(default=None))\
+        -> (UserOutput, bool):
     try:
         data = jwt.decode(access_token,
                           key=Config.jwt_secret,
@@ -23,12 +24,12 @@ async def requires_login(access_token: str = Depends(oauth2_scheme),
         data = jwt.decode(refresh_token,
                           key=Config.jwt_secret,
                           algorithms=['HS256'])
-        need_refresh = True
+        response.headers['X-token-need-refresh'] = 'true'
 
     return UserOutput(id=data['id'],
                       username=data['username'],
                       email=data['email'],
-                      roles=data['roles']), need_refresh
+                      roles=data['roles'])
 
 
 class RequiresRoles:
@@ -36,11 +37,12 @@ class RequiresRoles:
         self.required_role = required_role
 
     def __call__(self,
-                 user: UserOutput = Depends(requires_login)) -> UserOutput:
+                 auth_result: (UserOutput, int) = Depends(requires_login))\
+            -> (UserOutput, int):
 
-        for role in user.roles:
+        for role in auth_result[0].roles:
             if role.name == 'admin' or self.required_role == role:
-                return user
+                return auth_result
 
         raise HTTPException(status_code=403, detail="no permission")
 
