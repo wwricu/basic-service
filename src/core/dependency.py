@@ -37,12 +37,12 @@ class RequiresRoles:
         self.required_role = required_role
 
     def __call__(self,
-                 auth_result: (UserOutput, int) = Depends(requires_login))\
-            -> (UserOutput, int):
+                 user_output: UserOutput = Depends(requires_login))\
+            -> UserOutput:
 
-        for role in auth_result[0].roles:
+        for role in user_output.roles:
             if role.name == 'admin' or self.required_role == role:
-                return auth_result
+                return user_output
 
         raise HTTPException(status_code=403, detail="no permission")
 
