@@ -9,23 +9,16 @@ from core.config import Config
 from service import DatabaseService
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth")
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="auth", auto_error=False)
 
 
 async def optional_login_required(response: Response,
-                                  authentication:
-                                  Optional[str] = Header(default=None))\
+                                  access_token: str = Depends(oauth2_scheme_optional),
+                                  refresh_token: Optional[str] = Header(default=None))\
         -> Optional[UserOutput]:
-    if authentication is None:
+    if access_token is None or refresh_token is None:
         return None
 
-    return await requires_login(response)
-
-
-async def requires_login(response: Response,
-                         access_token: str = Depends(oauth2_scheme),
-                         refresh_token: Optional[str] = Header(default=None))\
-        -> UserOutput:
     try:
         data = jwt.decode(access_token,
                           key=Config.jwt_secret,
@@ -36,14 +29,21 @@ async def requires_login(response: Response,
                               key=Config.jwt_secret,
                               algorithms=['HS256'])
             response.headers['X-token-need-refresh'] = 'true'
-        except Exception as e:
-            print(e)
+        except jwt.ExpiredSignatureError:
             raise HTTPException(status_code=403, detail="token expired")
 
     return UserOutput(id=data['id'],
                       username=data['username'],
                       email=data['email'],
                       roles=data['roles'])
+
+
+async def requires_login(result:
+                         UserOutput = Depends(optional_login_required)) -> UserOutput:
+    if result is None:
+        raise HTTPException(status_code=401, detail="unauthenticated")
+
+    return result
 
 
 class RequiresRoles:

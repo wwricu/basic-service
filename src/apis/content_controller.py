@@ -10,14 +10,13 @@ from core.dependency import get_db, RequiresRoles, optional_login_required
 content_router = APIRouter(prefix="/content", tags=["content"])
 
 
-@content_router.post("",
-                     dependencies=[Depends(RequiresRoles('admin'))],
-                     response_model=ContentOutput)
+@content_router.post("", response_model=ContentOutput)
 async def add_content(content: ContentInput,
+                      cur_user: UserOutput = Depends(RequiresRoles('admin')),
                       db: Session = Depends(get_db)):
-    return ContentOutput.init(ResourceService
-                              .add_resource(Content.init(content),
-                                            db))
+    content_input = Content.init(content)
+    content_input.author_id = cur_user.id
+    return ContentOutput.init(ResourceService.add_resource(content_input, db))
 
 
 @content_router.get("", response_model=ContentOutput)
