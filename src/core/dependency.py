@@ -12,10 +12,20 @@ from service import DatabaseService
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth")
 
 
+async def optional_login_required(response: Response,
+                                  authentication:
+                                  Optional[str] = Header(default=None))\
+        -> Optional[UserOutput]:
+    if authentication is None:
+        return None
+
+    return await requires_login(response)
+
+
 async def requires_login(response: Response,
                          access_token: str = Depends(oauth2_scheme),
                          refresh_token: Optional[str] = Header(default=None))\
-        -> (UserOutput, bool):
+        -> UserOutput:
     try:
         data = jwt.decode(access_token,
                           key=Config.jwt_secret,

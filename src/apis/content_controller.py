@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Response, Depends
+from fastapi import APIRouter, Response, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from models import Content
-from schemas import ContentInput, ContentOutput, ContentPreview, ContentTags
+from schemas import ContentInput, ContentOutput, ContentPreview, ContentTags, UserOutput
 from service import ResourceService
-from core.dependency import get_db, RequiresRoles
+from core.dependency import get_db, RequiresRoles, optional_login_required
 
 
 content_router = APIRouter(prefix="/content", tags=["content"])
@@ -21,9 +21,15 @@ async def add_content(content: ContentInput,
 
 
 @content_router.get("", response_model=ContentOutput)
-async def get_content(content_id: int, db: Session = Depends(get_db)):
+async def get_content(content_id: int,
+                      cur_user: UserOutput = Depends(optional_login_required),
+                      db: Session = Depends(get_db)):
     contents = ResourceService.find_resources(Content(id=content_id), db)
-    return ContentOutput.init(contents[0]) if len(contents) == 1 else {}
+    if len(contents) != 1 or \
+            cur_user is None and contents[0].status != 'publish':
+        raise HTTPException(status_code=403, detail="need login to check draft")
+
+    return ContentOutput.init(contents[0])
 
 
 @content_router.get("/preview", response_model=list[ContentPreview])
@@ -32,7 +38,10 @@ async def get_preview(parent_id: int = 0,
                       tag_id: int = 0,
                       page_idx: int = 0,
                       page_size: int = 0,
+                      cur_user: UserOutput = Depends(optional_login_required),
                       db: Session = Depends(get_db)):
+    if cur_user is None:
+        status = 'publish'
 
     contents = ResourceService.find_preview(db,
                                             parent_id,
@@ -47,7 +56,10 @@ async def get_preview(parent_id: int = 0,
 async def get_preview_count(parent_id: int = 0,
                             status: str = 'publish',
                             tag_id: int = 0,
+                            cur_user: UserOutput = Depends(optional_login_required),
                             db: Session = Depends(get_db)):
+    if cur_user is None:
+        status = 'publish'
 
     return ResourceService.find_count(db,
                                       parent_id,
