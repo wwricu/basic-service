@@ -12,7 +12,7 @@ class DatabaseService:
     @classmethod
     def get_engine(cls):
         if not cls.__engine:
-            engine = create_engine(Config.DB_URL, echo=True)
+            engine = create_engine(Config.DB_URL, echo=False)
             cls.__engine = engine
         return cls.__engine
 

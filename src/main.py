@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from service import DatabaseService
@@ -13,17 +13,9 @@ app.include_router(router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['http://localhost:5173', 'http://127.0.0.1:5173'],
+    allow_origin_regex='https?://.*',
     allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*'],
     expose_headers=['X-token-need-refresh']
 )
-
-
-@app.router.get("/test")
-def test():
-    try:
-        print('here')
-    except Exception as e:
-        print(e)
-        raise HTTPException(status_code=404, detail=e.__str__())
