@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Response, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from models import Content
+from models import Content, Folder
 from schemas import ContentInput, ContentOutput, ContentPreview, ContentTags, UserOutput
 from service import ResourceService
 from core.dependency import get_db, RequiresRoles, optional_login_required
@@ -11,12 +11,13 @@ content_router = APIRouter(prefix="/content", tags=["content"])
 
 
 @content_router.post("", response_model=ContentOutput)
-async def add_content(content: ContentInput,
+async def add_content(content_input: ContentInput,
                       cur_user: UserOutput = Depends(RequiresRoles('admin')),
                       db: Session = Depends(get_db)):
-    content_input = Content.init(content)
-    content_input.author_id = cur_user.id
-    return ContentOutput.init(ResourceService.add_resource(content_input, db))
+    content = Content.init(content_input)
+    content.owner_id = cur_user.id
+    content.permission = 700  # owner all, group 0, public 0
+    return ContentOutput.init(ResourceService.add_resource(content, db))
 
 
 @content_router.get("", response_model=ContentOutput)
@@ -31,38 +32,40 @@ async def get_content(content_id: int,
     return ContentOutput.init(contents[0])
 
 
-@content_router.get("/preview", response_model=list[ContentPreview])
-async def get_preview(parent_id: int = 0,
-                      status: str = 'publish',
+@content_router.get("/preview/{url:path}", response_model=list[ContentPreview])
+async def get_preview(url: str = None,
                       tag_id: int = 0,
                       page_idx: int = 0,
                       page_size: int = 0,
                       cur_user: UserOutput = Depends(optional_login_required),
                       db: Session = Depends(get_db)):
-    if cur_user is None:
-        status = 'publish'
+
+    folders = ResourceService.find_resources(Folder(url=url), db)
+    assert len(folders) == 1
+    ResourceService.check_permission(folders[0], cur_user, 1)
 
     contents = ResourceService.find_preview(db,
-                                            parent_id,
-                                            status,
+                                            folders[0].id,
                                             tag_id,
                                             page_idx,
                                             page_size)
     return [ContentPreview.init(x) for x in contents]
 
 
-@content_router.get("/count", response_model=int)
-async def get_preview_count(parent_id: int = 0,
-                            status: str = 'publish',
+@content_router.get("/count/{url:path}", response_model=int)
+async def get_preview_count(url: str = None,
                             tag_id: int = 0,
                             cur_user: UserOutput = Depends(optional_login_required),
                             db: Session = Depends(get_db)):
-    if cur_user is None:
-        status = 'publish'
+    parent_id = 0
+    if url is not None:
+        folders = ResourceService.find_resources(Folder(url=url), db)
+        assert len(folders) == 1
+        ResourceService.check_permission(folders[0], cur_user, 1)
+        parent_id = folders[0].id
 
     return ResourceService.find_count(db,
                                       parent_id,
-                                      status,
                                       tag_id)
 
 

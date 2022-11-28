@@ -3,6 +3,7 @@ from typing import Optional
 
 from models import Resource, Folder, ContentTag, Content
 from dao import BaseDao, RelationDao
+from schemas import UserOutput
 
 
 class ResourceService:
@@ -28,13 +29,11 @@ class ResourceService:
     @staticmethod
     def find_preview(db,
                      parent_id:  Optional[int] = 0,
-                     status: Optional[str] = None,
                      tag_id:  Optional[int] = 0,
                      page_idx:  Optional[int] = 0,
                      page_size:  Optional[int] = 0):
         return RelationDao.get_contents_by_parent_tag(db,
                                                       parent_id,
-                                                      status,
                                                       tag_id,
                                                       page_idx,
                                                       page_size)
@@ -42,11 +41,9 @@ class ResourceService:
     @staticmethod
     def find_count(db,
                    parent_id: Optional[int] = 0,
-                   status: Optional[str] = None,
                    tag_id: Optional[int] = 0) -> int:
         return RelationDao.get_content_count(db,
                                              parent_id,
-                                             status,
                                              tag_id)
 
     @staticmethod
@@ -83,3 +80,19 @@ class ResourceService:
                             for x in content.tags]
         if len(add_content_tags) > 0:
             BaseDao.insert_all(add_content_tags, db)
+
+    @staticmethod
+    def check_permission(resource: Resource, user: UserOutput, operation_mask: int):
+        permission = 0
+        if user is None:
+            permission = resource.permission % 10
+        for role in user.roles:
+            if role.name == 'admin':
+                return
+            if role.name == resource.group.name:
+                permission |= (resource.permission // 10) % 10
+                break
+        if user.id == resource.owner_id:
+            permission |= (resource.permission // 100) % 10
+        if operation_mask & permission == 0:
+            raise Exception('no permission')

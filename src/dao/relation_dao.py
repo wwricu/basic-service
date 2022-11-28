@@ -6,7 +6,6 @@ class RelationDao:
     @staticmethod
     def get_contents_by_parent_tag(db,
                                    parent_id: Optional[int] = 0,
-                                   status: Optional[str] = None,
                                    tag_id: Optional[int] = 0,
                                    page_idx:  Optional[int] = 0,
                                    page_size:  Optional[int] = 0) -> list[Content]:
@@ -14,8 +13,6 @@ class RelationDao:
 
         if parent_id != 0:
             res = res.filter(Content.parent_id == parent_id)
-        if status is not None:
-            res = res.filter(Content.status == status)
         if tag_id != 0:
             res = res.filter(Content.tags.any(Tag.id == tag_id))
         if page_size != 0:
@@ -28,13 +25,10 @@ class RelationDao:
     @staticmethod
     def get_content_count(db,
                           parent_id: Optional[int] = 0,
-                          status: Optional[str] = None,
                           tag_id: Optional[int] = 0):
         res = db.query(Content)
         if parent_id != 0:
             res = res.filter(Content.parent_id == parent_id)
-        if status is not None:
-            res = res.filter(Content.status == status)
         if tag_id != 0:
             res = res.filter(Content.tags.any(Tag.id == tag_id))
         db.commit()
