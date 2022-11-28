@@ -12,7 +12,7 @@ class SysUser(Base):
     password_hash = Column(String(128), comment="password hash")
     salt = Column(String(128), comment="salt")
 
-    contents = relationship("Content", back_populates="author")
+    resources = relationship("Resource", back_populates="owner")
     roles = relationship('SysRole',
                          secondary='user_role',
                          back_populates='users',
@@ -24,6 +24,9 @@ class SysRole(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(20), unique=True, comment="role name")
     description = Column(String(255), comment="role description")
+
+    resources = relationship("Resource", back_populates="group")
+
     users = relationship('SysUser',
                          secondary='user_role',
                          back_populates='roles')

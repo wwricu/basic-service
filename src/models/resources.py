@@ -11,6 +11,14 @@ class Resource(Base):
     title = Column(String(255), comment="title name")
     url = Column(String(255), unique=True, comment="unique url")
 
+    owner_id = Column(Integer, ForeignKey('sys_user.id'))
+    owner = relationship("SysUser", back_populates="resources")
+
+    group_id = Column(Integer, ForeignKey('sys_role.id'))
+    group = relationship("SysRole", back_populates="resources")
+
+    permission = Column(Integer)
+
     created_time = Column(DateTime,
                           default=datetime.now,
                           comment="create time")
@@ -76,9 +84,6 @@ class Content(Resource):
     sub_title = Column(String(255), nullable=True, comment="content summary")
     status = Column(String(255), nullable=True, comment="content status")
     content = Column(LargeBinary(length=65536), nullable=True, comment="content html")
-
-    author_id = Column(Integer, ForeignKey('sys_user.id'))
-    author = relationship("SysUser", back_populates="contents")
 
     tags = relationship('Tag',
                         secondary='content_tag',
