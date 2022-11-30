@@ -1,5 +1,5 @@
 class Config:
-    DB_URL = 'mariadb+mariadbconnector://root:153226@127.0.0.1:3306/fastdb?charset=utf8'
+    DB_URL = 'mysql+pymysql://sql_admin:153226@127.0.0.1:3306/fastdb?charset=utf8'
     admin_username = 'wwr'
     admin_password_hash = 'f5168b16e387802b06e95905727277b0'
     admin_password_salt = 'CrvV5IDnCZ2noa-f4a_KChCBac284vBAw11p_NsiKa4'
