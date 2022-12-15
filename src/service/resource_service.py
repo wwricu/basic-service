@@ -70,18 +70,17 @@ class ResourceService:
 
     @staticmethod
     def check_permission(resource: Resource, user: UserOutput, operation_mask: int):
-        permission = 0
-        if user.id == resource.owner_id:
-            return
+        permission = resource.permission % 10
 
-        if user is None:
-            permission = resource.permission % 10
         for role in user.roles:
             if role.name == 'admin':
                 return
             if role.name == resource.group.name:
                 permission |= (resource.permission // 10) % 10
                 break
+
+        if user.id == resource.owner_id:
+            permission |= (resource.permission // 100) % 10
 
         if operation_mask & permission == 0:
             raise Exception('no permission')
