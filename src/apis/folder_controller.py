@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Response, Depends
 from sqlalchemy.orm import Session
 
-from models import Folder
-from schemas import FolderInput, FolderOutput, UserOutput
+from models import Folder, Content
+from schemas import FolderInput, FolderOutput, UserOutput, ResourcePreview
 from service import ResourceService
 from core.dependency import get_db, RequiresRoles, requires_login
 
@@ -20,16 +20,34 @@ async def add_folder(folder_input: FolderInput,
     return FolderOutput.init(ResourceService
                              .add_resource(folder, db))
 
+@folder_router.get("/count/{url:path}", response_model=int)
+async def get_sub_count(url: str = None,
+                        tag_id: int = 0,
+                        cur_user: UserOutput = Depends(requires_login),
+                        db: Session = Depends(get_db)):
+    folders = ResourceService.find_resources(Folder(url=url), db)
+    assert len(folders) == 1
+    ResourceService.check_permission(folders[0], cur_user, 1)
+    return ResourceService.find_sub_count(db, Content, folders[0].id, tag_id)
 
-@folder_router.get("{url:path}", response_model=list[FolderOutput])
+
+@folder_router.get("/sub_resources/{url:path}", response_model=list[FolderOutput])
 async def get_folder(url: str = None,
+                     tag_id: int = 0,
+                     page_idx: int = 0,
+                     page_size: int = 0,
                      cur_user: UserOutput = Depends(requires_login),
                      db: Session = Depends(get_db)):
     folders = ResourceService.find_resources(Folder(url=url), db)
     assert len(folders) == 1
     ResourceService.check_permission(folders[0], cur_user, 1)
-    sub_folders = ResourceService.find_resources(Folder(parent_id=folders[0].id), db)
-    return [FolderOutput.init(x) for x in sub_folders]
+    sub_resources = ResourceService.find_sub_resources(db,
+                                                       Content,
+                                                       folders[0].id,
+                                                       tag_id,
+                                                       page_idx,
+                                                       page_size)
+    return [ResourcePreview.init(x) for x in sub_resources]
 
 
 @folder_router.put("",

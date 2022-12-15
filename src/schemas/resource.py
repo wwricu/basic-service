@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from models import Folder, Content
+from models import Resource, Folder, Content
 from .tag import TagSchema
 
 
@@ -38,33 +38,33 @@ class FolderOutput(ResourceBase):
     updated_time: datetime = None
 
 
-class ContentPreview(FolderOutput):
+class ResourcePreview(FolderOutput):
     @classmethod
-    def init(cls, content: Content):
-        if not isinstance(content, Content):
+    def init(cls, resource: Resource):
+        if resource is None:
             return None
-        return ContentOutput(id=content.id,
-                             title=content.title,
-                             url=content.url,
-                             parent_id=content.parent_id,
-                             created_time=content.created_time,
-                             updated_time=content.updated_time,
-                             parent=FolderOutput.init(content.parent),
-                             author_id=content.author_id,
-                             sub_title=content.sub_title,
-                             status=content.status,
-                             tags=[TagSchema(id=x.id,
-                                             name=x.name)
-                                   for x in content.tags])
+        return ResourcePreview(id=resource.id,
+                               title=resource.title,
+                               url=resource.url,
+                               parent_id=resource.parent_id,
+                               created_time=resource.created_time,
+                               updated_time=resource.updated_time,
+                               author_id=resource.author_id,
+                               sub_title=resource.sub_title,
+                               type=resource.__class__,
+                               tags=[TagSchema(id=x.id,
+                                               name=x.name)
+                                     for x in resource.tags])
 
     parent: FolderOutput = None
     author_id: int = None
     sub_title: str = None
     status: str = None
+    type: str = None
     tags: list[TagSchema] = None
 
 
-class ContentOutput(ContentPreview):
+class ContentOutput(ResourcePreview):
     @classmethod
     def init(cls, content: Content):
         if not isinstance(content, Content):

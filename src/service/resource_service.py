@@ -74,7 +74,7 @@ class ResourceService:
 
         for role in user.roles:
             if role.name == 'admin':
-                return
+                return True
             if role.name == resource.group.name:
                 permission |= (resource.permission // 10) % 10
                 break
@@ -84,6 +84,7 @@ class ResourceService:
 
         if operation_mask & permission == 0:
             raise Exception('no permission')
+        return True
 
     @staticmethod
     def modify_content_tags(resource_id: int,
