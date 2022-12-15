@@ -12,7 +12,7 @@ class DatabaseService:
     @classmethod
     def get_engine(cls):
         if not cls.__engine:
-            engine = create_engine(Config.DB_URL, echo=False)
+            engine = create_engine(Config.DB_URL, echo=True)
             cls.__engine = engine
         return cls.__engine
 
@@ -58,8 +58,23 @@ class DatabaseService:
     def insert_root_folder(cls):
         db = DatabaseService.get_session()
         try:
-            folder = Folder(title='root_folder', url='')
-            db.add(folder)
+            root_folder = Folder(title='root',
+                                 permission=0,
+                                 url='')
+            db.add(root_folder)
+            db.flush()
+            post_folder = Folder(title='post',
+                                 permission=711,
+                                 url='/post',
+                                 owner_id=1,
+                                 parent_id=root_folder.id)
+            draft_folder = Folder(title='draft',
+                                  permission=700,
+                                  url='/draft',
+                                  owner_id=1,
+                                  parent_id=root_folder.id)
+            db.add(post_folder)
+            db.add(draft_folder)
             db.commit()
         except Exception as e:
             print(e)
