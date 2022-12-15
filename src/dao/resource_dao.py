@@ -4,12 +4,12 @@ from models import Content, Tag
 
 class RelationDao:
     @staticmethod
-    def get_contents_by_parent_tag(db,
-                                   obj_class,
-                                   parent_id: Optional[int] = 0,
-                                   tag_id: Optional[int] = 0,
-                                   page_idx:  Optional[int] = 0,
-                                   page_size:  Optional[int] = 0) -> list[Content]:
+    def get_sub_resources(db,
+                          obj_class,
+                          parent_id: Optional[int] = 0,
+                          tag_id: Optional[int] = 0,
+                          page_idx:  Optional[int] = 0,
+                          page_size:  Optional[int] = 0) -> list[Content]:
         res = db.query(obj_class).order_by(obj_class.created_time.desc())
 
         if parent_id != 0:
@@ -24,13 +24,14 @@ class RelationDao:
         return res.all()
 
     @staticmethod
-    def get_content_count(db,
-                          parent_id: Optional[int] = 0,
-                          tag_id: Optional[int] = 0):
-        res = db.query(Content)
+    def get_sub_resource_count(db,
+                               obj_class,
+                               parent_id: Optional[int] = 0,
+                               tag_id: Optional[int] = 0):
+        res = db.query(obj_class)
         if parent_id != 0:
-            res = res.filter(Content.parent_id == parent_id)
+            res = res.filter(obj_class.parent_id == parent_id)
         if tag_id != 0:
-            res = res.filter(Content.tags.any(Tag.id == tag_id))
+            res = res.filter(obj_class.tags.any(Tag.id == tag_id))
         db.commit()
         return res.count()

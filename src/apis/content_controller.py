@@ -44,11 +44,12 @@ async def get_preview(url: str = None,
     assert len(folders) == 1
     ResourceService.check_permission(folders[0], cur_user, 1)
 
-    contents = ResourceService.find_preview(db,
-                                            folders[0].id,
-                                            tag_id,
-                                            page_idx,
-                                            page_size)
+    contents = ResourceService.find_sub_resources(db,
+                                                  Content,
+                                                  folders[0].id,
+                                                  tag_id,
+                                                  page_idx,
+                                                  page_size)
     return [ContentPreview.init(x) for x in contents]
 
 
@@ -64,9 +65,10 @@ async def get_preview_count(url: str = None,
         ResourceService.check_permission(folders[0], cur_user, 1)
         parent_id = folders[0].id
 
-    return ResourceService.find_count(db,
-                                      parent_id,
-                                      tag_id)
+    return ResourceService.find_sub_count(db,
+                                          Content,
+                                          parent_id,
+                                          tag_id)
 
 
 # @content_router.put("",
