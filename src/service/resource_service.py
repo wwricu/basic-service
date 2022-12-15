@@ -28,6 +28,20 @@ class ResourceService:
         return BaseDao.select(resource, resource.__class__, db)
 
     @staticmethod
+    def find_sub_resources(db,
+                           obj_class = Resource,
+                           parent_id: int = 0,
+                           tag_id: Optional[int] = 0,
+                           page_idx: Optional[int] = 0,
+                           page_size: Optional[int] = 0):
+        return RelationDao.get_contents_by_parent_tag(db,
+                                                      obj_class,
+                                                      parent_id,
+                                                      tag_id,
+                                                      page_idx,
+                                                      page_size)
+
+    @staticmethod
     def find_preview(db,
                      parent_id:  Optional[int] = 0,
                      tag_id:  Optional[int] = 0,
