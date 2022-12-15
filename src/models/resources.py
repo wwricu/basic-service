@@ -40,6 +40,12 @@ class Resource(Base):
                                 foreign_keys=parent_id,
                                 back_populates='parent')
 
+    tags = relationship('Tag',
+                        secondary='resource_tag',
+                        back_populates='resources',
+                        cascade="save-update",
+                        lazy="joined")
+
     type = Column(String(50))
     __mapper_args__ = {
         # 'polymorphic_identity': 'resource',
@@ -88,12 +94,6 @@ class Content(Resource):
     status = Column(String(255), nullable=True, comment="content status")
     content = Column(LargeBinary(length=65536), nullable=True, comment="content html")
 
-    tags = relationship('Tag',
-                        secondary='content_tag',
-                        back_populates='contents',
-                        cascade="save-update",
-                        lazy="joined")
-
     __mapper_args__ = {
         'polymorphic_identity': 'content',
         'inherit_condition': id == Resource.id,
@@ -111,6 +111,7 @@ class Tag(Base):
     __tablename__ = 'tag'
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(128), unique=True)
-    contents = relationship('Content',
-                            secondary='content_tag',
-                            back_populates='tags')
+    type = Column(String(128))
+    resources = relationship('Resource',
+                             secondary='resource_tag',
+                             back_populates='tags')

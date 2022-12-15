@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from models import Tag, ContentTag
+from models import Tag, ResourceTag
 from dao import BaseDao
 
 
@@ -27,14 +27,14 @@ class TagService:
                            remove_content_ids: list[int],
                            db: Session):
         if add_content_ids is not None and len(add_content_ids) != 0:
-            add_content_tags = [ContentTag(tag_id=tag_id,
-                                           content_id=x)
+            add_content_tags = [ResourceTag(tag_id=tag_id,
+                                            content_id=x)
                                 for x in add_content_ids]
             BaseDao.insert_all(add_content_tags, db)
 
         if remove_content_ids is not None and len(remove_content_ids) != 0:
-            remove_content_tags = [ContentTag(tag_id=tag_id,
-                                              content_id=x)
+            remove_content_tags = [ResourceTag(tag_id=tag_id,
+                                               content_id=x)
                                    for x in remove_content_ids]
 
-            BaseDao.delete_all(remove_content_tags, ContentTag, db)
+            BaseDao.delete_all(remove_content_tags, ResourceTag, db)

@@ -29,11 +29,11 @@ class RolePermission(Base):
         primary_key=True)
 
 
-class ContentTag(Base):
-    __tablename__ = 'content_tag'
-    content_id = Column(
+class ResourceTag(Base):
+    __tablename__ = 'resource_tag'
+    resource_id = Column(
         Integer,
-        ForeignKey('content.id', ondelete='CASCADE'),
+        ForeignKey('resource.id', ondelete='CASCADE'),
         nullable=False,
         primary_key=True)
     tag_id = Column(
