@@ -16,9 +16,10 @@ class ResourceService:
             resource.url = parent.url
 
         if isinstance(resource, Folder):
-            resource.url += '/' + resource.title
+            resource.this_url = '/' + resource.title
         else:
-            resource.url += '/' + str(uuid.uuid4())
+            resource.this_url = '/' + str(uuid.uuid4())
+        resource.url += resource.this_url
 
         return BaseDao.insert(resource, db)
 

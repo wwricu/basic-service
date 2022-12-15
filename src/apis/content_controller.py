@@ -10,7 +10,7 @@ from core.dependency import get_db, RequiresRoles, optional_login_required
 content_router = APIRouter(prefix="/content", tags=["content"])
 
 
-@content_router.post("", response_model=ContentOutput)
+# @content_router.post("", response_model=ContentOutput)
 async def add_content(content_input: ContentInput,
                       cur_user: UserOutput = Depends(RequiresRoles('admin')),
                       db: Session = Depends(get_db)):
@@ -20,7 +20,7 @@ async def add_content(content_input: ContentInput,
     return ContentOutput.init(ResourceService.add_resource(content, db))
 
 
-@content_router.get("", response_model=ContentOutput)
+# @content_router.get("", response_model=ContentOutput)
 async def get_content(content_id: int,
                       cur_user: UserOutput = Depends(optional_login_required),
                       db: Session = Depends(get_db)):
@@ -32,7 +32,7 @@ async def get_content(content_id: int,
     return ContentOutput.init(contents[0])
 
 
-@content_router.get("/preview/{url:path}", response_model=list[ContentPreview])
+# @content_router.get("/preview/{url:path}", response_model=list[ContentPreview])
 async def get_preview(url: str = None,
                       tag_id: int = 0,
                       page_idx: int = 0,
@@ -52,7 +52,7 @@ async def get_preview(url: str = None,
     return [ContentPreview.init(x) for x in contents]
 
 
-@content_router.get("/count/{url:path}", response_model=int)
+# @content_router.get("/count/{url:path}", response_model=int)
 async def get_preview_count(url: str = None,
                             tag_id: int = 0,
                             cur_user: UserOutput = Depends(optional_login_required),
@@ -69,9 +69,9 @@ async def get_preview_count(url: str = None,
                                       tag_id)
 
 
-@content_router.put("",
-                    dependencies=[Depends(RequiresRoles('admin'))],
-                    response_model=ContentOutput)
+# @content_router.put("",
+#                     dependencies=[Depends(RequiresRoles('admin'))],
+#                     response_model=ContentOutput)
 async def modify_content(content: ContentInput,
                          db: Session = Depends(get_db)):
     ResourceService.reset_content_tags(Content.init(content), db)
@@ -87,9 +87,9 @@ async def delete_content(content_id: int,
     return Response(status_code=200)
 
 
-@content_router.put("/tag",
-                    dependencies=[Depends(RequiresRoles('admin'))],
-                    response_model=ContentOutput)
+# @content_router.put("/tag",
+#                     dependencies=[Depends(RequiresRoles('admin'))],
+#                     response_model=ContentOutput)
 async def modify_content_tag(content_tags: ContentTags,
                              db: Session = Depends(get_db)):
     ResourceService.modify_content_tags(content_tags.content_id,

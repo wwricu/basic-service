@@ -8,13 +8,16 @@ from . import Base
 class Resource(Base):
     __tablename__ = 'resource'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    title = Column(String(255), comment="title name")
-    url = Column(String(255), unique=True, comment="unique url")
+    title = Column(String(255))
+    url = Column(String(255), unique=True)
+    this_url = Column(String(255), comment='For concat after rename')
 
     owner_id = Column(Integer, ForeignKey('sys_user.id'))
     owner = relationship("SysUser", back_populates="resources")
 
-    group_id = Column(Integer, ForeignKey('sys_role.id'))
+    group_id = Column(Integer,
+                      ForeignKey('sys_role.id'),
+                      comment='Sys role as group')
     group = relationship("SysRole", back_populates="resources")
 
     permission = Column(Integer)
