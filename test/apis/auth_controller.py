@@ -1,22 +1,24 @@
 from test import client
 
-access_token = ''
-refresh_token = ''
+
+class AuthToken:
+    access_token: str
+    refresh_token: str
+    headers: dict
 
 def test_auth():
     payload = {'username': 'wwr', 'password': 'test password'}
     response = client.post('/auth', data=payload)
     print(response.json())
-    global access_token, refresh_token
-    access_token = response.json()['access_token']
-    refresh_token = response.json()['refresh_token']
+    AuthToken.access_token = response.json()['access_token']
+    AuthToken.refresh_token = response.json()['refresh_token']
+    AuthToken.headers = {'Authorization': f'Bearer {AuthToken.access_token}',
+                         'refresh-token': AuthToken.refresh_token}
     assert response.status_code == 200
     return response.json()
 
 def test_get_user():
-    headers = {'Authorization': f'Bearer {access_token}',
-               'refresh-token': refresh_token}
-    response = client.get('/auth', headers=headers)
+    response = client.get('/auth', headers=AuthToken.headers)
     print(response.json())
     assert response.status_code == 200
 
