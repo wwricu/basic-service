@@ -2,7 +2,7 @@ from typing import Optional
 from models import Content, Tag
 
 
-class RelationDao:
+class ResourceDao:
     @staticmethod
     def get_sub_resources(db,
                           obj_class,

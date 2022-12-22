@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Response, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from models import Content, Folder
-from schemas import ContentInput, ContentOutput, ResourcePreview, ContentTags, UserOutput
+from models import Content
+from schemas import ContentInput, ContentOutput, UserOutput
 from service import ResourceService
 from core.dependency import get_db, RequiresRoles, optional_login_required
 

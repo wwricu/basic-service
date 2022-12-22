@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, Depends
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from models import Folder, Content, Resource

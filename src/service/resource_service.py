@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 
 from models import Resource, Folder, ResourceTag, Content
-from dao import BaseDao, RelationDao
+from dao import BaseDao, ResourceDao
 from schemas import UserOutput
 
 
@@ -34,7 +34,7 @@ class ResourceService:
                            tag_id: Optional[int] = 0,
                            page_idx: Optional[int] = 0,
                            page_size: Optional[int] = 0):
-        return RelationDao.get_sub_resources(db,
+        return ResourceDao.get_sub_resources(db,
                                              obj_class,
                                              parent_url,
                                              tag_id,
@@ -46,7 +46,7 @@ class ResourceService:
                        obj_class = Resource,
                        parent_url: Optional[str] = None,
                        tag_id: Optional[int] = 0) -> int:
-        return RelationDao.get_sub_resource_count(db,
+        return ResourceDao.get_sub_resource_count(db,
                                                   obj_class,
                                                   parent_url,
                                                   tag_id)
@@ -57,7 +57,7 @@ class ResourceService:
 
     @staticmethod
     def remove_resource(resource: Resource, db):
-        return RelationDao.delete(resource, Resource, db)
+        return ResourceDao.delete(resource, Resource, db)
 
     @staticmethod
     def reset_content_tags(content: Content, db):
