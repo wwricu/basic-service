@@ -10,4 +10,3 @@ RUN pip3 install --upgrade pip \
 && echo 'Asia/Shanghai' >/etc/timezone
 
 CMD ["uvicorn", "main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "8000"]
-
