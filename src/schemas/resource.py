@@ -18,7 +18,6 @@ class FolderInput(ResourceBase):
 class ContentInput(FolderInput):
     tags: list[TagSchema] = []
     sub_title: str = None
-    status: str = None
     content: bytes = None
 
 
@@ -58,7 +57,6 @@ class ResourcePreview(FolderOutput):
 
     parent: FolderOutput = None
     owner_id: int = None
-    status: str = None
     type: str = None
     tags: list[TagSchema] = None
 
@@ -77,7 +75,6 @@ class ContentOutput(ResourcePreview):
                              updated_time=content.updated_time,
                              owner_id=content.owner_id,
                              sub_title=content.sub_title,
-                             status=content.status,
                              tags=[TagSchema(id=x.id,
                                              name=x.name)
                                    for x in content.tags],

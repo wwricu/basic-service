@@ -82,7 +82,6 @@ class Content(Resource):
                        parent_url=content.parent_url,
                        sub_title=content.sub_title,
                        permission=content.permission,
-                       status=content.status,
                        tags=[Tag.init(tag) for tag in content.tags],
                        content=content.content)
 
@@ -92,7 +91,6 @@ class Content(Resource):
                 primary_key=True)
 
     sub_title = Column(String(255), nullable=True, comment="content summary")
-    status = Column(String(255), nullable=True, comment="content status")
     content = Column(LargeBinary(length=65536), nullable=True, comment="content html")
 
     __mapper_args__ = {
