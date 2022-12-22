@@ -7,7 +7,7 @@ from .tag import TagSchema
 class ResourceBase(BaseModel):
     id: int = None
     title: str = None
-    parent_id: int = None
+    parent_url: str = None
 
 
 class FolderInput(ResourceBase):
@@ -29,7 +29,7 @@ class FolderOutput(ResourceBase):
         return FolderOutput(id=folder.id,
                             url=folder.url,
                             title=folder.title,
-                            parent_id=folder.parent_id,
+                            parent_url=folder.parent_url,
                             created_time=folder.created_time,
                             modified_time=folder.updated_time)
 
@@ -46,19 +46,17 @@ class ResourcePreview(FolderOutput):
         return ResourcePreview(id=resource.id,
                                title=resource.title,
                                url=resource.url,
-                               parent_id=resource.parent_id,
+                               parent_url=resource.parent_url,
                                created_time=resource.created_time,
                                updated_time=resource.updated_time,
-                               author_id=resource.author_id,
-                               sub_title=resource.sub_title,
-                               type=resource.__class__,
+                               owner_id=resource.owner_id,
+                               type=resource.__class__.__name__,
                                tags=[TagSchema(id=x.id,
                                                name=x.name)
                                      for x in resource.tags])
 
     parent: FolderOutput = None
-    author_id: int = None
-    sub_title: str = None
+    owner_id: int = None
     status: str = None
     type: str = None
     tags: list[TagSchema] = None
@@ -72,11 +70,11 @@ class ContentOutput(ResourcePreview):
         return ContentOutput(id=content.id,
                              title=content.title,
                              url=content.url,
-                             parent_id=content.parent_id,
+                             parent_url=content.parent_url,
                              parent=FolderOutput.init(content.parent),
                              created_time=content.created_time,
                              updated_time=content.updated_time,
-                             author_id=content.author_id,
+                             owner_id=content.owner_id,
                              sub_title=content.sub_title,
                              status=content.status,
                              tags=[TagSchema(id=x.id,

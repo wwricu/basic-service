@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Response, Depends
 from sqlalchemy.orm import Session
 
-from models import Folder, Content
+from models import Folder, Content, Resource
 from schemas import FolderInput, FolderOutput, UserOutput, ResourcePreview
 from service import ResourceService
-from core.dependency import get_db, RequiresRoles, requires_login
+from core.dependency import get_db, RequiresRoles, requires_login, optional_login_required
 
 
 folder_router = APIRouter(prefix="/folder", tags=["folder"])
@@ -31,18 +31,18 @@ async def get_sub_count(url: str = None,
     return ResourceService.find_sub_count(db, Content, folders[0].id, tag_id)
 
 
-@folder_router.get("/sub_resources/{url:path}", response_model=list[FolderOutput])
-async def get_folder(url: str = None,
+@folder_router.get("/sub_resources/{url:path}", response_model=list[ResourcePreview])
+async def get_folder(url: str = '',
                      tag_id: int = 0,
                      page_idx: int = 0,
                      page_size: int = 0,
-                     cur_user: UserOutput = Depends(requires_login),
+                     cur_user: UserOutput = Depends(optional_login_required),
                      db: Session = Depends(get_db)):
     folders = ResourceService.find_resources(Folder(url=url), db)
     assert len(folders) == 1
     ResourceService.check_permission(folders[0], cur_user, 1)
     sub_resources = ResourceService.find_sub_resources(db,
-                                                       Content,
+                                                       Resource,
                                                        folders[0].id,
                                                        tag_id,
                                                        page_idx,

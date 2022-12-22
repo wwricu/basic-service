@@ -67,12 +67,12 @@ class DatabaseService:
                                  permission=711,
                                  url='/post',
                                  owner_id=1,
-                                 parent_id=root_folder.id)
+                                 parent_url=root_folder.url)
             draft_folder = Folder(title='draft',
                                   permission=700,
                                   url='/draft',
                                   owner_id=1,
-                                  parent_id=root_folder.id)
+                                  parent_url=root_folder.url)
             db.add(post_folder)
             db.add(draft_folder)
             db.commit()

@@ -10,8 +10,8 @@ class ResourceService:
     @staticmethod
     def add_resource(resource: Resource, db):
         resource.url = ''
-        if resource.parent_id is not None and resource.parent_id != 0:
-            parent = BaseDao.select(Resource(id=resource.parent_id),
+        if resource.parent_url is not None:
+            parent = BaseDao.select(Resource(url=resource.parent_url),
                                     Resource, db)[0]
             resource.url = parent.url
 
@@ -30,13 +30,13 @@ class ResourceService:
     @staticmethod
     def find_sub_resources(db,
                            obj_class = Resource,
-                           parent_id: int = 0,
+                           parent_url: str = None,
                            tag_id: Optional[int] = 0,
                            page_idx: Optional[int] = 0,
                            page_size: Optional[int] = 0):
         return RelationDao.get_sub_resources(db,
                                              obj_class,
-                                             parent_id,
+                                             parent_url,
                                              tag_id,
                                              page_idx,
                                              page_size)
@@ -44,11 +44,11 @@ class ResourceService:
     @staticmethod
     def find_sub_count(db,
                        obj_class = Resource,
-                       parent_id: Optional[int] = 0,
+                       parent_url: Optional[str] = None,
                        tag_id: Optional[int] = 0) -> int:
         return RelationDao.get_sub_resource_count(db,
                                                   obj_class,
-                                                  parent_id,
+                                                  parent_url,
                                                   tag_id)
 
     @staticmethod
@@ -72,15 +72,15 @@ class ResourceService:
     def check_permission(resource: Resource, user: UserOutput, operation_mask: int):
         permission = resource.permission % 10
 
-        for role in user.roles:
-            if role.name == 'admin':
-                return True
-            if role.name == resource.group.name:
-                permission |= (resource.permission // 10) % 10
-                break
-
-        if user.id == resource.owner_id:
-            permission |= (resource.permission // 100) % 10
+        if user is not None:
+            for role in user.roles:
+                if role.name == 'admin':
+                    return True
+                if role.name == resource.group.name:
+                    permission |= (resource.permission // 10) % 10
+                    break
+            if user.id == resource.owner_id:
+                permission |= (resource.permission // 100) % 10
 
         if operation_mask & permission == 0:
             raise Exception('no permission')

@@ -31,13 +31,13 @@ class Resource(Base):
                           onupdate=datetime.now,
                           comment="update time")
 
-    parent_id = Column(Integer, ForeignKey('resource.id'), nullable=True)
+    parent_url = Column(String(255), ForeignKey('resource.url'), nullable=True)
     parent = relationship('Resource',
-                          remote_side=[id],
+                          remote_side=[url],
                           back_populates='sub_resource',
                           uselist=False)
     sub_resource = relationship("Resource",
-                                foreign_keys=parent_id,
+                                foreign_keys=parent_url,
                                 back_populates='parent')
 
     tags = relationship('Tag',
@@ -58,7 +58,7 @@ class Folder(Resource):
     def init(cls, folder):
         return Folder(id=folder.id,
                       title=folder.title,
-                      parent_id=folder.parent_id)
+                      parent_url=folder.parent_url)
 
     __tablename__ = 'folder'
     id = Column(Integer,
@@ -79,7 +79,7 @@ class Content(Resource):
     def init(cls, content):
         return Content(id=content.id,
                        title=content.title,
-                       parent_id=content.parent_id,
+                       parent_url=content.parent_url,
                        sub_title=content.sub_title,
                        status=content.status,
                        tags=[Tag.init(tag) for tag in content.tags],
