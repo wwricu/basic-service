@@ -59,7 +59,7 @@ async def modify_folder(folder: FolderInput,
                              .modify_resource(Folder.init(folder), db))
 
 
-@folder_router.delete("/{url:path}",
+@folder_router.delete("/{folder_id}",
                       dependencies=[Depends(RequiresRoles('admin'))])
-async def delete_folder(url: str = None, db: Session = Depends(get_db)):
-    return ResourceService.remove_resource(Resource(url=url), db)
+async def delete_folder(folder_id: int = 0, db: Session = Depends(get_db)):
+    return ResourceService.remove_resource(Resource(id=folder_id), db)

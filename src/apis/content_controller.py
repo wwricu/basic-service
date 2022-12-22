@@ -48,5 +48,4 @@ async def modify_content(content: ContentInput,
                        dependencies=[Depends(RequiresRoles('admin'))])
 async def delete_content(content_id: int,
                          db: Session = Depends(get_db)):
-    ResourceService.remove_resource(Content(id=content_id), db)
-    return Response(status_code=200)
+    return ResourceService.remove_resource(Content(id=content_id), db)

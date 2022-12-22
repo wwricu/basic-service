@@ -32,10 +32,17 @@ def test_modify_content(content_id: int):
     return response
 
 
-def run_all_test():
+def test_delete_content(content_id: int):
+    response = client.delete(f'content/{content_id}',
+                             headers=AuthToken.headers)
+    assert response.status_code == 200
+    return response
+
+def run_content_all_test():
     test_auth()
     r = test_add_content()
     test_modify_content(r.json()['id'])
+    test_delete_content(r.json()['id'])
 
 if __name__ == '__main__':
-    run_all_test()
+    run_content_all_test()

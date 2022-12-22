@@ -6,6 +6,9 @@ class AuthToken:
     refresh_token: str
     headers: dict
 
+def test_fake_auth():
+    AuthToken.headers = {}
+
 def test_auth():
     payload = {'username': 'wwr', 'password': 'test password'}
     response = client.post('/auth', data=payload)
@@ -22,9 +25,9 @@ def test_get_user():
     print(response.json())
     assert response.status_code == 200
 
-def run_all_test():
+def run_auth_all_test():
     test_auth()
     test_get_user()
 
 if __name__ == '__main__':
-    run_all_test()
+    run_auth_all_test()

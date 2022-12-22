@@ -19,21 +19,21 @@ def test_add_category(parent_url: str, title: str):
     print(response.json())
     return response
 
-def test_delete_category(url: str):
-    return client.delete(f'/folder/{url}',
+def test_delete_category(folder_id: int):
+    return client.delete(f'/folder/{folder_id}',
                          headers=AuthToken.headers)
 
-def run_all_test():
+def run_folder_all_test():
     test_auth()
     r = test_add_category('/post', 'test category')
     assert r.status_code == 200
     test_fake_auth()
     r = test_get_folder('/post')
     assert r.status_code == 200
-    assert len(r.json()) == 1
     test_auth()
-    r = test_delete_category('/post/test%20category')
+    print(r.json())
+    r = test_delete_category(r.json()[0]['id'])
     assert r.status_code == 200
 
 if __name__ == '__main__':
-    run_all_test()
+    run_folder_all_test()

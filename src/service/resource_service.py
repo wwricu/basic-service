@@ -57,7 +57,7 @@ class ResourceService:
 
     @staticmethod
     def remove_resource(resource: Resource, db):
-        return ResourceDao.delete(resource, Resource, db)
+        return BaseDao.delete(resource, Resource, db)
 
     @staticmethod
     def reset_content_tags(content: Content, db):

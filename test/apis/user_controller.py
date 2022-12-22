@@ -39,7 +39,7 @@ def test_modify_user(user_id: int):
     assert response.json()['username'] == 'after change'
     assert response.json()['email'] == 'test@email.test'
 
-def run_all_test():
+def run_user_all_test():
     test_auth()
     new_id = test_add_user()
     test_modify_user(new_id)
@@ -47,4 +47,4 @@ def run_all_test():
     test_remove_user(new_id)
 
 if __name__ == '__main__':
-    run_all_test()
+    run_user_all_test()
