@@ -25,6 +25,7 @@ def test_get_user(user_id: int):
                           headers=AuthToken.headers)
     print(response.json())
     assert response.status_code == 200
+    assert response.json()[0]['username'] == 'after change'
     return response.json()[0]['id']
 
 def test_modify_user(user_id: int):
@@ -38,9 +39,12 @@ def test_modify_user(user_id: int):
     assert response.json()['username'] == 'after change'
     assert response.json()['email'] == 'test@email.test'
 
-if __name__ == '__main__':
+def run_all_test():
     test_auth()
     new_id = test_add_user()
     test_modify_user(new_id)
     test_get_user(new_id)
     test_remove_user(new_id)
+
+if __name__ == '__main__':
+    run_all_test()
