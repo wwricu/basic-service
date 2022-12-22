@@ -81,6 +81,7 @@ class Content(Resource):
                        title=content.title,
                        parent_url=content.parent_url,
                        sub_title=content.sub_title,
+                       permission=content.permission,
                        status=content.status,
                        tags=[Tag.init(tag) for tag in content.tags],
                        content=content.content)

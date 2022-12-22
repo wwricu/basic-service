@@ -17,6 +17,7 @@ async def add_content(content_input: ContentInput,
     content = Content.init(content_input)
     content.owner_id = cur_user.id
     content.permission = 700  # owner all, group 0, public 0
+    content.parent_url = '/draft'
     return ContentOutput.init(ResourceService.add_resource(content, db))
 
 

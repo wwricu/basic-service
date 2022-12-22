@@ -8,6 +8,7 @@ class ResourceBase(BaseModel):
     id: int = None
     title: str = None
     parent_url: str = None
+    permission: int = 0
 
 
 class FolderInput(ResourceBase):
