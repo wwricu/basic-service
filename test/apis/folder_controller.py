@@ -25,10 +25,13 @@ def test_delete_category(url: str):
 
 def run_all_test():
     test_auth()
-    r = test_add_category('/post', 'test%20category')
+    r = test_add_category('/post', 'test category')
     assert r.status_code == 200
+    test_fake_auth()
     r = test_get_folder('/post')
     assert r.status_code == 200
+    assert len(r.json()) == 1
+    test_auth()
     r = test_delete_category('/post/test%20category')
     assert r.status_code == 200
 
