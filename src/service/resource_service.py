@@ -9,17 +9,17 @@ from schemas import UserOutput
 class ResourceService:
     @staticmethod
     def add_resource(resource: Resource, db):
-        resource.url = ''
+        parent_url = ''
         if resource.parent_url is not None:
             parent = BaseDao.select(Resource(url=resource.parent_url),
                                     Resource, db)[0]
-            resource.url = parent.url
+            parent_url = parent.url
 
         if isinstance(resource, Folder):
             resource.this_url = '/' + resource.title
         else:
             resource.this_url = '/' + str(uuid.uuid4())
-        resource.url += resource.this_url
+        resource.url = parent_url + resource.this_url
 
         return BaseDao.insert(resource, db)
 

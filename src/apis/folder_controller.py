@@ -43,7 +43,7 @@ async def get_folder(url: str = '',
     ResourceService.check_permission(folders[0], cur_user, 1)
     sub_resources = ResourceService.find_sub_resources(db,
                                                        Resource,
-                                                       folders[0].id,
+                                                       url,
                                                        tag_id,
                                                        page_idx,
                                                        page_size)
@@ -59,8 +59,8 @@ async def modify_folder(folder: FolderInput,
                              .modify_resource(Folder.init(folder), db))
 
 
-@folder_router.delete("/{folder_id}",
+@folder_router.delete("/{url:path}",
                       dependencies=[Depends(RequiresRoles('admin'))])
-async def delete_folder(folder_id: int, db: Session = Depends(get_db)):
-    ResourceService.remove_resource(Folder(id=folder_id), db)
+async def delete_folder(url: str = None, db: Session = Depends(get_db)):
+    ResourceService.remove_resource(Resource(url=url), db)
     return Response(status_code=200)
