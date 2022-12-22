@@ -62,5 +62,4 @@ async def modify_folder(folder: FolderInput,
 @folder_router.delete("/{url:path}",
                       dependencies=[Depends(RequiresRoles('admin'))])
 async def delete_folder(url: str = None, db: Session = Depends(get_db)):
-    ResourceService.remove_resource(Resource(url=url), db)
-    return Response(status_code=200)
+    return ResourceService.remove_resource(Resource(url=url), db)
