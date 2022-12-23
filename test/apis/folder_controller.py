@@ -23,6 +23,9 @@ def test_delete_category(folder_id: int):
     return client.delete(f'/folder/{folder_id}',
                          headers=AuthToken.headers)
 
+def test_get_count():
+    return client.get('/folder/count')
+
 def run_folder_all_test():
     test_auth()
     r = test_add_category('/post', 'test category')
@@ -33,6 +36,9 @@ def run_folder_all_test():
     test_auth()
     print(r.json())
     r = test_delete_category(r.json()[0]['id'])
+    assert r.status_code == 200
+    r = test_get_count()
+    print(r.json())
     assert r.status_code == 200
 
 if __name__ == '__main__':
