@@ -1,3 +1,4 @@
+from __future__ import annotations
 from pydantic import BaseModel
 from datetime import datetime
 from models import Resource, Folder, Content
@@ -47,6 +48,7 @@ class ResourcePreview(FolderOutput):
                                title=resource.title,
                                url=resource.url,
                                parent_url=resource.parent_url,
+                               parent=ResourcePreview.init(resource.parent),
                                created_time=resource.created_time,
                                updated_time=resource.updated_time,
                                owner_id=resource.owner_id,
@@ -55,7 +57,7 @@ class ResourcePreview(FolderOutput):
                                                name=x.name)
                                      for x in resource.tags])
 
-    parent: FolderOutput = None
+    parent: ResourcePreview = None
     owner_id: int = None
     type: str = None
     tags: list[TagSchema] = None
@@ -70,7 +72,7 @@ class ContentOutput(ResourcePreview):
                              title=content.title,
                              url=content.url,
                              parent_url=content.parent_url,
-                             parent=FolderOutput.init(content.parent),
+                             parent=ResourcePreview.init(content.parent),
                              created_time=content.created_time,
                              updated_time=content.updated_time,
                              owner_id=content.owner_id,

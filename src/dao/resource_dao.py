@@ -29,7 +29,7 @@ class ResourceDao:
                                parent_url: Optional[str] = None,
                                tag_id: Optional[int] = 0):
         res = db.query(obj_class)
-        if parent_url is not None:
+        if parent_url is not None and len(parent_url) > 0:
             res = res.filter(obj_class.parent_url == parent_url)
         if tag_id != 0:
             res = res.filter(obj_class.tags.any(Tag.id == tag_id))
