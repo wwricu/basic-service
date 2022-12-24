@@ -91,20 +91,3 @@ class ResourceService:
         if operation_mask & permission == 0:
             raise Exception('no permission')
         return True
-
-    @staticmethod
-    def modify_content_tags(resource_id: int,
-                            add_tag_ids: list[int],
-                            remove_tag_ids: list[int],
-                            db):
-        if add_tag_ids is not None and len(add_tag_ids) != 0:
-            add_content_tags = [ResourceTag(resource_id=resource_id,
-                                            tag_id=x)
-                                for x in add_tag_ids]
-            BaseDao.insert_all(add_content_tags, db)
-
-        if remove_tag_ids is not None and len(remove_tag_ids) != 0:
-            remove_content_tags = [ResourceTag(resource_id=resource_id,
-                                               tag_id=x)
-                                   for x in remove_tag_ids]
-            BaseDao.delete_all(remove_content_tags, ResourceTag, db)

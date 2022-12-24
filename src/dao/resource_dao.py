@@ -41,13 +41,3 @@ class ResourceDao:
             res = res.filter(obj_class.tags.any(PostTag.name == tag_name))
         db.commit()
         return res.count()
-
-    @staticmethod
-    def delete(obj, class_name, db):
-        if obj.url is None:
-            return
-        count = db.query(class_name) \
-            .filter_by(url=obj.url) \
-            .delete()
-        db.commit()
-        return count
