@@ -24,7 +24,7 @@ def test_delete_category(folder_id: int):
                          headers=AuthToken.headers)
 
 def test_get_count():
-    return client.get('/folder/count')
+    return client.get('/folder/count//post')
 
 def run_folder_all_test():
     test_auth()

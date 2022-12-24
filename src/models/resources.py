@@ -77,7 +77,8 @@ class Content(Resource):
                        parent_url=content.parent_url,
                        sub_title=content.sub_title,
                        permission=content.permission,
-                       category=Tag.init(content.category),
+                       category=Tag.init(content.category)
+                                if hasattr(content, 'category') else None,
                        tags=[Tag.init(tag) for tag in content.tags],
                        content=content.content)
 

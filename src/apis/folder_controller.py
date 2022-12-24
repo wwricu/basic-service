@@ -24,7 +24,7 @@ async def add_folder(folder_input: FolderInput,
 async def get_sub_count(url: str = None,
                         category_name: str = None,
                         tag_name: str = None,
-                        cur_user: UserOutput = Depends(requires_login),
+                        cur_user: UserOutput = Depends(optional_login_required),
                         db: Session = Depends(get_db)):
     folders = ResourceService.find_resources(Folder(url=url), db)
     assert len(folders) == 1

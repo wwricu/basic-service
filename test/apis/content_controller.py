@@ -41,8 +41,8 @@ def test_delete_content(content_id: int):
 def run_content_all_test():
     test_auth()
     r = test_add_content()
-    test_modify_content(r.json()['id'])
-    test_delete_content(r.json()['id'])
+    test_modify_content(r.json())
+    test_delete_content(r.json())
 
 if __name__ == '__main__':
     run_content_all_test()

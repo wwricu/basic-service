@@ -17,6 +17,7 @@ class FolderInput(ResourceBase):
 
 
 class ContentInput(FolderInput):
+    category: TagSchema = None
     tags: list[TagSchema] = []
     sub_title: str = None
     content: bytes = None
@@ -54,8 +55,10 @@ class ResourcePreview(FolderOutput):
                                type=resource.__class__.__name__,
                                tags=[TagSchema(id=x.id,
                                                name=x.name)
-                                     for x in resource.tags],
-                               category=TagSchema.init(resource.category))
+                                     for x in resource.tags]
+                                    if hasattr(resource, 'tags') else None,
+                               category=TagSchema.init(resource.category)
+                                        if hasattr(resource, 'category') else None)
 
     parent: ResourcePreview = None
     owner_id: int = None
