@@ -30,7 +30,8 @@ async def get_category(tag_id: int = None,
                      dependencies=[Depends(RequiresRoles('admin'))],
                      response_model=TagSchema)
 async def rename_category(category: TagSchema,
-                     db: Session = Depends(get_db)):
+                          db: Session = Depends(get_db)):
+    print(category.dict())
     return TagSchema.init(TagService
                           .rename_tag(PostCategory(id=category.id,
                                                    name=category.name), db))

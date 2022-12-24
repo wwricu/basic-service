@@ -21,7 +21,7 @@ async def add_content(content_input: ContentInput,
     return ResourceService.add_resource(content, db).id
 
 
-@content_router.get("", response_model=ContentOutput)
+@content_router.get("/{content_id}", response_model=ContentOutput)
 async def get_content(content_id: int,
                       cur_user: UserOutput = Depends(optional_login_required),
                       db: Session = Depends(get_db)):

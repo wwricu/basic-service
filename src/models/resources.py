@@ -3,7 +3,7 @@ from sqlalchemy import Integer, Column, String, DateTime, ForeignKey, LargeBinar
 from sqlalchemy.orm import relationship
 
 from . import Base
-from .tag import Tag
+from .tag import PostTag
 
 
 class Resource(Base):
@@ -71,16 +71,16 @@ class Folder(Resource):
 
 class Content(Resource):
     @classmethod
-    def init(cls, content):
-        return Content(id=content.id,
-                       title=content.title,
-                       parent_url=content.parent_url,
-                       sub_title=content.sub_title,
-                       permission=content.permission,
-                       category=Tag.init(content.category)
-                                if hasattr(content, 'category') else None,
-                       tags=[Tag.init(tag) for tag in content.tags],
-                       content=content.content)
+    def init(cls, content_input):
+        return Content(id=content_input.id,
+                       title=content_input.title,
+                       parent_url=content_input.parent_url,
+                       sub_title=content_input.sub_title,
+                       permission=content_input.permission,
+                       category_name=content_input.category_name,
+                       tags=[PostTag(id=tag.id,
+                                     name=tag.name) for tag in content_input.tags],
+                       content=content_input.content)
 
     __tablename__ = 'content'
     id = Column(Integer,

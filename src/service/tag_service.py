@@ -11,15 +11,15 @@ class TagService:
 
     @staticmethod
     def find_tag(tag: Tag, db: Session) -> list[Tag]:
-        return BaseDao.select(tag, Tag, db)
+        return BaseDao.select(tag, tag.__class__, db)
 
     @staticmethod
     def rename_tag(tag: Tag, db: Session):
-        return BaseDao.update(tag, Tag, db)
+        return BaseDao.update(tag, tag.__class__, db)
 
     @staticmethod
     def remove_tag(tag: Tag, db: Session):
-        return BaseDao.delete(tag, Tag, db)
+        return BaseDao.delete(tag, tag.__class__, db)
 
     @staticmethod
     def modify_tag_content(tag_id: int,
