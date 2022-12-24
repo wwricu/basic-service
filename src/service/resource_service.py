@@ -57,7 +57,29 @@ class ResourceService:
 
     @staticmethod
     def modify_resource(resource: Resource, db):
-        return BaseDao.update(resource, resource.__class__, db)
+        old_resources = BaseDao.select(Resource(id=resource.id),
+                                                resource.__class__,
+                                                db)
+        assert len(old_resources) == 1
+        sub_resources = ResourceService.find_sub_resources(db,
+                                                           Resource,
+                                                           parent_url=old_resources[0].url)
+
+        if resource.__class__ == 'Folder':
+            resource.this_url = '/' + resource.title
+        else:
+            resource.this_url = old_resources[0].this_url
+
+        resource.url = resource.parent_url + resource.this_url
+
+        res = BaseDao.update(resource, resource.__class__, db)
+        if resource.url != old_resources[0].url:
+            for re in sub_resources:
+                # foreign key restraint: must update parent url to make it existing
+                re.parent_url = resource.url
+                ResourceService.modify_resource(re, db)
+
+        return res
 
     @staticmethod
     def remove_resource(resource: Resource, db):

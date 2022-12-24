@@ -32,14 +32,17 @@ class Resource(Base):
                           onupdate=datetime.now,
                           comment="update time")
 
-    parent_url = Column(String(255), ForeignKey('resource.url'), nullable=True)
+    parent_url = Column(String(255),
+                        ForeignKey('resource.url'),
+                        nullable=True)
     parent = relationship('Resource',
                           remote_side=[url],
                           back_populates='sub_resource',
                           uselist=False)
     sub_resource = relationship("Resource",
                                 foreign_keys=parent_url,
-                                back_populates='parent')
+                                back_populates='parent',
+                                cascade="all")
 
     type = Column(String(50))
     __mapper_args__ = {
