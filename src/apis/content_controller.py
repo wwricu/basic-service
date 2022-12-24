@@ -45,6 +45,7 @@ async def modify_content(content: ContentInput,
 
 
 @content_router.delete("/{content_id}",
+                       response_model=int,
                        dependencies=[Depends(RequiresRoles('admin'))])
 async def delete_content(content_id: int,
                          db: Session = Depends(get_db)):

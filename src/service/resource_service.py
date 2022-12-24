@@ -69,8 +69,7 @@ class ResourceService:
         add_content_tags = [ResourceTag(resource_id=content.id,
                                         tag_name=x.name)
                             for x in content.tags]
-        for tag in add_content_tags:
-            print(tag.tag_name, tag.resource_id)
+
         if len(add_content_tags) > 0:
             BaseDao.insert_all(add_content_tags, db)
 

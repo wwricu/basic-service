@@ -50,10 +50,11 @@ class Resource(Base):
 
 class Folder(Resource):
     @classmethod
-    def init(cls, folder):
-        return Folder(id=folder.id,
-                      title=folder.title,
-                      parent_url=folder.parent_url)
+    def init(cls, folder_input):
+        return Folder(id=folder_input.id,
+                      title=folder_input.title,
+                      parent_url=folder_input.parent_url,
+                      permission=folder_input.permission)
 
     __tablename__ = 'folder'
     id = Column(Integer,
@@ -75,11 +76,11 @@ class Content(Resource):
         return Content(id=content_input.id,
                        title=content_input.title,
                        parent_url=content_input.parent_url,
-                       sub_title=content_input.sub_title,
                        permission=content_input.permission,
                        category_name=content_input.category_name,
                        tags=[PostTag(id=tag.id,
-                                     name=tag.name) for tag in content_input.tags],
+                                     name=tag.name)
+                             for tag in content_input.tags],
                        content=content_input.content)
 
     __tablename__ = 'content'

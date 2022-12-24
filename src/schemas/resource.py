@@ -9,7 +9,7 @@ class ResourceBase(BaseModel):
     id: int = None
     title: str = None
     parent_url: str = None
-    permission: int = 0
+    permission: int = None
 
 
 class FolderInput(ResourceBase):
@@ -60,7 +60,6 @@ class ResourcePreview(FolderOutput):
                                category_name=resource.category_name
                                         if hasattr(resource, 'category_name') else None)
 
-    parent: ResourcePreview = None
     owner_id: int = None
     type: str = None
     tags: list[TagSchema] = None
@@ -76,7 +75,6 @@ class ContentOutput(ResourcePreview):
                              title=content.title,
                              url=content.url,
                              parent_url=content.parent_url,
-                             parent=ResourcePreview.init(content.parent),
                              created_time=content.created_time,
                              updated_time=content.updated_time,
                              owner_id=content.owner_id,
