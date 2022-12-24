@@ -30,12 +30,9 @@ def run_folder_all_test():
     test_auth()
     r = test_add_category('/post', 'test category')
     assert r.status_code == 200
-    test_fake_auth()
-    r = test_get_folder('/post')
-    assert r.status_code == 200
     test_auth()
     print(r.json())
-    r = test_delete_category(r.json()[0]['id'])
+    r = test_delete_category(r.json()['id'])
     assert r.status_code == 200
     r = test_get_count()
     print(r.json())
