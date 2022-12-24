@@ -48,19 +48,20 @@ class ResourcePreview(FolderOutput):
                                title=resource.title,
                                url=resource.url,
                                parent_url=resource.parent_url,
-                               parent=ResourcePreview.init(resource.parent),
                                created_time=resource.created_time,
                                updated_time=resource.updated_time,
                                owner_id=resource.owner_id,
                                type=resource.__class__.__name__,
                                tags=[TagSchema(id=x.id,
                                                name=x.name)
-                                     for x in resource.tags])
+                                     for x in resource.tags],
+                               category=TagSchema.init(resource.category))
 
     parent: ResourcePreview = None
     owner_id: int = None
     type: str = None
     tags: list[TagSchema] = None
+    category: TagSchema = None
 
 
 class ContentOutput(ResourcePreview):
@@ -80,6 +81,7 @@ class ContentOutput(ResourcePreview):
                              tags=[TagSchema(id=x.id,
                                              name=x.name)
                                    for x in content.tags],
+                             category=TagSchema.init(content.category),
                              content=content.content)
 
     content: bytes = None

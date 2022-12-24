@@ -31,13 +31,15 @@ class ResourceService:
     def find_sub_resources(db,
                            obj_class = Resource,
                            parent_url: str = None,
-                           tag_id: Optional[int] = 0,
+                           category_name: Optional[str] = None,
+                           tag_name: Optional[str] = None,
                            page_idx: Optional[int] = 0,
                            page_size: Optional[int] = 0):
         return ResourceDao.get_sub_resources(db,
                                              obj_class,
                                              parent_url,
-                                             tag_id,
+                                             category_name,
+                                             tag_name,
                                              page_idx,
                                              page_size)
 
@@ -45,11 +47,13 @@ class ResourceService:
     def find_sub_count(db,
                        obj_class = Resource,
                        parent_url: Optional[str] = None,
-                       tag_id: Optional[int] = 0) -> int:
+                       category_name: Optional[str] = None,
+                       tag_name: Optional[str] = None) -> int:
         return ResourceDao.get_sub_resource_count(db,
                                                   obj_class,
                                                   parent_url,
-                                                  tag_id)
+                                                  category_name,
+                                                  tag_name)
 
     @staticmethod
     def modify_resource(resource: Resource, db):

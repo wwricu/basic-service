@@ -5,6 +5,8 @@ from models import Tag
 class TagSchema(BaseModel):
     @classmethod
     def init(cls, tag: Tag):
+        if tag is None:
+            return None
         return TagSchema(id=tag.id,
                          name=tag.name)
 

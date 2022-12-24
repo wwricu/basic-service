@@ -3,6 +3,7 @@ from sqlalchemy import Integer, Column, String, DateTime, ForeignKey, LargeBinar
 from sqlalchemy.orm import relationship
 
 from . import Base
+from .tag import Tag
 
 
 class Resource(Base):
@@ -40,12 +41,6 @@ class Resource(Base):
                                 foreign_keys=parent_url,
                                 back_populates='parent')
 
-    tags = relationship('Tag',
-                        secondary='resource_tag',
-                        back_populates='resources',
-                        cascade="save-update",
-                        lazy="joined")
-
     type = Column(String(50))
     __mapper_args__ = {
         # 'polymorphic_identity': 'resource',
@@ -82,6 +77,7 @@ class Content(Resource):
                        parent_url=content.parent_url,
                        sub_title=content.sub_title,
                        permission=content.permission,
+                       category=Tag.init(content.category),
                        tags=[Tag.init(tag) for tag in content.tags],
                        content=content.content)
 
@@ -93,24 +89,17 @@ class Content(Resource):
     sub_title = Column(String(255), nullable=True, comment="content summary")
     content = Column(LargeBinary(length=65536), nullable=True, comment="content html")
 
+    category_name = Column(String(128), ForeignKey('post_category.name'))
+    category = relationship("PostCategory", back_populates="posts")
+
+    tags = relationship('PostTag',
+                        secondary='post_tag_relation',
+                        back_populates='posts',
+                        cascade="save-update",
+                        lazy="joined")
+
     __mapper_args__ = {
         'polymorphic_identity': 'content',
         'inherit_condition': id == Resource.id,
     }
 
-
-class Tag(Base):
-    @classmethod
-    def init(cls, tag_schema):
-        if tag_schema is None:
-            return None
-        return Tag(id=tag_schema.id,
-                   name=tag_schema.name)
-
-    __tablename__ = 'tag'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(128), unique=True)
-    type = Column(String(128))
-    resources = relationship('Resource',
-                             secondary='resource_tag',
-                             back_populates='tags')
