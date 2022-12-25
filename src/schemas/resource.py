@@ -1,13 +1,15 @@
+from __future__ import annotations
 from pydantic import BaseModel
 from datetime import datetime
-from models import Folder, Content
+from models import Resource, Folder, Content
 from .tag import TagSchema
 
 
 class ResourceBase(BaseModel):
     id: int = None
     title: str = None
-    parent_id: int = None
+    parent_url: str = None
+    permission: int = None
 
 
 class FolderInput(ResourceBase):
@@ -15,9 +17,10 @@ class FolderInput(ResourceBase):
 
 
 class ContentInput(FolderInput):
+    category_name: str = None
     tags: list[TagSchema] = []
     sub_title: str = None
-    status: str = None
+    files: set = None
     content: bytes = None
 
 
@@ -29,7 +32,7 @@ class FolderOutput(ResourceBase):
         return FolderOutput(id=folder.id,
                             url=folder.url,
                             title=folder.title,
-                            parent_id=folder.parent_id,
+                            parent_url=folder.parent_url,
                             created_time=folder.created_time,
                             modified_time=folder.updated_time)
 
@@ -38,33 +41,33 @@ class FolderOutput(ResourceBase):
     updated_time: datetime = None
 
 
-class ContentPreview(FolderOutput):
+class ResourcePreview(FolderOutput):
     @classmethod
-    def init(cls, content: Content):
-        if not isinstance(content, Content):
+    def init(cls, resource: Resource):
+        if resource is None:
             return None
-        return ContentOutput(id=content.id,
-                             title=content.title,
-                             url=content.url,
-                             parent_id=content.parent_id,
-                             created_time=content.created_time,
-                             updated_time=content.updated_time,
-                             parent=FolderOutput.init(content.parent),
-                             author_id=content.author_id,
-                             sub_title=content.sub_title,
-                             status=content.status,
-                             tags=[TagSchema(id=x.id,
-                                             name=x.name)
-                                   for x in content.tags])
+        return ResourcePreview(id=resource.id,
+                               title=resource.title,
+                               url=resource.url,
+                               parent_url=resource.parent_url,
+                               created_time=resource.created_time,
+                               updated_time=resource.updated_time,
+                               owner_id=resource.owner_id,
+                               type=resource.__class__.__name__,
+                               tags=[TagSchema(id=x.id,
+                                               name=x.name)
+                                     for x in resource.tags]
+                                    if hasattr(resource, 'tags') else None,
+                               category_name=resource.category_name
+                                        if hasattr(resource, 'category_name') else None)
 
-    parent: FolderOutput = None
-    author_id: int = None
-    sub_title: str = None
-    status: str = None
+    owner_id: int = None
+    type: str = None
     tags: list[TagSchema] = None
+    category_name: str = None
 
 
-class ContentOutput(ContentPreview):
+class ContentOutput(ResourcePreview):
     @classmethod
     def init(cls, content: Content):
         if not isinstance(content, Content):
@@ -72,16 +75,15 @@ class ContentOutput(ContentPreview):
         return ContentOutput(id=content.id,
                              title=content.title,
                              url=content.url,
-                             parent_id=content.parent_id,
-                             parent=FolderOutput.init(content.parent),
+                             parent_url=content.parent_url,
                              created_time=content.created_time,
                              updated_time=content.updated_time,
-                             author_id=content.author_id,
+                             owner_id=content.owner_id,
                              sub_title=content.sub_title,
-                             status=content.status,
                              tags=[TagSchema(id=x.id,
                                              name=x.name)
                                    for x in content.tags],
+                             category_name=content.category_name,
                              content=content.content)
 
     content: bytes = None

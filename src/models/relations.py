@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, Column, ForeignKey
+from sqlalchemy import Integer, String, Column, ForeignKey
 
 from . import Base
 
@@ -29,15 +29,15 @@ class RolePermission(Base):
         primary_key=True)
 
 
-class ContentTag(Base):
-    __tablename__ = 'content_tag'
-    content_id = Column(
+class ResourceTag(Base):
+    __tablename__ = 'post_tag_relation'
+    resource_id = Column(
         Integer,
         ForeignKey('content.id', ondelete='CASCADE'),
         nullable=False,
         primary_key=True)
-    tag_id = Column(
-        Integer,
-        ForeignKey('tag.id', ondelete='CASCADE'),
+    tag_name = Column(
+        String(128),
+        ForeignKey('post_tag.name', ondelete='CASCADE'),
         nullable=False,
         primary_key=True)

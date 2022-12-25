@@ -1,4 +1,6 @@
-from fastapi import FastAPI, HTTPException
+import os
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from service import DatabaseService
@@ -17,14 +19,9 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*'],
-    expose_headers=['X-token-need-refresh']
+    expose_headers=['X-token-need-refresh', 'X-content-id']
 )
 
-
-@app.router.get("/test")
-def test():
-    try:
-        print('here')
-    except Exception as e:
-        print(e)
-        raise HTTPException(status_code=404, detail=e.__str__())
+if not os.path.exists('static'):
+    os.makedirs('static')
+app.mount("/static", StaticFiles(directory="static"), name="static")

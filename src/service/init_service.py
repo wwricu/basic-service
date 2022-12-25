@@ -58,8 +58,23 @@ class DatabaseService:
     def insert_root_folder(cls):
         db = DatabaseService.get_session()
         try:
-            folder = Folder(title='root_folder', url='')
-            db.add(folder)
+            root_folder = Folder(title='root',
+                                 permission=0,
+                                 url='')
+            db.add(root_folder)
+            db.flush()
+            post_folder = Folder(title='post',
+                                 permission=711,
+                                 url='/post',
+                                 owner_id=1,
+                                 parent_url=root_folder.url)
+            draft_folder = Folder(title='draft',
+                                  permission=700,
+                                  url='/draft',
+                                  owner_id=1,
+                                  parent_url=root_folder.url)
+            db.add(post_folder)
+            db.add(draft_folder)
             db.commit()
         except Exception as e:
             print(e)

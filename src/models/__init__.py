@@ -1,4 +1,5 @@
 from .base import Base
-from .relations import UserRole, RolePermission, ContentTag
+from .relations import UserRole, RolePermission, ResourceTag
 from .sys_user import SysUser, SysRole, SysPermission
-from .resources import Resource, Content, Folder, Tag
+from .resources import Resource, Content, Folder
+from .tag import Tag, PostTag, PostCategory

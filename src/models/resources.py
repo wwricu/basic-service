@@ -3,13 +3,25 @@ from sqlalchemy import Integer, Column, String, DateTime, ForeignKey, LargeBinar
 from sqlalchemy.orm import relationship
 
 from . import Base
+from .tag import PostTag
 
 
 class Resource(Base):
     __tablename__ = 'resource'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    title = Column(String(255), comment="title name")
-    url = Column(String(255), unique=True, comment="unique url")
+    title = Column(String(255))
+    url = Column(String(255), unique=True)
+    this_url = Column(String(255), comment='For concat after rename')
+
+    owner_id = Column(Integer, ForeignKey('sys_user.id'))
+    owner = relationship("SysUser", back_populates="resources")
+
+    group_id = Column(Integer,
+                      ForeignKey('sys_role.id'),
+                      comment='Sys role as group')
+    group = relationship("SysRole", back_populates="resources")
+
+    permission = Column(Integer)
 
     created_time = Column(DateTime,
                           default=datetime.now,
@@ -20,14 +32,17 @@ class Resource(Base):
                           onupdate=datetime.now,
                           comment="update time")
 
-    parent_id = Column(Integer, ForeignKey('resource.id'), nullable=True)
+    parent_url = Column(String(255),
+                        ForeignKey('resource.url'),
+                        nullable=True)
     parent = relationship('Resource',
-                          remote_side=[id],
+                          remote_side=[url],
                           back_populates='sub_resource',
                           uselist=False)
     sub_resource = relationship("Resource",
-                                foreign_keys=parent_id,
-                                back_populates='parent')
+                                foreign_keys=parent_url,
+                                back_populates='parent',
+                                cascade="all")
 
     type = Column(String(50))
     __mapper_args__ = {
@@ -38,10 +53,11 @@ class Resource(Base):
 
 class Folder(Resource):
     @classmethod
-    def init(cls, folder):
-        return Folder(id=folder.id,
-                      title=folder.title,
-                      parent_id=folder.parent_id)
+    def init(cls, folder_input):
+        return Folder(id=folder_input.id,
+                      title=folder_input.title,
+                      parent_url=folder_input.parent_url,
+                      permission=folder_input.permission)
 
     __tablename__ = 'folder'
     id = Column(Integer,
@@ -59,14 +75,16 @@ class Folder(Resource):
 
 class Content(Resource):
     @classmethod
-    def init(cls, content):
-        return Content(id=content.id,
-                       title=content.title,
-                       parent_id=content.parent_id,
-                       sub_title=content.sub_title,
-                       status=content.status,
-                       tags=[Tag.init(tag) for tag in content.tags],
-                       content=content.content)
+    def init(cls, content_input):
+        return Content(id=content_input.id,
+                       title=content_input.title,
+                       parent_url=content_input.parent_url,
+                       permission=content_input.permission,
+                       category_name=content_input.category_name,
+                       tags=[PostTag(id=tag.id,
+                                     name=tag.name)
+                             for tag in content_input.tags],
+                       content=content_input.content)
 
     __tablename__ = 'content'
     id = Column(Integer,
@@ -74,15 +92,14 @@ class Content(Resource):
                 primary_key=True)
 
     sub_title = Column(String(255), nullable=True, comment="content summary")
-    status = Column(String(255), nullable=True, comment="content status")
     content = Column(LargeBinary(length=65536), nullable=True, comment="content html")
 
-    author_id = Column(Integer, ForeignKey('sys_user.id'))
-    author = relationship("SysUser", back_populates="contents")
+    category_name = Column(String(128), ForeignKey('post_category.name'))
+    category = relationship("PostCategory", back_populates="posts")
 
-    tags = relationship('Tag',
-                        secondary='content_tag',
-                        back_populates='contents',
+    tags = relationship('PostTag',
+                        secondary='post_tag_relation',
+                        back_populates='posts',
                         cascade="save-update",
                         lazy="joined")
 
@@ -91,18 +108,3 @@ class Content(Resource):
         'inherit_condition': id == Resource.id,
     }
 
-
-class Tag(Base):
-    @classmethod
-    def init(cls, tag_schema):
-        if tag_schema is None:
-            return None
-        return Tag(id=tag_schema.id,
-                   name=tag_schema.name)
-
-    __tablename__ = 'tag'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(128), unique=True)
-    contents = relationship('Content',
-                            secondary='content_tag',
-                            back_populates='tags')
