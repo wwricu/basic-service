@@ -1,4 +1,6 @@
+import os
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from service import DatabaseService
@@ -17,5 +19,9 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*'],
-    expose_headers=['X-token-need-refresh']
+    expose_headers=['X-token-need-refresh', 'X-content-id']
 )
+
+if not os.path.exists('static'):
+    os.makedirs('static')
+app.mount("/static", StaticFiles(directory="static"), name="static")
