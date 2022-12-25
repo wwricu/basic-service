@@ -96,7 +96,7 @@ class ResourceService:
             BaseDao.insert_all(add_content_tags, db)
 
     @staticmethod
-    def trim_files(content_id: int, attach_files: set[str]):
+    async def trim_files(content_id: int, attach_files: set[str]):
         try:
             path = f'static/content/{content_id}'
             files = os.listdir(path)
