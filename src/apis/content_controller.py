@@ -39,6 +39,7 @@ async def get_content(content_id: int,
                     response_model=ContentOutput)
 async def modify_content(content: ContentInput,
                          db: Session = Depends(get_db)):
+    ResourceService.trim_files(content.id, content.files)
     ResourceService.reset_content_tags(Content.init(content), db)
     return ContentOutput.init(ResourceService
                               .modify_resource(Content.init(content), db))
@@ -49,4 +50,5 @@ async def modify_content(content: ContentInput,
                        dependencies=[Depends(RequiresRoles('admin'))])
 async def delete_content(content_id: int,
                          db: Session = Depends(get_db)):
+    ResourceService.trim_files(content_id, set())
     return ResourceService.remove_resource(Resource(id=content_id), db)

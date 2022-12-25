@@ -1,4 +1,4 @@
-import uuid
+import uuid, os
 from typing import Optional
 
 from models import Resource, Folder, ResourceTag, Content
@@ -94,6 +94,17 @@ class ResourceService:
 
         if len(add_content_tags) > 0:
             BaseDao.insert_all(add_content_tags, db)
+
+    @staticmethod
+    def trim_files(content_id: int, attach_files: set[str]):
+        try:
+            path = f'static/content/{content_id}'
+            files = os.listdir(path)
+            for filename in files:
+                if attach_files is None or not filename in attach_files:
+                    os.remove(f'{path}/{filename}')
+        except Exception as e:
+            print(e.__str__())
 
     @staticmethod
     def check_permission(resource: Resource, user: UserOutput, operation_mask: int):

@@ -20,6 +20,7 @@ class ContentInput(FolderInput):
     category_name: str = None
     tags: list[TagSchema] = []
     sub_title: str = None
+    files: set = None
     content: bytes = None
 
 
