@@ -80,7 +80,8 @@ class Content(Resource):
                        title=content_input.title,
                        parent_url=content_input.parent_url,
                        permission=content_input.permission,
-                       category_name=content_input.category_name,
+                       category_id=content_input.category.id
+                                if content_input.category is not None else None,
                        tags=[PostTag(id=tag.id,
                                      name=tag.name)
                              for tag in content_input.tags],
@@ -94,7 +95,7 @@ class Content(Resource):
     sub_title = Column(String(255), nullable=True, comment="content summary")
     content = Column(LargeBinary(length=65536), nullable=True, comment="content html")
 
-    category_name = Column(String(128), ForeignKey('post_category.name'))
+    category_id = Column(Integer, ForeignKey('post_category.id'))
     category = relationship("PostCategory", back_populates="posts")
 
     tags = relationship('PostTag',

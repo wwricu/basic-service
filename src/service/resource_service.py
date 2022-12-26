@@ -1,5 +1,6 @@
 import uuid, os
 from typing import Optional
+from datetime import datetime
 
 from models import Resource, Folder, ResourceTag, Content
 from dao import BaseDao, ResourceDao
@@ -72,6 +73,7 @@ class ResourceService:
 
         resource.url = resource.parent_url + resource.this_url
 
+        resource.updated_time = datetime.now()
         res = BaseDao.update(resource, resource.__class__, db)
         if resource.url != old_resources[0].url:
             for re in sub_resources:
@@ -89,7 +91,7 @@ class ResourceService:
     def reset_content_tags(content: Content, db):
         BaseDao.delete_all([ResourceTag(resource_id=content.id)], ResourceTag, db)
         add_content_tags = [ResourceTag(resource_id=content.id,
-                                        tag_name=x.name)
+                                        tag_id=x.id)
                             for x in content.tags]
 
         if len(add_content_tags) > 0:

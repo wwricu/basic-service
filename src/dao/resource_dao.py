@@ -18,7 +18,7 @@ class ResourceDao:
         if tag_name is not None:
             res = res.filter(obj_class.tags.any(PostTag.name == tag_name))
         if category_name is not None:
-            res = res.filter(obj_class.category_name == category_name)
+            res = res.filter(obj_class.category.name == category_name)
         if page_size != 0:
             # res = res.offset(page_idx * page_size).limit(page_size)
             res = res.slice(page_idx * page_size, (page_idx + 1) * page_size)
@@ -36,7 +36,7 @@ class ResourceDao:
         if parent_url is not None and len(parent_url) > 0:
             res = res.filter(obj_class.parent_url == parent_url)
         if category_name is not None:
-            res = res.filter(obj_class.category_name == category_name)
+            res = res.filter(obj_class.category.name == category_name)
         if tag_name is not None:
             res = res.filter(obj_class.tags.any(PostTag.name == tag_name))
         db.commit()

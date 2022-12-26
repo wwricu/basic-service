@@ -36,8 +36,8 @@ class ResourceTag(Base):
         ForeignKey('content.id', ondelete='CASCADE'),
         nullable=False,
         primary_key=True)
-    tag_name = Column(
-        String(128),
-        ForeignKey('post_tag.name', ondelete='CASCADE'),
+    tag_id = Column(
+        Integer,
+        ForeignKey('post_tag.id', ondelete='CASCADE'),
         nullable=False,
         primary_key=True)

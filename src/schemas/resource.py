@@ -17,7 +17,7 @@ class FolderInput(ResourceBase):
 
 
 class ContentInput(FolderInput):
-    category_name: str = None
+    category: TagSchema = None
     tags: list[TagSchema] = []
     sub_title: str = None
     files: set = None
@@ -34,7 +34,7 @@ class FolderOutput(ResourceBase):
                             title=folder.title,
                             parent_url=folder.parent_url,
                             created_time=folder.created_time,
-                            modified_time=folder.updated_time)
+                            updated_time=folder.updated_time)
 
     url: str = None
     created_time: datetime = None
@@ -58,13 +58,15 @@ class ResourcePreview(FolderOutput):
                                                name=x.name)
                                      for x in resource.tags]
                                     if hasattr(resource, 'tags') else None,
-                               category_name=resource.category_name
-                                        if hasattr(resource, 'category_name') else None)
+                               category=TagSchema(id=resource.category.id,
+                                                  name=resource.category.name)
+                                        if hasattr(resource, 'category') and resource.category is not None
+                               else None)
 
     owner_id: int = None
     type: str = None
     tags: list[TagSchema] = None
-    category_name: str = None
+    category: TagSchema = None
 
 
 class ContentOutput(ResourcePreview):
@@ -83,7 +85,9 @@ class ContentOutput(ResourcePreview):
                              tags=[TagSchema(id=x.id,
                                              name=x.name)
                                    for x in content.tags],
-                             category_name=content.category_name,
+                             category=TagSchema(id=content.category.id,
+                                                name=content.category.name)
+                             if content.category is not None else None,
                              content=content.content)
 
     content: bytes = None
