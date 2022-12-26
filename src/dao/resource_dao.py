@@ -11,7 +11,7 @@ class ResourceDao:
                           tag_name: Optional[str] = None,
                           page_idx:  Optional[int] = 0,
                           page_size:  Optional[int] = 0) -> list[Content]:
-        res = db.query(obj_class).order_by(obj_class.created_time.desc())
+        res = db.query(obj_class).order_by(obj_class.updated_time.desc())
 
         if parent_url is not None and len(parent_url) > 0:
             res = res.filter(obj_class.parent_url == parent_url)
