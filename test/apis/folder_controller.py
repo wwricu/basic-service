@@ -1,6 +1,6 @@
 from test import client
 from test.apis import AuthToken
-from test.apis.auth_controller import test_auth, test_fake_auth
+from test.apis.auth_controller import test_auth
 
 from src.schemas import FolderInput
 

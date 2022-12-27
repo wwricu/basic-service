@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from models import Tag, ResourceTag
+from models import Tag
 from dao import BaseDao
 
 

@@ -3,7 +3,7 @@ from test.apis import AuthToken
 from test.apis.auth_controller import test_auth
 from test.apis.content_controller import test_add_content
 
-from src.schemas import ContentInput, TagSchema
+from src.schemas import TagSchema
 
 
 def test_add_tag(tag_name: str):
