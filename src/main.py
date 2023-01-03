@@ -5,6 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from service import DatabaseService
 from apis import router
+from core import Config
+
+Config.read_config()
 
 DatabaseService.init_db()
 
