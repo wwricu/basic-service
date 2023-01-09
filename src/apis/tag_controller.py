@@ -32,7 +32,7 @@ async def get_tag(tag_id: int = None,
 async def rename_tag(tag: TagSchema,
                      db: Session = Depends(get_db)):
     return TagSchema.init(TagService
-                          .rename_tag(Tag(id=tag.id, name=tag.name), db))
+                          .rename_tag(PostTag(id=tag.id, name=tag.name), db))
 
 
 @tag_router.delete("/{tag_id}",
