@@ -20,12 +20,15 @@ async def add_folder(folder_input: FolderInput,
     return FolderOutput.init(ResourceService
                              .add_resource(folder, db))
 
+
 @folder_router.get("/count/{url:path}", response_model=int)
 async def get_sub_count(url: str = None,
                         category_name: str = None,
                         tag_name: str = None,
                         cur_user: UserOutput = Depends(optional_login_required),
                         db: Session = Depends(get_db)):
+    if len(url) > 0 and url[0] != '/':
+        url = f'/{url}'
     folders = ResourceService.find_resources(Folder(url=url), db)
     assert len(folders) == 1
     ResourceService.check_permission(folders[0], cur_user, 1)
@@ -44,6 +47,8 @@ async def get_folder(url: str = '',
                      page_size: int = 0,
                      cur_user: UserOutput = Depends(optional_login_required),
                      db: Session = Depends(get_db)):
+    if len(url) > 0 and url[0] != '/':
+        url = f'/{url}'
     folders = ResourceService.find_resources(Folder(url=url), db)
     assert len(folders) == 1
     ResourceService.check_permission(folders[0], cur_user, 1)

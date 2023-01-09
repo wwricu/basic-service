@@ -57,10 +57,10 @@ class ResourcePreview(FolderOutput):
                                tags=[TagSchema(id=x.id,
                                                name=x.name)
                                      for x in resource.tags]
-                                    if hasattr(resource, 'tags') else None,
+                               if hasattr(resource, 'tags') else None,
                                category=TagSchema(id=resource.category.id,
                                                   name=resource.category.name)
-                                        if hasattr(resource, 'category') and resource.category is not None
+                               if hasattr(resource, 'category') and resource.category is not None
                                else None)
 
     owner_id: int = None

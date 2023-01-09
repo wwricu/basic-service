@@ -81,7 +81,7 @@ class Content(Resource):
                        parent_url=content_input.parent_url,
                        permission=content_input.permission,
                        category_id=content_input.category.id
-                                if content_input.category is not None else None,
+                       if content_input.category is not None else None,
                        tags=[PostTag(id=tag.id,
                                      name=tag.name)
                              for tag in content_input.tags],
@@ -108,4 +108,3 @@ class Content(Resource):
         'polymorphic_identity': 'content',
         'inherit_condition': id == Resource.id,
     }
-

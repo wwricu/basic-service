@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 
 from . import Base
 
+
 class Tag(Base):
     @classmethod
     def init(cls, tag_schema):
@@ -29,6 +30,7 @@ class PostTag(Tag):
         'polymorphic_identity': 'post_tag',
         'inherit_condition': id == Tag.id,
     }
+
 
 class PostCategory(Tag):
     __tablename__ = 'post_category'

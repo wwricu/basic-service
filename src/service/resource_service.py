@@ -1,4 +1,5 @@
-import uuid, os
+import os
+import uuid
 from typing import Optional
 from datetime import datetime
 
@@ -30,7 +31,7 @@ class ResourceService:
 
     @staticmethod
     def find_sub_resources(db,
-                           obj_class = Resource,
+                           obj_class=Resource,
                            parent_url: str = None,
                            category_name: Optional[str] = None,
                            tag_name: Optional[str] = None,
@@ -46,7 +47,7 @@ class ResourceService:
 
     @staticmethod
     def find_sub_count(db,
-                       obj_class = Resource,
+                       obj_class=Resource,
                        parent_url: Optional[str] = None,
                        category_name: Optional[str] = None,
                        tag_name: Optional[str] = None) -> int:
@@ -59,8 +60,7 @@ class ResourceService:
     @staticmethod
     def modify_resource(resource: Resource, db):
         old_resources = BaseDao.select(Resource(id=resource.id),
-                                                resource.__class__,
-                                                db)
+                                       resource.__class__, db)
         assert len(old_resources) == 1
         sub_resources = ResourceService.find_sub_resources(db,
                                                            Resource,
@@ -103,7 +103,7 @@ class ResourceService:
             path = f'static/content/{content_id}'
             files = os.listdir(path)
             for filename in files:
-                if attach_files is None or not filename in attach_files:
+                if attach_files is None or filename not in attach_files:
                     os.remove(f'{path}/{filename}')
         except Exception as e:
             print(e.__str__())

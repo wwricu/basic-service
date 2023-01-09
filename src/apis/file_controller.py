@@ -1,10 +1,12 @@
-import hashlib, os
+import os
+import hashlib
 from fastapi import Depends, APIRouter, UploadFile, Request, HTTPException
 
 from core.dependency import RequiresRoles
 
 
 file_router = APIRouter(prefix="/file", tags=["file"])
+
 
 @file_router.post("/static/content",
                   dependencies=[Depends(RequiresRoles('admin'))])

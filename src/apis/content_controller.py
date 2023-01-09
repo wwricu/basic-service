@@ -14,7 +14,6 @@ content_router = APIRouter(prefix="/content", tags=["content"])
 async def add_content(content_input: ContentInput,
                       cur_user: UserOutput = Depends(RequiresRoles('admin')),
                       db: Session = Depends(get_db)):
-    print(content_input.dict())
     content = Content.init(content_input)
     content.owner_id = cur_user.id
     content.permission = 700  # owner all, group 0, public 0
