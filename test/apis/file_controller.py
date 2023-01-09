@@ -17,9 +17,11 @@ def test_upload_static_file() -> int:
     assert response.status_code == 200
     return response
 
+
 def run_user_all_test():
     test_auth()
     test_upload_static_file()
+
 
 if __name__ == '__main__':
     run_user_all_test()

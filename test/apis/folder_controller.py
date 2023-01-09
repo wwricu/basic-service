@@ -4,11 +4,13 @@ from test.apis.auth_controller import test_auth
 
 from src.schemas import FolderInput
 
+
 def test_get_folder(url: str):
     response = client.get(f'/folder/sub_resources/{url}',
                           headers=AuthToken.headers)
     print(response.json())
     return response
+
 
 def test_add_category(parent_url: str, title: str):
     folder_input = FolderInput(title=title,
@@ -19,12 +21,15 @@ def test_add_category(parent_url: str, title: str):
     print(response.json())
     return response
 
+
 def test_delete_category(folder_id: int):
     return client.delete(f'/folder/{folder_id}',
                          headers=AuthToken.headers)
 
+
 def test_get_count():
     return client.get('/folder/count//post')
+
 
 def run_folder_all_test():
     test_auth()
@@ -37,6 +42,7 @@ def run_folder_all_test():
     r = test_get_count()
     print(r.json())
     assert r.status_code == 200
+
 
 if __name__ == '__main__':
     run_folder_all_test()

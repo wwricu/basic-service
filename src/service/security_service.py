@@ -4,7 +4,7 @@ import jwt
 
 from typing import Optional
 from datetime import datetime, timedelta
-from core.config import Config
+from config import Config
 from schemas import UserOutput
 
 

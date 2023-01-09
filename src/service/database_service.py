@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import database_exists, create_database
 
-from core.config import Config
+from config import Config
 from models import Base, SysUser, SysRole, Folder
 
 
@@ -80,3 +80,11 @@ class DatabaseService:
             print(e)
         finally:
             db.close()
+
+
+def get_db():
+    db = DatabaseService.get_session()
+    try:
+        yield db
+    finally:
+        db.close()

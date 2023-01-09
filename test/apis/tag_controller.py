@@ -14,6 +14,7 @@ def test_add_tag(tag_name: str):
     assert response.status_code == 200
     return response
 
+
 def test_add_category(cat_name: str):
     tag = TagSchema(name=cat_name)
     response = client.post('/category',
@@ -21,7 +22,7 @@ def test_add_category(cat_name: str):
                            headers=AuthToken.headers)
     assert response.status_code == 200
     return response
-    pass
+
 
 def test_modify_content(cat_name: str, tag_name: str):
     response = test_add_content()
@@ -34,6 +35,7 @@ def test_modify_content(cat_name: str, tag_name: str):
                json=new_content,
                headers=AuthToken.headers)
 
+
 def run_tag_all_test():
     test_auth()
     tag_name = 'test tag name'
@@ -41,6 +43,7 @@ def run_tag_all_test():
     cat_name = 'test cat name'
     test_add_category(cat_name)
     test_modify_content(cat_name, tag_name)
+
 
 if __name__ == '__main__':
     run_tag_all_test()

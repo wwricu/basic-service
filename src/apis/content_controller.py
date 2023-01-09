@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 
 from models import Content, Resource
 from schemas import ContentInput, ContentOutput, UserOutput
-from service import ResourceService
-from core.dependency import get_db, RequiresRoles, optional_login_required
+from service import ResourceService, get_db
+from .auth_controller import RequiresRoles, optional_login_required
 
 
 content_router = APIRouter(prefix="/content", tags=["content"])

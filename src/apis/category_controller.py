@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from schemas import TagSchema
-from service import TagService
+from service import TagService, get_db
 from models import PostCategory
-from core.dependency import get_db, RequiresRoles
+from .auth_controller import RequiresRoles
 
 
 category_router = APIRouter(prefix="/category", tags=["category"])

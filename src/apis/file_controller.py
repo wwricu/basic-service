@@ -1,8 +1,7 @@
 import os
 import hashlib
 from fastapi import Depends, APIRouter, UploadFile, Request, HTTPException
-
-from core.dependency import RequiresRoles
+from .auth_controller import RequiresRoles
 
 
 file_router = APIRouter(prefix="/file", tags=["file"])

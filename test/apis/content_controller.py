@@ -4,6 +4,7 @@ from test.apis.auth_controller import test_auth
 
 from src.schemas import ContentInput
 
+
 def test_add_content():
     content_input = {
         'title': 'test title',
@@ -17,6 +18,7 @@ def test_add_content():
     print(response.json())
     assert response.status_code == 200
     return response
+
 
 def test_modify_content(content_id: int):
     content_input = ContentInput(id=content_id,
@@ -38,11 +40,13 @@ def test_delete_content(content_id: int):
     assert response.status_code == 200
     return response
 
+
 def run_content_all_test():
     test_auth()
     r = test_add_content()
     test_modify_content(r.json())
     test_delete_content(r.json())
+
 
 if __name__ == '__main__':
     run_content_all_test()
