@@ -1,4 +1,3 @@
-from typing import Optional
 from models import Content, PostCategory, PostTag
 
 
@@ -6,11 +5,11 @@ class ResourceDao:
     @staticmethod
     def get_sub_resources(db,
                           obj_class,
-                          parent_url: Optional[str] = None,
-                          category_name: Optional[str] = None,
-                          tag_name: Optional[str] = None,
-                          page_idx:  Optional[int] = 0,
-                          page_size:  Optional[int] = 0) -> list[Content]:
+                          parent_url: str | None = None,
+                          category_name: str | None = None,
+                          tag_name: str | None = None,
+                          page_idx:  int | None = 0,
+                          page_size:  int | None = 0) -> list[Content]:
         res = db.query(obj_class).order_by(obj_class.updated_time.desc())
 
         if parent_url is not None and len(parent_url) > 0:
@@ -29,9 +28,9 @@ class ResourceDao:
     @staticmethod
     def get_sub_resource_count(db,
                                obj_class,
-                               parent_url: Optional[str] = None,
-                               category_name: Optional[str] = None,
-                               tag_name: Optional[str] = None):
+                               parent_url: str | None = None,
+                               category_name: str | None = None,
+                               tag_name: str | None = None):
         res = db.query(obj_class)
         if parent_url is not None and len(parent_url) > 0:
             res = res.filter(obj_class.parent_url == parent_url)

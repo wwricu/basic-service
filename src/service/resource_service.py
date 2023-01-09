@@ -1,6 +1,5 @@
 import os
 import uuid
-from typing import Optional
 from datetime import datetime
 
 from models import Resource, Folder, ResourceTag, Content
@@ -33,10 +32,10 @@ class ResourceService:
     def find_sub_resources(db,
                            obj_class=Resource,
                            parent_url: str = None,
-                           category_name: Optional[str] = None,
-                           tag_name: Optional[str] = None,
-                           page_idx: Optional[int] = 0,
-                           page_size: Optional[int] = 0):
+                           category_name: str | None = None,
+                           tag_name: str | None = None,
+                           page_idx: int | None = 0,
+                           page_size: int | None = 0):
         return ResourceDao.get_sub_resources(db,
                                              obj_class,
                                              parent_url,
@@ -48,9 +47,9 @@ class ResourceService:
     @staticmethod
     def find_sub_count(db,
                        obj_class=Resource,
-                       parent_url: Optional[str] = None,
-                       category_name: Optional[str] = None,
-                       tag_name: Optional[str] = None) -> int:
+                       parent_url: str | None = None,
+                       category_name: str | None = None,
+                       tag_name: str | None = None) -> int:
         return ResourceDao.get_sub_resource_count(db,
                                                   obj_class,
                                                   parent_url,

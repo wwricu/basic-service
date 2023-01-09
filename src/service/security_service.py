@@ -2,7 +2,6 @@ import secrets
 import hashlib
 import jwt
 
-from typing import Optional
 from datetime import datetime, timedelta
 from config import Config
 from schemas import UserOutput
@@ -27,7 +26,7 @@ class SecurityService:
                                        .hexdigest()
 
     @staticmethod
-    def create_jwt_token(user_info: UserOutput, refresh: Optional[bool] = False):
+    def create_jwt_token(user_info: UserOutput, refresh: bool | None = False):
         data = user_info.dict()
         delta = timedelta(minutes=60)
         if refresh:
