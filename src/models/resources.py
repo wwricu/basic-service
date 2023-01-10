@@ -2,7 +2,7 @@ from datetime import datetime
 from sqlalchemy import Integer, Column, String, DateTime, ForeignKey, LargeBinary
 from sqlalchemy.orm import relationship
 
-from . import Base
+from .sys_user import Base
 from .tag import PostTag
 
 

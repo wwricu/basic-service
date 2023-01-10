@@ -1,7 +1,7 @@
 from sqlalchemy import Integer, Column, String, ForeignKey
 from sqlalchemy.orm import relationship
 
-from . import Base
+from .sys_user import Base
 
 
 class Tag(Base):
