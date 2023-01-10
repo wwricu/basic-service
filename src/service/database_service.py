@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy_utils import database_exists, create_database
 
 from config import Config
@@ -17,7 +17,7 @@ class DatabaseService:
         return cls.__engine
 
     @classmethod
-    def get_session(cls):
+    def get_session(cls) -> Session:
         engine = cls.get_engine()
         return sessionmaker(autocommit=False,
                             autoflush=False,
@@ -25,7 +25,7 @@ class DatabaseService:
                             bind=engine)()
 
     @classmethod
-    def get_db(cls):
+    def get_db(cls) -> Session:
         with cls.get_session() as session:
             yield session
 

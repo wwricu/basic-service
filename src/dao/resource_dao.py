@@ -1,15 +1,16 @@
-from models import Content, PostCategory, PostTag
+from sqlalchemy.orm import Session
+from models import PostCategory, PostTag
 
 
 class ResourceDao:
     @staticmethod
-    def get_sub_resources(db,
+    def get_sub_resources(db: Session,
                           obj_class,
                           parent_url: str | None = None,
                           category_name: str | None = None,
                           tag_name: str | None = None,
                           page_idx:  int | None = 0,
-                          page_size:  int | None = 0) -> list[Content]:
+                          page_size:  int | None = 0) -> list[any]:
         res = db.query(obj_class).order_by(obj_class.updated_time.desc())
 
         if parent_url is not None and len(parent_url) > 0:
@@ -26,11 +27,11 @@ class ResourceDao:
         return res.all()
 
     @staticmethod
-    def get_sub_resource_count(db,
+    def get_sub_resource_count(db: Session,
                                obj_class,
                                parent_url: str | None = None,
                                category_name: str | None = None,
-                               tag_name: str | None = None):
+                               tag_name: str | None = None) -> int:
         res = db.query(obj_class)
         if parent_url is not None and len(parent_url) > 0:
             res = res.filter(obj_class.parent_url == parent_url)

@@ -18,14 +18,14 @@ async def add_content(content_input: ContentInput,
     content.owner_id = cur_user.id
     content.permission = 700  # owner all, group 0, public 0
     content.parent_url = '/draft'
-    return ResourceService.add_resource(content, db).id
+    return ResourceService.add_resource(db, content).id
 
 
 @content_router.get("/{content_id}", response_model=ContentOutput)
 async def get_content(content_id: int,
                       cur_user: UserOutput = Depends(optional_login_required),
                       db: Session = Depends(DatabaseService.get_db)):
-    contents = ResourceService.find_resources(Content(id=content_id), db)
+    contents = ResourceService.find_resources(db, Content(id=content_id))
     if len(contents) != 1 or not ResourceService.check_permission(contents[0],
                                                                   cur_user,
                                                                   1):
@@ -40,9 +40,9 @@ async def get_content(content_id: int,
 async def modify_content(content: ContentInput,
                          db: Session = Depends(DatabaseService.get_db)):
     await ResourceService.trim_files(content.id, content.files)
-    ResourceService.reset_content_tags(Content.init(content), db)
+    ResourceService.reset_content_tags(db, Content.init(content))
     return ContentOutput.init(ResourceService
-                              .modify_resource(Content.init(content), db))
+                              .modify_resource(db, Content.init(content)))
 
 
 @content_router.delete("/{content_id}",
@@ -51,4 +51,4 @@ async def modify_content(content: ContentInput,
 async def delete_content(content_id: int,
                          db: Session = Depends(DatabaseService.get_db)):
     await ResourceService.trim_files(content_id, set())
-    return ResourceService.remove_resource(Resource(id=content_id), db)
+    return ResourceService.remove_resource(db, Resource(id=content_id))

@@ -14,10 +14,12 @@ auth_router = APIRouter(prefix="/auth", tags=["auth"])
 oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="auth", auto_error=False)
 
 
-async def optional_login_required(response: Response,
-                                  access_token: str = Depends(oauth2_scheme_optional),
-                                  refresh_token: str | None = Header(default=None)) \
-        -> UserOutput | None:
+async def optional_login_required(
+        response: Response,
+        access_token: str = Depends(oauth2_scheme_optional),
+        refresh_token: str | None = Header(default=None)
+) -> UserOutput | None:
+
     if access_token is None or refresh_token is None:
         return None
 
@@ -40,8 +42,10 @@ async def optional_login_required(response: Response,
                       roles=data['roles'])
 
 
-async def requires_login(result:
-                         UserOutput = Depends(optional_login_required)) -> UserOutput:
+async def requires_login(
+        result: UserOutput = Depends(optional_login_required)
+) -> UserOutput:
+
     if result is None:
         raise HTTPException(status_code=401, detail="unauthenticated")
 
@@ -52,9 +56,9 @@ class RequiresRoles:
     def __init__(self, required_role: str):
         self.required_role = required_role
 
-    def __call__(self,
-                 user_output: UserOutput = Depends(requires_login)) \
-            -> UserOutput:
+    def __call__(
+            self, user_output: UserOutput = Depends(requires_login)
+    ) -> UserOutput:
 
         for role in user_output.roles:
             if role.name == 'admin' or self.required_role == role:
@@ -71,10 +75,10 @@ async def get_current_user(user_output: UserOutput = Depends(requires_login)):
 @auth_router.post("", response_model=TokenResponse)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(),
                 db: Session = Depends(DatabaseService.get_db)):
-    user_output = UserService \
-        .user_login(UserInput(username=form_data.username,
-                              password=form_data.password),
-                    db)
+    user_output = UserService.user_login(
+        db, UserInput(username=form_data.username,
+                      password=form_data.password)
+    )
     access_token = SecurityService.create_jwt_token(user_output)
     refresh_token = SecurityService.create_jwt_token(user_output, True)
     return TokenResponse(access_token=access_token,

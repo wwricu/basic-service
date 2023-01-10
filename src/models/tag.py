@@ -5,13 +5,6 @@ from . import Base
 
 
 class Tag(Base):
-    @classmethod
-    def init(cls, tag_schema):
-        if tag_schema is None:
-            return None
-        return Tag(id=tag_schema.id,
-                   name=tag_schema.name)
-
     __tablename__ = 'tag'
     id = Column(Integer, primary_key=True, autoincrement=True)
 

@@ -1,6 +1,7 @@
 import os
 import uuid
 from datetime import datetime
+from sqlalchemy.orm import Session
 
 from models import Resource, Folder, ResourceTag, Content
 from dao import BaseDao, ResourceDao
@@ -9,7 +10,7 @@ from schemas import UserOutput
 
 class ResourceService:
     @staticmethod
-    def add_resource(resource: Resource, db):
+    def add_resource(db: Session, resource: Resource):
         parent_url = ''
         if resource.parent_url is not None:
             parent = BaseDao.select(Resource(url=resource.parent_url),
@@ -25,11 +26,11 @@ class ResourceService:
         return BaseDao.insert(resource, db)
 
     @staticmethod
-    def find_resources(resource: Resource, db):
+    def find_resources(db: Session, resource: Resource):
         return BaseDao.select(resource, resource.__class__, db)
 
     @staticmethod
-    def find_sub_resources(db,
+    def find_sub_resources(db: Session,
                            obj_class=Resource,
                            parent_url: str = None,
                            category_name: str | None = None,
@@ -45,7 +46,7 @@ class ResourceService:
                                              page_size)
 
     @staticmethod
-    def find_sub_count(db,
+    def find_sub_count(db: Session,
                        obj_class=Resource,
                        parent_url: str | None = None,
                        category_name: str | None = None,
@@ -57,7 +58,7 @@ class ResourceService:
                                                   tag_name)
 
     @staticmethod
-    def modify_resource(resource: Resource, db):
+    def modify_resource(db: Session, resource: Resource):
         old_resources = BaseDao.select(Resource(id=resource.id),
                                        resource.__class__, db)
         assert len(old_resources) == 1
@@ -78,16 +79,16 @@ class ResourceService:
             for re in sub_resources:
                 # foreign key restraint: must update parent url to make it existing
                 re.parent_url = resource.url
-                ResourceService.modify_resource(re, db)
+                ResourceService.modify_resource(db, re)
 
         return res
 
     @staticmethod
-    def remove_resource(resource: Resource, db):
+    def remove_resource(db: Session, resource: Resource):
         return BaseDao.delete(resource, Resource, db)
 
     @staticmethod
-    def reset_content_tags(content: Content, db):
+    def reset_content_tags(db: Session, content: Content):
         BaseDao.delete_all([ResourceTag(resource_id=content.id)], ResourceTag, db)
         add_content_tags = [ResourceTag(resource_id=content.id,
                                         tag_id=x.id)
@@ -108,9 +109,12 @@ class ResourceService:
             print(e.__str__())
 
     @staticmethod
-    def check_permission(resource: Resource, user: UserOutput, operation_mask: int):
-        permission = resource.permission % 10
+    def check_permission(
+            resource: Resource,
+            user: UserOutput,
+            operation_mask: int) -> bool | None:
 
+        permission = resource.permission % 10
         if user is not None:
             for role in user.roles:
                 if role.name == 'admin':

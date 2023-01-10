@@ -17,8 +17,7 @@ async def add_folder(folder_input: FolderInput,
     folder = Folder.init(folder_input)
     folder.owner_id = cur_user.id
     folder.permission = 701  # owner all, group 0, public read
-    return FolderOutput.init(ResourceService
-                             .add_resource(folder, db))
+    return FolderOutput.init(ResourceService.add_resource(db, folder))
 
 
 @folder_router.get("/count/{url:path}", response_model=int)
@@ -29,7 +28,7 @@ async def get_sub_count(url: str = None,
                         db: Session = Depends(DatabaseService.get_db)):
     if len(url) > 0 and url[0] != '/':
         url = f'/{url}'
-    folders = ResourceService.find_resources(Folder(url=url), db)
+    folders = ResourceService.find_resources(db, Folder(url=url))
     assert len(folders) == 1
     ResourceService.check_permission(folders[0], cur_user, 1)
     return ResourceService.find_sub_count(db,
@@ -49,7 +48,7 @@ async def get_folder(url: str = '',
                      db: Session = Depends(DatabaseService.get_db)):
     if len(url) > 0 and url[0] != '/':
         url = f'/{url}'
-    folders = ResourceService.find_resources(Folder(url=url), db)
+    folders = ResourceService.find_resources(db, Folder(url=url))
     assert len(folders) == 1
     ResourceService.check_permission(folders[0], cur_user, 1)
     sub_resources = ResourceService.find_sub_resources(db,
@@ -68,11 +67,11 @@ async def get_folder(url: str = '',
 async def modify_folder(folder: FolderInput,
                         db: Session = Depends(DatabaseService.get_db)):
     return FolderOutput.init(ResourceService
-                             .modify_resource(Folder.init(folder), db))
+                             .modify_resource(db, Folder.init(folder)))
 
 
 @folder_router.delete("/{folder_id}",
                       response_model=int,
                       dependencies=[Depends(RequiresRoles('admin'))])
 async def delete_folder(folder_id: int = 0, db: Session = Depends(DatabaseService.get_db)):
-    return ResourceService.remove_resource(Resource(id=folder_id), db)
+    return ResourceService.remove_resource(db, Resource(id=folder_id))

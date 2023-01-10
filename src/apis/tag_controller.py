@@ -15,14 +15,14 @@ tag_router = APIRouter(prefix="/tag", tags=["tag"])
                  response_model=TagSchema)
 async def add_tag(tag: TagSchema,
                   db: Session = Depends(DatabaseService.get_db)):
-    return TagSchema.init(TagService.add_tag(PostTag(name=tag.name), db))
+    return TagSchema.init(TagService.add_tag(db, PostTag(name=tag.name)))
 
 
 @tag_router.get("", response_model=list[TagSchema])
 async def get_tag(tag_id: int = None,
                   name: str = None,
                   db: Session = Depends(DatabaseService.get_db)):
-    tags = TagService.find_tag(PostTag(id=tag_id, name=name), db)
+    tags = TagService.find_tag(db, PostTag(id=tag_id, name=name))
     return [TagSchema.init(x) for x in tags]
 
 
@@ -40,4 +40,4 @@ async def rename_tag(tag: TagSchema,
                    response_model=int)
 async def remove_tag(tag_id: int,
                      db: Session = Depends(DatabaseService.get_db)):
-    return TagService.remove_tag(Tag(id=tag_id), db)
+    return TagService.remove_tag(db, Tag(id=tag_id))

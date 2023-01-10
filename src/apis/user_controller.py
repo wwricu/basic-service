@@ -14,7 +14,7 @@ user_router = APIRouter(prefix="/user", tags=["user"])
                   response_model=UserOutput)
 async def add_user(user_input: UserInput,
                    db: Session = Depends(DatabaseService.get_db)):
-    return UserService.add_user(user_input, db)
+    return UserService.add_user(db, user_input)
 
 
 @user_router.get("/{user_id}",
@@ -24,9 +24,11 @@ async def get_users(user_id: int = None,
                     username: str = None,
                     email: str = None,
                     db: Session = Depends(DatabaseService.get_db)):
-    return UserService.find_user(UserInput(id=user_id,
-                                           username=username,
-                                           email=email), db)
+    return UserService.find_user(
+        db, UserInput(id=user_id,
+                      username=username,
+                      email=email)
+    )
 
 
 @user_router.put("",
@@ -34,7 +36,7 @@ async def get_users(user_id: int = None,
                  response_model=UserOutput)
 async def modify_users(user_input: UserInput,
                        db: Session = Depends(DatabaseService.get_db)):
-    return UserService.modify_user(user_input, db)
+    return UserService.modify_user(db, user_input)
 
 
 @user_router.delete("/{user_id}",
@@ -42,4 +44,4 @@ async def modify_users(user_input: UserInput,
                     response_model=int)
 async def remove_users(user_id: int,
                        db: Session = Depends(DatabaseService.get_db)):
-    return UserService.remove_user(UserInput(id=user_id), db)
+    return UserService.remove_user(db, UserInput(id=user_id))
