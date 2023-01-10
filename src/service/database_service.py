@@ -25,6 +25,11 @@ class DatabaseService:
                             bind=engine)()
 
     @classmethod
+    def get_db(cls):
+        with cls.get_session() as session:
+            yield session
+
+    @classmethod
     def init_db(cls):
         engine = cls.get_engine()
         if not database_exists(engine.url):
@@ -36,7 +41,7 @@ class DatabaseService:
 
     @classmethod
     def insert_admin(cls):
-        db = DatabaseService.get_session()
+        db = cls.get_session()
         try:
             admin_role = SysRole(name='admin',
                                  description='Admin role')
@@ -56,7 +61,7 @@ class DatabaseService:
 
     @classmethod
     def insert_root_folder(cls):
-        db = DatabaseService.get_session()
+        db = cls.get_session()
         try:
             root_folder = Folder(title='root',
                                  permission=0,
@@ -80,11 +85,3 @@ class DatabaseService:
             print(e)
         finally:
             db.close()
-
-
-def get_db():
-    db = DatabaseService.get_session()
-    try:
-        yield db
-    finally:
-        db.close()

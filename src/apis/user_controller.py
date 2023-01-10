@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from schemas import UserInput, UserOutput
-from service import UserService, get_db
+from service import UserService, DatabaseService
 from .auth_controller import RequiresRoles
 
 
@@ -13,7 +13,7 @@ user_router = APIRouter(prefix="/user", tags=["user"])
                   dependencies=[Depends(RequiresRoles('admin'))],
                   response_model=UserOutput)
 async def add_user(user_input: UserInput,
-                   db: Session = Depends(get_db)):
+                   db: Session = Depends(DatabaseService.get_db)):
     return UserService.add_user(user_input, db)
 
 
@@ -23,7 +23,7 @@ async def add_user(user_input: UserInput,
 async def get_users(user_id: int = None,
                     username: str = None,
                     email: str = None,
-                    db: Session = Depends(get_db)):
+                    db: Session = Depends(DatabaseService.get_db)):
     return UserService.find_user(UserInput(id=user_id,
                                            username=username,
                                            email=email), db)
@@ -33,7 +33,7 @@ async def get_users(user_id: int = None,
                  dependencies=[Depends(RequiresRoles('admin'))],
                  response_model=UserOutput)
 async def modify_users(user_input: UserInput,
-                       db: Session = Depends(get_db)):
+                       db: Session = Depends(DatabaseService.get_db)):
     return UserService.modify_user(user_input, db)
 
 
@@ -41,5 +41,5 @@ async def modify_users(user_input: UserInput,
                     dependencies=[Depends(RequiresRoles('admin'))],
                     response_model=int)
 async def remove_users(user_id: int,
-                       db: Session = Depends(get_db)):
+                       db: Session = Depends(DatabaseService.get_db)):
     return UserService.remove_user(UserInput(id=user_id), db)

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from models import Folder, Content, Resource
 from schemas import FolderInput, FolderOutput, UserOutput, ResourcePreview
-from service import ResourceService, get_db
+from service import ResourceService, DatabaseService
 from .auth_controller import RequiresRoles, optional_login_required
 
 
@@ -13,7 +13,7 @@ folder_router = APIRouter(prefix="/folder", tags=["folder"])
 @folder_router.post("", response_model=FolderOutput)
 async def add_folder(folder_input: FolderInput,
                      cur_user: UserOutput = Depends(RequiresRoles('admin')),
-                     db: Session = Depends(get_db)):
+                     db: Session = Depends(DatabaseService.get_db)):
     folder = Folder.init(folder_input)
     folder.owner_id = cur_user.id
     folder.permission = 701  # owner all, group 0, public read
@@ -26,7 +26,7 @@ async def get_sub_count(url: str = None,
                         category_name: str = None,
                         tag_name: str = None,
                         cur_user: UserOutput = Depends(optional_login_required),
-                        db: Session = Depends(get_db)):
+                        db: Session = Depends(DatabaseService.get_db)):
     if len(url) > 0 and url[0] != '/':
         url = f'/{url}'
     folders = ResourceService.find_resources(Folder(url=url), db)
@@ -46,7 +46,7 @@ async def get_folder(url: str = '',
                      page_idx: int = 0,
                      page_size: int = 0,
                      cur_user: UserOutput = Depends(optional_login_required),
-                     db: Session = Depends(get_db)):
+                     db: Session = Depends(DatabaseService.get_db)):
     if len(url) > 0 and url[0] != '/':
         url = f'/{url}'
     folders = ResourceService.find_resources(Folder(url=url), db)
@@ -66,7 +66,7 @@ async def get_folder(url: str = '',
                    dependencies=[Depends(RequiresRoles('admin'))],
                    response_model=FolderOutput)
 async def modify_folder(folder: FolderInput,
-                        db: Session = Depends(get_db)):
+                        db: Session = Depends(DatabaseService.get_db)):
     return FolderOutput.init(ResourceService
                              .modify_resource(Folder.init(folder), db))
 
@@ -74,5 +74,5 @@ async def modify_folder(folder: FolderInput,
 @folder_router.delete("/{folder_id}",
                       response_model=int,
                       dependencies=[Depends(RequiresRoles('admin'))])
-async def delete_folder(folder_id: int = 0, db: Session = Depends(get_db)):
+async def delete_folder(folder_id: int = 0, db: Session = Depends(DatabaseService.get_db)):
     return ResourceService.remove_resource(Resource(id=folder_id), db)

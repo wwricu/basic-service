@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from service import SecurityService, UserService, get_db
+from service import SecurityService, UserService, DatabaseService
 from schemas import UserInput, UserOutput, TokenResponse
 from config import Config
 
@@ -70,7 +70,7 @@ async def get_current_user(user_output: UserOutput = Depends(requires_login)):
 
 @auth_router.post("", response_model=TokenResponse)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(),
-                db: Session = Depends(get_db)):
+                db: Session = Depends(DatabaseService.get_db)):
     user_output = UserService \
         .user_login(UserInput(username=form_data.username,
                               password=form_data.password),
