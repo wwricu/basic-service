@@ -13,14 +13,16 @@ class SecurityService:
         return secrets.token_urlsafe()
 
     @staticmethod
-    def get_password_hash(plain_password, salt) -> str:
+    def get_password_hash(plain_password: str, salt: str) -> str:
         after_salt = hashlib.md5(
             plain_password.encode(encoding='utf-8')
         ).hexdigest() + salt
         return hashlib.md5(after_salt.encode(encoding='utf-8')).hexdigest()
 
     @staticmethod
-    def verify_password(plain_password, salt, password_hash) -> str:
+    def verify_password(plain_password: str,
+                        salt: str,
+                        password_hash: str) -> bool:
         after_salt = hashlib.md5(
             plain_password.encode(encoding='utf-8')
         ).hexdigest() + salt

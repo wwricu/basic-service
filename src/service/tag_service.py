@@ -7,16 +7,16 @@ from dao import BaseDao
 class TagService:
     @staticmethod
     def add_tag(db: Session, tag: Tag) -> Tag:
-        return BaseDao.insert(tag, db)
+        return BaseDao.insert(db, tag)
 
     @staticmethod
     def find_tag(db: Session, tag: Tag) -> list[Tag]:
-        return BaseDao.select(tag, tag.__class__, db)
+        return BaseDao.select(db, tag, tag.__class__)
 
     @staticmethod
     def rename_tag(db: Session, tag: Tag) -> Tag:
-        return BaseDao.update(tag, tag.__class__, db)
+        return BaseDao.update(db, tag, tag.__class__)
 
     @staticmethod
     def remove_tag(db: Session, tag: Tag) -> int:
-        return BaseDao.delete(tag, tag.__class__, db)
+        return BaseDao.delete(db, tag, tag.__class__)

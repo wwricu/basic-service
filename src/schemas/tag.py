@@ -1,10 +1,11 @@
+from __future__ import annotations
 from pydantic import BaseModel
 from models import Tag
 
 
 class TagSchema(BaseModel):
     @classmethod
-    def init(cls, tag: Tag):
+    def init(cls, tag: Tag) -> TagSchema | None:
         if tag is None:
             return None
         return TagSchema(id=tag.id,

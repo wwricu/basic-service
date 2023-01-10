@@ -1,6 +1,11 @@
+from sqlalchemy import Table
+from sqlalchemy.orm import Session
+from typing import Type
+
+
 class BaseDao:
     @staticmethod
-    def get_query(obj, class_name, db):
+    def get_query(db: Session, obj: Table, class_name: Table | Type):
         res = db.query(class_name)
 
         for key in class_name.__dict__:
@@ -14,31 +19,28 @@ class BaseDao:
         return res
 
     @staticmethod
-    def insert(obj, db):
+    def insert(db: Session, obj: Table):
         db.add(obj)
         db.commit()
-        # db.refresh(obj)
-        # db.expunge(obj)
         return obj
 
     @staticmethod
-    def insert_all(obj, db):
+    def insert_all(db: Session, obj: list[Table]):
         db.add_all(obj)
         db.commit()
 
     @staticmethod
-    def select(obj, class_name, db):
-        res = BaseDao.get_query(obj, class_name, db).all()
+    def select(db: Session, obj: any, class_name: Table | Type):
+        res = BaseDao.get_query(db, obj, class_name).all()
         db.commit()
         return res
 
     @staticmethod
-    def update(obj, class_name, db):
+    def update(db: Session, obj: any, class_name: Table | Type):
         if obj.id is None or obj.id == 0:
             return
 
-        origin_obj = db.query(class_name) \
-                       .filter_by(id=obj.id).one()
+        origin_obj = db.query(class_name).filter_by(id=obj.id).one()
         for key in obj.__dict__:
             if key[0] == '_' or getattr(obj, key) is None:
                 continue
@@ -50,19 +52,17 @@ class BaseDao:
         return origin_obj
 
     @staticmethod
-    def delete(obj, class_name, db):
+    def delete(db: Session, obj: any, class_name: Table | Type):
         if obj.id is None or obj.id == 0:
             return
-        count = db.query(class_name) \
-                  .filter_by(id=obj.id) \
-                  .delete()
+        count = db.query(class_name).filter_by(id=obj.id).delete()
         db.commit()
         return count
 
     @staticmethod
-    def delete_all(objs, class_name, db):
+    def delete_all(db: Session, objs: list, class_name: Table | Type):
         count = 0
         for obj in objs:
-            count += BaseDao.get_query(obj, class_name, db).delete()
+            count += BaseDao.get_query(db, obj, class_name).delete()
         db.commit()
         return count

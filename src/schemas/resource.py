@@ -26,7 +26,7 @@ class ContentInput(FolderInput):
 
 class FolderOutput(ResourceBase):
     @classmethod
-    def init(cls, folder: Folder):
+    def init(cls, folder: Folder) -> FolderOutput | None:
         if not isinstance(folder, Folder):
             return None
         return FolderOutput(id=folder.id,
@@ -43,7 +43,7 @@ class FolderOutput(ResourceBase):
 
 class ResourcePreview(FolderOutput):
     @classmethod
-    def init(cls, resource: Resource):
+    def init(cls, resource: Resource) -> ResourcePreview | None:
         if resource is None:
             return None
         return ResourcePreview(id=resource.id,
@@ -71,7 +71,7 @@ class ResourcePreview(FolderOutput):
 
 class ContentOutput(ResourcePreview):
     @classmethod
-    def init(cls, content: Content):
+    def init(cls, content: Content) -> ContentOutput | None:
         if not isinstance(content, Content):
             return None
         return ContentOutput(id=content.id,

@@ -5,7 +5,7 @@ from models import PostCategory, PostTag
 class ResourceDao:
     @staticmethod
     def get_sub_resources(db: Session,
-                          obj_class,
+                          obj_class: any,
                           parent_url: str | None = None,
                           category_name: str | None = None,
                           tag_name: str | None = None,
@@ -28,7 +28,7 @@ class ResourceDao:
 
     @staticmethod
     def get_sub_resource_count(db: Session,
-                               obj_class,
+                               obj_class: any,
                                parent_url: str | None = None,
                                category_name: str | None = None,
                                tag_name: str | None = None) -> int:
