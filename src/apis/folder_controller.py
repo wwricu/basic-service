@@ -6,11 +6,12 @@ from service import ResourceService, DatabaseService
 from .auth_controller import RequiresRoles, optional_login_required
 
 
-folder_router = APIRouter(prefix="/folder", tags=["folder"])
+folder_router = APIRouter(prefix="/folder",
+                          tags=["folder"],
+                          dependencies=[Depends(DatabaseService.open_session)])
 
 
 @folder_router.post("",
-                    dependencies=[Depends(DatabaseService.open_session)],
                     response_model=FolderOutput)
 async def add_folder(folder_input: FolderInput,
                      cur_user: UserOutput = Depends(RequiresRoles('admin'))):
@@ -21,7 +22,6 @@ async def add_folder(folder_input: FolderInput,
 
 
 @folder_router.get("/count/{url:path}",
-                   dependencies=[Depends(DatabaseService.open_session)],
                    response_model=int)
 async def get_sub_count(url: str = None,
                         category_name: str = None,
@@ -39,7 +39,6 @@ async def get_sub_count(url: str = None,
 
 
 @folder_router.get("/sub_content/{url:path}",
-                   dependencies=[Depends(DatabaseService.open_session)],
                    response_model=list[ResourcePreview])
 async def get_folder(url: str = '',
                      category_name: str = None,
@@ -62,8 +61,7 @@ async def get_folder(url: str = '',
 
 
 @folder_router.put("",
-                   dependencies=[Depends(RequiresRoles('admin')),
-                                 Depends(DatabaseService.open_session)],
+                   dependencies=[Depends(RequiresRoles('admin'))],
                    response_model=FolderOutput)
 async def modify_folder(folder: FolderInput):
     return FolderOutput.init(ResourceService
@@ -71,8 +69,7 @@ async def modify_folder(folder: FolderInput):
 
 
 @folder_router.delete("/{folder_id}",
-                      dependencies=[Depends(RequiresRoles('admin')),
-                                    Depends(DatabaseService.open_session)],
+                      dependencies=[Depends(RequiresRoles('admin'))],
                       response_model=int)
 async def delete_folder(folder_id: int = 0):
     return ResourceService.remove_resource(Resource(id=folder_id))
