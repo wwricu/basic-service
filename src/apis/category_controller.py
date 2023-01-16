@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from schemas import TagSchema
 from service import TagService, DatabaseService
-from models import PostCategory
+from models import PostCategory, Tag
 from .auth_controller import RequiresRoles
 
 
@@ -19,9 +19,9 @@ async def add_category(category: TagSchema):
 
 
 @category_router.get("", response_model=list[TagSchema])
-async def get_category(tag_id: int = None,
-                       name: str = None):
-    tags = TagService.find_tag(PostCategory(id=tag_id, name=name))
+async def get_category(category: TagSchema = Depends()):
+    tags = TagService.find_tag(PostCategory(id=category.id,
+                                            name=category.name))
     return [TagSchema.init(x) for x in tags]
 
 
@@ -32,3 +32,10 @@ async def rename_category(category: TagSchema):
     return TagSchema.init(TagService.rename_tag(
         PostCategory(id=category.id, name=category.name)
     ))
+
+
+@category_router.delete("/{category_id}",
+                        dependencies=[Depends(RequiresRoles('admin'))],
+                        response_model=int)
+async def remove_tag(category_id: int):
+    return TagService.remove_tag(Tag(id=category_id))

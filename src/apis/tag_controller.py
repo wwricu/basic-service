@@ -19,9 +19,8 @@ async def add_tag(tag: TagSchema):
 
 
 @tag_router.get("", response_model=list[TagSchema])
-async def get_tag(tag_id: int = None,
-                  name: str = None):
-    tags = TagService.find_tag(PostTag(id=tag_id, name=name))
+async def get_tag(tag: TagSchema = Depends()):
+    tags = TagService.find_tag(PostTag(id=tag.id, name=tag.name))
     return [TagSchema.init(x) for x in tags]
 
 

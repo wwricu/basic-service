@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from dao import BaseDao
 from schemas import UserInput, UserOutput
 from models import SysUser
@@ -14,7 +15,7 @@ class UserService:
                 sys_user.salt,
                 sys_user.password_hash
         ):
-            raise Exception('Password Mismatch')
+            raise HTTPException(status_code=401, detail="password mismatch")
 
         return UserOutput.init(sys_user)
 

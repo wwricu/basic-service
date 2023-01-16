@@ -1,8 +1,7 @@
 import jwt
 
 from fastapi import Depends, APIRouter, Response, HTTPException, Header
-from fastapi.security import OAuth2PasswordBearer
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from service import SecurityService, UserService, DatabaseService
 from schemas import UserInput, UserOutput, TokenResponse
@@ -18,10 +17,6 @@ async def optional_login_required(
         access_token: str = Depends(oauth2_scheme_optional),
         refresh_token: str | None = Header(default=None)
 ) -> UserOutput | None:
-
-    if access_token is None or refresh_token is None:
-        return None
-
     try:
         data = jwt.decode(access_token,
                           key=Config.jwt_secret,
@@ -33,7 +28,11 @@ async def optional_login_required(
                               algorithms=['HS256'])
             response.headers['X-token-need-refresh'] = 'true'
         except jwt.ExpiredSignatureError:
+            print('token expired')
             return None
+    except Exception as e:
+        print('invalid token', e)
+        return None
 
     return UserOutput(id=data['id'],
                       username=data['username'],
