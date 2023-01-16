@@ -3,7 +3,6 @@ import jwt
 from fastapi import Depends, APIRouter, Response, HTTPException, Header
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
 
 from service import SecurityService, UserService, DatabaseService
 from schemas import UserInput, UserOutput, TokenResponse
@@ -71,13 +70,12 @@ async def get_current_user(user_output: UserOutput = Depends(requires_login)):
     return user_output
 
 
-@auth_router.post("", response_model=TokenResponse)
-async def login(form_data: OAuth2PasswordRequestForm = Depends(),
-                db: Session = Depends(DatabaseService.get_db)):
-    user_output = UserService.user_login(
-        db, UserInput(username=form_data.username,
-                      password=form_data.password)
-    )
+@auth_router.post("",
+                  dependencies=[Depends(DatabaseService.open_session)],
+                  response_model=TokenResponse)
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user_output = UserService.user_login(UserInput(username=form_data.username,
+                                                   password=form_data.password))
     access_token = SecurityService.create_jwt_token(user_output)
     refresh_token = SecurityService.create_jwt_token(user_output, True)
     return TokenResponse(access_token=access_token,

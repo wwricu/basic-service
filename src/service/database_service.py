@@ -1,4 +1,8 @@
+from functools import wraps
+from typing import Callable
+from contextvars import ContextVar
 from sqlalchemy import create_engine
+from sqlalchemy.engine.base import Engine
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy_utils import database_exists, create_database
 
@@ -6,8 +10,11 @@ from config import Config
 from models import Base, SysUser, SysRole, Folder
 
 
+ctx_db: ContextVar[Session | None] = ContextVar('ctx_db', default=None)
+
+
 class DatabaseService:
-    __engine = None
+    __engine: Engine = None
 
     @classmethod
     def get_engine(cls):
@@ -17,7 +24,7 @@ class DatabaseService:
         return cls.__engine
 
     @classmethod
-    def get_session(cls) -> Session:
+    def create_session(cls) -> Session:
         engine = cls.get_engine()
         return sessionmaker(autocommit=False,
                             autoflush=False,
@@ -25,9 +32,22 @@ class DatabaseService:
                             bind=engine)()
 
     @classmethod
-    def get_db(cls) -> Session:
-        with cls.get_session() as session:
+    async def open_session(cls) -> Session:
+        with cls.create_session() as session:
+            '''
+            This dependency must be async
+            to share the same coroutine and
+            context with other function.
+            '''
+            ctx_db.set(session)
             yield session
+
+    @staticmethod
+    def database_session(method: Callable) -> Callable:
+        @wraps(method)
+        def wrapper(*args, **kwargs):
+            return method(*args, session=ctx_db.get(), **kwargs)
+        return wrapper
 
     @classmethod
     def init_db(cls):
@@ -41,7 +61,7 @@ class DatabaseService:
 
     @classmethod
     def insert_admin(cls):
-        db = cls.get_session()
+        session = cls.create_session()
         try:
             admin_role = SysRole(name='admin',
                                  description='Admin role')
@@ -49,25 +69,26 @@ class DatabaseService:
                             email=Config.admin_email,
                             password_hash=Config.admin_password_hash,
                             salt=Config.admin_password_salt)
-            db.add(admin_role)
-            db.add(admin)
+            session.add(admin_role)
+            session.add(admin)
             admin.roles.append(admin_role)
 
-            db.commit()
+            session.commit()
         except Exception as e:
             print(e)
+            session.rollback()
         finally:
-            db.close()
+            session.close()
 
     @classmethod
     def insert_root_folder(cls):
-        db = cls.get_session()
+        session = cls.create_session()
         try:
             root_folder = Folder(title='root',
                                  permission=0,
                                  url='')
-            db.add(root_folder)
-            db.flush()
+            session.add(root_folder)
+            session.flush()
             post_folder = Folder(title='post',
                                  permission=711,
                                  url='/post',
@@ -78,10 +99,11 @@ class DatabaseService:
                                   url='/draft',
                                   owner_id=1,
                                   parent_url=root_folder.url)
-            db.add(post_folder)
-            db.add(draft_folder)
-            db.commit()
+            session.add(post_folder)
+            session.add(draft_folder)
+            session.commit()
         except Exception as e:
             print(e)
+            session.rollback()
         finally:
-            db.close()
+            session.close()

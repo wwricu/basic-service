@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 
 from schemas import TagSchema
 from service import TagService, DatabaseService
@@ -11,33 +10,33 @@ tag_router = APIRouter(prefix="/tag", tags=["tag"])
 
 
 @tag_router.post("",
-                 dependencies=[Depends(RequiresRoles('admin'))],
+                 dependencies=[Depends(RequiresRoles('admin')),
+                               Depends(DatabaseService.open_session)],
                  response_model=TagSchema)
-async def add_tag(tag: TagSchema,
-                  db: Session = Depends(DatabaseService.get_db)):
-    return TagSchema.init(TagService.add_tag(db, PostTag(name=tag.name)))
+async def add_tag(tag: TagSchema):
+    return TagSchema.init(TagService.add_tag(PostTag(name=tag.name)))
 
 
-@tag_router.get("", response_model=list[TagSchema])
+@tag_router.get("",
+                dependencies=[Depends(DatabaseService.open_session)],
+                response_model=list[TagSchema])
 async def get_tag(tag_id: int = None,
-                  name: str = None,
-                  db: Session = Depends(DatabaseService.get_db)):
-    tags = TagService.find_tag(db, PostTag(id=tag_id, name=name))
+                  name: str = None):
+    tags = TagService.find_tag(PostTag(id=tag_id, name=name))
     return [TagSchema.init(x) for x in tags]
 
 
 @tag_router.put("",
-                dependencies=[Depends(RequiresRoles('admin'))],
+                dependencies=[Depends(RequiresRoles('admin')),
+                              Depends(DatabaseService.open_session)],
                 response_model=TagSchema)
-async def rename_tag(tag: TagSchema,
-                     db: Session = Depends(DatabaseService.get_db)):
-    return TagSchema.init(TagService
-                          .rename_tag(PostTag(id=tag.id, name=tag.name), db))
+async def rename_tag(tag: TagSchema):
+    return TagSchema.init(TagService.rename_tag(PostTag(id=tag.id, name=tag.name)))
 
 
 @tag_router.delete("/{tag_id}",
-                   dependencies=[Depends(RequiresRoles('admin'))],
+                   dependencies=[Depends(RequiresRoles('admin')),
+                                 Depends(DatabaseService.open_session)],
                    response_model=int)
-async def remove_tag(tag_id: int,
-                     db: Session = Depends(DatabaseService.get_db)):
-    return TagService.remove_tag(db, Tag(id=tag_id))
+async def remove_tag(tag_id: int):
+    return TagService.remove_tag(Tag(id=tag_id))
