@@ -74,8 +74,7 @@ class DatabaseService:
             admin.roles.append(admin_role)
 
             session.commit()
-        except Exception as e:
-            print(e)
+        except (Exception,):
             session.rollback()
         finally:
             session.close()
@@ -102,8 +101,7 @@ class DatabaseService:
             session.add(post_folder)
             session.add(draft_folder)
             session.commit()
-        except Exception as e:
-            print(e)
+        except (Exception,):
             session.rollback()
         finally:
             session.close()
