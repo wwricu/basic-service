@@ -17,6 +17,8 @@ async def optional_login_required(
         access_token: str = Depends(oauth2_scheme_optional),
         refresh_token: str | None = Header(default=None)
 ) -> UserOutput | None:
+    if access_token is None:
+        return None
     try:
         data = jwt.decode(access_token,
                           key=Config.jwt_secret,
@@ -31,7 +33,7 @@ async def optional_login_required(
             print('token expired')
             return None
     except Exception as e:
-        print('invalid token', e)
+        print(e)
         return None
 
     return UserOutput(id=data['id'],

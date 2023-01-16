@@ -5,7 +5,7 @@ from typing import Type
 
 from models import Resource, Folder, ResourceTag, Content
 from dao import BaseDao, ResourceDao
-from schemas import UserOutput
+from schemas import UserOutput, ResourceQuery
 
 
 class ResourceService:
@@ -30,37 +30,27 @@ class ResourceService:
         return BaseDao.select(resource, resource.__class__)
 
     @staticmethod
-    def find_sub_resources(obj_class: Type = Resource,
-                           parent_url: str = None,
-                           category_name: str | None = None,
-                           tag_name: str | None = None,
-                           page_idx: int | None = 0,
-                           page_size: int | None = 0) -> list[Resource]:
-        return ResourceDao.get_sub_resources(obj_class,
-                                             parent_url,
-                                             category_name,
-                                             tag_name,
-                                             page_idx,
-                                             page_size)
+    def find_sub_resources(parent_url: str | None = None,
+                           resource_query: ResourceQuery | None = ResourceQuery(),
+                           obj_class: Type | None = Resource) -> list[Resource]:
+        return ResourceDao.get_sub_resources(parent_url,
+                                             resource_query,
+                                             obj_class)
 
     @staticmethod
-    def find_sub_count(obj_class: Type = Resource,
-                       parent_url: str | None = None,
-                       category_name: str | None = None,
-                       tag_name: str | None = None) -> int:
-        return ResourceDao.get_sub_resource_count(obj_class,
-                                                  parent_url,
-                                                  category_name,
-                                                  tag_name)
+    def find_sub_count(parent_url: str | None = None,
+                       resource_query: ResourceQuery | None = ResourceQuery(),
+                       obj_class: Type | None = Resource) -> int:
+        return ResourceDao.get_sub_resource_count(parent_url,
+                                                  resource_query,
+                                                  obj_class)
 
     @staticmethod
     def modify_resource(resource: Resource) -> Resource:
         old_resources = BaseDao.select(Resource(id=resource.id),
                                        resource.__class__)
         assert len(old_resources) == 1
-        sub_resources = ResourceService.find_sub_resources(
-             Resource, parent_url=old_resources[0].url
-        )
+        sub_resources = ResourceService.find_sub_resources(old_resources[0].url)
 
         if resource.__class__ == 'Folder':
             resource.this_url = '/' + resource.title
