@@ -34,7 +34,7 @@ async def optional_login_required(
                               algorithms=['HS256'])
             response.headers['X-token-need-refresh'] = 'true'
         except jwt.ExpiredSignatureError:
-            raise HTTPException(status_code=403, detail="token expired")
+            return None
 
     return UserOutput(id=data['id'],
                       username=data['username'],
@@ -48,7 +48,6 @@ async def requires_login(
 
     if result is None:
         raise HTTPException(status_code=401, detail="unauthenticated")
-
     return result
 
 
