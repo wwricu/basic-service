@@ -7,6 +7,20 @@ from .tag import PostTag
 
 
 class Resource(Base):
+    def __init__(self,
+                 id: int | None = None,
+                 title: str | None = None,
+                 url: str | None = None,
+                 permission: int | None = None,
+                 parent_url: str | None = None,
+                 **kwargs):
+        super().__init__()
+        self.id = id
+        self.title = title
+        self.url = url
+        self.permission = permission
+        self.parent_url = parent_url
+
     __tablename__ = 'resource'
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(255))
@@ -52,12 +66,8 @@ class Resource(Base):
 
 
 class Folder(Resource):
-    @classmethod
-    def init(cls, folder_input):
-        return Folder(id=folder_input.id,
-                      title=folder_input.title,
-                      parent_url=folder_input.parent_url,
-                      permission=folder_input.permission)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     __tablename__ = 'folder'
     id = Column(Integer,
@@ -74,18 +84,18 @@ class Folder(Resource):
 
 
 class Content(Resource):
-    @classmethod
-    def init(cls, content_input):
-        return Content(id=content_input.id,
-                       title=content_input.title,
-                       parent_url=content_input.parent_url,
-                       permission=content_input.permission,
-                       category_id=content_input.category.id
-                       if content_input.category is not None else None,
-                       tags=[PostTag(id=tag.id,
-                                     name=tag.name)
-                             for tag in content_input.tags],
-                       content=content_input.content)
+    def __init__(self,
+                 category: any = None,
+                 tags: list | None = (),
+                 content: bytes | None = None,
+                 **kwargs):
+        super().__init__(**kwargs)
+        if category:
+            self.category_id = category.id
+        self.tags = [PostTag(id=tag.id,
+                             name=tag.name)
+                     for tag in tags]
+        self.content = content
 
     __tablename__ = 'content'
     id = Column(Integer,

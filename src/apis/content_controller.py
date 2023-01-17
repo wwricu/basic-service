@@ -14,7 +14,7 @@ content_router = APIRouter(prefix="/content",
 @content_router.post("", response_model=int)
 async def add_content(content_input: ContentInput,
                       cur_user: UserOutput = Depends(RequiresRoles('admin'))):
-    content = Content.init(content_input)
+    content = Content(**content_input.dict())
     content.owner_id = cur_user.id
     content.permission = 700  # owner all, group 0, public 0
     content.parent_url = '/draft'
@@ -38,8 +38,11 @@ async def get_content(content_id: int,
                     response_model=ContentOutput)
 async def modify_content(content: ContentInput):
     await ResourceService.trim_files(content.id, content.files)
-    ResourceService.reset_content_tags(Content.init(content))
-    return ContentOutput.init(ResourceService.modify_resource(Content.init(content)))
+    ResourceService.reset_content_tags(Content(**content.dict()))
+    return ContentOutput.init(
+        ResourceService.modify_resource(
+            Content(**content.dict())
+        ))
 
 
 @content_router.delete("/{content_id}",

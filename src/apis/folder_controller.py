@@ -15,7 +15,7 @@ folder_router = APIRouter(prefix="/folder",
                     response_model=FolderOutput)
 async def add_folder(folder_input: FolderInput,
                      cur_user: UserOutput = Depends(RequiresRoles('admin'))):
-    folder = Folder.init(folder_input)
+    folder = Folder(**folder_input.dict())
     folder.owner_id = cur_user.id
     folder.permission = 701  # owner all, group 0, public read
     return FolderOutput.init(ResourceService.add_resource(folder))
@@ -55,9 +55,11 @@ async def get_folder(url: str = '',
 @folder_router.put("",
                    dependencies=[Depends(RequiresRoles('admin'))],
                    response_model=FolderOutput)
-async def modify_folder(folder: FolderInput):
-    return FolderOutput.init(ResourceService
-                             .modify_resource(Folder.init(folder)))
+async def modify_folder(folder_input: FolderInput):
+    return FolderOutput.init(
+        ResourceService.modify_resource(
+            Folder(**folder_input.dict())
+        ))
 
 
 @folder_router.delete("/{folder_id}",
