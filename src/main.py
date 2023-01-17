@@ -17,8 +17,10 @@ app = FastAPI()
 async def startup():
     Config.read_config()
     DatabaseService.init_db()
-    if not os.path.exists('static'):
-        os.makedirs('static')
+    try:
+        os.makedirs('static/content')
+    except FileExistsError:
+        pass
 
     app.include_router(router)
     app.mount("/static", StaticFiles(directory="static"), name="static")

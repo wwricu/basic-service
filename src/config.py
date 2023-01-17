@@ -10,7 +10,7 @@ class Config:
     jwt_secret = '245700b63ff9720127a531a1da7841b54582e0729f59505800b2f689f0d43788'
 
     @classmethod
-    def read_config(cls, filename: str = 'conf/config.json'):
+    def read_config(cls, filename: str = 'assets/config.json'):
         try:
             with open(filename, 'r') as f:
                 config_text = f.read()

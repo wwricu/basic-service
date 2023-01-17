@@ -91,8 +91,10 @@ class Content(Resource):
                  content: bytes | None = None,
                  **kwargs):
         super().__init__(**kwargs)
-        self.category_id = category.get('id')
-        self.tags = [PostTag(**tag) for tag in tags]
+        if category is not None:
+            self.category_id = category.get('id')
+        if tags is not None:
+            self.tags = [PostTag(**tag) for tag in tags]
         self.content = content
 
     __tablename__ = 'content'

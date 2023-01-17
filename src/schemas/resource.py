@@ -49,8 +49,8 @@ class ResourcePreview(FolderOutput):
               tags: list[PostTag] = (),
               category: PostCategory | None = None,
               **kwargs) -> ResourcePreview:
-
-        tags = [TagSchema(id=tag.id, name=tag.name) for tag in tags]
+        if tags is not None:
+            tags = [TagSchema(id=tag.id, name=tag.name) for tag in tags]
         if category is not None:
             category = TagSchema(id=category.id, name=category.name)
         return ResourcePreview(tags=tags, category=category, **kwargs)
@@ -68,7 +68,8 @@ class ContentOutput(ResourcePreview):
               tags: list[PostTag] = (),
               category: PostCategory | None = None,
               **kwargs) -> ContentOutput:
-        tags = [TagSchema(id=tag.id, name=tag.name) for tag in tags]
+        if tags is not None:
+            tags = [TagSchema(id=tag.id, name=tag.name) for tag in tags]
         if category is not None:
             category = TagSchema(id=category.id, name=category.name)
         return ContentOutput(tags=tags, category=category, **kwargs)
