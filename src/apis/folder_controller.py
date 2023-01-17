@@ -18,7 +18,7 @@ async def add_folder(folder_input: FolderInput,
     folder = Folder(**folder_input.dict())
     folder.owner_id = cur_user.id
     folder.permission = 701  # owner all, group 0, public read
-    return FolderOutput.init(ResourceService.add_resource(folder))
+    return FolderOutput.init(**ResourceService.add_resource(folder).__dict__)
 
 
 @folder_router.get("/count/{url:path}",
@@ -56,10 +56,8 @@ async def get_folder(url: str = '',
                    dependencies=[Depends(RequiresRoles('admin'))],
                    response_model=FolderOutput)
 async def modify_folder(folder_input: FolderInput):
-    return FolderOutput.init(
-        ResourceService.modify_resource(
-            Folder(**folder_input.dict())
-        ))
+    return FolderOutput.init(**ResourceService.modify_resource(
+            Folder(**folder_input.dict())).__dict__)
 
 
 @folder_router.delete("/{folder_id}",

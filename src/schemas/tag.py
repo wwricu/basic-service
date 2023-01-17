@@ -8,8 +8,7 @@ class TagSchema(BaseModel):
     def init(cls, tag: Tag) -> TagSchema | None:
         if tag is None:
             return None
-        return TagSchema(id=tag.id,
-                         name=tag.name)
+        return TagSchema(id=tag.id, name=tag.name)
 
     id: int = None
     name: str = None

@@ -91,7 +91,7 @@ class Content(Resource):
                  content: bytes | None = None,
                  **kwargs):
         super().__init__(**kwargs)
-        self.category_id = category['id']
+        self.category_id = category.get('id')
         self.tags = [PostTag(**tag) for tag in tags]
         self.content = content
 
@@ -104,7 +104,9 @@ class Content(Resource):
     content = Column(LargeBinary(length=65536), nullable=True, comment="content html")
 
     category_id = Column(Integer, ForeignKey('post_category.id'))
-    category = relationship("PostCategory", back_populates="posts")
+    category = relationship("PostCategory",
+                            back_populates="posts",
+                            lazy="joined")
 
     tags = relationship('PostTag',
                         secondary='post_tag_relation',
