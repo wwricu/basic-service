@@ -1,3 +1,4 @@
+from types import MappingProxyType
 from datetime import datetime
 from sqlalchemy import Integer, Column, String, DateTime, ForeignKey, LargeBinary
 from sqlalchemy.orm import relationship
@@ -85,16 +86,13 @@ class Folder(Resource):
 
 class Content(Resource):
     def __init__(self,
-                 category: any = None,
-                 tags: list | None = (),
+                 category: dict = MappingProxyType({}),
+                 tags: list[dict] = (),
                  content: bytes | None = None,
                  **kwargs):
         super().__init__(**kwargs)
-        if category:
-            self.category_id = category.id
-        self.tags = [PostTag(id=tag.id,
-                             name=tag.name)
-                     for tag in tags]
+        self.category_id = category['id']
+        self.tags = [PostTag(**tag) for tag in tags]
         self.content = content
 
     __tablename__ = 'content'

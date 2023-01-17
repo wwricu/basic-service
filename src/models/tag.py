@@ -5,11 +5,23 @@ from .sys_user import Base
 
 
 class Tag(Base):
+    def __init__(self, id: int | None = None, **kwargs):
+        super().__init__(**kwargs)
+        self.id = id
+
     __tablename__ = 'tag'
     id = Column(Integer, primary_key=True, autoincrement=True)
 
 
 class PostTag(Tag):
+    def __init__(self,
+                 id: int | None = None,
+                 name: str | None = None,
+                 **kwargs):
+        super().__init__(**kwargs)
+        self.id = id
+        self.name = name
+
     __tablename__ = 'post_tag'
     id = Column(Integer,
                 ForeignKey('tag.id', ondelete='CASCADE'),
@@ -26,6 +38,14 @@ class PostTag(Tag):
 
 
 class PostCategory(Tag):
+    def __init__(self,
+                 id: int | None = None,
+                 name: str | None = None,
+                 **kwargs):
+        super().__init__(**kwargs)
+        self.id = id
+        self.name = name
+
     __tablename__ = 'post_category'
     id = Column(Integer,
                 ForeignKey('tag.id', ondelete='CASCADE'),
