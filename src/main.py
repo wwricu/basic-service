@@ -1,11 +1,12 @@
 import os
 import uvicorn
+import asyncio
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
-from service import DatabaseService
+from dao import AsyncDatabase
 from apis import router
 from config import Config
 
@@ -16,7 +17,8 @@ app = FastAPI()
 @app.on_event('startup')
 async def startup():
     Config.read_config()
-    DatabaseService.init_db()
+    await AsyncDatabase.init_database()
+    # AsyncDatabase.init_db()
     try:
         os.makedirs('static/content')
     except FileExistsError:

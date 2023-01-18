@@ -1,16 +1,31 @@
 from sqlalchemy import Table
-from sqlalchemy.orm import Session
 from typing import Type
-from service import DatabaseService
+from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from .async_database import AsyncDatabase
 
 
 class BaseDao:
     @staticmethod
-    @DatabaseService.database_session
-    def get_query(obj: Table,
-                  class_name: Table | Type,
-                  *, session: Session):
-        res = session.query(class_name)
+    @AsyncDatabase.database_session
+    async def insert(obj: Table, *, session: AsyncSession):
+        session.add(obj)
+        await session.commit()
+        return obj
+
+    @staticmethod
+    @AsyncDatabase.database_session
+    async def insert_all(obj: list[Table], *, session: AsyncSession):
+        session.add_all(obj)
+        await session.commit()
+
+    @staticmethod
+    @AsyncDatabase.database_session
+    async def select(obj: any,
+                     class_name: Table | Type,
+                     *, session: AsyncSession):
+        statement = select(class_name)
 
         for key in class_name.__dict__:
             if key[0] == '_' or not hasattr(obj, key):
@@ -19,40 +34,20 @@ class BaseDao:
             if attr is None:
                 continue
             if isinstance(attr, int) or isinstance(attr, str):
-                res = res.filter(getattr(class_name, key) == attr)
-        return res
+                statement = statement.where(getattr(class_name, key) == attr)
+        return (await session.scalars(statement)).all()
 
     @staticmethod
-    @DatabaseService.database_session
-    def insert(obj: Table, *, session: Session):
-        session.add(obj)
-        session.commit()
-        return obj
-
-    @staticmethod
-    @DatabaseService.database_session
-    def insert_all(obj: list[Table], *, session: Session):
-        session.add_all(obj)
-        session.commit()
-
-    @staticmethod
-    @DatabaseService.database_session
-    def select(obj: any,
-               class_name: Table | Type,
-               *, session: Session):
-        res = BaseDao.get_query(obj, class_name).all()
-        session.commit()
-        return res
-
-    @staticmethod
-    @DatabaseService.database_session
-    def update(obj: any,
-               class_name: Table | Type,
-               *, session: Session):
+    @AsyncDatabase.database_session
+    async def update(obj: any,
+                     class_name: Table | Type,
+                     *, session: AsyncSession):
         if obj.id is None or obj.id == 0:
             return
 
-        origin_obj = session.query(class_name).filter_by(id=obj.id).one()
+        origin_obj = await session.scalar(
+            select(class_name).where(getattr(class_name, 'id') == obj.id)
+        )
         for key in obj.__dict__:
             if key[0] == '_' or getattr(obj, key) is None:
                 continue
@@ -60,28 +55,29 @@ class BaseDao:
             attr = getattr(obj, key)
             if not isinstance(attr, list):
                 setattr(origin_obj, key, attr)
-        session.commit()
+        await session.commit()
         return origin_obj
 
     @staticmethod
-    @DatabaseService.database_session
-    def delete(obj: any,
-               class_name: Table | Type,
-               *,
-               session: Session):
+    @AsyncDatabase.database_session
+    async def delete(obj: any,
+                     class_name: Table | Type,
+                     *, session: AsyncSession):
         if obj.id is None or obj.id == 0:
             return
-        count = session.query(class_name).filter_by(id=obj.id).delete()
-        session.commit()
-        return count
+        obj = await session.scalar(
+            select(class_name).where(getattr(class_name, 'id') == obj.id)
+        )
+        await session.delete(obj)
+        await session.commit()
 
     @staticmethod
-    @DatabaseService.database_session
-    def delete_all(objs: list,
-                   class_name: Table | Type,
-                   *, session: Session):
-        count = 0
+    @AsyncDatabase.database_session
+    async def delete_all(objs: list,
+                         class_name: Table | Type,
+                         *, session: AsyncSession):
         for obj in objs:
-            count += BaseDao.get_query(obj, class_name).delete()
-        session.commit()
-        return count
+            obj = await BaseDao.select(obj, class_name)
+            if len(obj) == 1:
+                await session.delete(obj[0])
+        await session.commit()

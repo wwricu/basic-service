@@ -3,7 +3,8 @@ import jwt
 from fastapi import Depends, APIRouter, Response, HTTPException, Header
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from service import SecurityService, UserService, DatabaseService
+from dao import AsyncDatabase
+from service import SecurityService, UserService
 from schemas import UserInput, UserOutput, TokenResponse
 from config import Config
 
@@ -72,11 +73,12 @@ async def get_current_user(user_output: UserOutput = Depends(requires_login)):
 
 
 @auth_router.post("",
-                  dependencies=[Depends(DatabaseService.open_session)],
+                  dependencies=[Depends(AsyncDatabase.open_session)],
                   response_model=TokenResponse)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user_output = UserService.user_login(UserInput(username=form_data.username,
-                                                   password=form_data.password))
+    user_output = await UserService.user_login(
+        UserInput(username=form_data.username, password=form_data.password)
+    )
     access_token = SecurityService.create_jwt_token(user_output)
     refresh_token = SecurityService.create_jwt_token(user_output, True)
     return TokenResponse(access_token=access_token,

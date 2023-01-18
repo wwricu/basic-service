@@ -108,13 +108,13 @@ class Content(Resource):
     category_id = Column(Integer, ForeignKey('post_category.id'))
     category = relationship("PostCategory",
                             back_populates="posts",
-                            lazy="joined")
+                            lazy="selectin")
 
     tags = relationship('PostTag',
                         secondary='post_tag_relation',
                         back_populates='posts',
                         cascade="save-update",
-                        lazy="joined")
+                        lazy="selectin")
 
     __mapper_args__ = {
         'polymorphic_identity': 'content',

@@ -7,8 +7,8 @@ from .security_service import SecurityService
 
 class UserService:
     @staticmethod
-    def user_login(user_input: UserInput) -> UserOutput:
-        sys_user = BaseDao.select(user_input, SysUser)[0]
+    async def user_login(user_input: UserInput) -> UserOutput:
+        sys_user = (await BaseDao.select(user_input, SysUser))[0]
 
         if not SecurityService.verify_password(
                 user_input.password,
@@ -20,7 +20,7 @@ class UserService:
         return UserOutput.init(sys_user)
 
     @staticmethod
-    def add_user(user_input: UserInput) -> UserOutput:
+    async def add_user(user_input: UserInput) -> UserOutput:
         sys_user = SysUser(id=user_input.id,
                            username=user_input.username,
                            email=user_input.email)
@@ -29,16 +29,16 @@ class UserService:
         sys_user.password_hash = SecurityService.get_password_hash(
             user_input.password, sys_user.salt)
 
-        return UserOutput.init(BaseDao.insert(sys_user))
+        return UserOutput.init(await BaseDao.insert(sys_user))
 
     @staticmethod
-    def find_user(user_input: UserInput) -> list[UserOutput]:
+    async def find_user(user_input: UserInput) -> list[UserOutput]:
         return list(map(lambda it: UserOutput.init(it),
-                        BaseDao.select(user_input, SysUser)))
+                        await BaseDao.select(user_input, SysUser)))
 
     @staticmethod
-    def modify_user(user_input: UserInput) -> UserOutput:
-        sys_user = BaseDao.select(SysUser(id=user_input.id), SysUser)[0]
+    async def modify_user(user_input: UserInput) -> UserOutput:
+        sys_user = (await BaseDao.select(SysUser(id=user_input.id), SysUser))[0]
 
         if user_input.username is not None:
             sys_user.username = user_input.username
@@ -48,9 +48,9 @@ class UserService:
             sys_user.password_hash = SecurityService.get_password_hash(
                 user_input.password, sys_user.salt)
 
-        BaseDao.update(sys_user, SysUser)
+        await BaseDao.update(sys_user, SysUser)
         return UserOutput.init(sys_user)
 
     @staticmethod
-    def remove_user(user_input: UserInput) -> int:
-        return BaseDao.delete(SysUser(id=user_input.id), SysUser)
+    async def remove_user(user_input: UserInput) -> int:
+        return await BaseDao.delete(SysUser(id=user_input.id), SysUser)

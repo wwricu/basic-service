@@ -17,7 +17,7 @@ class SysUser(Base):
     roles = relationship('SysRole',
                          secondary='user_role',
                          back_populates='users',
-                         lazy="joined")
+                         lazy="selectin")
 
 
 class SysRole(Base):
@@ -34,7 +34,7 @@ class SysRole(Base):
     permissions = relationship('SysPermission',
                                secondary='role_permission',
                                back_populates='roles',
-                               lazy="joined")
+                               lazy="selectin")
 
 
 class SysPermission(Base):

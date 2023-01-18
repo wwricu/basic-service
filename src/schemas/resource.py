@@ -1,7 +1,7 @@
 from __future__ import annotations
 from pydantic import BaseModel
 from datetime import datetime
-from models import Resource, Content, PostTag, PostCategory
+from models import Resource, Content, PostTag, PostCategory, Folder
 from .tag import TagSchema
 
 
@@ -30,8 +30,8 @@ class FolderOutput(ResourceBase):
     updated_time: datetime = None
 
     @classmethod
-    def init(cls, **kwargs) -> FolderOutput:
-        return FolderOutput(**kwargs)
+    def init(cls, folder: Folder) -> FolderOutput | None:
+        return FolderOutput(**folder.__dict__) if folder else None
 
 
 class ResourcePreview(FolderOutput):
