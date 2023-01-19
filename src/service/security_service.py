@@ -14,7 +14,7 @@ class SecurityService:
                                                     auto_error=False)
 
     @staticmethod
-    async def optional_login_required(
+    def optional_login_required(
             response: Response,
             access_token: str = Depends(__oauth2_scheme_optional),
             refresh_token: str | None = Header(default=None)
@@ -44,7 +44,7 @@ class SecurityService:
                           roles=data['roles'])
 
     @staticmethod
-    async def requires_login(
+    def requires_login(
             result: UserOutput = Depends(optional_login_required)
     ) -> UserOutput:
 
@@ -54,6 +54,7 @@ class SecurityService:
 
     @staticmethod
     def generate_salt() -> str:
+        # TODO: replace md5
         return secrets.token_urlsafe()
 
     @staticmethod
@@ -77,6 +78,7 @@ class SecurityService:
     @staticmethod
     def create_jwt_token(user_info: UserOutput,
                          refresh: bool | None = False) -> bytes:
+        # TODO: replace jwt key
         data = user_info.dict()
         delta = timedelta(minutes=60)
         if refresh:
