@@ -18,7 +18,7 @@
   "admin": {
     "username": "wwr",
     "password_hash": "f5168b16e387802b06e95905727277b0",
-    "password_salt": "CrvV5IDnCZ2noa-f4a_KChCBac284vBAw11p_NsiKa4",
+    "salt": "CrvV5IDnCZ2noa-f4a_KChCBac284vBAw11p_NsiKa4",
     "email": "iswangwr@gmail.com",
     "role": {
       "name": "admin"

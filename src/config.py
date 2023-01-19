@@ -8,13 +8,13 @@ class AdminConfig:
     def __init__(self,
                  username: str,
                  password_hash: str,
-                 password_salt: str,
+                 salt: str,
                  email: str | None = None,
                  role: dict | None = MappingProxyType({'name': 'admin'})
                  ):
         self.username = username
         self.password_hash = password_hash
-        self.password_salt = password_salt
+        self.salt = salt
         self.email = email
         self.role = role
 

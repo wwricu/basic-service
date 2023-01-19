@@ -14,7 +14,7 @@ class SecurityService:
                                                     auto_error=False)
 
     @staticmethod
-    async def optional_login_required(
+    def optional_login_required(
             response: Response,
             access_token: str = Depends(__oauth2_scheme_optional),
             refresh_token: str | None = Header(default=None)
@@ -23,13 +23,13 @@ class SecurityService:
             return None
         try:
             data = jwt.decode(access_token,
-                              key=Config.jwt_secret,
-                              algorithms=['HS256'])
+                              key=Config.jwt.key,
+                              algorithms=[Config.jwt.algorithm])
         except jwt.ExpiredSignatureError:
             try:
                 data = jwt.decode(refresh_token,
-                                  key=Config.jwt_secret,
-                                  algorithms=['HS256'])
+                                  key=Config.jwt.key,
+                                  algorithms=[Config.jwt.algorithm])
                 response.headers['X-token-need-refresh'] = 'true'
             except jwt.ExpiredSignatureError:
                 print('token expired')
@@ -44,7 +44,7 @@ class SecurityService:
                           roles=data['roles'])
 
     @staticmethod
-    async def requires_login(
+    def requires_login(
             result: UserOutput = Depends(optional_login_required)
     ) -> UserOutput:
 
@@ -67,6 +67,7 @@ class SecurityService:
     def verify_password(plain_password: str,
                         salt: str,
                         password_hash: str) -> bool:
+        print(plain_password, salt, password_hash)
         after_salt = hashlib.md5(
             plain_password.encode(encoding='utf-8')
         ).hexdigest() + salt
@@ -88,7 +89,7 @@ class SecurityService:
     @staticmethod
     def verify_token(token: str) -> UserOutput:
         data = jwt.decode(token,
-                          key=Config.jwt_secret,
+                          key=Config.jwt.key,
                           algorithms=[Config.jwt.algorithm])
 
         return UserOutput(id=data['id'],

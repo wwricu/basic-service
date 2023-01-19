@@ -58,6 +58,7 @@ class BaseDao:
         obj_update = await session.scalar(
             select(class_name).where(getattr(class_name, 'id') == obj.id)
         )
+
         for key in obj.__dict__:
             if key[0] == '_' or getattr(obj, key) is None:
                 continue
@@ -65,6 +66,7 @@ class BaseDao:
             attr = getattr(obj, key)
             if not isinstance(attr, list):
                 setattr(obj_update, key, attr)
+
         await session.commit()
         return obj_update
 

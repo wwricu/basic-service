@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends
 
 from dao import AsyncDatabase
 from models import Folder, Content, Resource
-from schemas import FolderInput, FolderOutput, UserOutput, ResourcePreview, ResourceQuery
+from schemas import FolderInput, FolderOutput, UserOutput
+from schemas import ResourcePreview, ResourceQuery
 from service import ResourceService, SecurityService, RequiresRoles
 
 

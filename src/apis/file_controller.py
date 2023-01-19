@@ -22,7 +22,9 @@ async def upload(files: list[UploadFile], request: Request):
 
     async def save_file(file: UploadFile):
         suffix = os.path.splitext(file.filename)[-1]
-        filename = hashlib.md5(file.filename.encode(encoding='utf-8')).hexdigest()
+        filename = hashlib.md5(
+            file.filename.encode(encoding='utf-8')
+        ).hexdigest()
         path = f'{content_path}/{filename}{suffix}'
         await Path(path).write_bytes(await file.read())
         if os.path.exists(path):

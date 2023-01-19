@@ -6,6 +6,7 @@ from contextvars import ContextVar
 from sqlalchemy import text
 from sqlalchemy.engine import URL
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, AsyncSession
 
 from config import Config
@@ -22,8 +23,9 @@ class AsyncDatabase:
     @classmethod
     async def get_engine(cls) -> AsyncEngine:
         if not cls.__engine:
-            engine = create_async_engine(URL.create(**Config.database.__dict__),
-                                         echo=False)
+            engine = create_async_engine(
+                URL.create(**Config.database.__dict__), echo=False
+            )
             cls.__engine = engine
             cls.__session_maker = sessionmaker(
                 engine, expire_on_commit=False, class_=AsyncSession
@@ -75,17 +77,23 @@ class AsyncDatabase:
 
     @classmethod
     async def insert_admin(cls):
-        # TODO: suppress warning
         session: AsyncSession = cls.__session_maker()
         try:
             admin_role = SysRole(**Config.admin.role)
-            admin = SysUser(**Config.admin.__dict__)
+            admin = SysUser(username=Config.admin.username,
+                            password_hash=Config.admin.password_hash,
+                            salt=Config.admin.salt,
+                            email=Config.admin.email)
+
             session.add(admin_role)
             session.add(admin)
             admin.roles.append(admin_role)
 
             await session.commit()
-        except (Exception,):
+        except IntegrityError:
+            pass
+        except Exception as e:
+            print(e)
             await session.rollback()
         finally:
             await session.close()
@@ -97,7 +105,10 @@ class AsyncDatabase:
             for folder in Config.folders:
                 session.add(folder)
             await session.commit()
-        except (Exception,):
+        except IntegrityError:
+            pass
+        except Exception as e:
+            print(e)
             await session.rollback()
         finally:
             await session.close()
