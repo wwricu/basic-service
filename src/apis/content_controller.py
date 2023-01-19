@@ -4,8 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from dao import AsyncDatabase
 from models import Content, Resource
 from schemas import ContentInput, ContentOutput, UserOutput
-from service import ResourceService
-from .auth_controller import RequiresRoles, optional_login_required
+from service import ResourceService, SecurityService, RequiresRoles
 
 
 content_router = APIRouter(prefix="/content",
@@ -28,8 +27,10 @@ async def add_content(content_input: ContentInput,
 
 
 @content_router.get("/{content_id}", response_model=ContentOutput)
-async def get_content(content_id: int,
-                      cur_user: UserOutput = Depends(optional_login_required)):
+async def get_content(
+        content_id: int,
+        cur_user: UserOutput = Depends(SecurityService.optional_login_required)
+):
     contents = await ResourceService.find_resources(Content(id=content_id))
     if len(contents) != 1 or not ResourceService.check_permission(
             contents[0], cur_user, 1):

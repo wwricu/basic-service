@@ -3,8 +3,7 @@ from fastapi import APIRouter, Depends
 from dao import AsyncDatabase
 from models import Folder, Content, Resource
 from schemas import FolderInput, FolderOutput, UserOutput, ResourcePreview, ResourceQuery
-from service import ResourceService
-from .auth_controller import RequiresRoles, optional_login_required
+from service import ResourceService, SecurityService, RequiresRoles
 
 
 folder_router = APIRouter(prefix="/folder",
@@ -26,9 +25,11 @@ async def add_folder(folder_input: FolderInput,
 
 @folder_router.get("/count/{url:path}",
                    response_model=int)
-async def get_sub_count(url: str = None,
-                        resource_query: ResourceQuery = Depends(),
-                        cur_user: UserOutput = Depends(optional_login_required)):
+async def get_sub_count(
+        url: str = None,
+        resource_query: ResourceQuery = Depends(),
+        cur_user: UserOutput = Depends(SecurityService.optional_login_required)
+):
     if len(url) > 0 and url[0] != '/':
         url = f'/{url}'
     folders = await ResourceService.find_resources(Folder(url=url))
@@ -41,9 +42,11 @@ async def get_sub_count(url: str = None,
 
 @folder_router.get("/sub_content/{url:path}",
                    response_model=list[ResourcePreview])
-async def get_folder(url: str = '',
-                     resource_query: ResourceQuery = Depends(),
-                     cur_user: UserOutput = Depends(optional_login_required)):
+async def get_folder(
+        url: str = '',
+        resource_query: ResourceQuery = Depends(),
+        cur_user: UserOutput = Depends(SecurityService.optional_login_required)
+):
     if len(url) > 0 and url[0] != '/':
         url = f'/{url}'
     folders = await ResourceService.find_resources(Folder(url=url))

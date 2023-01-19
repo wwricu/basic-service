@@ -1,3 +1,5 @@
+import warnings
+import aiomysql
 from functools import wraps
 from typing import Callable
 from contextvars import ContextVar
@@ -55,6 +57,8 @@ class AsyncDatabase:
                        host=Config.database.host,
                        port=Config.database.port)
         )
+        # Suppress warning given at create existed databases
+        warnings.filterwarnings('ignore', category=aiomysql.Warning)
         async with engine.begin() as conn:
             await conn.execute(
                 text(f"CREATE DATABASE IF NOT EXISTS {Config.database.database}")

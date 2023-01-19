@@ -2,9 +2,8 @@ from fastapi import APIRouter, Depends
 
 from dao import AsyncDatabase
 from schemas import TagSchema
-from service import TagService
+from service import TagService, RequiresRoles
 from models import Tag, PostTag
-from .auth_controller import RequiresRoles
 
 
 tag_router = APIRouter(prefix="/tag",

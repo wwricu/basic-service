@@ -3,7 +3,7 @@ import hashlib
 import asyncio
 from anyio import Path
 from fastapi import Depends, APIRouter, UploadFile, Request, HTTPException
-from .auth_controller import RequiresRoles
+from service import RequiresRoles
 
 
 file_router = APIRouter(prefix="/file", tags=["file"])

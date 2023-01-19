@@ -49,7 +49,6 @@ class JWTConfig:
 
 
 class Config:
-    jwt_secret = '245700b63ff9720127a531a1da7841b54582e0729f59505800b2f689f0d43788'
     database: DatabaseConfig = None
     admin: AdminConfig = None
     jwt: JWTConfig = None
@@ -72,7 +71,7 @@ class Config:
                   jwt: dict,
                   folders: dict,
                   **kwargs):
-        print(kwargs)
+        _ = kwargs
         cls.database = DatabaseConfig(**database)
         cls.admin = AdminConfig(**admin)
         cls.jwt = JWTConfig(**jwt)
