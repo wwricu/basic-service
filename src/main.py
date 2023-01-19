@@ -6,7 +6,7 @@ from anyio import Path
 
 from dao import AsyncDatabase
 from apis import router
-from config import Config
+from config import Config, logger
 
 
 app = FastAPI()
@@ -14,7 +14,7 @@ app = FastAPI()
 
 @app.on_event('startup')
 async def startup():
-    await Config.read_config()
+    await Config.init_config()
     await AsyncDatabase.init_database()
     # AsyncDatabase.init_db()
     path = Path('static/content')
@@ -35,8 +35,8 @@ async def startup():
 
 @app.on_event('shutdown')
 async def shutdown():
-    await AsyncDatabase.dispose_engine()
-    print('see u later')
+    await AsyncDatabase.close()
+    logger.info('see u later')
 
 
 if __name__ == "__main__":

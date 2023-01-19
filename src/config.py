@@ -1,7 +1,12 @@
+import logging
 import json
 from anyio import Path
 from types import MappingProxyType
+
 from models import Folder
+
+
+logger = logging.getLogger()
 
 
 class AdminConfig:
@@ -55,14 +60,21 @@ class Config:
     folders: list[Folder] = []
 
     @classmethod
-    async def read_config(cls, filename: str = 'assets/config.json'):
+    async def init_config(cls, filename: str = 'assets/config.json'):
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter(
+            "%(levelname)s:     %(message)s"
+        ))
+        logger.setLevel(logging.INFO)
+        logger.addHandler(handler)
+
         try:
             config_text = await Path(filename).read_text()
             config_json = json.loads(config_text)
             cls.load_json(**config_json)
-            print(f'config file: {filename}')
+            logger.info(f'config file: {filename}')
         except FileNotFoundError:
-            print('config file NOT found')
+            logger.info('config file NOT found')
 
     @classmethod
     def load_json(cls,

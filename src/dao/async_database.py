@@ -5,11 +5,12 @@ from typing import Callable
 from contextvars import ContextVar
 from sqlalchemy import text
 from sqlalchemy.engine import URL
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import close_all_sessions
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from config import Config
+from config import Config, logger
 from models import Base, SysUser, SysRole
 
 
@@ -18,7 +19,7 @@ ctx_db: ContextVar[AsyncSession | None] = ContextVar('ctx_db', default=None)
 
 class AsyncDatabase:
     __engine: AsyncEngine = None
-    __session_maker: sessionmaker = None
+    __session_maker: async_sessionmaker = None
 
     @classmethod
     async def get_engine(cls) -> AsyncEngine:
@@ -27,13 +28,14 @@ class AsyncDatabase:
                 URL.create(**Config.database.__dict__), echo=False
             )
             cls.__engine = engine
-            cls.__session_maker = sessionmaker(
-                engine, expire_on_commit=False, class_=AsyncSession
+            cls.__session_maker = async_sessionmaker(
+                engine, expire_on_commit=False
             )
         return cls.__engine
 
     @classmethod
-    async def dispose_engine(cls):
+    async def close(cls):
+        close_all_sessions()
         if cls.__engine:
             await cls.__engine.dispose()
 
@@ -93,7 +95,7 @@ class AsyncDatabase:
         except IntegrityError:
             pass
         except Exception as e:
-            print(e)
+            logger.warn(e)
             await session.rollback()
         finally:
             await session.close()
@@ -108,7 +110,7 @@ class AsyncDatabase:
         except IntegrityError:
             pass
         except Exception as e:
-            print(e)
+            logger.warn(e)
             await session.rollback()
         finally:
             await session.close()

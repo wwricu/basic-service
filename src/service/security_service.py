@@ -5,7 +5,7 @@ import jwt
 from fastapi import Depends, Response, HTTPException, Header
 from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime, timedelta
-from config import Config
+from config import Config, logger
 from schemas import UserOutput
 
 
@@ -14,7 +14,7 @@ class SecurityService:
                                                     auto_error=False)
 
     @staticmethod
-    def optional_login_required(
+    async def optional_login_required(
             response: Response,
             access_token: str = Depends(__oauth2_scheme_optional),
             refresh_token: str | None = Header(default=None)
@@ -32,10 +32,10 @@ class SecurityService:
                                   algorithms=[Config.jwt.algorithm])
                 response.headers['X-token-need-refresh'] = 'true'
             except jwt.ExpiredSignatureError:
-                print('token expired')
+                logger.info('token expired')
                 return None
         except Exception as e:
-            print(e)
+            logger.warn(e)
             return None
 
         return UserOutput(id=data['id'],
@@ -44,7 +44,7 @@ class SecurityService:
                           roles=data['roles'])
 
     @staticmethod
-    def requires_login(
+    async def requires_login(
             result: UserOutput = Depends(optional_login_required)
     ) -> UserOutput:
 
@@ -67,7 +67,6 @@ class SecurityService:
     def verify_password(plain_password: str,
                         salt: str,
                         password_hash: str) -> bool:
-        print(plain_password, salt, password_hash)
         after_salt = hashlib.md5(
             plain_password.encode(encoding='utf-8')
         ).hexdigest() + salt
