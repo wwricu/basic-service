@@ -39,19 +39,13 @@ class SecurityService:
             delta = timedelta(days=7)
 
         data.update({"exp": datetime.utcnow() + delta})
-        return jwt.encode(payload=data,
-                          key=Config.jwt_secret,
-                          algorithm='HS256',
-                          headers={
-                              "alg": "HS256",
-                              "typ": "JWT"
-                          })
+        return jwt.encode(payload=data, **Config.jwt.__dict__)
 
     @staticmethod
     def verify_token(token: str) -> UserOutput:
         data = jwt.decode(token,
                           key=Config.jwt_secret,
-                          algorithms=['HS256'])
+                          algorithms=[Config.jwt.algorithm])
 
         return UserOutput(id=data['id'],
                           username=data['username'],

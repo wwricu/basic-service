@@ -35,10 +35,24 @@ class DatabaseConfig:
         self.database = database
 
 
+class JWTConfig:
+    def __init__(self,
+                 key: str,
+                 algorithm: str | None = 'HS256',
+                 headers: dict | None = MappingProxyType({
+                     "alg": "HS256",
+                     "typ": "JWT"
+                 })):
+        self.key = key
+        self.algorithm = algorithm
+        self.headers = headers
+
+
 class Config:
     jwt_secret = '245700b63ff9720127a531a1da7841b54582e0729f59505800b2f689f0d43788'
     database: DatabaseConfig = None
     admin: AdminConfig = None
+    jwt: JWTConfig = None
     folders: list[Folder] = []
 
     @classmethod
@@ -53,12 +67,14 @@ class Config:
 
     @classmethod
     def load_json(cls,
-                  jwt_secret: str,
                   database: dict,
                   admin: dict,
-                  folders: dict):
-        cls.jwt_secret = jwt_secret
-        cls.admin = AdminConfig(**admin)
+                  jwt: dict,
+                  folders: dict,
+                  **kwargs):
+        print(kwargs)
         cls.database = DatabaseConfig(**database)
+        cls.admin = AdminConfig(**admin)
+        cls.jwt = JWTConfig(**jwt)
         for folder in folders:
             cls.folders.append(Folder(**folder))
