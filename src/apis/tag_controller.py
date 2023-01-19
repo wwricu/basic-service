@@ -35,7 +35,7 @@ async def rename_tag(tag: TagSchema):
     )
 
 
-@tag_router.delete("/{tag_id}",
+@tag_router.delete("/{tag_id}", response_model=int,
                    dependencies=[Depends(RequiresRoles('admin'))])
 async def remove_tag(tag_id: int):
     return await TagService.remove_tag(Tag(id=tag_id))

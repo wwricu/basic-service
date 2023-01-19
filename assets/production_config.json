@@ -1,5 +1,4 @@
 {
-  "jwt_secret": "245700b63ff9720127a531a1da7841b54582e0729f59505800b2f689f0d43788",
   "database": {
     "drivername": "mysql+aiomysql",
     "username": "root",
@@ -8,14 +7,21 @@
     "port": 3306,
     "database": "fastdb"
   },
+  "jwt": {
+    "key": "245700b63ff9720127a531a1da7841b54582e0729f59505800b2f689f0d43788",
+    "algorithm": "HS256",
+    "headers": {
+      "alg": "HS256",
+      "typ": "JWT"
+    }
+  },
   "admin": {
     "username": "wwr",
     "password_hash": "f5168b16e387802b06e95905727277b0",
-    "password_salt": "CrvV5IDnCZ2noa-f4a_KChCBac284vBAw11p_NsiKa4",
+    "salt": "CrvV5IDnCZ2noa-f4a_KChCBac284vBAw11p_NsiKa4",
     "email": "iswangwr@gmail.com",
     "role": {
-      "name": "admin",
-      "description": "admin"
+      "name": "admin"
     }
   },
   "folders": [

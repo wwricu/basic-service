@@ -16,9 +16,8 @@ async def get_current_user(
     return user_output
 
 
-@auth_router.post("",
-                  dependencies=[Depends(AsyncDatabase.open_session)],
-                  response_model=TokenResponse)
+@auth_router.post("", response_model=TokenResponse,
+                  dependencies=[Depends(AsyncDatabase.open_session)])
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user_output = await UserService.user_login(
         UserInput(username=form_data.username, password=form_data.password)
