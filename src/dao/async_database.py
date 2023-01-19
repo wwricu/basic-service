@@ -1,6 +1,8 @@
 from functools import wraps
 from typing import Callable
 from contextvars import ContextVar
+from sqlalchemy import text
+from sqlalchemy.engine import URL
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, AsyncSession
 
@@ -18,7 +20,8 @@ class AsyncDatabase:
     @classmethod
     async def get_engine(cls) -> AsyncEngine:
         if not cls.__engine:
-            engine = create_async_engine(Config.db_url, echo=False)
+            engine = create_async_engine(URL.create(**Config.database.__dict__),
+                                         echo=False)
             cls.__engine = engine
             cls.__session_maker = sessionmaker(
                 engine, expire_on_commit=False, class_=AsyncSession
@@ -45,10 +48,21 @@ class AsyncDatabase:
 
     @classmethod
     async def init_database(cls):
+        engine = create_async_engine(
+            URL.create(drivername=Config.database.drivername,
+                       username=Config.database.username,
+                       password=Config.database.password,
+                       host=Config.database.host,
+                       port=Config.database.port)
+        )
+        async with engine.begin() as conn:
+            await conn.execute(
+                text(f"CREATE DATABASE IF NOT EXISTS {Config.database.database}")
+            )
+            await conn.execute(text(f"USE {Config.database.database}"))
+        await engine.dispose()
+
         engine = await cls.get_engine()
-        # TODO: create database
-        # if not database_exists(engine.url):
-        #     create_database(engine.url)
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
