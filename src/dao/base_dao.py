@@ -1,14 +1,14 @@
 import asyncio
 from sqlalchemy import Table
 from typing import Type
-from sqlalchemy.future import select
+from sqlalchemy import select
+# from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .async_database import AsyncDatabase
 
 
 # TODO: use instance instead of static methods
-# TODO: update sqlalchemy to 2.0
 class BaseDao:
     @staticmethod
     @AsyncDatabase.database_session
@@ -55,14 +55,14 @@ class BaseDao:
         if obj.id is None or obj.id == 0:
             return
 
-        obj_update = await session.scalar(
-            select(class_name).where(getattr(class_name, 'id') == obj.id)
-        )
+        obj_update = await session.get(class_name, obj.id)
+        # obj_update = await session.scalar(
+        #     select(class_name).filter_by(id=obj.id)
+        # )
 
         for key in obj.__dict__:
             if key[0] == '_' or getattr(obj, key) is None:
                 continue
-            # TODO: change relations on update
             attr = getattr(obj, key)
             if not isinstance(attr, list):
                 setattr(obj_update, key, attr)
@@ -77,10 +77,11 @@ class BaseDao:
                      *, session: AsyncSession
                      ) -> int:  # return deleted id
         if obj.id is None or obj.id == 0:
-            return
-        obj = await session.scalar(
-            select(class_name).where(getattr(class_name, 'id') == obj.id)
-        )
+            return 0
+        obj = await session.get(class_name, obj.id)
+        # obj = await session.scalar(
+        #     select(class_name).filter_by(id=obj.id)
+        # )
         await session.delete(obj)
         await session.commit()
         return obj.id
