@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, AsyncSession
 
 from config import Config
-from models import Base, SysUser, SysRole, Folder
+from models import Base, SysUser, SysRole
 
 
 ctx_db: ContextVar[AsyncSession | None] = ContextVar('ctx_db', default=None)
@@ -74,12 +74,8 @@ class AsyncDatabase:
         # TODO: suppress warning
         session: AsyncSession = cls.__session_maker()
         try:
-            admin_role = SysRole(name='admin',
-                                 description='Admin role')
-            admin = SysUser(username=Config.admin_username,
-                            email=Config.admin_email,
-                            password_hash=Config.admin_password_hash,
-                            salt=Config.admin_password_salt)
+            admin_role = SysRole(**Config.admin.role)
+            admin = SysUser(**Config.admin.__dict__)
             session.add(admin_role)
             session.add(admin)
             admin.roles.append(admin_role)
@@ -94,23 +90,8 @@ class AsyncDatabase:
     async def insert_root_folder(cls):
         session: AsyncSession = cls.__session_maker()
         try:
-            root_folder = Folder(title='root',
-                                 permission=0,
-                                 url='')
-            session.add(root_folder)
-            await session.flush()
-            post_folder = Folder(title='post',
-                                 permission=711,
-                                 url='/post',
-                                 owner_id=1,
-                                 parent_url=root_folder.url)
-            draft_folder = Folder(title='draft',
-                                  permission=700,
-                                  url='/draft',
-                                  owner_id=1,
-                                  parent_url=root_folder.url)
-            session.add(post_folder)
-            session.add(draft_folder)
+            for folder in Config.folders:
+                session.add(folder)
             await session.commit()
         except (Exception,):
             await session.rollback()
