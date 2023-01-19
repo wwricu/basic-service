@@ -2,7 +2,7 @@ from functools import wraps
 from typing import Callable
 from contextvars import ContextVar
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, AsyncSession
 
 from config import Config
 from models import Base, SysUser, SysRole, Folder
@@ -12,29 +12,27 @@ ctx_db: ContextVar[AsyncSession | None] = ContextVar('ctx_db', default=None)
 
 
 class AsyncDatabase:
-    __engine = None
-    __async_session = None
+    __engine: AsyncEngine = None
+    __session_maker: sessionmaker = None
 
     @classmethod
-    async def get_engine(cls):
+    async def get_engine(cls) -> AsyncEngine:
         if not cls.__engine:
             engine = create_async_engine(Config.db_url, echo=False)
             cls.__engine = engine
+            cls.__session_maker = sessionmaker(
+                engine, expire_on_commit=False, class_=AsyncSession
+            )
         return cls.__engine
 
     @classmethod
-    async def create_session(cls):
-        return sessionmaker(await cls.get_engine(),
-                            expire_on_commit=False,
-                            class_=AsyncSession)()
+    async def dispose_engine(cls):
+        if cls.__engine:
+            await cls.__engine.dispose()
 
     @classmethod
     async def open_session(cls) -> AsyncSession:
-        maker = sessionmaker(await cls.get_engine(),
-                             expire_on_commit=False,
-                             class_=AsyncSession)
-        async with maker() as session:
-            # async with session.begin():
+        async with cls.__session_maker() as session:
             ctx_db.set(session)
             yield session
 
@@ -48,6 +46,7 @@ class AsyncDatabase:
     @classmethod
     async def init_database(cls):
         engine = await cls.get_engine()
+        # TODO: create database
         # if not database_exists(engine.url):
         #     create_database(engine.url)
         async with engine.begin() as conn:
@@ -58,7 +57,8 @@ class AsyncDatabase:
 
     @classmethod
     async def insert_admin(cls):
-        session = await cls.create_session()
+        # TODO: suppress warning
+        session: AsyncSession = cls.__session_maker()
         try:
             admin_role = SysRole(name='admin',
                                  description='Admin role')
@@ -78,7 +78,7 @@ class AsyncDatabase:
 
     @classmethod
     async def insert_root_folder(cls):
-        session = await cls.create_session()
+        session: AsyncSession = cls.__session_maker()
         try:
             root_folder = Folder(title='root',
                                  permission=0,

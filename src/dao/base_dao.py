@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .async_database import AsyncDatabase
 
 
+# TODO: use instance instead of static methods
 class BaseDao:
     @staticmethod
     @AsyncDatabase.database_session
@@ -25,7 +26,7 @@ class BaseDao:
     async def select(obj: any,
                      class_name: Table | Type,
                      *, session: AsyncSession):
-        statement = select(class_name)
+        stmt = select(class_name)
 
         for key in class_name.__dict__:
             if key[0] == '_' or not hasattr(obj, key):
@@ -34,8 +35,8 @@ class BaseDao:
             if attr is None:
                 continue
             if isinstance(attr, int) or isinstance(attr, str):
-                statement = statement.where(getattr(class_name, key) == attr)
-        return (await session.scalars(statement)).all()
+                stmt = stmt.where(getattr(class_name, key) == attr)
+        return (await session.scalars(stmt)).all()
 
     @staticmethod
     @AsyncDatabase.database_session
@@ -45,7 +46,7 @@ class BaseDao:
         if obj.id is None or obj.id == 0:
             return
 
-        origin_obj = await session.scalar(
+        obj_update = await session.scalar(
             select(class_name).where(getattr(class_name, 'id') == obj.id)
         )
         for key in obj.__dict__:
@@ -54,9 +55,9 @@ class BaseDao:
             # TODO: change relations on update
             attr = getattr(obj, key)
             if not isinstance(attr, list):
-                setattr(origin_obj, key, attr)
+                setattr(obj_update, key, attr)
         await session.commit()
-        return origin_obj
+        return obj_update
 
     @staticmethod
     @AsyncDatabase.database_session

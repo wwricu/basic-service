@@ -1,6 +1,5 @@
 import os
 import uvicorn
-import asyncio
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -34,6 +33,12 @@ async def startup():
         allow_headers=['*'],
         expose_headers=['X-token-need-refresh', 'X-content-id']
     )
+
+
+@app.on_event('shutdown')
+async def shutdown():
+    await AsyncDatabase.dispose_engine()
+    print('see u later')
 
 
 if __name__ == "__main__":
