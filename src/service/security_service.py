@@ -87,17 +87,6 @@ class SecurityService:
         data.update({"exp": datetime.utcnow() + delta})
         return jwt.encode(payload=data, **Config.jwt.__dict__)
 
-    @staticmethod
-    def verify_token(token: str) -> UserOutput:
-        data = jwt.decode(token,
-                          key=Config.jwt.key,
-                          algorithms=[Config.jwt.algorithm])
-
-        return UserOutput(id=data['id'],
-                          username=data['username'],
-                          email=data['email'],
-                          roles=data['roles'])
-
 
 class RequiresRoles:
     def __init__(self, required_role: str):
