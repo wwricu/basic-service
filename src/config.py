@@ -1,4 +1,5 @@
 import json
+from anyio import Path
 
 
 class Config:
@@ -10,12 +11,11 @@ class Config:
     jwt_secret = '245700b63ff9720127a531a1da7841b54582e0729f59505800b2f689f0d43788'
 
     @classmethod
-    def read_config(cls, filename: str = 'assets/config.json'):
+    async def read_config(cls, filename: str = 'assets/config.json'):
         try:
-            with open(filename, 'r') as f:
-                config_text = f.read()
-                config_json = json.loads(config_text)
-                Config.load_config(**config_json)
+            config_text = await Path(filename).read_text()
+            config_json = json.loads(config_text)
+            cls.load_config(**config_json)
             print(f'read {filename}')
         except FileNotFoundError:
             print('use dev config')

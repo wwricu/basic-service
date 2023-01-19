@@ -1,5 +1,6 @@
-import os
 import uuid
+import asyncio
+from anyio import Path
 from datetime import datetime
 from typing import Type
 
@@ -62,11 +63,14 @@ class ResourceService:
 
         resource.updated_time = datetime.now()
         res = await BaseDao.update(resource, resource.__class__)
+
+        async_tasks = []
         if resource.url != old_resources[0].url:
-            for re in sub_resources:
+            for sub in sub_resources:
                 # foreign key restraint: must update parent url to make it existing
-                re.parent_url = resource.url
-                await ResourceService.modify_resource(re)
+                sub.parent_url = resource.url
+                async_tasks.append(ResourceService.modify_resource(sub))
+        await asyncio.gather(*async_tasks)
         return res
 
     @staticmethod
@@ -85,14 +89,9 @@ class ResourceService:
 
     @staticmethod
     async def trim_files(content_id: int, attach_files: set[str]):
-        try:
-            path = f'static/content/{content_id}'
-            files = os.listdir(path)
-            for filename in files:
-                if attach_files is None or filename not in attach_files:
-                    os.remove(f'{path}/{filename}')
-        except Exception as e:
-            print(e.__str__())
+        async for file in Path(f'static/content/{content_id}').iterdir():
+            if attach_files is None or file.name not in attach_files:
+                await file.unlink(missing_ok=True)
 
     @staticmethod
     def check_permission(

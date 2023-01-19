@@ -1,3 +1,4 @@
+import asyncio
 from sqlalchemy import Table
 from typing import Type
 from sqlalchemy.future import select
@@ -7,6 +8,7 @@ from .async_database import AsyncDatabase
 
 
 # TODO: use instance instead of static methods
+# TODO: update sqlalchemy to 2.0
 class BaseDao:
     @staticmethod
     @AsyncDatabase.database_session
@@ -36,6 +38,13 @@ class BaseDao:
                 continue
             if isinstance(attr, int) or isinstance(attr, str):
                 stmt = stmt.where(getattr(class_name, key) == attr)
+        '''
+        NOTICE: Difference between session.scalars and session.scalar:
+        scalar return the unique result as a raw OBJECT, while
+        scalars returns multiple results that need further processing,
+        so we must use '.all()', '.first()' or '.one()',
+        to fetch result(s) from them.
+        '''
         return (await session.scalars(stmt)).all()
 
     @staticmethod
@@ -77,8 +86,20 @@ class BaseDao:
     async def delete_all(objs: list,
                          class_name: Table | Type,
                          *, session: AsyncSession):
+        async_tasks = []
         for obj in objs:
-            obj = await BaseDao.select(obj, class_name)
-            if len(obj) == 1:
-                await session.delete(obj[0])
+            async_tasks.append(BaseDao.select(obj, class_name))
+        res_group = await asyncio.gather(*async_tasks)
+        '''
+        NOTICE:
+        asyncio.gather will ONLY add the exact ASYNC functions
+        to the event loop, which means other things like:
+        SYNC functions and awaited functions invoked in parameter list,
+        will NOT be run concurrently. See async_test.py file
+        '''
+        async_tasks.clear()
+        for res in res_group:  # each res is a list of object
+            for obj in res:
+                async_tasks.append(session.delete(obj))
+        await asyncio.gather(*async_tasks)
         await session.commit()
