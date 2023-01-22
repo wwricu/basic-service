@@ -1,5 +1,5 @@
 import os
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from dao import AsyncDatabase
 from models import Content, Resource
@@ -33,9 +33,8 @@ async def get_content(
         cur_user: UserOutput = Depends(SecurityService.optional_login_required)
 ):
     contents = await ResourceService.find_resources(Content(id=content_id))
-    if len(contents) != 1 or not ResourceService.check_permission(
-            contents[0], cur_user, 1):
-        raise HTTPException(status_code=403, detail="need login to check draft")
+    assert len(contents) == 1
+    ResourceService.check_permission(contents[0], cur_user, 1)
     return ContentOutput.init(contents[0])
 
 

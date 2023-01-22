@@ -1,11 +1,13 @@
-import uuid
 import asyncio
+import uuid
+
 from anyio import Path
 from datetime import datetime
+from fastapi import HTTPException
 from typing import Type
 
-from models import Resource, Folder, ResourceTag, Content
 from dao import BaseDao, ResourceDao
+from models import Resource, Folder, ResourceTag, Content
 from schemas import UserOutput, ResourceQuery
 
 
@@ -97,8 +99,8 @@ class ResourceService:
     def check_permission(
             resource: Resource,
             user: UserOutput,
-            operation_mask: int) -> bool:
-
+            operation_mask: int
+    ):
         permission = resource.permission % 10
         if user is not None:
             for role in user.roles:
@@ -111,5 +113,4 @@ class ResourceService:
                 permission |= (resource.permission // 100) % 10
 
         if operation_mask & permission == 0:
-            raise Exception('no permission')
-        return True
+            raise HTTPException(status_code=403, detail="unauthorized")
