@@ -1,14 +1,19 @@
+import functools
 import warnings
-import aiomysql
-from functools import wraps
-from typing import Callable
 from contextvars import ContextVar
+from typing import Callable
+
+from aiomysql import Warning as SQLWarning
 from sqlalchemy import text
 from sqlalchemy.engine import URL
-from sqlalchemy.orm import close_all_sessions
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.ext.asyncio import (
+    async_sessionmaker,
+    create_async_engine,
+    AsyncEngine,
+    AsyncSession
+)
+from sqlalchemy.orm import close_all_sessions
 
 from config import Config, logger
 from models import Base, SysUser, SysRole
@@ -47,7 +52,7 @@ class AsyncDatabase:
 
     @staticmethod
     def database_session(method: Callable) -> Callable:
-        @wraps(method)
+        @functools.wraps(method)
         def wrapper(*args, **kwargs):
             return method(*args, session=ctx_db.get(), **kwargs)
         return wrapper
@@ -62,7 +67,7 @@ class AsyncDatabase:
                        port=Config.database.port)
         )
         # Suppress warning given at create existed databases
-        warnings.filterwarnings('ignore', category=aiomysql.Warning)
+        warnings.filterwarnings('ignore', category=SQLWarning)
         async with engine.begin() as conn:
             await conn.execute(
                 text(f"CREATE DATABASE IF NOT EXISTS {Config.database.database}")

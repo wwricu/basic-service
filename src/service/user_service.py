@@ -1,6 +1,7 @@
 from fastapi import HTTPException
-from dao import BaseDao
+
 from schemas import UserInput, UserOutput
+from dao import BaseDao
 from models import SysUser
 from .security_service import SecurityService
 

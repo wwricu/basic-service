@@ -1,4 +1,4 @@
-from .user_service import UserService
-from .security_service import SecurityService, RequiresRoles
 from .resource_service import ResourceService
+from .security_service import RequiresRoles, SecurityService
 from .tag_service import TagService
+from .user_service import UserService

@@ -1,7 +1,9 @@
 from __future__ import annotations
-from pydantic import BaseModel
 from datetime import datetime
-from models import Resource, Content, PostTag, PostCategory, Folder
+
+from pydantic import BaseModel
+
+from models import Content, Folder, PostCategory, PostTag, Resource
 from .tag import TagSchema
 
 

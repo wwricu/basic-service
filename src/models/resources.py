@@ -1,6 +1,9 @@
-from types import MappingProxyType
 from datetime import datetime
-from sqlalchemy import Integer, Column, String, DateTime, ForeignKey, LargeBinary
+from types import MappingProxyType
+
+from sqlalchemy import (
+    Column, DateTime, ForeignKey, Integer, LargeBinary, String
+)
 from sqlalchemy.orm import relationship
 
 from .sys_user import Base
@@ -51,7 +54,7 @@ class Resource(Base):
                         ForeignKey('resource.url'),
                         nullable=True)
     parent = relationship('Resource',
-                          remote_side=[url],
+                          remote_side=['url'],
                           back_populates='sub_resource',
                           uselist=False)
     sub_resource = relationship("Resource",

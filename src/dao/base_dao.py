@@ -1,8 +1,7 @@
 import asyncio
-from sqlalchemy import Table
 from typing import Type
-from sqlalchemy import select
-# from sqlalchemy.future import select
+
+from sqlalchemy import select, Table
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .async_database import AsyncDatabase

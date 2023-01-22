@@ -1,10 +1,11 @@
-import secrets
 import hashlib
 import jwt
-
-from fastapi import Depends, Response, HTTPException, Header
-from fastapi.security import OAuth2PasswordBearer
+import secrets
 from datetime import datetime, timedelta
+
+from fastapi import Depends, Header, HTTPException, Response
+from fastapi.security import OAuth2PasswordBearer
+
 from config import Config, logger
 from schemas import UserOutput
 
@@ -93,7 +94,8 @@ class RequiresRoles:
         self.required_role = required_role
 
     def __call__(
-            self, user_output: UserOutput = Depends(SecurityService.requires_login)
+            self,
+            user_output: UserOutput = Depends(SecurityService.requires_login)
     ) -> UserOutput:
 
         for role in user_output.roles:

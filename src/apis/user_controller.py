@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from dao import AsyncDatabase
 from schemas import UserInput, UserOutput
-from service import UserService, RequiresRoles
+from service import RequiresRoles, UserService
 
 
 user_router = APIRouter(prefix="/user",

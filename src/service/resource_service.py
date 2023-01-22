@@ -1,14 +1,14 @@
 import asyncio
 import uuid
+from datetime import datetime
+from typing import Type, Sequence
 
 from anyio import Path
-from datetime import datetime
 from fastapi import HTTPException
-from typing import Type
 
 from dao import BaseDao, ResourceDao
-from models import Resource, Folder, ResourceTag, Content
-from schemas import UserOutput, ResourceQuery
+from models import Content, Folder, Resource, ResourceTag
+from schemas import ResourceQuery, UserOutput
 
 
 class ResourceService:
@@ -17,7 +17,8 @@ class ResourceService:
         parent_url = ''
         if resource.parent_url is not None:
             parent = (await BaseDao.select(
-                Resource(url=resource.parent_url), Resource))[0]
+                Resource(url=resource.parent_url), Resource)
+            )[0]
             parent_url = parent.url
 
         if isinstance(resource, Folder):
@@ -33,18 +34,21 @@ class ResourceService:
         return await BaseDao.select(resource, resource.__class__)
 
     @staticmethod
-    async def find_sub_resources(parent_url: str | None = None,
-                                 resource_query: ResourceQuery | None = ResourceQuery(),
-                                 obj_class: Type | None = Resource
-                                 ) -> list[Resource]:
+    async def find_sub_resources(
+            parent_url: str | None = None,
+            resource_query: ResourceQuery | None = ResourceQuery(),
+            obj_class: Type | None = Resource
+    ) -> Sequence[Resource]:
         return await ResourceDao.get_sub_resources(parent_url,
                                                    resource_query,
                                                    obj_class)
 
     @staticmethod
-    async def find_sub_count(parent_url: str | None = None,
-                             resource_query: ResourceQuery | None = ResourceQuery(),
-                             obj_class: Type | None = Resource) -> int:
+    async def find_sub_count(
+            parent_url: str | None = None,
+            resource_query: ResourceQuery | None = ResourceQuery(),
+            obj_class: Type | None = Resource
+    ) -> int:
         return await ResourceDao.get_sub_resource_count(parent_url,
                                                         resource_query,
                                                         obj_class)
@@ -81,7 +85,9 @@ class ResourceService:
 
     @staticmethod
     async def reset_content_tags(content: Content):
-        await BaseDao.delete_all([ResourceTag(resource_id=content.id)], ResourceTag)
+        await BaseDao.delete_all(
+            [ResourceTag(resource_id=content.id)], ResourceTag
+        )
         add_content_tags = [ResourceTag(resource_id=content.id,
                                         tag_id=x.id)
                             for x in content.tags]

@@ -1,9 +1,9 @@
-from fastapi import Depends, APIRouter, Response
+from fastapi import APIRouter, Depends, Response
 from fastapi.security import OAuth2PasswordRequestForm
 
 from dao import AsyncDatabase
 from service import SecurityService, UserService
-from schemas import UserInput, UserOutput, TokenResponse
+from schemas import TokenResponse, UserInput, UserOutput
 
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])

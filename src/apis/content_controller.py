@@ -1,10 +1,11 @@
 import os
+
 from fastapi import APIRouter, Depends
 
 from dao import AsyncDatabase
 from models import Content, Resource
 from schemas import ContentInput, ContentOutput, UserOutput
-from service import ResourceService, SecurityService, RequiresRoles
+from service import RequiresRoles, ResourceService, SecurityService
 
 
 content_router = APIRouter(prefix="/content",
