@@ -1,12 +1,12 @@
 import uvicorn
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
 from anyio import Path
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
-from dao import AsyncDatabase
 from apis import router
 from config import Config, logger
+from dao import AsyncDatabase
 
 
 app = FastAPI()

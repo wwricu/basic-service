@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from dao import AsyncDatabase
 from schemas import TagSchema
-from service import TagService, RequiresRoles
+from service import RequiresRoles, TagService
 from models import PostCategory, Tag
 
 

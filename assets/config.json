@@ -8,7 +8,7 @@
     "database": "fastdb"
   },
   "jwt": {
-    "key": "245700b63ff9720127a531a1da7841b54582e0729f59505800b2f689f0d43788",
+    "key": "8cf395c08d690e754fdc05f074adbc0b1dee6ed3577c35c6533e01e4b7037363",
     "algorithm": "HS256",
     "headers": {
       "alg": "HS256",
@@ -17,8 +17,8 @@
   },
   "admin": {
     "username": "wwr",
-    "password_hash": "f5168b16e387802b06e95905727277b0",
-    "salt": "CrvV5IDnCZ2noa-f4a_KChCBac284vBAw11p_NsiKa4",
+    "password_hash": "7b243cc5a5f3b79f591c390f17d03f914f785afa3a1eb0fb17b0988b75b4d84f",
+    "salt": "94f540b52845cbd80e064b02702fbc32c33484f7c72ad7a78f9e8725b2ecb2bc",
     "email": "iswangwr@gmail.com",
     "role": {
       "name": "admin"

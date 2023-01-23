@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 
 from dao import AsyncDatabase
+from models import PostTag, Tag
 from schemas import TagSchema
-from service import TagService, RequiresRoles
-from models import Tag, PostTag
+from service import RequiresRoles, TagService
 
 
 tag_router = APIRouter(prefix="/tag",
@@ -11,9 +11,8 @@ tag_router = APIRouter(prefix="/tag",
                        dependencies=[Depends(AsyncDatabase.open_session)])
 
 
-@tag_router.post("",
-                 dependencies=[Depends(RequiresRoles('admin'))],
-                 response_model=TagSchema)
+@tag_router.post("", response_model=TagSchema,
+                 dependencies=[Depends(RequiresRoles('admin'))])
 async def add_tag(tag: TagSchema):
     return TagSchema.init(await TagService.add_tag(PostTag(name=tag.name)))
 
@@ -24,9 +23,8 @@ async def get_tag(tag: TagSchema = Depends()):
     return [TagSchema.init(x) for x in tags]
 
 
-@tag_router.put("",
-                dependencies=[Depends(RequiresRoles('admin'))],
-                response_model=TagSchema)
+@tag_router.put("", response_model=TagSchema,
+                dependencies=[Depends(RequiresRoles('admin'))])
 async def rename_tag(tag: TagSchema):
     return TagSchema.init(
         await TagService.rename_tag(

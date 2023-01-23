@@ -1,21 +1,25 @@
+from typing import Type, Sequence
+
+from sqlalchemy import func, select, Table
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from .async_database import AsyncDatabase
 from models import PostCategory, PostTag, Resource
 from schemas import ResourceQuery
-from sqlalchemy import func, select, Table
-from typing import Type
-from sqlalchemy.ext.asyncio import AsyncSession
-from .async_database import AsyncDatabase
 
 
 class ResourceDao:
     @staticmethod
     @AsyncDatabase.database_session
-    async def get_sub_resources(parent_url: str | None = None,
-                                resource_query: ResourceQuery = ResourceQuery(),
-                                obj_class: Table | Type = Resource,
-                                *, session: AsyncSession) -> list[any]:
+    async def get_sub_resources(
+            parent_url: str | None = None,
+            resource_query: ResourceQuery = ResourceQuery(),
+            obj_class: Table | Type = Resource,
+            *, session: AsyncSession
+    ) -> Sequence[any]:
         stmt = select(obj_class).order_by(obj_class.updated_time.desc())
 
-        if parent_url is not None and len(parent_url) > 0:
+        if parent_url is not None:
             stmt = stmt.where(obj_class.parent_url == parent_url)
 
         if resource_query.category_name is not None:
@@ -35,17 +39,19 @@ class ResourceDao:
                 (resource_query.page_idx + 1) * resource_query.page_size
             )
 
-        return [x for x in (await session.scalars(stmt)).all()]
+        return (await session.scalars(stmt)).all()
 
     @staticmethod
     @AsyncDatabase.database_session
-    async def get_sub_resource_count(parent_url: str | None = None,
-                                     resource_query: ResourceQuery = ResourceQuery(),
-                                     obj_class: Table | Type = Resource,
-                                     *, session: AsyncSession) -> int:
+    async def get_sub_resource_count(
+            parent_url: str | None = None,
+            resource_query: ResourceQuery = ResourceQuery(),
+            obj_class: Table | Type = Resource,
+            *, session: AsyncSession
+    ) -> int:
         stmt = select(func.count()).select_from(obj_class)
 
-        if parent_url is not None and len(parent_url) > 0:
+        if parent_url is not None:
             stmt = stmt.where(obj_class.parent_url == parent_url)
 
         if resource_query.category_name is not None:

@@ -1,10 +1,11 @@
-import secrets
 import hashlib
 import jwt
-
-from fastapi import Depends, Response, HTTPException, Header
-from fastapi.security import OAuth2PasswordBearer
+import secrets
 from datetime import datetime, timedelta
+
+from fastapi import Depends, Header, HTTPException, Response
+from fastapi.security import OAuth2PasswordBearer
+
 from config import Config, logger
 from schemas import UserOutput
 
@@ -13,6 +14,7 @@ class SecurityService:
     __oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="auth",
                                                     auto_error=False)
 
+    # TODO: async dependency
     @staticmethod
     def optional_login_required(
             response: Response,
@@ -54,31 +56,27 @@ class SecurityService:
 
     @staticmethod
     def generate_salt() -> str:
-        # TODO: replace md5
-        return secrets.token_urlsafe()
+        return secrets.token_hex()
 
     @staticmethod
     def get_password_hash(plain_password: str, salt: str) -> str:
-        after_salt = hashlib.md5(
+        after_salt = hashlib.sha256(
             plain_password.encode(encoding='utf-8')
         ).hexdigest() + salt
-        return hashlib.md5(after_salt.encode(encoding='utf-8')).hexdigest()
-
-    @staticmethod
-    def verify_password(plain_password: str,
-                        salt: str,
-                        password_hash: str) -> bool:
-        after_salt = hashlib.md5(
-            plain_password.encode(encoding='utf-8')
-        ).hexdigest() + salt
-        return password_hash == hashlib.md5(
+        return hashlib.sha256(
             after_salt.encode(encoding='utf-8')
         ).hexdigest()
+
+    @classmethod
+    def verify_password(cls,
+                        plain_password: str,
+                        salt: str,
+                        password_hash: str) -> bool:
+        return password_hash == cls.get_password_hash(plain_password, salt)
 
     @staticmethod
     def create_jwt_token(user_info: UserOutput,
                          refresh: bool | None = False) -> bytes:
-        # TODO: replace jwt key
         data = user_info.dict()
         delta = timedelta(minutes=60)
         if refresh:
@@ -93,7 +91,8 @@ class RequiresRoles:
         self.required_role = required_role
 
     def __call__(
-            self, user_output: UserOutput = Depends(SecurityService.requires_login)
+            self,
+            user_output: UserOutput = Depends(SecurityService.requires_login)
     ) -> UserOutput:
 
         for role in user_output.roles:

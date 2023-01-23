@@ -1,4 +1,4 @@
-from .relations import UserRole, RolePermission, ResourceTag
-from .sys_user import SysUser, SysRole, SysPermission, Base
-from .resources import Resource, Content, Folder
-from .tag import Tag, PostTag, PostCategory
+from .relations import ResourceTag, RolePermission, UserRole
+from .resources import Content, Folder, Resource
+from .sys_user import Base, SysPermission, SysRole, SysUser
+from .tag import PostCategory, PostTag, Tag

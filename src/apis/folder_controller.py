@@ -1,10 +1,15 @@
 from fastapi import APIRouter, Depends
 
 from dao import AsyncDatabase
-from models import Folder, Content, Resource
-from schemas import FolderInput, FolderOutput, UserOutput
-from schemas import ResourcePreview, ResourceQuery
-from service import ResourceService, SecurityService, RequiresRoles
+from models import Content, Folder, Resource
+from schemas import (
+    FolderInput,
+    FolderOutput,
+    ResourcePreview,
+    ResourceQuery,
+    UserOutput
+)
+from service import RequiresRoles, ResourceService, SecurityService
 
 
 folder_router = APIRouter(prefix="/folder",

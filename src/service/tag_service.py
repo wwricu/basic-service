@@ -1,5 +1,5 @@
-from models import Tag
 from dao import BaseDao
+from models import Tag
 
 
 class TagService:
