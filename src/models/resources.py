@@ -54,7 +54,7 @@ class Resource(Base):
                         ForeignKey('resource.url'),
                         nullable=True)
     parent = relationship('Resource',
-                          remote_side=['url'],
+                          remote_side=url,
                           back_populates='sub_resource',
                           uselist=False)
     sub_resource = relationship("Resource",
