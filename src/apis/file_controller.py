@@ -11,16 +11,17 @@ from service import RequiresRoles
 file_router = APIRouter(prefix="/file", tags=["file"])
 
 
-@file_router.post("/static/content",
-                  dependencies=[Depends(RequiresRoles('admin'))])
+@file_router.post(
+    "/static/content", dependencies=[Depends(RequiresRoles('admin'))]
+)
 async def upload(files: list[UploadFile], request: Request):
     succ_files, content_id = [], request.headers['x-content-id']
     if content_id is None:
         raise HTTPException(status_code=404, detail='no content id')
 
-    content_path = f'static/content/{content_id}'
-    if not os.path.exists(content_path):
-        os.makedirs(content_path)
+    content_path = Path(f'static/content/{content_id}')
+    if not await Path.exists(content_path):
+        await Path.mkdir(content_path)
 
     async def save_file(file: UploadFile):
         suffix = os.path.splitext(file.filename)[-1]

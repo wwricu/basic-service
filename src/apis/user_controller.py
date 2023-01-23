@@ -5,10 +5,14 @@ from schemas import UserInput, UserOutput
 from service import RequiresRoles, UserService
 
 
-user_router = APIRouter(prefix="/user",
-                        tags=["user"],
-                        dependencies=[Depends(RequiresRoles('admin')),
-                                      Depends(AsyncDatabase.open_session)])
+user_router = APIRouter(
+    prefix="/user",
+    tags=["user"],
+    dependencies=[
+        Depends(RequiresRoles('admin')),
+        Depends(AsyncDatabase.open_session)
+    ]
+)
 
 
 @user_router.post("", response_model=UserOutput)

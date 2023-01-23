@@ -47,10 +47,12 @@ class ResourcePreview(FolderOutput):
         return cls.parse(**resource.__dict__) if resource else None
 
     @classmethod
-    def parse(cls,
-              tags: list[PostTag] = (),
-              category: PostCategory | None = None,
-              **kwargs) -> ResourcePreview:
+    def parse(
+            cls,
+            tags: list[PostTag] = (),
+            category: PostCategory | None = None,
+            **kwargs
+    ) -> ResourcePreview:
         if tags is not None:
             tags = [TagSchema(id=tag.id, name=tag.name) for tag in tags]
         if category is not None:
@@ -66,10 +68,12 @@ class ContentOutput(ResourcePreview):
         return cls.parse(**content.__dict__) if content else None
 
     @classmethod
-    def parse(cls,
-              tags: list[PostTag] = (),
-              category: PostCategory | None = None,
-              **kwargs) -> ContentOutput:
+    def parse(
+            cls,
+            tags: list[PostTag] = (),
+            category: PostCategory | None = None,
+            **kwargs
+    ) -> ContentOutput:
         if tags is not None:
             tags = [TagSchema(id=tag.id, name=tag.name) for tag in tags]
         if category is not None:

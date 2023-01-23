@@ -14,10 +14,12 @@ class SysUser(Base):
     salt = Column(String(128), comment="salt")
 
     resources = relationship("Resource", back_populates="owner")
-    roles = relationship('SysRole',
-                         secondary='user_role',
-                         back_populates='users',
-                         lazy="selectin")
+    roles = relationship(
+        'SysRole',
+        secondary='user_role',
+        back_populates='users',
+        lazy="selectin"
+    )
 
 
 class SysRole(Base):
@@ -28,13 +30,17 @@ class SysRole(Base):
 
     resources = relationship("Resource", back_populates="group")
 
-    users = relationship('SysUser',
-                         secondary='user_role',
-                         back_populates='roles')
-    permissions = relationship('SysPermission',
-                               secondary='role_permission',
-                               back_populates='roles',
-                               lazy="selectin")
+    users = relationship(
+        'SysUser',
+        secondary='user_role',
+        back_populates='roles'
+    )
+    permissions = relationship(
+        'SysPermission',
+        secondary='role_permission',
+        back_populates='roles',
+        lazy="selectin"
+    )
 
 
 class SysPermission(Base):
@@ -42,6 +48,8 @@ class SysPermission(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(20), unique=True, comment="permission name")
     description = Column(String(255), comment="permission description")
-    roles = relationship('SysRole',
-                         secondary='role_permission',
-                         back_populates='permissions')
+    roles = relationship(
+        'SysRole',
+        secondary='role_permission',
+        back_populates='permissions'
+    )

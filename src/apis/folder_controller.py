@@ -12,15 +12,18 @@ from schemas import (
 from service import RequiresRoles, ResourceService, SecurityService
 
 
-folder_router = APIRouter(prefix="/folder",
-                          tags=["folder"],
-                          dependencies=[Depends(AsyncDatabase.open_session)])
+folder_router = APIRouter(
+    prefix="/folder",
+    tags=["folder"],
+    dependencies=[Depends(AsyncDatabase.open_session)]
+)
 
 
-@folder_router.post("",
-                    response_model=FolderOutput)
-async def add_folder(folder_input: FolderInput,
-                     cur_user: UserOutput = Depends(RequiresRoles('admin'))):
+@folder_router.post("", response_model=FolderOutput)
+async def add_folder(
+        folder_input: FolderInput,
+        cur_user: UserOutput = Depends(RequiresRoles('admin'))
+):
 
     folder = Folder(**folder_input.dict())
     folder.owner_id = cur_user.id
@@ -41,13 +44,16 @@ async def get_sub_count(
     folders = await ResourceService.find_resources(Folder(url=url))
     assert len(folders) == 1
     ResourceService.check_permission(folders[0], cur_user, 1)
-    return await ResourceService.find_sub_count(folders[0].url,
-                                                resource_query,
-                                                Content)
+    return await ResourceService.find_sub_count(
+        folders[0].url,
+        resource_query,
+        Content
+    )
 
 
-@folder_router.get("/sub_content/{url:path}",
-                   response_model=list[ResourcePreview])
+@folder_router.get(
+    "/sub_content/{url:path}", response_model=list[ResourcePreview]
+)
 async def get_folder(
         url: str = '',
         resource_query: ResourceQuery = Depends(),
@@ -64,8 +70,10 @@ async def get_folder(
     return [ResourcePreview.init(x) for x in sub_resources]
 
 
-@folder_router.put("", response_model=FolderOutput,
-                   dependencies=[Depends(RequiresRoles('admin'))])
+@folder_router.put(
+    "", response_model=FolderOutput,
+    dependencies=[Depends(RequiresRoles('admin'))]
+)
 async def modify_folder(folder_input: FolderInput):
     return FolderOutput.init(
         await ResourceService.modify_resource(
@@ -74,7 +82,9 @@ async def modify_folder(folder_input: FolderInput):
     )
 
 
-@folder_router.delete("/{folder_id}", response_model=int,
-                      dependencies=[Depends(RequiresRoles('admin'))])
+@folder_router.delete(
+    "/{folder_id}", response_model=int,
+    dependencies=[Depends(RequiresRoles('admin'))]
+)
 async def delete_folder(folder_id: int = 0):
     return await ResourceService.remove_resource(Resource(id=folder_id))
