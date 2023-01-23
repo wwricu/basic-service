@@ -1,5 +1,4 @@
-import os
-
+from anyio import Path
 from fastapi import APIRouter, Depends
 
 from dao import AsyncDatabase
@@ -26,9 +25,9 @@ async def add_content(
     content.permission = 700  # owner all, group 0, public 0
     content.parent_url = '/draft'
     id = (await ResourceService.add_resource(content)).id
-    content_folder = f'static/content/{id}'
-    if not os.path.exists(content_folder):
-        os.makedirs(content_folder)
+    content_folder = Path(f'static/content/{id}')
+    if not await Path.exists(content_folder):
+        await Path.mkdir(content_folder)
     return id
 
 
