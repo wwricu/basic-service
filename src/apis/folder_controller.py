@@ -44,9 +44,11 @@ async def get_sub_count(
     folders = await ResourceService.find_resources(Folder(url=url))
     assert len(folders) == 1
     ResourceService.check_permission(folders[0], cur_user, 1)
-    return await ResourceService.find_sub_count(folders[0].url,
-                                                resource_query,
-                                                Content)
+    return await ResourceService.find_sub_count(
+        folders[0].url,
+        resource_query,
+        Content
+    )
 
 
 @folder_router.get(

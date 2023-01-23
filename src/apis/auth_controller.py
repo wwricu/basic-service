@@ -26,8 +26,9 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     )
     access_token = SecurityService.create_jwt_token(user_output)
     refresh_token = SecurityService.create_jwt_token(user_output, True)
-    return TokenResponse(access_token=access_token,
-                         refresh_token=refresh_token)
+    return TokenResponse(
+        access_token=access_token, refresh_token=refresh_token
+    )
 
 
 @auth_router.post("/refresh", response_model=TokenResponse)
@@ -38,5 +39,6 @@ async def refresh(
     access_token = SecurityService.create_jwt_token(cur_user)
     refresh_token = SecurityService.create_jwt_token(cur_user, True)
     response.headers['X-token-need-refresh'] = 'false'
-    return TokenResponse(access_token=access_token,
-                         refresh_token=refresh_token)
+    return TokenResponse(
+        access_token=access_token, refresh_token=refresh_token
+    )

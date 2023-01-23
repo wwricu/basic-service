@@ -72,10 +72,12 @@ class SecurityService:
         ).hexdigest()
 
     @classmethod
-    def verify_password(cls,
-                        plain_password: str,
-                        salt: str,
-                        password_hash: str) -> bool:
+    def verify_password(
+            cls,
+            plain_password: str,
+            salt: str,
+            password_hash: str
+    ) -> bool:
         return password_hash == cls.get_password_hash(plain_password, salt)
 
     @staticmethod

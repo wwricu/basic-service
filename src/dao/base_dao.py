@@ -23,9 +23,11 @@ class BaseDao:
 
     @staticmethod
     @AsyncDatabase.database_session
-    async def select(obj: any,
-                     class_name: Table | Type,
-                     *, session: AsyncSession):
+    async def select(
+            obj: any,
+            class_name: Table | Type,
+            *, session: AsyncSession
+    ):
         stmt = select(class_name)
 
         for key in class_name.__dict__:
