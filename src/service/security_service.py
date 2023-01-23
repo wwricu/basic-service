@@ -2,6 +2,7 @@ import hashlib
 import jwt
 import secrets
 from datetime import datetime, timedelta
+from typing import Callable
 
 from fastapi import Depends, Header, HTTPException, Response
 from fastapi.security import OAuth2PasswordBearer
@@ -10,49 +11,48 @@ from config import Config, logger
 from schemas import UserOutput
 
 
-class SecurityService:
-    __oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="auth",
-                                                    auto_error=False)
+oauth2_scheme_optional = OAuth2PasswordBearer(
+    tokenUrl="auth", auto_error=False
+)
 
-    # TODO: async dependency
-    @staticmethod
-    def optional_login_required(
-            response: Response,
-            access_token: str = Depends(__oauth2_scheme_optional),
-            refresh_token: str | None = Header(default=None)
-    ) -> UserOutput | None:
-        if access_token is None:
-            return None
+
+async def optional_login_required(
+        response: Response,
+        access_token: str = Depends(oauth2_scheme_optional),
+        refresh_token: str | None = Header(default=None)
+) -> UserOutput | None:
+    if access_token is None:
+        return None
+    try:
+        data = jwt.decode(access_token,
+                          key=Config.jwt.key,
+                          algorithms=[Config.jwt.algorithm])
+    except jwt.ExpiredSignatureError:
         try:
-            data = jwt.decode(access_token,
+            data = jwt.decode(refresh_token,
                               key=Config.jwt.key,
                               algorithms=[Config.jwt.algorithm])
+            response.headers['X-token-need-refresh'] = 'true'
         except jwt.ExpiredSignatureError:
-            try:
-                data = jwt.decode(refresh_token,
-                                  key=Config.jwt.key,
-                                  algorithms=[Config.jwt.algorithm])
-                response.headers['X-token-need-refresh'] = 'true'
-            except jwt.ExpiredSignatureError:
-                logger.info('token expired')
-                return None
-        except Exception as e:
-            logger.warn(e)
+            logger.info('token expired')
             return None
+    except Exception as e:
+        logger.warn(e)
+        return None
+    return UserOutput(**data)
 
-        return UserOutput(id=data['id'],
-                          username=data['username'],
-                          email=data['email'],
-                          roles=data['roles'])
 
-    @staticmethod
-    def requires_login(
-            result: UserOutput = Depends(optional_login_required)
-    ) -> UserOutput:
+async def requires_login(
+        result: UserOutput = Depends(optional_login_required)
+) -> UserOutput:
+    if result is None:
+        raise HTTPException(status_code=401, detail="unauthenticated")
+    return result
 
-        if result is None:
-            raise HTTPException(status_code=401, detail="unauthenticated")
-        return result
+
+class SecurityService:
+    optional_login_required: Callable = optional_login_required
+    requires_login: Callable = requires_login
 
     @staticmethod
     def generate_salt() -> str:
@@ -90,7 +90,7 @@ class RequiresRoles:
     def __init__(self, required_role: str):
         self.required_role = required_role
 
-    def __call__(
+    async def __call__(
             self,
             user_output: UserOutput = Depends(SecurityService.requires_login)
     ) -> UserOutput:
