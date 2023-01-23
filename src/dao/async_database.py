@@ -60,11 +60,13 @@ class AsyncDatabase:
     @classmethod
     async def init_database(cls):
         engine = create_async_engine(
-            URL.create(drivername=Config.database.drivername,
-                       username=Config.database.username,
-                       password=Config.database.password,
-                       host=Config.database.host,
-                       port=Config.database.port)
+            URL.create(
+                drivername=Config.database.drivername,
+                username=Config.database.username,
+                password=Config.database.password,
+                host=Config.database.host,
+                port=Config.database.port
+            )
         )
         # Suppress warning given at create existed databases
         warnings.filterwarnings('ignore', category=SQLWarning)
@@ -87,10 +89,12 @@ class AsyncDatabase:
         session: AsyncSession = cls.__session_maker()
         try:
             admin_role = SysRole(**Config.admin.role)
-            admin = SysUser(username=Config.admin.username,
-                            password_hash=Config.admin.password_hash,
-                            salt=Config.admin.salt,
-                            email=Config.admin.email)
+            admin = SysUser(
+                username=Config.admin.username,
+                password_hash=Config.admin.password_hash,
+                salt=Config.admin.salt,
+                email=Config.admin.email
+            )
 
             session.add(admin_role)
             session.add(admin)

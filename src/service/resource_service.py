@@ -39,9 +39,9 @@ class ResourceService:
             resource_query: ResourceQuery | None = ResourceQuery(),
             obj_class: Type | None = Resource
     ) -> Sequence[Resource]:
-        return await ResourceDao.get_sub_resources(parent_url,
-                                                   resource_query,
-                                                   obj_class)
+        return await ResourceDao.get_sub_resources(
+            parent_url, resource_query, obj_class
+        )
 
     @staticmethod
     async def find_sub_count(
@@ -49,9 +49,9 @@ class ResourceService:
             resource_query: ResourceQuery | None = ResourceQuery(),
             obj_class: Type | None = Resource
     ) -> int:
-        return await ResourceDao.get_sub_resource_count(parent_url,
-                                                        resource_query,
-                                                        obj_class)
+        return await ResourceDao.get_sub_resource_count(
+            parent_url, resource_query, obj_class
+        )
 
     @staticmethod
     async def modify_resource(resource: Resource) -> Resource:

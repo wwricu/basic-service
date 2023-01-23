@@ -10,8 +10,7 @@ class RoleSchema(BaseModel):
     def init(cls, role: SysRole) -> RoleSchema | None:
         if role is None:
             return None
-        return RoleSchema(id=role.id,
-                          name=role.name)
+        return RoleSchema(id=role.id, name=role.name)
     id: int = None
     name: str = None
 
@@ -28,11 +27,15 @@ class UserOutput(BaseModel):
     def init(cls, sys_user: SysUser) -> UserOutput | None:
         if sys_user is None:
             return None
-        return UserOutput(id=sys_user.id,
-                          username=sys_user.username,
-                          email=sys_user.email,
-                          roles=[RoleSchema.init(role)
-                                 for role in sys_user.roles])
+        return UserOutput(
+            id=sys_user.id,
+            username=sys_user.username,
+            email=sys_user.email,
+            roles=[
+                RoleSchema.init(role)
+                for role in sys_user.roles
+            ]
+        )
 
     id: int = None
     username: str = None

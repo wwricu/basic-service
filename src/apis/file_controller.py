@@ -11,8 +11,9 @@ from service import RequiresRoles
 file_router = APIRouter(prefix="/file", tags=["file"])
 
 
-@file_router.post("/static/content",
-                  dependencies=[Depends(RequiresRoles('admin'))])
+@file_router.post(
+    "/static/content", dependencies=[Depends(RequiresRoles('admin'))]
+)
 async def upload(files: list[UploadFile], request: Request):
     succ_files, content_id = [], request.headers['x-content-id']
     if content_id is None:

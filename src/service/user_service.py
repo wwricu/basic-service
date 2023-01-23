@@ -22,9 +22,11 @@ class UserService:
 
     @staticmethod
     async def add_user(user_input: UserInput) -> UserOutput:
-        sys_user = SysUser(id=user_input.id,
-                           username=user_input.username,
-                           email=user_input.email)
+        sys_user = SysUser(
+            id=user_input.id,
+            username=user_input.username,
+            email=user_input.email
+        )
 
         sys_user.salt = SecurityService.generate_salt()
         sys_user.password_hash = SecurityService.get_password_hash(
@@ -35,8 +37,10 @@ class UserService:
 
     @staticmethod
     async def find_user(user_input: UserInput) -> list[UserOutput]:
-        return list(map(lambda it: UserOutput.init(it),
-                        await BaseDao.select(user_input, SysUser)))
+        return list(map(
+            lambda it: UserOutput.init(it),
+            await BaseDao.select(user_input, SysUser)
+        ))
 
     @staticmethod
     async def modify_user(user_input: UserInput) -> UserOutput:

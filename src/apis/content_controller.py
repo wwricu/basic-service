@@ -8,14 +8,18 @@ from schemas import ContentInput, ContentOutput, UserOutput
 from service import RequiresRoles, ResourceService, SecurityService
 
 
-content_router = APIRouter(prefix="/content",
-                           tags=["content"],
-                           dependencies=[Depends(AsyncDatabase.open_session)])
+content_router = APIRouter(
+    prefix="/content",
+    tags=["content"],
+    dependencies=[Depends(AsyncDatabase.open_session)]
+)
 
 
 @content_router.post("", response_model=int)
-async def add_content(content_input: ContentInput,
-                      cur_user: UserOutput = Depends(RequiresRoles('admin'))):
+async def add_content(
+        content_input: ContentInput,
+        cur_user: UserOutput = Depends(RequiresRoles('admin'))
+):
 
     content = Content(**content_input.dict())
     content.owner_id = cur_user.id
@@ -39,8 +43,10 @@ async def get_content(
     return ContentOutput.init(contents[0])
 
 
-@content_router.put("", response_model=ContentOutput,
-                    dependencies=[Depends(RequiresRoles('admin'))])
+@content_router.put(
+    "", response_model=ContentOutput,
+    dependencies=[Depends(RequiresRoles('admin'))]
+)
 async def modify_content(content: ContentInput):
     await ResourceService.trim_files(content.id, content.files)
     await ResourceService.reset_content_tags(Content(**content.dict()))
@@ -48,8 +54,10 @@ async def modify_content(content: ContentInput):
     return ContentOutput.init(content)
 
 
-@content_router.delete("/{content_id}", response_model=int,
-                       dependencies=[Depends(RequiresRoles('admin'))])
+@content_router.delete(
+    "/{content_id}", response_model=int,
+    dependencies=[Depends(RequiresRoles('admin'))]
+)
 async def delete_content(content_id: int):
     await ResourceService.trim_files(content_id, set())
     return await ResourceService.remove_resource(Resource(id=content_id))

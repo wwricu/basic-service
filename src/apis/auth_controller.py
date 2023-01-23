@@ -16,8 +16,10 @@ async def get_current_user(
     return user_output
 
 
-@auth_router.post("", response_model=TokenResponse,
-                  dependencies=[Depends(AsyncDatabase.open_session)])
+@auth_router.post(
+    "", response_model=TokenResponse,
+    dependencies=[Depends(AsyncDatabase.open_session)]
+)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user_output = await UserService.user_login(
         UserInput(username=form_data.username, password=form_data.password)
@@ -29,8 +31,10 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
 
 @auth_router.post("/refresh", response_model=TokenResponse)
-async def refresh(response: Response,
-                  cur_user: UserOutput = Depends(SecurityService.requires_login)):
+async def refresh(
+        response: Response,
+        cur_user: UserOutput = Depends(SecurityService.requires_login)
+):
     access_token = SecurityService.create_jwt_token(cur_user)
     refresh_token = SecurityService.create_jwt_token(cur_user, True)
     response.headers['X-token-need-refresh'] = 'false'

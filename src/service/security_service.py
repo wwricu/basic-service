@@ -24,14 +24,18 @@ async def optional_login_required(
     if access_token is None:
         return None
     try:
-        data = jwt.decode(access_token,
-                          key=Config.jwt.key,
-                          algorithms=[Config.jwt.algorithm])
+        data = jwt.decode(
+            jwt=access_token,
+            key=Config.jwt.key,
+            algorithms=[Config.jwt.algorithm]
+        )
     except jwt.ExpiredSignatureError:
         try:
-            data = jwt.decode(refresh_token,
-                              key=Config.jwt.key,
-                              algorithms=[Config.jwt.algorithm])
+            data = jwt.decode(
+                jwt=refresh_token,
+                key=Config.jwt.key,
+                algorithms=[Config.jwt.algorithm]
+            )
             response.headers['X-token-need-refresh'] = 'true'
         except jwt.ExpiredSignatureError:
             logger.info('token expired')
@@ -75,8 +79,10 @@ class SecurityService:
         return password_hash == cls.get_password_hash(plain_password, salt)
 
     @staticmethod
-    def create_jwt_token(user_info: UserOutput,
-                         refresh: bool | None = False) -> bytes:
+    def create_jwt_token(
+            user_info: UserOutput,
+            refresh: bool | None = False
+    ) -> bytes:
         data = user_info.dict()
         delta = timedelta(minutes=60)
         if refresh:
