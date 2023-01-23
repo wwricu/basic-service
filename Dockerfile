@@ -5,7 +5,6 @@ WORKDIR /fastapi
 
 RUN pip3 install --upgrade pip \
 && pip3 install --no-cache-dir --upgrade -r /fastapi/requirements.txt \
-&& mv /fastapi/assets/production_config.json /fastapi/assets/config.json \
 && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
 && echo 'Asia/Shanghai' > /etc/timezone
 
