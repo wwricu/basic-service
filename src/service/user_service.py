@@ -28,7 +28,8 @@ class UserService:
 
         sys_user.salt = SecurityService.generate_salt()
         sys_user.password_hash = SecurityService.get_password_hash(
-            user_input.password, sys_user.salt)
+            user_input.password, sys_user.salt
+        )
 
         return UserOutput.init(await BaseDao.insert(sys_user))
 
@@ -39,7 +40,9 @@ class UserService:
 
     @staticmethod
     async def modify_user(user_input: UserInput) -> UserOutput:
-        sys_user = (await BaseDao.select(SysUser(id=user_input.id), SysUser))[0]
+        sys_user = (await BaseDao.select(
+            SysUser(id=user_input.id), SysUser
+        ))[0]
 
         if user_input.username is not None:
             sys_user.username = user_input.username
@@ -47,7 +50,8 @@ class UserService:
             sys_user.email = user_input.email
         if user_input.password is not None:
             sys_user.password_hash = SecurityService.get_password_hash(
-                user_input.password, sys_user.salt)
+                user_input.password, sys_user.salt
+            )
 
         await BaseDao.update(sys_user, SysUser)
         return UserOutput.init(sys_user)

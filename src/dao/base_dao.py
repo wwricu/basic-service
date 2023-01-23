@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .async_database import AsyncDatabase
 
 
-# TODO: use instance instead of static methods
 class BaseDao:
     @staticmethod
     @AsyncDatabase.database_session
