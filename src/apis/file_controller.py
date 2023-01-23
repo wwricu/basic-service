@@ -28,7 +28,7 @@ async def upload(files: list[UploadFile], request: Request):
         filename = hashlib.md5(
             file.filename.encode(encoding='utf-8')
         ).hexdigest()
-        path = f'{content_path.name}/{filename}{suffix}'
+        path = f'{content_path}/{filename}{suffix}'
         await Path(path).write_bytes(await file.read())
         if os.path.exists(path):
             succ_files.append({
