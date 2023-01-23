@@ -46,7 +46,7 @@ async def optional_login_required(
     return UserOutput(**data)
 
 
-async def requires_login(
+async def login_required(
         result: UserOutput = Depends(optional_login_required)
 ) -> UserOutput:
     if result is None:
@@ -56,7 +56,7 @@ async def requires_login(
 
 class SecurityService:
     optional_login_required: Callable = optional_login_required
-    requires_login: Callable = requires_login
+    login_required: Callable = login_required
 
     @staticmethod
     def generate_salt() -> str:
@@ -94,13 +94,13 @@ class SecurityService:
         return jwt.encode(payload=data, **Config.jwt.__dict__)
 
 
-class RequiresRoles:
+class RoleRequired:
     def __init__(self, required_role: str):
         self.required_role = required_role
 
     async def __call__(
             self,
-            user_output: UserOutput = Depends(SecurityService.requires_login)
+            user_output: UserOutput = Depends(SecurityService.login_required)
     ) -> UserOutput:
 
         for role in user_output.roles:

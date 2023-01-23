@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from dao import AsyncDatabase
 from models import Content, Resource
 from schemas import ContentInput, ContentOutput, UserOutput
-from service import RequiresRoles, ResourceService, SecurityService
+from service import RoleRequired, ResourceService, SecurityService
 
 
 content_router = APIRouter(
@@ -17,7 +17,7 @@ content_router = APIRouter(
 @content_router.post("", response_model=int)
 async def add_content(
         content_input: ContentInput,
-        cur_user: UserOutput = Depends(RequiresRoles('admin'))
+        cur_user: UserOutput = Depends(RoleRequired('admin'))
 ):
 
     content = Content(**content_input.dict())
@@ -44,7 +44,7 @@ async def get_content(
 
 @content_router.put(
     "", response_model=ContentOutput,
-    dependencies=[Depends(RequiresRoles('admin'))]
+    dependencies=[Depends(RoleRequired('admin'))]
 )
 async def modify_content(content: ContentInput):
     await ResourceService.trim_files(content.id, content.files)
@@ -55,7 +55,7 @@ async def modify_content(content: ContentInput):
 
 @content_router.delete(
     "/{content_id}", response_model=int,
-    dependencies=[Depends(RequiresRoles('admin'))]
+    dependencies=[Depends(RoleRequired('admin'))]
 )
 async def delete_content(content_id: int):
     await ResourceService.trim_files(content_id, set())

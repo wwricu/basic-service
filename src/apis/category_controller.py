@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from dao import AsyncDatabase
 from schemas import TagSchema
-from service import RequiresRoles, TagService
+from service import RoleRequired, TagService
 from models import PostCategory, Tag
 
 
@@ -15,7 +15,7 @@ category_router = APIRouter(
 
 @category_router.post(
     "", response_model=TagSchema,
-    dependencies=[Depends(RequiresRoles('admin'))]
+    dependencies=[Depends(RoleRequired('admin'))]
 )
 async def add_category(category: TagSchema):
     return TagSchema.init(
@@ -33,7 +33,7 @@ async def get_category(category: TagSchema = Depends()):
 
 @category_router.put(
     "", response_model=TagSchema,
-    dependencies=[Depends(RequiresRoles('admin'))]
+    dependencies=[Depends(RoleRequired('admin'))]
 )
 async def rename_category(category: TagSchema):
     return TagSchema.init(await TagService.rename_tag(
@@ -43,7 +43,7 @@ async def rename_category(category: TagSchema):
 
 @category_router.delete(
     "/{category_id}", response_model=int,
-    dependencies=[Depends(RequiresRoles('admin'))]
+    dependencies=[Depends(RoleRequired('admin'))]
 )
 async def remove_tag(category_id: int):
     return await TagService.remove_tag(Tag(id=category_id))
