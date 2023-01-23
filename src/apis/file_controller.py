@@ -5,14 +5,14 @@ import os
 from anyio import Path
 from fastapi import APIRouter, Depends,  HTTPException, Request, UploadFile
 
-from service import RequiresRoles
+from service import RoleRequired
 
 
 file_router = APIRouter(prefix="/file", tags=["file"])
 
 
 @file_router.post(
-    "/static/content", dependencies=[Depends(RequiresRoles('admin'))]
+    "/static/content", dependencies=[Depends(RoleRequired('admin'))]
 )
 async def upload(files: list[UploadFile], request: Request):
     succ_files, content_id = [], request.headers['x-content-id']

@@ -2,14 +2,14 @@ from fastapi import APIRouter, Depends
 
 from dao import AsyncDatabase
 from schemas import UserInput, UserOutput
-from service import RequiresRoles, UserService
+from service import RoleRequired, UserService
 
 
 user_router = APIRouter(
     prefix="/user",
     tags=["user"],
     dependencies=[
-        Depends(RequiresRoles('admin')),
+        Depends(RoleRequired('admin')),
         Depends(AsyncDatabase.open_session)
     ]
 )

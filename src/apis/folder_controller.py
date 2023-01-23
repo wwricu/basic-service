@@ -9,7 +9,7 @@ from schemas import (
     ResourceQuery,
     UserOutput
 )
-from service import RequiresRoles, ResourceService, SecurityService
+from service import RoleRequired, ResourceService, SecurityService
 
 
 folder_router = APIRouter(
@@ -22,7 +22,7 @@ folder_router = APIRouter(
 @folder_router.post("", response_model=FolderOutput)
 async def add_folder(
         folder_input: FolderInput,
-        cur_user: UserOutput = Depends(RequiresRoles('admin'))
+        cur_user: UserOutput = Depends(RoleRequired('admin'))
 ):
 
     folder = Folder(**folder_input.dict())
@@ -72,7 +72,7 @@ async def get_folder(
 
 @folder_router.put(
     "", response_model=FolderOutput,
-    dependencies=[Depends(RequiresRoles('admin'))]
+    dependencies=[Depends(RoleRequired('admin'))]
 )
 async def modify_folder(folder_input: FolderInput):
     return FolderOutput.init(
@@ -84,7 +84,7 @@ async def modify_folder(folder_input: FolderInput):
 
 @folder_router.delete(
     "/{folder_id}", response_model=int,
-    dependencies=[Depends(RequiresRoles('admin'))]
+    dependencies=[Depends(RoleRequired('admin'))]
 )
 async def delete_folder(folder_id: int = 0):
     return await ResourceService.remove_resource(Resource(id=folder_id))
