@@ -1,10 +1,11 @@
-FROM python:3.10
+FROM python:3.10.9-slim
 
 COPY ./ /fastapi
 WORKDIR /fastapi
 
-RUN pip3 install --upgrade pip \
-&& pip3 install --no-cache-dir --upgrade -r /fastapi/requirements.txt \
+ENV PIP_ROOT_USER_ACTION=ignore
+RUN pip3 install --disable-pip-version-check \
+--no-cache-dir -r /fastapi/requirements.txt \
 && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
 && echo 'Asia/Shanghai' > /etc/timezone
 
