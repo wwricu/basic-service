@@ -4,7 +4,7 @@ from typing import Callable
 
 from sqlalchemy import text
 from sqlalchemy.engine import URL
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, ProgrammingError
 from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
@@ -64,16 +64,18 @@ class AsyncDatabase:
                 password=Config.database.password,
                 host=Config.database.host,
                 port=Config.database.port
-            )
+            ),
+            # CREATE DATABASE cannot in transaction
+            isolation_level="AUTOCOMMIT"
         )
+
         try:
             async with engine.begin() as conn:
                 await conn.execute(
                     text(f"CREATE DATABASE {Config.database.database}")
                 )
-                await conn.execute(text(f"USE {Config.database.database}"))
-        except Exception as e:
-            logger.info('database existed', e)
+        except ProgrammingError:
+            pass
         finally:
             await engine.dispose()
 
