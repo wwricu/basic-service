@@ -1,9 +1,7 @@
 import functools
-import warnings
 from contextvars import ContextVar
 from typing import Callable
 
-from aiomysql import Warning as SQLWarning
 from sqlalchemy import text
 from sqlalchemy.engine import URL
 from sqlalchemy.exc import IntegrityError
@@ -68,14 +66,16 @@ class AsyncDatabase:
                 port=Config.database.port
             )
         )
-        # Suppress warning given at create existed databases
-        warnings.filterwarnings('ignore', category=SQLWarning)
-        async with engine.begin() as conn:
-            await conn.execute(
-                text(f"CREATE DATABASE IF NOT EXISTS {Config.database.database}")
-            )
-            await conn.execute(text(f"USE {Config.database.database}"))
-        await engine.dispose()
+        try:
+            async with engine.begin() as conn:
+                await conn.execute(
+                    text(f"CREATE DATABASE {Config.database.database}")
+                )
+                await conn.execute(text(f"USE {Config.database.database}"))
+        except Exception as e:
+            logger.info('database existed', e)
+        finally:
+            await engine.dispose()
 
         engine = await cls.get_engine()
         async with engine.begin() as conn:
