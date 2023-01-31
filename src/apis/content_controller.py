@@ -16,10 +16,9 @@ content_router = APIRouter(
 
 @content_router.post("", response_model=int)
 async def add_content(
-        content_input: ContentInput,
-        cur_user: UserOutput = Depends(RoleRequired('admin'))
+    content_input: ContentInput,
+    cur_user: UserOutput = Depends(RoleRequired('admin'))
 ):
-
     content = Content(**content_input.dict())
     content.owner_id = cur_user.id
     content.permission = 700  # owner all, group 0, public 0
@@ -33,8 +32,8 @@ async def add_content(
 
 @content_router.get("/{content_id}", response_model=ContentOutput)
 async def get_content(
-        content_id: int,
-        cur_user: UserOutput = Depends(SecurityService.optional_login_required)
+    content_id: int,
+    cur_user: UserOutput = Depends(SecurityService.optional_login_required)
 ):
     contents = await ResourceService.find_resources(Content(id=content_id))
     assert len(contents) == 1

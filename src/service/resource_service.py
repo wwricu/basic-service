@@ -35,9 +35,9 @@ class ResourceService:
 
     @staticmethod
     async def find_sub_resources(
-            parent_url: str | None = None,
-            resource_query: ResourceQuery | None = ResourceQuery(),
-            obj_class: Type | None = Resource
+        parent_url: str | None = None,
+        resource_query: ResourceQuery | None = ResourceQuery(),
+        obj_class: Type | None = Resource
     ) -> Sequence[Resource]:
         return await ResourceDao.get_sub_resources(
             parent_url, resource_query, obj_class
@@ -45,9 +45,9 @@ class ResourceService:
 
     @staticmethod
     async def find_sub_count(
-            parent_url: str | None = None,
-            resource_query: ResourceQuery | None = ResourceQuery(),
-            obj_class: Type | None = Resource
+        parent_url: str | None = None,
+        resource_query: ResourceQuery | None = ResourceQuery(),
+        obj_class: Type | None = Resource
     ) -> int:
         return await ResourceDao.get_sub_resource_count(
             parent_url, resource_query, obj_class
@@ -103,9 +103,9 @@ class ResourceService:
 
     @staticmethod
     def check_permission(
-            resource: Resource,
-            user: UserOutput,
-            operation_mask: int
+        resource: Resource,
+        user: UserOutput,
+        operation_mask: int
     ):
         permission = resource.permission % 10
         if user is not None:

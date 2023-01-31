@@ -12,10 +12,10 @@ class ResourceDao:
     @staticmethod
     @AsyncDatabase.database_session
     async def get_sub_resources(
-            parent_url: str | None = None,
-            resource_query: ResourceQuery = ResourceQuery(),
-            obj_class: Table | Type = Resource,
-            *, session: AsyncSession
+        parent_url: str | None = None,
+        resource_query: ResourceQuery = ResourceQuery(),
+        obj_class: Table | Type = Resource,
+        *, session: AsyncSession
     ) -> Sequence[any]:
         stmt = select(obj_class).order_by(obj_class.updated_time.desc())
 
@@ -44,10 +44,10 @@ class ResourceDao:
     @staticmethod
     @AsyncDatabase.database_session
     async def get_sub_resource_count(
-            parent_url: str | None = None,
-            resource_query: ResourceQuery = ResourceQuery(),
-            obj_class: Table | Type = Resource,
-            *, session: AsyncSession
+        parent_url: str | None = None,
+        resource_query: ResourceQuery = ResourceQuery(),
+        obj_class: Table | Type = Resource,
+        *, session: AsyncSession
     ) -> int:
         stmt = select(func.count()).select_from(obj_class)
 

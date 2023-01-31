@@ -21,8 +21,8 @@ folder_router = APIRouter(
 
 @folder_router.post("", response_model=FolderOutput)
 async def add_folder(
-        folder_input: FolderInput,
-        cur_user: UserOutput = Depends(RoleRequired('admin'))
+    folder_input: FolderInput,
+    cur_user: UserOutput = Depends(RoleRequired('admin'))
 ):
 
     folder = Folder(**folder_input.dict())
@@ -35,9 +35,9 @@ async def add_folder(
 
 @folder_router.get("/count/{url:path}", response_model=int)
 async def get_sub_count(
-        url: str = None,
-        resource_query: ResourceQuery = Depends(),
-        cur_user: UserOutput = Depends(SecurityService.optional_login_required)
+    url: str = None,
+    resource_query: ResourceQuery = Depends(),
+    cur_user: UserOutput = Depends(SecurityService.optional_login_required)
 ):
     if len(url) > 0 and url[0] != '/':
         url = f'/{url}'
@@ -55,9 +55,9 @@ async def get_sub_count(
     "/sub_content/{url:path}", response_model=list[ResourcePreview]
 )
 async def get_folder(
-        url: str = '',
-        resource_query: ResourceQuery = Depends(),
-        cur_user: UserOutput = Depends(SecurityService.optional_login_required)
+    url: str = '',
+    resource_query: ResourceQuery = Depends(),
+    cur_user: UserOutput = Depends(SecurityService.optional_login_required)
 ):
     if len(url) > 0 and url[0] != '/':
         url = f'/{url}'

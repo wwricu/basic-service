@@ -11,7 +11,7 @@ auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
 @auth_router.get("", response_model=UserOutput)
 async def get_current_user(
-        user_output: UserOutput = Depends(SecurityService.optional_login_required)
+    user_output: UserOutput = Depends(SecurityService.optional_login_required)
 ):
     return user_output
 
@@ -33,8 +33,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
 @auth_router.post("/refresh", response_model=TokenResponse)
 async def refresh(
-        response: Response,
-        cur_user: UserOutput = Depends(SecurityService.login_required)
+    response: Response,
+    cur_user: UserOutput = Depends(SecurityService.login_required)
 ):
     access_token = SecurityService.create_jwt_token(cur_user)
     refresh_token = SecurityService.create_jwt_token(cur_user, True)
