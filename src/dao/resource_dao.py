@@ -24,7 +24,7 @@ class ResourceDao:
 
         if resource_query.category_name is not None:
             stmt = stmt.join(PostCategory).where(
-                obj_class.category.name == resource_query.category_name
+                PostCategory.name == resource_query.category_name
             )
 
         if resource_query.tag_name is not None:
@@ -56,7 +56,7 @@ class ResourceDao:
 
         if resource_query.category_name is not None:
             stmt = stmt.join(PostCategory).where(
-                obj_class.category.name == resource_query.category_name
+                PostCategory.name == resource_query.category_name
             )
 
         if resource_query.tag_name is not None:
