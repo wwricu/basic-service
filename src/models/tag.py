@@ -15,10 +15,10 @@ class Tag(Base):
 
 class PostTag(Tag):
     def __init__(
-            self,
-            id: int | None = None,
-            name: str | None = None,
-            **kwargs
+        self,
+        id: int | None = None,
+        name: str | None = None,
+        **kwargs
     ):
         super().__init__(**kwargs)
         self.id = id
@@ -45,10 +45,10 @@ class PostTag(Tag):
 
 class PostCategory(Tag):
     def __init__(
-            self,
-            id: int | None = None,
-            name: str | None = None,
-            **kwargs
+        self,
+        id: int | None = None,
+        name: str | None = None,
+        **kwargs
     ):
         super().__init__(**kwargs)
         self.id = id

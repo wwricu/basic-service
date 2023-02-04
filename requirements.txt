@@ -4,5 +4,5 @@ fastapi~=0.89.1
 pydantic~=1.10.4
 python-multipart~=0.0.5
 PyJWT~=2.6.0
-SQLAlchemy~=2.0.0rc3
+SQLAlchemy~=2.0.0
 uvicorn~=0.20.0

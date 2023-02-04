@@ -17,9 +17,9 @@ oauth2_scheme_optional = OAuth2PasswordBearer(
 
 
 async def optional_login_required(
-        response: Response,
-        access_token: str = Depends(oauth2_scheme_optional),
-        refresh_token: str | None = Header(default=None)
+    response: Response,
+    access_token: str = Depends(oauth2_scheme_optional),
+    refresh_token: str | None = Header(default=None)
 ) -> UserOutput | None:
     if access_token is None:
         return None
@@ -47,7 +47,7 @@ async def optional_login_required(
 
 
 async def login_required(
-        result: UserOutput = Depends(optional_login_required)
+    result: UserOutput = Depends(optional_login_required)
 ) -> UserOutput:
     if result is None:
         raise HTTPException(status_code=401, detail="unauthenticated")
@@ -73,10 +73,10 @@ class SecurityService:
 
     @classmethod
     def verify_password(
-            cls,
-            plain_password: str,
-            salt: str,
-            password_hash: str
+        cls,
+        plain_password: str,
+        salt: str,
+        password_hash: str
     ) -> bool:
         return password_hash == cls.get_password_hash(plain_password, salt)
 
@@ -99,8 +99,8 @@ class RoleRequired:
         self.required_role = required_role
 
     async def __call__(
-            self,
-            user_output: UserOutput = Depends(SecurityService.login_required)
+        self,
+        user_output: UserOutput = Depends(SecurityService.login_required)
     ) -> UserOutput:
 
         for role in user_output.roles:

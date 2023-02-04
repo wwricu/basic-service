@@ -48,10 +48,10 @@ class ResourcePreview(FolderOutput):
 
     @classmethod
     def parse(
-            cls,
-            tags: list[PostTag] = (),
-            category: PostCategory | None = None,
-            **kwargs
+        cls,
+        tags: list[PostTag] = (),
+        category: PostCategory | None = None,
+        **kwargs
     ) -> ResourcePreview:
         if tags is not None:
             tags = [TagSchema(id=tag.id, name=tag.name) for tag in tags]
@@ -69,10 +69,10 @@ class ContentOutput(ResourcePreview):
 
     @classmethod
     def parse(
-            cls,
-            tags: list[PostTag] = (),
-            category: PostCategory | None = None,
-            **kwargs
+        cls,
+        tags: list[PostTag] = (),
+        category: PostCategory | None = None,
+        **kwargs
     ) -> ContentOutput:
         if tags is not None:
             tags = [TagSchema(id=tag.id, name=tag.name) for tag in tags]

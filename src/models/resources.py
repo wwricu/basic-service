@@ -12,13 +12,13 @@ from .tag import PostTag
 
 class Resource(Base):
     def __init__(
-            self,
-            id: int | None = None,
-            title: str | None = None,
-            url: str | None = None,
-            permission: int | None = None,
-            parent_url: str | None = None,
-            **kwargs
+        self,
+        id: int | None = None,
+        title: str | None = None,
+        url: str | None = None,
+        permission: int | None = None,
+        parent_url: str | None = None,
+        **kwargs
     ):
         super().__init__()
         self.id = id

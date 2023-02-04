@@ -12,12 +12,12 @@ logger = logging.getLogger()
 
 class AdminConfig:
     def __init__(
-            self,
-            username: str,
-            password_hash: str,
-            salt: str,
-            email: str | None = None,
-            role: dict | None = MappingProxyType({'name': 'admin'})
+        self,
+        username: str,
+        password_hash: str,
+        salt: str,
+        email: str | None = None,
+        role: dict | None = MappingProxyType({'name': 'admin'})
     ):
         self.username = username
         self.password_hash = password_hash
@@ -28,13 +28,13 @@ class AdminConfig:
 
 class DatabaseConfig:
     def __init__(
-            self,
-            drivername: str,
-            username: str,
-            password: str,
-            host: str | None = '127.0.0.1',
-            port: int | None = 3306,
-            database: str | None = None
+        self,
+        drivername: str,
+        username: str,
+        password: str,
+        host: str | None = '127.0.0.1',
+        port: int | None = 3306,
+        database: str | None = None
     ):
         self.drivername = drivername
         self.username = username
@@ -46,13 +46,13 @@ class DatabaseConfig:
 
 class JWTConfig:
     def __init__(
-            self,
-            key: str,
-            algorithm: str | None = 'HS256',
-            headers: dict | None = MappingProxyType({
-             "alg": "HS256",
-             "typ": "JWT"
-            })
+        self,
+        key: str,
+        algorithm: str | None = 'HS256',
+        headers: dict | None = MappingProxyType({
+            "alg": "HS256",
+            "typ": "JWT"
+        })
     ):
         self.key = key
         self.algorithm = algorithm
@@ -84,12 +84,12 @@ class Config:
 
     @classmethod
     def load_json(
-            cls,
-            database: dict,
-            admin: dict,
-            jwt: dict,
-            folders: dict,
-            **kwargs
+        cls,
+        database: dict,
+        admin: dict,
+        jwt: dict,
+        folders: dict,
+        **kwargs
     ):
         _ = kwargs
         cls.database = DatabaseConfig(**database)

@@ -24,9 +24,9 @@ class BaseDao:
     @staticmethod
     @AsyncDatabase.database_session
     async def select(
-            obj: any,
-            class_name: Table | Type,
-            *, session: AsyncSession
+        obj: any,
+        class_name: Table | Type,
+        *, session: AsyncSession
     ):
         stmt = select(class_name)
 
@@ -50,9 +50,9 @@ class BaseDao:
     @staticmethod
     @AsyncDatabase.database_session
     async def update(
-            obj: any,
-            class_name: Table | Type,
-            *, session: AsyncSession
+        obj: any,
+        class_name: Table | Type,
+        *, session: AsyncSession
     ):
         if obj.id is None or obj.id == 0:
             return
@@ -75,9 +75,9 @@ class BaseDao:
     @staticmethod
     @AsyncDatabase.database_session
     async def delete(
-            obj: any,
-            class_name: Table | Type,
-            *, session: AsyncSession
+        obj: any,
+        class_name: Table | Type,
+        *, session: AsyncSession
     ) -> int:  # return deleted id
         if obj.id is None or obj.id == 0:
             return 0
@@ -92,9 +92,9 @@ class BaseDao:
     @staticmethod
     @AsyncDatabase.database_session
     async def delete_all(
-            objs: list,
-            class_name: Table | Type,
-            *, session: AsyncSession
+        objs: list,
+        class_name: Table | Type,
+        *, session: AsyncSession
     ) -> int:  # return deleted count
         count, async_tasks = 0, []
         for obj in objs:
