@@ -7,6 +7,10 @@
     "port": 5432,
     "database": "fastdb"
   },
+  "redis": {
+    "host": "45.63.26.210",
+    "port": 6379
+  },
   "jwt": {
     "key": "8cf395c08d690e754fdc05f074adbc0b1dee6ed3577c35c6533e01e4b7037363",
     "algorithm": "HS256",

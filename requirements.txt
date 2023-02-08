@@ -1,8 +1,9 @@
-asyncpg~=0.27.0
 anyio~=3.6.2
+asyncpg~=0.27.0
 fastapi~=0.89.1
 pydantic~=1.10.4
 python-multipart~=0.0.5
 PyJWT~=2.6.0
-SQLAlchemy~=2.0.0rc3
+redis~=4.5.0
+SQLAlchemy~=2.0.0
 uvicorn~=0.20.0

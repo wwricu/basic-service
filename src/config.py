@@ -44,6 +44,16 @@ class DatabaseConfig:
         self.database = database
 
 
+class RedisConfig:
+    def __init__(
+        self,
+        host: str,
+        port: int = 6379
+    ):
+        self.host = host
+        self.port = port
+
+
 class JWTConfig:
     def __init__(
         self,
@@ -61,6 +71,7 @@ class JWTConfig:
 
 class Config:
     database: DatabaseConfig = None
+    redis: RedisConfig = None
     admin: AdminConfig = None
     jwt: JWTConfig = None
     folders: list[Folder] = []
@@ -86,6 +97,7 @@ class Config:
     def load_json(
         cls,
         database: dict,
+        redis: dict,
         admin: dict,
         jwt: dict,
         folders: dict,
@@ -95,5 +107,6 @@ class Config:
         cls.database = DatabaseConfig(**database)
         cls.admin = AdminConfig(**admin)
         cls.jwt = JWTConfig(**jwt)
+        cls.redis = RedisConfig(**redis)
         for folder in folders:
             cls.folders.append(Folder(**folder))

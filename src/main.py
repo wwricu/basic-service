@@ -1,3 +1,4 @@
+import pickle
 import uvicorn
 from anyio import Path
 from fastapi import FastAPI
@@ -6,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from apis import router
 from config import Config, logger
-from dao import AsyncDatabase
+from dao import AsyncDatabase, AsyncRedis
 
 
 app = FastAPI()
@@ -16,6 +17,9 @@ app = FastAPI()
 async def startup():
     await Config.init_config()
     await AsyncDatabase.init_database()
+    await AsyncRedis.init_redis()
+    await AsyncRedis.get_connection()
+    await AsyncRedis.test()
     # AsyncDatabase.init_db()
     path = Path('static/content')
     if not await Path.exists(path):
