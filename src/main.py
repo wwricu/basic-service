@@ -18,9 +18,6 @@ async def startup():
     await Config.init_config()
     await AsyncDatabase.init_database()
     await AsyncRedis.init_redis()
-    await AsyncRedis.get_connection()
-    await AsyncRedis.test()
-    # AsyncDatabase.init_db()
     path = Path('static/content')
     if not await Path.exists(path):
         await Path.mkdir(path)

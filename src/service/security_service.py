@@ -82,8 +82,8 @@ class SecurityService:
 
     @staticmethod
     def create_jwt_token(
-            user_info: UserOutput,
-            refresh: bool | None = False
+        user_info: UserOutput,
+        refresh: bool | None = False
     ) -> bytes:
         data = user_info.dict()
         delta = timedelta(minutes=60)
