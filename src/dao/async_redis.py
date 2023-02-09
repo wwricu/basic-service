@@ -17,6 +17,7 @@ class AsyncRedis:
             )
         redis = await cls.get_connection()
         await redis.set('preview_dict', pickle.dumps(dict()))
+        await redis.set('count_dict', pickle.dumps(dict()))
 
     @classmethod
     async def get_connection(cls) -> Redis:

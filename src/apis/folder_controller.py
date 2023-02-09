@@ -56,23 +56,21 @@ async def get_sub_count(
     assert len(folders) == 1
     ResourceService.check_permission(folders[0], cur_user, 1)
 
-    preview_dict: dict = pickle.loads(await redis.get('preview_dict'))
+    count_dict: dict = pickle.loads(await redis.get('count_dict'))
     key = (
-        f'preview:url{url}:'
+        f'count:url{url}:'
         + f'category_name:{resource_query.category_name}:'
         + f'tag_name:{resource_query.tag_name}:'
-        + f'page_idx:{resource_query.page_idx}:'
-        + f'page_size:{resource_query.page_size}:'
     )
-    sub_resources = preview_dict.get(key)
-    if sub_resources is not None:
-        return len(sub_resources)
-
-    return await ResourceService.find_sub_count(
-        folders[0].url,
-        resource_query,
-        Content
-    )
+    count = count_dict.get(key)
+    if count is None:
+        count = await ResourceService.find_sub_count(
+            folders[0].url,
+            resource_query,
+            Content
+        )
+        count_dict[key] = count
+    return count
 
 
 @folder_router.get(
@@ -106,7 +104,6 @@ async def get_folder(
         + f'page_size:{resource_query.page_size}:'
     )
     sub_resources = preview_dict.get(key)
-
     if sub_resources is None:
         sub_resources = await ResourceService.find_sub_resources(
             url, resource_query, Content
