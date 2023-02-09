@@ -102,9 +102,12 @@ class ResourceService:
 
     @staticmethod
     async def trim_files(content_id: int, attach_files: set[str]):
-        async for file in Path(f'static/content/{content_id}').iterdir():
-            if attach_files is None or file.name not in attach_files:
-                await file.unlink(missing_ok=True)
+        try:
+            async for file in Path(f'static/content/{content_id}').iterdir():
+                if attach_files is None or file.name not in attach_files:
+                    await file.unlink(missing_ok=True)
+        except FileNotFoundError:
+            pass
 
     @staticmethod
     def check_permission(
