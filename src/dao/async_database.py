@@ -1,3 +1,4 @@
+import asyncio
 import functools
 from contextvars import ContextVar
 from typing import Callable
@@ -40,7 +41,7 @@ class AsyncDatabase:
     async def close(cls):
         close_all_sessions()
         if cls.__engine:
-            await cls.__engine.dispose()
+            asyncio.create_task(cls.__engine.dispose())
 
     @classmethod
     async def open_session(cls) -> AsyncSession:
@@ -83,8 +84,8 @@ class AsyncDatabase:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
-        await cls.insert_admin()
-        await cls.insert_root_folder()
+        asyncio.create_task(cls.insert_admin())
+        asyncio.create_task(cls.insert_root_folder())
 
     @classmethod
     async def insert_admin(cls):

@@ -1,3 +1,5 @@
+import asyncio
+
 import uvicorn
 from anyio import Path
 from fastapi import FastAPI
@@ -15,11 +17,11 @@ app = FastAPI()
 @app.on_event('startup')
 async def startup():
     await Config.init_config()
-    await AsyncDatabase.init_database()
-    await AsyncRedis.init_redis()
+    asyncio.create_task(AsyncDatabase.init_database())
+    asyncio.create_task(AsyncRedis.init_redis())
     path = Path('static/content')
     if not await Path.exists(path):
-        await Path.mkdir(path)
+        asyncio.create_task(Path.mkdir(path))
 
     app.include_router(router)
     app.mount("/static", StaticFiles(directory="static"), name="static")

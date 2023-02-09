@@ -56,7 +56,8 @@ class ResourceService:
     @staticmethod
     async def modify_resource(resource: Resource) -> Resource:
         old_resources = await BaseDao.select(
-            Resource(id=resource.id), resource.__class__)
+            Resource(id=resource.id), resource.__class__
+        )
         assert len(old_resources) == 1
         sub_resources = await ResourceService.find_sub_resources(
             old_resources[0].url
@@ -70,9 +71,8 @@ class ResourceService:
         resource.url = resource.parent_url + resource.this_url
 
         resource.updated_time = datetime.now()
-        res = await BaseDao.update(resource, resource.__class__)
+        res = BaseDao.update(resource, resource.__class__)
 
-        async_tasks = []
         if resource.url != old_resources[0].url:
             for sub in sub_resources:
                 """
@@ -80,8 +80,7 @@ class ResourceService:
                 must update parent url to make it existing
                 """
                 sub.parent_url = resource.url
-                async_tasks.append(ResourceService.modify_resource(sub))
-        await asyncio.gather(*async_tasks)
+                asyncio.create_task(ResourceService.modify_resource(sub))
         return res
 
     @staticmethod
@@ -90,22 +89,27 @@ class ResourceService:
 
     @staticmethod
     async def reset_content_tags(content: Content):
-        await BaseDao.delete_all(
-            [ResourceTag(resource_id=content.id)], ResourceTag
+        asyncio.create_task(
+            BaseDao.delete_all(
+                [ResourceTag(resource_id=content.id)],
+                ResourceTag
+            )
         )
-        add_content_tags = [ResourceTag(resource_id=content.id,
-                                        tag_id=x.id)
-                            for x in content.tags]
+        add_content_tags = [
+            ResourceTag(resource_id=content.id, tag_id=x.id)
+            for x in content.tags
+        ]
 
         if len(add_content_tags) > 0:
-            await BaseDao.insert_all(add_content_tags)
+            asyncio.create_task(BaseDao.insert_all(add_content_tags))
+
 
     @staticmethod
     async def trim_files(content_id: int, attach_files: set[str]):
         try:
             async for file in Path(f'static/content/{content_id}').iterdir():
                 if attach_files is None or file.name not in attach_files:
-                    await file.unlink(missing_ok=True)
+                    asyncio.create_task(file.unlink(missing_ok=True))
         except FileNotFoundError:
             pass
 

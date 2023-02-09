@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import HTTPException
 
 from schemas import UserInput, UserOutput
@@ -57,7 +59,7 @@ class UserService:
                 user_input.password, sys_user.salt
             )
 
-        await BaseDao.update(sys_user, SysUser)
+        asyncio.create_task(BaseDao.update(sys_user, SysUser))
         return UserOutput.init(sys_user)
 
     @staticmethod
