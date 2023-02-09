@@ -6,8 +6,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
-from .sys_user import Base
-from .tag import PostTag
+from models.sys_user import Base
+from models.tag import PostTag
 
 
 class Resource(Base):

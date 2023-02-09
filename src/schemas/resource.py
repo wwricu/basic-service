@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from models import Content, Folder, PostCategory, PostTag, Resource
-from .tag import TagSchema
+from schemas.tag import TagSchema
 
 
 class ResourceBase(BaseModel):

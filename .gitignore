@@ -1,7 +1,6 @@
-.venv
+venv
 .idea
 .vscode
-assets/production_config.json
 
 **/__pycache__
 

@@ -3,7 +3,7 @@ from typing import Type, Sequence
 from sqlalchemy import func, select, Table
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .async_database import AsyncDatabase
+from dao.async_database import AsyncDatabase
 from models import PostCategory, PostTag, Resource
 from schemas import ResourceQuery
 
