@@ -71,7 +71,7 @@ class ResourceService:
         resource.url = resource.parent_url + resource.this_url
 
         resource.updated_time = datetime.now()
-        res = BaseDao.update(resource, resource.__class__)
+        res = await BaseDao.update(resource, resource.__class__)
 
         if resource.url != old_resources[0].url:
             for sub in sub_resources:
@@ -89,11 +89,8 @@ class ResourceService:
 
     @staticmethod
     async def reset_content_tags(content: Content):
-        asyncio.create_task(
-            BaseDao.delete_all(
-                [ResourceTag(resource_id=content.id)],
-                ResourceTag
-            )
+        await BaseDao.delete_all(
+            [ResourceTag(resource_id=content.id)], ResourceTag
         )
         add_content_tags = [
             ResourceTag(resource_id=content.id, tag_id=x.id)
@@ -101,8 +98,8 @@ class ResourceService:
         ]
 
         if len(add_content_tags) > 0:
-            asyncio.create_task(BaseDao.insert_all(add_content_tags))
-
+            # cannot run async because commit may race with close
+            await BaseDao.insert_all(add_content_tags)
 
     @staticmethod
     async def trim_files(content_id: int, attach_files: set[str]):

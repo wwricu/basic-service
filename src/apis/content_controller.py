@@ -67,13 +67,15 @@ async def get_content(
     dependencies=[Depends(RoleRequired('admin'))]
 )
 async def modify_content(
-    content: ContentInput,
+    content_input: ContentInput,
     redis: Redis = Depends(AsyncRedis.get_connection)
 ):
-    await ResourceService.reset_content_tags(Content(**content.dict()))
-    content = await ResourceService.modify_resource(Content(**content.dict()))
+    await ResourceService.reset_content_tags(Content(**content_input.dict()))
+    content = await ResourceService.modify_resource(
+        Content(**content_input.dict())
+    )
     for task in [
-        ResourceService.trim_files(content.id, content.files),
+        ResourceService.trim_files(content_input.id, content_input.files),
         redis.set(f'content:id:{content.id}', pickle.dumps(content)),
         redis.set('count_dict', pickle.dumps(dict())),
         redis.set('preview_dict', pickle.dumps(dict()))
