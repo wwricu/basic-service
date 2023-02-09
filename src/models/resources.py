@@ -20,7 +20,7 @@ class Resource(Base):
         parent_url: str | None = None,
         **kwargs
     ):
-        super().__init__()
+        super().__init__(**kwargs)
         self.id = id
         self.title = title
         self.url = url
@@ -105,11 +105,11 @@ class Folder(Resource):
 
 class Content(Resource):
     def __init__(
-            self,
-            category: dict = MappingProxyType({}),
-            tags: list[dict] = (),
-            content: bytes | None = None,
-            **kwargs
+        self,
+        category: dict = MappingProxyType({}),
+        tags: list[dict] = (),
+        content: bytes | None = None,
+        **kwargs
     ):
         super().__init__(**kwargs)
         if category is not None:

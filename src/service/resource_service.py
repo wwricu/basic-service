@@ -58,7 +58,9 @@ class ResourceService:
         old_resources = await BaseDao.select(
             Resource(id=resource.id), resource.__class__)
         assert len(old_resources) == 1
-        sub_resources = await ResourceService.find_sub_resources(old_resources[0].url)
+        sub_resources = await ResourceService.find_sub_resources(
+            old_resources[0].url
+        )
 
         if resource.__class__ == 'Folder':
             resource.this_url = '/' + resource.title
@@ -73,7 +75,10 @@ class ResourceService:
         async_tasks = []
         if resource.url != old_resources[0].url:
             for sub in sub_resources:
-                # foreign key restraint: must update parent url to make it existing
+                """
+                foreign key restraint here:
+                must update parent url to make it existing
+                """
                 sub.parent_url = resource.url
                 async_tasks.append(ResourceService.modify_resource(sub))
         await asyncio.gather(*async_tasks)

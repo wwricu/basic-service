@@ -12,9 +12,9 @@ class UserService:
         sys_user = (await BaseDao.select(user_input, SysUser))[0]
 
         if not SecurityService.verify_password(
-                user_input.password,
-                sys_user.salt,
-                sys_user.password_hash
+            user_input.password,
+            sys_user.salt,
+            sys_user.password_hash
         ):
             raise HTTPException(status_code=401, detail="password mismatch")
 
