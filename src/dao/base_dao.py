@@ -30,12 +30,8 @@ class BaseDao:
     ):
         stmt = select(class_name)
 
-        for key in class_name.__dict__:
-            if key[0] == '_' or not hasattr(obj, key):
-                continue
-            attr = getattr(obj, key)
-            if attr is None:
-                continue
+        for key in class_name.__mapper__.c.keys():
+            attr = getattr(obj, key, None)
             if isinstance(attr, int) or isinstance(attr, str):
                 stmt = stmt.where(getattr(class_name, key) == attr)
         '''
@@ -54,19 +50,14 @@ class BaseDao:
         class_name: Table | Type,
         *, session: AsyncSession
     ):
-        if obj.id is None or obj.id == 0:
-            return
-
         obj_update = await session.get(class_name, obj.id)
         # obj_update = await session.scalar(
         #     select(class_name).filter_by(id=obj.id)
         # )
 
-        for key in obj.__dict__:
-            if key[0] == '_' or getattr(obj, key) is None:
-                continue
-            attr = getattr(obj, key)
-            if not isinstance(attr, list):
+        for key in obj.__mapper__.c.keys():  # iter all column keys
+            attr = getattr(obj, key, None)
+            if attr is not None:
                 setattr(obj_update, key, attr)
 
         await session.commit()
@@ -79,8 +70,6 @@ class BaseDao:
         class_name: Table | Type,
         *, session: AsyncSession
     ) -> int:  # return deleted id
-        if obj.id is None or obj.id == 0:
-            return 0
         obj = await session.get(class_name, obj.id)
         # obj = await session.scalar(
         #     select(class_name).filter_by(id=obj.id)
