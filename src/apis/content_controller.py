@@ -1,3 +1,4 @@
+import asyncio
 import pickle
 
 from anyio import Path
@@ -29,13 +30,15 @@ async def add_content(
     content.parent_url = '/draft'
 
     content = await ResourceService.add_resource(content)
-    await redis.set(f'content:id:{content.id}', pickle.dumps(content))
-    await redis.set('count_dict', pickle.dumps(dict()))
-    await redis.set('preview_dict', pickle.dumps(dict()))
+    asyncio.create_task(asyncio.gather(
+        redis.set(f'content:id:{content.id}', pickle.dumps(content)),
+        redis.set('count_dict', pickle.dumps(dict())),
+        redis.set('preview_dict', pickle.dumps(dict()))
+    ))
 
     content_folder = Path(f'static/content/{content.id}')
     if not await Path.exists(content_folder):
-        await Path.mkdir(content_folder)
+        asyncio.create_task(Path.mkdir(content_folder))
     return content.id
 
 
@@ -50,7 +53,9 @@ async def get_content(
         contents = [pickle.loads(contents_str)]
     else:
         contents = await ResourceService.find_resources(Content(id=content_id))
-        await redis.set(f'content:id:{content_id}', pickle.dumps(contents[0]))
+        asyncio.create_task(
+            redis.set(f'content:id:{content_id}', pickle.dumps(contents[0]))
+        )
     assert len(contents) == 1
     ResourceService.check_permission(contents[0], cur_user, 1)
     return ContentOutput.init(contents[0])
@@ -64,12 +69,15 @@ async def modify_content(
     content: ContentInput,
     redis: Redis = Depends(AsyncRedis.get_connection)
 ):
-    await ResourceService.trim_files(content.id, content.files)
     await ResourceService.reset_content_tags(Content(**content.dict()))
     content = await ResourceService.modify_resource(Content(**content.dict()))
-    await redis.set(f'content:id:{content.id}', pickle.dumps(content))
-    await redis.set('count_dict', pickle.dumps(dict()))
-    await redis.set('preview_dict', pickle.dumps(dict()))
+    asyncio.create_task(asyncio.gather(
+        ResourceService.trim_files(content.id, content.files),
+        redis.set(f'content:id:{content.id}', pickle.dumps(content)),
+        redis.set('count_dict', pickle.dumps(dict())),
+        redis.set('preview_dict', pickle.dumps(dict()))
+    ))
+
     return ContentOutput.init(content)
 
 
@@ -81,8 +89,10 @@ async def delete_content(
     content_id: int,
     redis: Redis = Depends(AsyncRedis.get_connection)
 ):
-    await ResourceService.trim_files(content_id, set())
-    await redis.delete(f'content:id:{content_id}')
-    await redis.set('count_dict', pickle.dumps(dict()))
-    await redis.set('preview_dict', pickle.dumps(dict()))
+    asyncio.create_task(asyncio.gather(
+        ResourceService.trim_files(content_id, set()),
+        redis.delete(f'content:id:{content_id}'),
+        redis.set('count_dict', pickle.dumps(dict())),
+        redis.set('preview_dict', pickle.dumps(dict()))
+    ))
     return await ResourceService.remove_resource(Resource(id=content_id))
