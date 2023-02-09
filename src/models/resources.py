@@ -20,7 +20,8 @@ class Resource(Base):
         parent_url: str | None = None,
         **kwargs
     ):
-        super().__init__(**kwargs)
+        _ = kwargs
+        super().__init__()
         self.id = id
         self.title = title
         self.url = url

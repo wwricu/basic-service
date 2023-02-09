@@ -6,7 +6,8 @@ from models.sys_user import Base
 
 class Tag(Base):
     def __init__(self, id: int | None = None, **kwargs):
-        super().__init__(**kwargs)
+        _ = kwargs
+        super().__init__()
         self.id = id
 
     __tablename__ = 'tag'

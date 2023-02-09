@@ -64,7 +64,7 @@ async def get_sub_count(
         + f'page_idx:{resource_query.page_idx}:'
         + f'page_size:{resource_query.page_size}:'
     )
-    sub_resources = preview_dict.get(key, default=None)
+    sub_resources = preview_dict.get(key)
     if sub_resources is not None:
         return len(sub_resources)
 
@@ -105,7 +105,7 @@ async def get_folder(
         + f'page_idx:{resource_query.page_idx}:'
         + f'page_size:{resource_query.page_size}:'
     )
-    sub_resources = preview_dict.get(key, default=None)
+    sub_resources = preview_dict.get(key)
 
     if sub_resources is None:
         sub_resources = await ResourceService.find_sub_resources(
