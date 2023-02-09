@@ -70,6 +70,7 @@ async def get_sub_count(
             Content
         )
         count_dict[key] = count
+        await redis.set('count_dict', pickle.dumps(count_dict))
     return count
 
 
