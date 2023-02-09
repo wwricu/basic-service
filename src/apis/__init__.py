@@ -1,12 +1,12 @@
 from fastapi import APIRouter
 
-from .auth_controller import auth_router
-from .category_controller import category_router
-from .content_controller import content_router
-from .file_controller import file_router
-from .folder_controller import folder_router
-from .tag_controller import tag_router
-from .user_controller import user_router
+from apis.auth_controller import auth_router
+from apis.category_controller import category_router
+from apis.content_controller import content_router
+from apis.file_controller import file_router
+from apis.folder_controller import folder_router
+from apis.tag_controller import tag_router
+from apis.user_controller import user_router
 
 router = APIRouter()
 router.include_router(auth_router)

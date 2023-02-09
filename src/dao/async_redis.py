@@ -16,3 +16,7 @@ class AsyncRedis:
     @classmethod
     async def get_connection(cls) -> Redis:
         return Redis(connection_pool=cls.__pool)
+
+    @classmethod
+    async def close(cls):
+        await cls.__pool.disconnect()

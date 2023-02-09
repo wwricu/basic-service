@@ -1,4 +1,3 @@
-import pickle
 import uvicorn
 from anyio import Path
 from fastapi import FastAPI
@@ -36,6 +35,7 @@ async def startup():
 
 @app.on_event('shutdown')
 async def shutdown():
+    await AsyncRedis.close()
     await AsyncDatabase.close()
     logger.info('see u later')
 
