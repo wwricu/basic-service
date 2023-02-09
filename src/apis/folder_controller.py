@@ -1,6 +1,9 @@
-from fastapi import APIRouter, Depends
+import pickle
 
-from dao import AsyncDatabase
+from fastapi import APIRouter, Depends
+from redis.asyncio import Redis
+
+from dao import AsyncDatabase, AsyncRedis
 from models import Content, Folder, Resource
 from schemas import (
     FolderInput,
@@ -37,13 +40,34 @@ async def add_folder(
 async def get_sub_count(
     url: str = None,
     resource_query: ResourceQuery = Depends(),
-    cur_user: UserOutput = Depends(SecurityService.optional_login_required)
+    cur_user: UserOutput = Depends(SecurityService.optional_login_required),
+    redis: Redis = Depends(AsyncRedis.get_connection)
 ):
     if len(url) > 0 and url[0] != '/':
         url = f'/{url}'
-    folders = await ResourceService.find_resources(Folder(url=url))
+
+    folders_str = await redis.get(f'folder:url:{url}')
+    if folders_str is not None:
+        folders = pickle.loads(folders_str)
+    else:
+        folders = await ResourceService.find_resources(Folder(url=url))
+        await redis.set(f'folder:url:{url}', pickle.dumps(folders))
+
     assert len(folders) == 1
     ResourceService.check_permission(folders[0], cur_user, 1)
+
+    preview_dict: dict = pickle.loads(await redis.get('preview_dict'))
+    key = (
+        f'preview:url{url}:'
+        + f'category_name:{resource_query.category_name}:'
+        + f'tag_name:{resource_query.tag_name}:'
+        + f'page_idx:{resource_query.page_idx}:'
+        + f'page_size:{resource_query.page_size}:'
+    )
+    sub_resources = preview_dict.get(key, default=None)
+    if sub_resources is not None:
+        return len(sub_resources)
+
     return await ResourceService.find_sub_count(
         folders[0].url,
         resource_query,
@@ -57,16 +81,38 @@ async def get_sub_count(
 async def get_folder(
     url: str = '',
     resource_query: ResourceQuery = Depends(),
-    cur_user: UserOutput = Depends(SecurityService.optional_login_required)
+    cur_user: UserOutput = Depends(SecurityService.optional_login_required),
+    redis: Redis = Depends(AsyncRedis.get_connection)
 ):
     if len(url) > 0 and url[0] != '/':
         url = f'/{url}'
-    folders = await ResourceService.find_resources(Folder(url=url))
+
+    folders_str = await redis.get(f'folder:url:{url}')
+    if folders_str is not None:
+        folders = pickle.loads(folders_str)
+    else:
+        folders = await ResourceService.find_resources(Folder(url=url))
+        await redis.set(f'folder:url:{url}', pickle.dumps(folders))
+
     assert len(folders) == 1
     ResourceService.check_permission(folders[0], cur_user, 1)
-    sub_resources = await ResourceService.find_sub_resources(
-        url, resource_query, Content
+
+    preview_dict: dict = pickle.loads(await redis.get('preview_dict'))
+    key = (
+        f'preview:url{url}:'
+        + f'category_name:{resource_query.category_name}:'
+        + f'tag_name:{resource_query.tag_name}:'
+        + f'page_idx:{resource_query.page_idx}:'
+        + f'page_size:{resource_query.page_size}:'
     )
+    sub_resources = preview_dict.get(key, default=None)
+
+    if sub_resources is None:
+        sub_resources = await ResourceService.find_sub_resources(
+            url, resource_query, Content
+        )
+        preview_dict[key] = sub_resources
+        await redis.set('preview_dict', pickle.dumps(preview_dict))
     return [ResourcePreview.init(x) for x in sub_resources]
 
 

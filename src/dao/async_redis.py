@@ -1,5 +1,7 @@
 # import redis.asyncio as redis
-from redis.asyncio import Redis, ConnectionPool
+import pickle
+
+from redis.asyncio import ConnectionPool, Redis, StrictRedis
 
 from config import Config
 
@@ -9,13 +11,16 @@ class AsyncRedis:
 
     @classmethod
     async def init_redis(cls):
-        cls.__pool = ConnectionPool(
-            **Config.redis.__dict__,
-        )
+        if cls.__pool is None:
+            cls.__pool = ConnectionPool(
+                **Config.redis.__dict__,
+            )
+        redis = await cls.get_connection()
+        await redis.set('preview_dict', pickle.dumps(dict()))
 
     @classmethod
     async def get_connection(cls) -> Redis:
-        return Redis(connection_pool=cls.__pool)
+        return StrictRedis(connection_pool=cls.__pool)
 
     @classmethod
     async def close(cls):

@@ -30,6 +30,7 @@ async def add_content(
 
     content = await ResourceService.add_resource(content)
     await redis.set(f'content:id:{content.id}', pickle.dumps(content))
+    await redis.set('preview_dict', pickle.dumps(dict()))
 
     content_folder = Path(f'static/content/{content.id}')
     if not await Path.exists(content_folder):
@@ -66,6 +67,7 @@ async def modify_content(
     await ResourceService.reset_content_tags(Content(**content.dict()))
     content = await ResourceService.modify_resource(Content(**content.dict()))
     await redis.set(f'content:id:{content.id}', pickle.dumps(content))
+    await redis.set('preview_dict', pickle.dumps(dict()))
     return ContentOutput.init(content)
 
 
@@ -79,4 +81,5 @@ async def delete_content(
 ):
     await ResourceService.trim_files(content_id, set())
     await redis.delete(f'content:id:{content_id}')
+    await redis.set('preview_dict', pickle.dumps(dict()))
     return await ResourceService.remove_resource(Resource(id=content_id))
