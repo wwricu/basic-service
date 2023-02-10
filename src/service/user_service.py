@@ -1,16 +1,32 @@
 import asyncio
+import time
 
-from fastapi import HTTPException
+from fastapi import Depends, HTTPException
+from redis.asyncio import Redis
 
-from schemas import UserInput, UserOutput
-from dao import BaseDao
+from dao import AsyncRedis, BaseDao
 from models import SysUser
+from schemas import UserInput, UserOutput
 from service.security_service import SecurityService
 
 
 class UserService:
     @staticmethod
-    async def user_login(user_input: UserInput) -> UserOutput:
+    async def user_login(
+        user_input: UserInput,
+        redis: Redis = Depends(AsyncRedis.get_connection)
+    ) -> UserOutput:
+        last_fail_time = await redis.get(
+            f'login_failure:username:{user_input.username}'
+        )
+        if (
+            last_fail_time is not None
+            and int(time.time()) - last_fail_time < 30
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail=f'too frequent attempt for {user_input.username}'
+            )
         sys_user = (await BaseDao.select(user_input, SysUser))[0]
 
         if not SecurityService.verify_password(
@@ -18,8 +34,16 @@ class UserService:
             sys_user.salt,
             sys_user.password_hash
         ):
-            raise HTTPException(status_code=401, detail="password mismatch")
+            # await here for possable dense requests.
+            await redis.set(
+                f'login_failure:username:{user_input.username}',
+                int(time.time())
+            )
+            raise HTTPException(status_code=401, detail='password mismatch')
 
+        asyncio.create_task(
+            redis.delete(f'login_failure:username:{user_input.username}')
+        )
         return UserOutput.init(sys_user)
 
     @staticmethod
