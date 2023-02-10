@@ -19,12 +19,16 @@ async def startup():
     await Config.init_config()
     asyncio.create_task(AsyncDatabase.init_database())
     asyncio.create_task(AsyncRedis.init_redis())
-    path = Path('static/content')
+    path = Path(Config.static.content_path)
     if not await Path.exists(path):
-        asyncio.create_task(Path.mkdir(path))
+        await Path.mkdir(path)
 
     app.include_router(router)
-    app.mount("/static", StaticFiles(directory="static"), name="static")
+    app.mount(
+        f'/{Config.static.root_path}',
+        StaticFiles(directory=Config.static.root_path),
+        name=Config.static.root_path
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origin_regex='https?://.*',
@@ -42,10 +46,10 @@ async def shutdown():
     logger.info('see u later')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     uvicorn.run(
-        app="main:app",
-        host="0.0.0.0",
+        app='main:app',
+        host='0.0.0.0',
         port=8000,
-        log_level="info"
+        log_level='info'
     )

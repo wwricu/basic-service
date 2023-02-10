@@ -44,6 +44,21 @@ class DatabaseConfig:
         self.database = database
 
 
+class JWTConfig:
+    def __init__(
+        self,
+        key: str,
+        algorithm: str | None = 'HS256',
+        headers: dict | None = MappingProxyType({
+            'alg': 'HS256',
+            'typ': 'JWT'
+        })
+    ):
+        self.key = key
+        self.algorithm = algorithm
+        self.headers = headers
+
+
 class RedisConfig:
     def __init__(
         self,
@@ -54,19 +69,14 @@ class RedisConfig:
         self.port = port
 
 
-class JWTConfig:
+class StaticResource:
     def __init__(
         self,
-        key: str,
-        algorithm: str | None = 'HS256',
-        headers: dict | None = MappingProxyType({
-            "alg": "HS256",
-            "typ": "JWT"
-        })
+        root_path: str | None = 'static',
+        content_path: str | None = 'static/content'
     ):
-        self.key = key
-        self.algorithm = algorithm
-        self.headers = headers
+        self.root_path = root_path
+        self.content_path = content_path
 
 
 class Config:
@@ -74,13 +84,14 @@ class Config:
     redis: RedisConfig = None
     admin: AdminConfig = None
     jwt: JWTConfig = None
+    static: StaticResource = None
     folders: list[Folder] = []
 
     @classmethod
     async def init_config(cls, filename: str = 'assets/config.json'):
         handler = logging.StreamHandler()
         handler.setFormatter(logging.Formatter(
-            "%(levelname)s:     %(message)s"
+            '%(levelname)s:     %(message)s'
         ))
         logger.setLevel(logging.INFO)
         logger.addHandler(handler)
@@ -100,6 +111,7 @@ class Config:
         redis: dict,
         admin: dict,
         jwt: dict,
+        static: dict,
         folders: dict,
         **kwargs
     ):
@@ -108,5 +120,6 @@ class Config:
         cls.admin = AdminConfig(**admin)
         cls.jwt = JWTConfig(**jwt)
         cls.redis = RedisConfig(**redis)
+        cls.static = StaticResource(**static)
         for folder in folders:
             cls.folders.append(Folder(**folder))

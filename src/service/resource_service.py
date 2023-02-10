@@ -6,6 +6,7 @@ from typing import Type, Sequence
 from anyio import Path
 from fastapi import HTTPException
 
+from config import Config
 from dao import BaseDao, ResourceDao
 from models import Content, Folder, Resource, ResourceTag
 from schemas import ResourceQuery, UserOutput
@@ -103,12 +104,12 @@ class ResourceService:
 
     @staticmethod
     async def trim_files(content_id: int, attach_files: set[str]):
-        try:
-            async for file in Path(f'static/content/{content_id}').iterdir():
-                if attach_files is None or file.name not in attach_files:
-                    asyncio.create_task(file.unlink(missing_ok=True))
-        except FileNotFoundError:
-            pass
+        folder = Path(f'{Config.static.content_path}/{content_id}')
+        if not await Path.exists(folder):
+            return
+        async for file in folder.iterdir():
+            if attach_files is None or file.name not in attach_files:
+                asyncio.create_task(file.unlink(missing_ok=True))
 
     @staticmethod
     def check_permission(
@@ -128,4 +129,4 @@ class ResourceService:
                 permission |= (resource.permission // 100) % 10
 
         if operation_mask & permission == 0:
-            raise HTTPException(status_code=403, detail="unauthorized")
+            raise HTTPException(status_code=403, detail='unauthorized')

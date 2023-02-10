@@ -5,21 +5,22 @@ import os
 from anyio import Path
 from fastapi import APIRouter, Depends,  HTTPException, Request, UploadFile
 
+from config import Config
 from service import RoleRequired
 
 
-file_router = APIRouter(prefix="/file", tags=["file"])
+file_router = APIRouter(prefix='/file', tags=['file'])
 
 
 @file_router.post(
-    "/static/content", dependencies=[Depends(RoleRequired('admin'))]
+    '/static/content', dependencies=[Depends(RoleRequired('admin'))]
 )
 async def upload(files: list[UploadFile], request: Request):
     succ_files, content_id = [], request.headers['x-content-id']
     if content_id is None:
         raise HTTPException(status_code=404, detail='no content id')
 
-    content_path = Path(f'static/content/{content_id}')
+    content_path = Path(f'{Config.static.content_path}/{content_id}')
     if not await Path.exists(content_path):
         await Path.mkdir(content_path)
 

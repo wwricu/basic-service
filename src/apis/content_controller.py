@@ -5,6 +5,7 @@ from anyio import Path
 from fastapi import APIRouter, Depends
 from redis.asyncio import Redis
 
+from config import Config
 from dao import AsyncDatabase, AsyncRedis
 from models import Content, Resource
 from schemas import ContentInput, ContentOutput, UserOutput
@@ -12,13 +13,13 @@ from service import RoleRequired, ResourceService, SecurityService
 
 
 content_router = APIRouter(
-    prefix="/content",
-    tags=["content"],
+    prefix='/content',
+    tags=['content'],
     dependencies=[Depends(AsyncDatabase.open_session)]
 )
 
 
-@content_router.post("", response_model=int)
+@content_router.post('', response_model=int)
 async def add_content(
     content_input: ContentInput,
     cur_user: UserOutput = Depends(RoleRequired('admin')),
@@ -37,13 +38,13 @@ async def add_content(
     ]:
         asyncio.create_task(task)
 
-    content_folder = Path(f'static/content/{content.id}')
+    content_folder = Path(f'{Config.static.content_path}/{content.id}')
     if not await Path.exists(content_folder):
         asyncio.create_task(Path.mkdir(content_folder))
     return content.id
 
 
-@content_router.get("/{content_id}", response_model=ContentOutput)
+@content_router.get('/{content_id}', response_model=ContentOutput)
 async def get_content(
     content_id: int,
     cur_user: UserOutput = Depends(SecurityService.optional_login_required),
@@ -63,7 +64,7 @@ async def get_content(
 
 
 @content_router.put(
-    "", response_model=ContentOutput,
+    '', response_model=ContentOutput,
     dependencies=[Depends(RoleRequired('admin'))]
 )
 async def modify_content(
@@ -86,7 +87,7 @@ async def modify_content(
 
 
 @content_router.delete(
-    "/{content_id}", response_model=int,
+    '/{content_id}', response_model=int,
     dependencies=[Depends(RoleRequired('admin'))]
 )
 async def delete_content(
