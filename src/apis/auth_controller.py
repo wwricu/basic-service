@@ -3,7 +3,7 @@ import time
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.security import OAuth2PasswordRequestForm
-from redis import Redis
+from redis.asyncio import Redis
 
 from dao import AsyncDatabase, AsyncRedis
 from service import SecurityService, UserService
@@ -45,7 +45,7 @@ async def login(
             UserInput(username=form_data.username, password=form_data.password)
         )
     except (Exception,):
-        # await here for possable dense requests.
+        # await here for possible dense requests.
         await redis.set(
             f'login_failure:username:{form_data.username}',
             int(time.time())

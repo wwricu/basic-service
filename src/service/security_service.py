@@ -83,7 +83,7 @@ class SecurityService:
     @staticmethod
     def create_jwt_token(
         user_info: UserOutput,
-        timeout_hour: int | None = 1  # default for acccess_token
+        timeout_hour: int | None = 1  # default for access_token
     ) -> bytes:
         data = user_info.dict()
         delta = timedelta(hours=timeout_hour)

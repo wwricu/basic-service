@@ -7,14 +7,14 @@ from models import PostCategory, Tag
 
 
 category_router = APIRouter(
-    prefix="/category",
-    tags=["category"],
+    prefix='/category',
+    tags=['category'],
     dependencies=[Depends(AsyncDatabase.open_session)]
 )
 
 
 @category_router.post(
-    "", response_model=TagSchema,
+    '', response_model=TagSchema,
     dependencies=[Depends(RoleRequired('admin'))]
 )
 async def add_category(category: TagSchema):
@@ -23,7 +23,7 @@ async def add_category(category: TagSchema):
     )
 
 
-@category_router.get("", response_model=list[TagSchema])
+@category_router.get('', response_model=list[TagSchema])
 async def get_category(category: TagSchema = Depends()):
     tags = await TagService.find_tag(
         PostCategory(id=category.id, name=category.name)
@@ -32,7 +32,7 @@ async def get_category(category: TagSchema = Depends()):
 
 
 @category_router.put(
-    "", response_model=TagSchema,
+    '', response_model=TagSchema,
     dependencies=[Depends(RoleRequired('admin'))]
 )
 async def rename_category(category: TagSchema):
@@ -42,7 +42,7 @@ async def rename_category(category: TagSchema):
 
 
 @category_router.delete(
-    "/{category_id}", response_model=int,
+    '/{category_id}', response_model=int,
     dependencies=[Depends(RoleRequired('admin'))]
 )
 async def remove_tag(category_id: int):

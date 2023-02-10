@@ -16,7 +16,7 @@ file_router = APIRouter(prefix='/file', tags=['file'])
     '/static/content', dependencies=[Depends(RoleRequired('admin'))]
 )
 async def upload(files: list[UploadFile], request: Request):
-    succ_files, content_id = [], request.headers['x-content-id']
+    success_files, content_id = [], request.headers['x-content-id']
     if content_id is None:
         raise HTTPException(status_code=404, detail='no content id')
 
@@ -32,7 +32,7 @@ async def upload(files: list[UploadFile], request: Request):
         path = f'{content_path}/{filename}{suffix}'
         await Path(path).write_bytes(await file.read())
         if os.path.exists(path):
-            succ_files.append({
+            success_files.append({
                 'name': file.filename,
                 'path': path
             })
@@ -41,4 +41,4 @@ async def upload(files: list[UploadFile], request: Request):
     for f in files:
         async_tasks.append(save_file(f))
     await asyncio.gather(*async_tasks)
-    return {'files': succ_files}
+    return {'files': success_files}

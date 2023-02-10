@@ -1,4 +1,3 @@
-# import redis.asyncio as redis
 import pickle
 
 from redis.asyncio import ConnectionPool, Redis, StrictRedis
