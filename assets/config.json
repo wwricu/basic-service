@@ -28,6 +28,10 @@
       "name": "admin"
     }
   },
+  "static": {
+    "root_path": "static",
+    "content_path": "static/content"
+  },
   "folders": [
     {
       "title": "root",

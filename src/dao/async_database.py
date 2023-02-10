@@ -84,8 +84,9 @@ class AsyncDatabase:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
-        asyncio.create_task(cls.insert_admin())
-        asyncio.create_task(cls.insert_root_folder())
+        # await commit() cannot be executed at the same time
+        await cls.insert_admin()
+        await cls.insert_root_folder()
 
     @classmethod
     async def insert_admin(cls):

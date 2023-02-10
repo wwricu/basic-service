@@ -17,8 +17,10 @@ app = FastAPI()
 @app.on_event('startup')
 async def startup():
     await Config.init_config()
-    asyncio.create_task(AsyncDatabase.init_database())
-    asyncio.create_task(AsyncRedis.init_redis())
+    await asyncio.gather(
+        AsyncDatabase.init_database(),
+        AsyncRedis.init_redis()
+    )
     path = Path(Config.static.content_path)
     if not await Path.exists(path):
         await Path.mkdir(path)
@@ -41,8 +43,10 @@ async def startup():
 
 @app.on_event('shutdown')
 async def shutdown():
-    await AsyncRedis.close()
-    await AsyncDatabase.close()
+    await asyncio.gather(
+        AsyncRedis.close(),
+        AsyncDatabase.close()
+    )
     logger.info('see u later')
 
 
