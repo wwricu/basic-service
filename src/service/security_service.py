@@ -12,7 +12,7 @@ from schemas import UserOutput
 
 
 oauth2_scheme_optional = OAuth2PasswordBearer(
-    tokenUrl="auth", auto_error=False
+    tokenUrl='auth', auto_error=False
 )
 
 
@@ -50,7 +50,7 @@ async def login_required(
     result: UserOutput = Depends(optional_login_required)
 ) -> UserOutput:
     if result is None:
-        raise HTTPException(status_code=401, detail="unauthenticated")
+        raise HTTPException(status_code=401, detail='unauthenticated')
     return result
 
 
@@ -83,14 +83,11 @@ class SecurityService:
     @staticmethod
     def create_jwt_token(
         user_info: UserOutput,
-        refresh: bool | None = False
+        timeout_hour: int | None = 1  # default for acccess_token
     ) -> bytes:
         data = user_info.dict()
-        delta = timedelta(minutes=60)
-        if refresh:
-            delta = timedelta(days=7)
-
-        data.update({"exp": datetime.utcnow() + delta})
+        delta = timedelta(hours=timeout_hour)
+        data.update({'exp': datetime.utcnow() + delta})
         return jwt.encode(payload=data, **Config.jwt.__dict__)
 
 
@@ -107,4 +104,4 @@ class RoleRequired:
             if role.name == 'admin' or self.required_role == role:
                 return user_output
 
-        raise HTTPException(status_code=403, detail="no permission")
+        raise HTTPException(status_code=403, detail='no permission')
