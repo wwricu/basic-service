@@ -81,6 +81,7 @@ class AsyncDatabase:
             await engine.dispose()
 
         engine = await cls.get_engine()
+        logger.info('database connected')
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 

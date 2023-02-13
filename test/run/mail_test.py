@@ -1,7 +1,6 @@
+import asyncio
 from email.mime.text import MIMEText
 from smtplib import SMTP
-
-from config import Config, logger
 
 
 class MailService:
@@ -11,35 +10,41 @@ class MailService:
         recipients: list[str],
         subject: str | None = None,
         message: str | None = None,
+        *,
+        sender_show: str | None = None,
+        recipient_show: str | None = None,
+        cc_show: str | None = None
     ):
         msg = MIMEText(message, 'plain', _charset='utf-8')
         msg['subject'] = subject
+        msg['from'] = sender_show
+        msg['to'] = recipient_show
+        msg['cc'] = cc_show
 
         smtp = SMTP(
-            host=Config.mail.host,
-            port=Config.mail.port
+            host='smtp.office365.com',
+            port=587
         )
 
         try:
             smtp.starttls()
             smtp.login(
-                user=Config.mail.username,
-                password=Config.mail.password
+                user='iswangwr@outlook.com',
+                password=''
             )
             smtp.sendmail(
-                from_addr=Config.mail.username,
+                from_addr='iswangwr@outlook.com',
                 to_addrs=recipients,
                 msg=msg.as_string()
             )
         except Exception as e:
-            logger.warn('send mail failed', e)
+            print(e)
         finally:
             smtp.close()
 
-    @classmethod
-    async def daily_mail(cls):
-        await cls.send_mail(
-            ['iswangwr@outlook.com'],
-            'A another day begins...',
-            'Thanks for your hard working.',
-        )
+
+asyncio.run(MailService.send_mail(
+    ['iswangwr@outlook.com'],
+    'A another day begins...',
+    'Thanks for your hard working.',
+))
