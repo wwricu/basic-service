@@ -7,6 +7,12 @@
     "port": 5432,
     "database": "fastdb"
   },
+  "mail": {
+    "host": "smtp.office365.com",
+    "port": 587,
+    "username": "iswangwr@outlook.com",
+    "password": ""
+  },
   "redis": {
     "host": "45.63.26.210",
     "port": 6379

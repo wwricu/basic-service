@@ -26,6 +26,20 @@ class AdminConfig:
         self.role = role
 
 
+class MailConfig:
+    def __init__(
+        self,
+        host: str | None = None,
+        port: int = 0,
+        username: str | None = None,
+        password: str | None = None,
+    ):
+        self.host = host
+        self.port = port
+        self.username = username
+        self.password = password
+
+
 class DatabaseConfig:
     def __init__(
         self,
@@ -83,6 +97,7 @@ class Config:
     database: DatabaseConfig = None
     redis: RedisConfig = None
     admin: AdminConfig = None
+    mail: MailConfig = None
     jwt: JWTConfig = None
     static: StaticResource = None
     folders: list[Folder] = []
@@ -110,6 +125,7 @@ class Config:
         database: dict,
         redis: dict,
         admin: dict,
+        mail: dict,
         jwt: dict,
         static: dict,
         folders: dict,
@@ -118,6 +134,7 @@ class Config:
         _ = kwargs
         cls.database = DatabaseConfig(**database)
         cls.admin = AdminConfig(**admin)
+        cls.mail = MailConfig(**mail)
         cls.jwt = JWTConfig(**jwt)
         cls.redis = RedisConfig(**redis)
         cls.static = StaticResource(**static)
