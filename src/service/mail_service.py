@@ -42,3 +42,13 @@ class MailService:
             logger.warn('send mail failed', e)
         finally:
             smtp.close()
+
+    @classmethod
+    async def daily_mail(cls):
+        await cls.send_mail(
+            ['iswangwr@outlook.com'],
+            'A another day begins...',
+            'Thanks for your hard working.',
+            sender_show='wwr',
+            recipient_show='wwr'
+        )

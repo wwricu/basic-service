@@ -2,6 +2,9 @@ import asyncio
 
 import uvicorn
 from anyio import Path
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -9,9 +12,20 @@ from fastapi.staticfiles import StaticFiles
 from apis import router
 from config import Config, logger
 from dao import AsyncDatabase, AsyncRedis
+from service import MailService
 
 
 app = FastAPI()
+
+
+async def schedule_jobs():
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(
+        MailService.daily_mail,
+        CronTrigger(),
+        hour='8'
+    )
+    scheduler.start()
 
 
 @app.on_event('startup')
@@ -21,6 +35,8 @@ async def startup():
         AsyncDatabase.init_database(),
         AsyncRedis.init_redis()
     )
+    await schedule_jobs()
+
     path = Path(Config.static.content_path)
     if not await Path.exists(path):
         await Path.mkdir(path)
