@@ -32,7 +32,7 @@ async def add_content(
     content.parent_url = '/draft'
 
     content = await ResourceService.add_resource(content)
-    for task in cast(list[Coroutine], (
+    for task in cast(tuple[Coroutine], (
         redis.set(f'content:id:{content.id}', pickle.dumps(content)),
         redis.set('count_dict', pickle.dumps(dict())),
         redis.set('preview_dict', pickle.dumps(dict()))
@@ -56,10 +56,10 @@ async def get_content(
         contents = [pickle.loads(contents_str)]
     else:
         contents = await ResourceService.find_resources(Content(id=content_id))
-        asyncio.create_task(
-            cast(Coroutine, redis.set(f'content:id:{content_id}',
-                                      pickle.dumps(contents[0])))
-        )
+        asyncio.create_task(cast(
+            Coroutine,
+            redis.set(f'content:id:{content_id}', pickle.dumps(contents[0]))
+        ))
     assert len(contents) == 1
     ResourceService.check_permission(contents[0], cur_user, 1)
     return ContentOutput.init(contents[0])
@@ -77,12 +77,12 @@ async def modify_content(
     content = await ResourceService.modify_resource(
         Content(**content_input.dict())
     )
-    for task in [
+    for task in (
         ResourceService.trim_files(content_input.id, content_input.files),
         redis.set(f'content:id:{content.id}', pickle.dumps(content)),
         redis.set('count_dict', pickle.dumps(dict())),
         redis.set('preview_dict', pickle.dumps(dict()))
-    ]:
+    ):
         asyncio.create_task(task)
 
     return ContentOutput.init(content)

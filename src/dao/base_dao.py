@@ -1,5 +1,5 @@
 import asyncio
-from typing import Sequence, Type
+from typing import Type
 
 from sqlalchemy import select, Table
 from sqlalchemy.ext.asyncio import AsyncSession

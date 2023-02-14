@@ -18,13 +18,13 @@ from service import RoleRequired, ResourceService, SecurityService
 
 
 folder_router = APIRouter(
-    prefix="/folder",
-    tags=["folder"],
+    prefix='/folder',
+    tags=['folder'],
     dependencies=[Depends(AsyncDatabase.open_session)]
 )
 
 
-@folder_router.post("", response_model=FolderOutput)
+@folder_router.post('', response_model=FolderOutput)
 async def add_folder(
     folder_input: FolderInput,
     cur_user: UserOutput = Depends(RoleRequired('admin'))
@@ -38,7 +38,7 @@ async def add_folder(
     )
 
 
-@folder_router.get("/count/{url:path}", response_model=int)
+@folder_router.get('/count/{url:path}', response_model=int)
 async def get_sub_count(
     url: str = None,
     resource_query: ResourceQuery = Depends(),
@@ -53,9 +53,9 @@ async def get_sub_count(
         folders = pickle.loads(folders_str)
     else:
         folders = await ResourceService.find_resources(Folder(url=url))
-        asyncio.create_task(
-            cast(Coroutine, redis.set(f'folder:url:{url}', pickle.dumps(folders)))
-        )
+        asyncio.create_task(cast(
+            Coroutine, redis.set(f'folder:url:{url}', pickle.dumps(folders))
+        ))
 
     assert len(folders) == 1
     ResourceService.check_permission(folders[0], cur_user, 1)
@@ -74,14 +74,14 @@ async def get_sub_count(
             Content
         )
         count_dict[key] = count
-        asyncio.create_task(
-            cast(Coroutine, redis.set('count_dict', pickle.dumps(count_dict)))
-        )
+        asyncio.create_task(cast(
+            Coroutine, redis.set('count_dict', pickle.dumps(count_dict))
+        ))
     return count
 
 
 @folder_router.get(
-    "/sub_content/{url:path}", response_model=list[ResourcePreview]
+    '/sub_content/{url:path}', response_model=list[ResourcePreview]
 )
 async def get_folder(
     url: str = '',
@@ -97,9 +97,9 @@ async def get_folder(
         folders = pickle.loads(folders_str)
     else:
         folders = await ResourceService.find_resources(Folder(url=url))
-        asyncio.create_task(
-            cast(Coroutine, redis.set(f'folder:url:{url}', pickle.dumps(folders)))
-        )
+        asyncio.create_task(cast(
+            Coroutine, redis.set(f'folder:url:{url}', pickle.dumps(folders))
+        ))
 
     assert len(folders) == 1
     ResourceService.check_permission(folders[0], cur_user, 1)
@@ -118,14 +118,14 @@ async def get_folder(
             url, resource_query, Content
         )
         preview_dict[key] = sub_resources
-        asyncio.create_task(
-            cast(Coroutine, redis.set('preview_dict', pickle.dumps(preview_dict)))
-        )
+        asyncio.create_task(cast(
+            Coroutine, redis.set('preview_dict', pickle.dumps(preview_dict))
+        ))
     return [ResourcePreview.init(x) for x in sub_resources]
 
 
 @folder_router.put(
-    "", response_model=FolderOutput,
+    '', response_model=FolderOutput,
     dependencies=[Depends(RoleRequired('admin'))]
 )
 async def modify_folder(folder_input: FolderInput):
@@ -137,7 +137,7 @@ async def modify_folder(folder_input: FolderInput):
 
 
 @folder_router.delete(
-    "/{folder_id}", response_model=int,
+    '/{folder_id}', response_model=int,
     dependencies=[Depends(RoleRequired('admin'))]
 )
 async def delete_folder(folder_id: int = 0):

@@ -26,20 +26,6 @@ class AdminConfig:
         self.role = role
 
 
-class MailConfig:
-    def __init__(
-        self,
-        host: str | None = None,
-        port: int = 0,
-        username: str | None = None,
-        password: str | None = None,
-    ):
-        self.host = host
-        self.port = port
-        self.username = username
-        self.password = password
-
-
 class DatabaseConfig:
     def __init__(
         self,
@@ -71,6 +57,20 @@ class JWTConfig:
         self.key = key
         self.algorithm = algorithm
         self.headers = headers
+
+
+class MailConfig:
+    def __init__(
+        self,
+        host: str | None = None,
+        port: int = 0,
+        username: str | None = None,
+        password: str | None = None,
+    ):
+        self.host = host
+        self.port = port
+        self.username = username
+        self.password = password
 
 
 class RedisConfig:
@@ -124,19 +124,21 @@ class Config:
         cls,
         database: dict,
         admin: dict,
-        mail: dict,
         jwt: dict,
         static: dict,
         folders: dict,
+        mail: dict | None = None,
         redis: dict | None = None,
         **kwargs
     ):
         _ = kwargs
         cls.database = DatabaseConfig(**database)
         cls.admin = AdminConfig(**admin)
-        cls.mail = MailConfig(**mail)
         cls.jwt = JWTConfig(**jwt)
         cls.static = StaticResource(**static)
+        # mail and redis are optional
+        if mail is not None:
+            cls.mail = MailConfig(**mail)
         if redis is not None:
             cls.redis = RedisConfig(**redis)
         for folder in folders:

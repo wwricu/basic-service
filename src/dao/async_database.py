@@ -1,6 +1,5 @@
 import asyncio
 import functools
-import sqlite3
 from contextvars import ContextVar
 
 from sqlalchemy import text
@@ -67,13 +66,13 @@ class AsyncDatabase:
                 port=Config.database.port
             ),
             # CREATE DATABASE cannot in transaction
-            isolation_level="AUTOCOMMIT"
+            isolation_level='AUTOCOMMIT'
         )
 
         try:
             async with engine.begin() as conn:
                 await conn.execute(
-                    text(f"CREATE DATABASE {Config.database.database}")
+                    text(f'CREATE DATABASE {Config.database.database}')
                 )
         except ProgrammingError:
             # postgres database existed

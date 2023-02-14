@@ -12,6 +12,9 @@ class MailService:
         subject: str | None = None,
         message: str | None = None,
     ):
+        if Config.mail is None:
+            return
+
         msg = MIMEText(message, 'plain', _charset='utf-8')
         msg['subject'] = subject
 
@@ -19,7 +22,6 @@ class MailService:
             host=Config.mail.host,
             port=Config.mail.port
         )
-
         try:
             smtp.starttls()
             smtp.login(
