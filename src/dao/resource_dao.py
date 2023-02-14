@@ -23,14 +23,14 @@ class ResourceDao:
             stmt = stmt.where(obj_class.parent_url == parent_url)
 
         if resource_query.category_name is not None:
-            stmt = stmt.join(PostCategory).where(
+            stmt = stmt.where(obj_class.category.has(
                 PostCategory.name == resource_query.category_name
-            )
+            ))
 
         if resource_query.tag_name is not None:
             stmt = stmt.where(obj_class.tags.any(
-                PostTag.name == resource_query.tag_name)
-            )
+                PostTag.name == resource_query.tag_name
+            ))
 
         if resource_query.page_size != 0:
             # res = res.offset(page_idx * page_size).limit(page_size)
@@ -55,13 +55,13 @@ class ResourceDao:
             stmt = stmt.where(obj_class.parent_url == parent_url)
 
         if resource_query.category_name is not None:
-            stmt = stmt.join(PostCategory).where(
+            stmt = stmt.where(obj_class.category.has(
                 PostCategory.name == resource_query.category_name
-            )
+            ))
 
         if resource_query.tag_name is not None:
             stmt = stmt.where(obj_class.tags.any(
-                PostTag.name == resource_query.tag_name)
-            )
+                PostTag.name == resource_query.tag_name
+            ))
 
         return await session.scalar(stmt)
