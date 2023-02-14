@@ -123,12 +123,12 @@ class Config:
     def load_json(
         cls,
         database: dict,
-        redis: dict,
         admin: dict,
         mail: dict,
         jwt: dict,
         static: dict,
         folders: dict,
+        redis: dict | None = None,
         **kwargs
     ):
         _ = kwargs
@@ -136,7 +136,8 @@ class Config:
         cls.admin = AdminConfig(**admin)
         cls.mail = MailConfig(**mail)
         cls.jwt = JWTConfig(**jwt)
-        cls.redis = RedisConfig(**redis)
         cls.static = StaticResource(**static)
+        if redis is not None:
+            cls.redis = RedisConfig(**redis)
         for folder in folders:
             cls.folders.append(Folder(**folder))
