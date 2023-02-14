@@ -62,4 +62,5 @@ async def test_append():
 
 
 if __name__ == '__main__':
-    asyncio.run(test_arg2())
+    # asyncio.run(test_arg2())
+    print(Test().a)
