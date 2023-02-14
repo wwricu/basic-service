@@ -1,5 +1,6 @@
 import asyncio
 import pickle
+from typing import cast, Coroutine
 
 from fastapi import APIRouter, Depends
 from redis.asyncio import Redis
@@ -53,7 +54,7 @@ async def get_sub_count(
     else:
         folders = await ResourceService.find_resources(Folder(url=url))
         asyncio.create_task(
-            redis.set(f'folder:url:{url}', pickle.dumps(folders))
+            cast(Coroutine, redis.set(f'folder:url:{url}', pickle.dumps(folders)))
         )
 
     assert len(folders) == 1
@@ -74,7 +75,7 @@ async def get_sub_count(
         )
         count_dict[key] = count
         asyncio.create_task(
-            redis.set('count_dict', pickle.dumps(count_dict))
+            cast(Coroutine, redis.set('count_dict', pickle.dumps(count_dict)))
         )
     return count
 
@@ -97,7 +98,7 @@ async def get_folder(
     else:
         folders = await ResourceService.find_resources(Folder(url=url))
         asyncio.create_task(
-            redis.set(f'folder:url:{url}', pickle.dumps(folders))
+            cast(Coroutine, redis.set(f'folder:url:{url}', pickle.dumps(folders)))
         )
 
     assert len(folders) == 1
@@ -118,7 +119,7 @@ async def get_folder(
         )
         preview_dict[key] = sub_resources
         asyncio.create_task(
-            redis.set('preview_dict', pickle.dumps(preview_dict))
+            cast(Coroutine, redis.set('preview_dict', pickle.dumps(preview_dict)))
         )
     return [ResourcePreview.init(x) for x in sub_resources]
 

@@ -40,6 +40,6 @@ class MailService:
     async def daily_mail(cls):
         await cls.send_mail(
             ['iswangwr@outlook.com'],
-            'A another day begins...',
-            'Thanks for your hard working.',
+            'Another day begins...',
+            '<p>Thanks for your hard working.</p>',
         )

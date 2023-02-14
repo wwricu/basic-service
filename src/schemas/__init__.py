@@ -5,23 +5,21 @@ from schemas.resource import (
     ContentOutput,
     FolderInput,
     FolderOutput,
-    ResourceBase,
     ResourcePreview
 )
 from schemas.tag import ContentTags, TagContents, TagSchema
 
 __all__ = [
-    "ContentInput",
-    "ContentOutput",
-    "ContentTags",
-    "FolderInput",
-    "FolderOutput",
-    "ResourceBase",
-    "ResourcePreview",
-    "ResourceQuery",
-    "TagContents",
-    "TagSchema",
-    "TokenResponse",
-    "UserInput",
-    "UserOutput",
+    'ContentInput',
+    'ContentOutput',
+    'ContentTags',
+    'FolderInput',
+    'FolderOutput',
+    'ResourcePreview',
+    'ResourceQuery',
+    'TagContents',
+    'TagSchema',
+    'TokenResponse',
+    'UserInput',
+    'UserOutput',
 ]

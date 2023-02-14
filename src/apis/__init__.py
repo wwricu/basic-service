@@ -16,3 +16,5 @@ router.include_router(file_router)
 router.include_router(folder_router)
 router.include_router(tag_router)
 router.include_router(user_router)
+
+__all__ = ['router']

@@ -31,7 +31,7 @@ class ResourceService:
         return await BaseDao.insert(resource)
 
     @staticmethod
-    async def find_resources(resource: Resource) -> Resource:
+    async def find_resources(resource: Resource) -> list[Resource]:
         return await BaseDao.select(resource, resource.__class__)
 
     @staticmethod

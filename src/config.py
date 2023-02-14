@@ -115,7 +115,7 @@ class Config:
             config_text = await Path(filename).read_text()
             config_json = json.loads(config_text)
             cls.load_json(**config_json)
-            logger.info(f'config file: {filename}')
+            logger.info(f'config read finished with {filename}')
         except FileNotFoundError:
             logger.info('config file NOT found')
 

@@ -1,5 +1,5 @@
 import asyncio
-from typing import Type
+from typing import Sequence, Type
 
 from sqlalchemy import select, Table
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,7 +10,7 @@ from dao.async_database import AsyncDatabase
 class BaseDao:
     @staticmethod
     @AsyncDatabase.database_session
-    async def insert(obj: Table, *, session: AsyncSession):
+    async def insert(obj: Table, *, session: AsyncSession) -> any:
         session.add(obj)
         await session.commit()
         return obj
@@ -49,7 +49,7 @@ class BaseDao:
         obj: any,
         class_name: Table | Type,
         *, session: AsyncSession
-    ):
+    ) -> any:
         obj_update = await session.get(class_name, obj.id)
         # obj_update = await session.scalar(
         #     select(class_name).filter_by(id=obj.id)

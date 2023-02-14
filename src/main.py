@@ -18,7 +18,7 @@ from service import MailService
 app = FastAPI()
 
 
-async def schedule_jobs():
+def schedule_jobs():
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
         MailService.daily_mail,
@@ -35,7 +35,7 @@ async def startup():
         AsyncDatabase.init_database(),
         AsyncRedis.init_redis()
     )
-    await schedule_jobs()
+    schedule_jobs()
 
     path = Path(Config.static.content_path)
     if not await Path.exists(path):

@@ -1,4 +1,5 @@
 import pickle
+from typing import Awaitable, cast
 
 from redis.asyncio import ConnectionPool, Redis, StrictRedis
 
@@ -15,8 +16,8 @@ class AsyncRedis:
                 **Config.redis.__dict__,
             )
         redis = await cls.get_connection()
-        await redis.set('preview_dict', pickle.dumps(dict()))
-        await redis.set('count_dict', pickle.dumps(dict()))
+        await cast(Awaitable, redis.set('preview_dict', pickle.dumps(dict())))
+        await cast(Awaitable, redis.set('count_dict', pickle.dumps(dict())))
         logger.info('redis connected')
 
     @classmethod
