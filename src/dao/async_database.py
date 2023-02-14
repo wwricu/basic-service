@@ -1,11 +1,11 @@
 import asyncio
 import functools
+import sqlite3
 from contextvars import ContextVar
-from typing import Callable
 
 from sqlalchemy import text
 from sqlalchemy.engine import URL
-from sqlalchemy.exc import IntegrityError, ProgrammingError
+from sqlalchemy.exc import IntegrityError, ProgrammingError, OperationalError
 from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
@@ -50,7 +50,7 @@ class AsyncDatabase:
             yield session
 
     @staticmethod
-    def database_session(method: Callable) -> Callable:
+    def database_session(method: callable) -> callable:
         @functools.wraps(method)
         def wrapper(*args, **kwargs):
             return method(*args, session=ctx_db.get(), **kwargs)
@@ -76,6 +76,10 @@ class AsyncDatabase:
                     text(f"CREATE DATABASE {Config.database.database}")
                 )
         except ProgrammingError:
+            # postgres database existed
+            pass
+        except OperationalError:
+            # sqlite dialect error
             pass
         finally:
             await engine.dispose()

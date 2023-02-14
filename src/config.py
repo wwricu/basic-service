@@ -44,10 +44,10 @@ class DatabaseConfig:
     def __init__(
         self,
         drivername: str,
-        username: str,
-        password: str,
-        host: str | None = '127.0.0.1',
-        port: int | None = 3306,
+        username: str | None = None,
+        password: str | None = None,
+        host: str | None = None,
+        port: int | None = None,
         database: str | None = None
     ):
         self.drivername = drivername

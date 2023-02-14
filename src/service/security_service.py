@@ -2,7 +2,6 @@ import hashlib
 import jwt
 import secrets
 from datetime import datetime, timedelta
-from typing import Callable
 
 from fastapi import Depends, Header, HTTPException, Response
 from fastapi.security import OAuth2PasswordBearer
@@ -55,8 +54,8 @@ async def login_required(
 
 
 class SecurityService:
-    optional_login_required: Callable = optional_login_required
-    login_required: Callable = login_required
+    optional_login_required: callable = optional_login_required
+    login_required: callable = login_required
 
     @staticmethod
     def generate_salt() -> str:

@@ -1,11 +1,7 @@
 {
   "database": {
-    "drivername": "postgresql+asyncpg",
-    "username": "postgres",
-    "password": "153226",
-    "host": "127.0.0.1",
-    "port": 5432,
-    "database": "fastdb"
+    "drivername": "sqlite+aiosqlite",
+    "database": "assets/fastdb.sqlite3"
   },
   "mail": {
     "host": "smtp.office365.com",
