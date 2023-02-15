@@ -8,6 +8,8 @@ from schemas.resource import (
     ResourcePreview
 )
 from schemas.tag import ContentTags, TagContents, TagSchema
+from schemas.third_party import WeatherSchema
+
 
 __all__ = [
     'ContentInput',
@@ -22,4 +24,5 @@ __all__ = [
     'TokenResponse',
     'UserInput',
     'UserOutput',
+    'WeatherSchema',
 ]

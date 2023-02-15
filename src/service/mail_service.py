@@ -1,7 +1,11 @@
+import asyncio
+import datetime
 from email.mime.text import MIMEText
 from smtplib import SMTP
 
 from config import Config, logger
+from schemas import WeatherSchema
+from service.http_service import HTTPService
 
 
 class MailService:
@@ -15,7 +19,7 @@ class MailService:
         if Config.mail is None:
             return
 
-        msg = MIMEText(message, 'plain', _charset='utf-8')
+        msg = MIMEText(message, 'html', _charset='utf-8')
         msg['subject'] = subject
 
         smtp = SMTP(
@@ -40,8 +44,26 @@ class MailService:
 
     @classmethod
     async def daily_mail(cls):
-        await cls.send_mail(
+        try:
+            weather = WeatherSchema.parse_obj(await HTTPService.get_weather())
+            message = f"""
+            <div
+            style="font-size: 24px;
+            font-family: Google Sans, Helvetica, sans-serif;"
+            >
+            <li>Weather in {weather.cityInfo.city}: {weather.data.forecast[0].type}</li>
+            <li>Air quality: {weather.data.quality}</li>
+            <li>
+            Temperature: {weather.data.forecast[0].low} ~ {weather.data.forecast[0].high}
+            </li>
+            <li>Humidity is {weather.data.shidu}</li>
+            </div>
+            """
+        except Exception as e:
+            logger.warn('failed to get weather')
+            message = e.__str__()
+        asyncio.create_task(MailService.send_mail(
             ['iswangwr@outlook.com'],
-            'Another day begins...',
-            '<p>Thanks for your hard working.</p>',
-        )
+            f'Today is {datetime.datetime.today().date()}',
+            message,
+        ))

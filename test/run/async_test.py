@@ -61,6 +61,16 @@ async def test_append():
     await asyncio.gather(*tasks)
 
 
+async def sleep(s: int, label: str | None = None):
+    await asyncio.sleep(s)
+    print('async end', label)
+
+
+async def main():
+    asyncio.create_task(sleep(5))
+    print('sync end')
+    await asyncio.sleep(10)
+
+
 if __name__ == '__main__':
-    # asyncio.run(test_arg2())
-    print(Test().a)
+    asyncio.run(main())
