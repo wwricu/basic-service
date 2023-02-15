@@ -22,7 +22,7 @@ def schedule_jobs():
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
         MailService.daily_mail,
-        CronTrigger(hour=8, timezone='Asia/Shanghai'),
+        CronTrigger(hour=9, timezone='Asia/Shanghai'),
     )
     scheduler.start()
     logger.info('schedule jobs started')

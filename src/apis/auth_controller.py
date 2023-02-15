@@ -1,5 +1,6 @@
 import asyncio
 import time
+from typing import cast, Coroutine
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.security import OAuth2PasswordRequestForm
@@ -46,15 +47,16 @@ async def login(
         )
     except (Exception,):
         # await here for possible dense requests.
-        await redis.set(
+        await cast(Coroutine, redis.set(
             f'login_failure:username:{form_data.username}',
             int(time.time())
-        )
+        ))
         raise HTTPException(status_code=401, detail='password mismatch')
 
-    asyncio.create_task(
+    asyncio.create_task(cast(
+        Coroutine,
         redis.delete(f'login_failure:username:{form_data.username}')
-    )
+    ))
     access_token = SecurityService.create_jwt_token(user_output)
     refresh_token = SecurityService.create_jwt_token(
         user_output, REFRESH_TIMEOUT_HOUR

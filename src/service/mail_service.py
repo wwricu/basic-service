@@ -57,6 +57,7 @@ class MailService:
             Temperature: {weather.data.forecast[0].low} ~ {weather.data.forecast[0].high}
             </li>
             <li>Humidity is {weather.data.shidu}</li>
+            <p>updated at {weather.cityInfo.updateTime}</p>
             </div>
             """
         except Exception as e:
