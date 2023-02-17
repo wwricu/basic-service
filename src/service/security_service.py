@@ -29,16 +29,12 @@ async def optional_login_required(
             algorithms=[Config.jwt.algorithm]
         )
     except jwt.ExpiredSignatureError:
-        try:
-            data = jwt.decode(
-                jwt=refresh_token,
-                key=Config.jwt.key,
-                algorithms=[Config.jwt.algorithm]
-            )
-            response.headers['X-token-need-refresh'] = 'true'
-        except jwt.ExpiredSignatureError:
-            logger.info('token expired')
-            return None
+        data = jwt.decode(
+            jwt=refresh_token,
+            key=Config.jwt.key,
+            algorithms=[Config.jwt.algorithm]
+        )
+        response.headers['X-token-need-refresh'] = 'true'
     except Exception as e:
         logger.warn(e)
         return None
@@ -100,7 +96,7 @@ class RoleRequired:
     ) -> UserOutput:
 
         for role in user_output.roles:
-            if role.name == 'admin' or self.required_role == role:
+            if role.name == 'admin' or self.required_role == role.name:
                 return user_output
 
         raise HTTPException(status_code=403, detail='no permission')

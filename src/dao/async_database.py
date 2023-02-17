@@ -4,12 +4,12 @@ from contextvars import ContextVar
 
 from sqlalchemy import text
 from sqlalchemy.engine import URL
-from sqlalchemy.exc import IntegrityError, ProgrammingError, OperationalError
+from sqlalchemy.exc import IntegrityError, OperationalError, ProgrammingError 
 from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
-    create_async_engine,
     AsyncEngine,
-    AsyncSession
+    AsyncSession,
+    create_async_engine
 )
 from sqlalchemy.orm import close_all_sessions
 
@@ -48,11 +48,15 @@ class AsyncDatabase:
             ctx_db.set(session)
             yield session
 
-    @staticmethod
-    def database_session(method: callable) -> callable:
+    @classmethod
+    def database_session(cls, method: callable) -> callable:
         @functools.wraps(method)
-        def wrapper(*args, **kwargs):
-            return method(*args, session=ctx_db.get(), **kwargs)
+        async def wrapper(*args, **kwargs):
+            session = ctx_db.get()
+            if session is not None:
+                return await method(*args, session=session, **kwargs)
+            async with cls.__session_maker() as session:
+                return await method(*args, session=session, **kwargs)
         return wrapper
 
     @classmethod

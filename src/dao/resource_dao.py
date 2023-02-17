@@ -1,4 +1,4 @@
-from typing import Type, Sequence
+from typing import Sequence, Type
 
 from sqlalchemy import func, select, Table
 from sqlalchemy.ext.asyncio import AsyncSession
