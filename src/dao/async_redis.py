@@ -36,14 +36,14 @@ class AsyncRedis:
 
 
 class FakeRedis:
-    async def get(self, key: str):
-        _, _ = self, key
+    async def get(self, key: str, *args, **kwargs):
+        _, _, _, _ = self, key, args, kwargs
         return None
 
-    async def set(self, key: str, value: str):
-        _, _, _ = self, key, value
+    async def set(self, key: str, value: str, *args, **kwargs):
+        _, _, _, _, _ = self, key, value, args, kwargs
         return None
 
-    async def delete(self, key: str):
-        _, _ = self, key
+    async def delete(self, key: str, args, kwargs):
+        _, _, _, _ = self, key, args, kwargs
         return None

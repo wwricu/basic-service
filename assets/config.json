@@ -19,8 +19,8 @@
   },
   "admin": {
     "username": "wwr",
-    "password_hash": "7b243cc5a5f3b79f591c390f17d03f914f785afa3a1eb0fb17b0988b75b4d84f",
-    "salt": "94f540b52845cbd80e064b02702fbc32c33484f7c72ad7a78f9e8725b2ecb2bc",
+    "salt": "6d07ce77b6a770a861d824343efbc594ff70df0fd5f2d954aab60666ec4b9113",
+    "password_hash": "07f09dcbba0225574697b714101252a377cc35eb3b9889f2e0b615539c3d4533",
     "email": "iswangwr@gmail.com",
     "role": {
       "name": "admin"

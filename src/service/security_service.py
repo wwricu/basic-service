@@ -59,17 +59,13 @@ async def login_throttle(
     redis: Redis = Depends(AsyncRedis.get_connection)
 ):
     res = await asyncio.gather(
-        redis.get(
-            f'login_failure:ip:{request.client.host}'
-        ),
-        redis.get(
-            f'login_failure:username:{form_data.username}'
-        )
+        redis.get(f'login_failure:ip:{request.client.host}'),
+        redis.get(f'login_failure:username:{form_data.username}')
     )
     # NOTICE: everything except 0, False, None make any() True
     if any(res):
         logger.info(
-            f"""failed login for {form_data.username},
+            f"""failed to login for {form_data.username},
             from {request.client.host}""",
         )
         raise HTTPException(
@@ -81,7 +77,7 @@ async def login_throttle(
     try:
         yield  # login here
     except Exception as e:
-        logger.info(f'failed to login {e}')
+        logger.info(f'failed to login', e)
         await asyncio.gather(
             cast(Coroutine, redis.set(
                 f'login_failure:ip:{request.client.host}',
@@ -92,7 +88,7 @@ async def login_throttle(
                 'True', ex=30
             ))
         )
-        raise HTTPException(status_code=401, detail='failed login')
+        raise HTTPException(status_code=401, detail='failed to login')
 
 
 class SecurityService:

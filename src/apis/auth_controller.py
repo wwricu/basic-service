@@ -1,10 +1,7 @@
-from typing import cast, Coroutine
-
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, Response
 from fastapi.security import OAuth2PasswordRequestForm
-from redis.asyncio import Redis
 
-from dao import AsyncDatabase, AsyncRedis
+from dao import AsyncDatabase
 from service import SecurityService, UserService
 from schemas import TokenResponse, UserInput, UserOutput
 
