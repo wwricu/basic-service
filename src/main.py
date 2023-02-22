@@ -4,7 +4,6 @@ import uvicorn
 from anyio import Path
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -22,7 +21,7 @@ def schedule_jobs():
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
         MailService.daily_mail,
-        CronTrigger(hour=9, timezone='Asia/Shanghai'),
+        CronTrigger(hour=8, timezone='Asia/Shanghai'),
     )
     scheduler.start()
     logger.info('schedule jobs started')

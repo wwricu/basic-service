@@ -1,12 +1,16 @@
+import asyncio
 import hashlib
 import jwt
 import secrets
 from datetime import datetime, timedelta
+from typing import cast, Coroutine
 
-from fastapi import Depends, Header, HTTPException, Response
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, Header, HTTPException, Request, Response
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from redis.asyncio import Redis
 
 from config import Config, logger
+from dao import AsyncRedis
 from schemas import UserOutput
 
 
@@ -49,9 +53,52 @@ async def login_required(
     return result
 
 
+async def login_throttle(
+    request: Request,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    redis: Redis = Depends(AsyncRedis.get_connection)
+):
+    res = await asyncio.gather(
+        redis.get(
+            f'login_failure:ip:{request.client.host}'
+        ),
+        redis.get(
+            f'login_failure:username:{form_data.username}'
+        )
+    )
+    # NOTICE: everything except 0, False, None make any() True
+    if any(res):
+        logger.info(
+            f"""failed login for {form_data.username},
+            from {request.client.host}""",
+        )
+        raise HTTPException(
+            status_code=403,
+            detail=f"""too frequent attempt,
+            username: {form_data.username}
+            address: {request.client.host}"""
+        )
+    try:
+        yield  # login here
+    except Exception as e:
+        logger.info(f'failed to login {e}')
+        await asyncio.gather(
+            cast(Coroutine, redis.set(
+                f'login_failure:ip:{request.client.host}',
+                'True', ex=30
+            )),
+            cast(Coroutine, redis.set(
+                f'login_failure:username:{form_data.username}',
+                'True', ex=30
+            ))
+        )
+        raise HTTPException(status_code=401, detail='failed login')
+
+
 class SecurityService:
     optional_login_required: callable = optional_login_required
     login_required: callable = login_required
+    login_throttle: callable = login_throttle
 
     @staticmethod
     def generate_salt() -> str:

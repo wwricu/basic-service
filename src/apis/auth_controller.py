@@ -1,5 +1,3 @@
-import asyncio
-import time
 from typing import cast, Coroutine
 
 from fastapi import APIRouter, Depends, HTTPException, Response
@@ -24,39 +22,16 @@ async def get_current_user(
 
 @auth_router.post(
     '', response_model=TokenResponse,
-    dependencies=[Depends(AsyncDatabase.open_session)]
+    dependencies=[
+        Depends(AsyncDatabase.open_session),
+        Depends(SecurityService.login_throttle),
+    ]
 )
-async def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    redis: Redis = Depends(AsyncRedis.get_connection)
-):
-    last_fail_time: bytes = await redis.get(
-        f'login_failure:username:{form_data.username}'
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user_output = await UserService.user_login(
+        UserInput(username=form_data.username, password=form_data.password)
     )
-    if (
-        last_fail_time is not None and
-        int(time.time()) - int(last_fail_time.decode()) < 30
-    ):
-        raise HTTPException(
-            status_code=403,
-            detail=f'too frequent attempt for {form_data.username}'
-        )
-    try:
-        user_output = await UserService.user_login(
-            UserInput(username=form_data.username, password=form_data.password)
-        )
-    except (Exception,):
-        # await here for possible dense requests.
-        await cast(Coroutine, redis.set(
-            f'login_failure:username:{form_data.username}',
-            int(time.time())
-        ))
-        raise HTTPException(status_code=401, detail='password mismatch')
 
-    asyncio.create_task(cast(
-        Coroutine,
-        redis.delete(f'login_failure:username:{form_data.username}')
-    ))
     access_token = SecurityService.create_jwt_token(user_output)
     refresh_token = SecurityService.create_jwt_token(
         user_output, REFRESH_TIMEOUT_HOUR

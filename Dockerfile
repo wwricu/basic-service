@@ -11,7 +11,8 @@ RUN pip3 install --disable-pip-version-check \
 
 CMD ["uvicorn", "main:app", \
      "--app-dir", "./src", \
-     "--proxy-headers", \
      "--host", "0.0.0.0", \
      "--port", "8000", \
+     "--proxy-headers", \
+     "--forwarded-allow-ips", "*",\
      "--root-path", "/api"]
