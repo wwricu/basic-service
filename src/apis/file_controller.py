@@ -1,11 +1,10 @@
 import asyncio
 import hashlib
-import os
 
 from anyio import Path
 from fastapi import APIRouter, Depends,  HTTPException, Request, UploadFile
 
-from config import Config
+from config import Config, logger
 from service import RoleRequired
 
 
@@ -25,16 +24,17 @@ async def upload(files: list[UploadFile], request: Request):
         await Path.mkdir(content_path)
 
     async def save_file(file: UploadFile):
-        suffix = os.path.splitext(file.filename)[-1]
+        suffix = Path(file.filename).suffix
         filename = hashlib.md5(
             file.filename.encode(encoding='utf-8')
         ).hexdigest()
-        path = f'{content_path}/{filename}{suffix}'
-        await Path(path).write_bytes(await file.read())
-        if os.path.exists(path):
+        # Path.__fspath__()/__str__() aka original Path._path
+        path = Path(f'{content_path.__fspath__()}/{filename}{suffix}')
+        await path.write_bytes(await file.read())
+        if await Path.exists(path):
             success_files.append({
                 'name': file.filename,
-                'path': path
+                'path': path.__fspath__()
             })
 
     async_tasks = []

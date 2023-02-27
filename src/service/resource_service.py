@@ -1,4 +1,5 @@
 import asyncio
+import os
 import uuid
 from datetime import datetime
 from typing import Type, Sequence
@@ -104,12 +105,20 @@ class ResourceService:
 
     @staticmethod
     async def trim_files(content_id: int, attach_files: set[str]):
-        folder = Path(f'{Config.static.content_path}/{content_id}')
-        if not await Path.exists(folder):
+        path = Path(f'{Config.static.content_path}/{content_id}')
+        if not await Path.exists(path):
             return
-        async for file in folder.iterdir():
-            if attach_files is None or file.name not in attach_files:
-                asyncio.create_task(file.unlink(missing_ok=True))
+
+        async def handle_files(folder: Path):
+            tasks = []
+            async for file in folder.iterdir():
+                if attach_files is None or file.name not in attach_files:
+                    tasks.append(file.unlink(missing_ok=True))
+            await asyncio.gather(*tasks)
+            if len(os.listdir(folder.__fspath__())) == 0:
+                await folder.rmdir()
+
+        asyncio.create_task(handle_files(path))
 
     @staticmethod
     def check_permission(

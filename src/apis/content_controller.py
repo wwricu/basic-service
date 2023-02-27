@@ -2,11 +2,9 @@ import asyncio
 import pickle
 from typing import cast, Coroutine
 
-from anyio import Path
 from fastapi import APIRouter, Depends
 from redis.asyncio import Redis
 
-from config import Config
 from dao import AsyncDatabase, AsyncRedis
 from models import Content, Resource
 from schemas import ContentInput, ContentOutput, UserOutput
@@ -39,9 +37,6 @@ async def add_content(
     )):
         asyncio.create_task(task)
 
-    content_folder = Path(f'{Config.static.content_path}/{content.id}')
-    if not await Path.exists(content_folder):
-        asyncio.create_task(Path.mkdir(content_folder))
     return content.id
 
 
@@ -96,11 +91,11 @@ async def delete_content(
     content_id: int,
     redis: Redis = Depends(AsyncRedis.get_connection)
 ):
-    for task in [
+    for task in (
         ResourceService.trim_files(content_id, set()),
         redis.delete(f'content:id:{content_id}'),
         redis.set('count_dict', pickle.dumps(dict())),
         redis.set('preview_dict', pickle.dumps(dict()))
-    ]:
+    ):
         asyncio.create_task(task)
     return await ResourceService.remove_resource(Resource(id=content_id))
