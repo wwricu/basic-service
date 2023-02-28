@@ -98,6 +98,7 @@ class AsyncDatabase:
 
     @classmethod
     async def insert_admin(cls):
+        # wwr:test_password for dev
         session: AsyncSession = cls.__session_maker()
         try:
             admin_role = SysRole(**Config.admin.role)

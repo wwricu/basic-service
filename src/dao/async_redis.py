@@ -1,4 +1,5 @@
 import pickle
+from threading import Lock
 from typing import Awaitable, cast
 
 from redis.asyncio import ConnectionPool, Redis, StrictRedis
@@ -36,14 +37,27 @@ class AsyncRedis:
 
 
 class FakeRedis:
+    __data: dict[str, bytes | None] = None
+    __lock: Lock = None
+
+    def __init__(self):
+        self.__data = dict()
+        self.__lock = Lock()
+
     async def get(self, key: str, *args, **kwargs):
-        _, _, _, _ = self, key, args, kwargs
-        return None
+        _, _ = args, kwargs
+        return self.__data.get(key)
 
     async def set(self, key: str, value: str, *args, **kwargs):
-        _, _, _, _, _ = self, key, value, args, kwargs
+        _, _ = args, kwargs
+        self.__lock.locked()
+        self.__data[key] = value.encode()
+        self.__lock.release()
         return None
 
     async def delete(self, key: str, args, kwargs):
-        _, _, _, _ = self, key, args, kwargs
+        _, _ = args, kwargs
+        self.__lock.locked()
+        self.__data[key] = None
+        self.__lock.release()
         return None

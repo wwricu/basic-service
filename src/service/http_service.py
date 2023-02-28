@@ -15,3 +15,12 @@ class HTTPService:
                 if response.status != 200:
                     return None
                 return await response.json()
+
+    @staticmethod
+    async def get_image(url: str) -> bytes:
+        async with aiohttp.ClientSession() as client:
+            async with client.get(url) as response:
+                print('code!', response.status)
+                if response.status != 200:
+                    raise FileNotFoundError
+                return await response.read()
