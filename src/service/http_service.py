@@ -1,8 +1,9 @@
-# coding=utf-8
 import re
+from typing import cast, Coroutine
 
 import aiohttp
-from config import logger
+
+from dao import AsyncRedis
 
 
 class HTTPService:
@@ -34,16 +35,19 @@ class HTTPService:
 
     @classmethod
     async def parse_bing_image_url(cls) -> str:
+        redis = await AsyncRedis.get_connection()
         async with aiohttp.ClientSession() as client:
             async with client.get(cls.BING_URL) as response:
                 if response.status != 200:
                     raise FileNotFoundError
-                return '{bing_url}{image_path}'.format(
-                    bing_url=cls.BING_URL,
-                    image_path=re.search(
-                        cls.BING_IMAGE_PATTERN,
-                        (await response.read()).decode(
-                            encoding=response.get_encoding()
-                        )
-                    ).group()
-                )
+                image_url = re.search(
+                    cls.BING_IMAGE_PATTERN,
+                    (await response.read()).decode(
+                        encoding=response.get_encoding()
+                    )
+                ).group()
+                if image_url is None:
+                    return 'failed to get bing image url'
+                url = f'{cls.BING_URL}{image_url.__str__()}'
+                await cast(Coroutine, redis.set('bing_image_url', url))
+                return url

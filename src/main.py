@@ -1,4 +1,6 @@
 import asyncio
+import io
+import sys
 
 import uvicorn
 from anyio import Path
@@ -11,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from apis import router
 from config import Config, logger
 from dao import AsyncDatabase, AsyncRedis
-from service import MailService
+from service import HTTPService, MailService
 
 
 app = FastAPI()
@@ -23,12 +25,19 @@ def schedule_jobs():
         MailService.daily_mail,
         CronTrigger(hour=8, timezone='Asia/Shanghai'),
     )
+    scheduler.add_job(
+        HTTPService.parse_bing_image_url,
+        CronTrigger(hour=9, timezone='Asia/Shanghai'),
+    )
     scheduler.start()
     logger.info('schedule jobs started')
 
 
 @app.on_event('startup')
 async def startup():
+    # print() cannot print every unicode character, change to uft-8 under windows
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
+
     await Config.init_config()
     await asyncio.gather(
         AsyncDatabase.init_database(),

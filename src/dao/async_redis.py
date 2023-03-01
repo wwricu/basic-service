@@ -1,3 +1,4 @@
+from __future__ import annotations
 import pickle
 from threading import Lock
 from typing import Awaitable, cast
@@ -28,7 +29,7 @@ class AsyncRedis:
     @classmethod
     async def get_connection(cls) -> Redis:
         if Config.redis is None:
-            return cast(Redis, FakeRedis())
+            return cast(Redis, FakeRedis.get_instance())
         return StrictRedis(connection_pool=cls.__pool)
 
     @classmethod
@@ -38,13 +39,21 @@ class AsyncRedis:
 
 class FakeRedis:
     __data: dict[str, bytes | None] = None
-    __lock: Lock = None
+    __lock: Lock = Lock()
+    __instance: FakeRedis = None
 
-    def __init__(self):
-        self.__data = dict()
-        self.__lock = Lock()
-        self.__data.setdefault('count_dict', pickle.dumps(dict()))
-        self.__data.setdefault('preview_dict', pickle.dumps(dict()))
+    @classmethod
+    def get_instance(cls):
+        cls.__lock.acquire()
+        if cls.__instance is None:
+            instance = cls()
+            instance.__lock = Lock()
+            instance.__data = dict()
+            instance.__data.setdefault('count_dict', pickle.dumps(dict()))
+            instance.__data.setdefault('preview_dict', pickle.dumps(dict()))
+            cls.__instance = instance
+        cls.__lock.release()
+        return cls.__instance
 
     async def get(self, key: str, *args, **kwargs):
         _, _ = args, kwargs

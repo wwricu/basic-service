@@ -25,8 +25,7 @@ __all__ = ['router']
 
 @router.get('/bing', response_model=str)
 async def get_bing_image(redis: Redis = Depends(AsyncRedis.get_connection)):
-    # url = await redis.get('bing_image_url')
-    # if url is None:
-    url = await HTTPService.parse_bing_image_url()
-        # await redis.set('bing_image_url', url)
-    return url
+    url: bytes = await redis.get('bing_image_url')
+    if url is None:
+        return await HTTPService.parse_bing_image_url()
+    return url.decode()
