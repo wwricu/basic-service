@@ -44,7 +44,7 @@ async def upload(request: Request, url: str = Body(embed=True)):
         content_path,
         url.split('/')[-1]
     )
-    res.update({'url': url})
+    res.setdefault('url', url)
     return res
 
 

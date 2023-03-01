@@ -43,6 +43,8 @@ class FakeRedis:
     def __init__(self):
         self.__data = dict()
         self.__lock = Lock()
+        self.__data.setdefault('count_dict', pickle.dumps(dict()))
+        self.__data.setdefault('preview_dict', pickle.dumps(dict()))
 
     async def get(self, key: str, *args, **kwargs):
         _, _ = args, kwargs
@@ -50,14 +52,12 @@ class FakeRedis:
 
     async def set(self, key: str, value: str, *args, **kwargs):
         _, _ = args, kwargs
-        self.__lock.locked()
+        self.__lock.acquire()
         self.__data[key] = value.encode()
         self.__lock.release()
-        return None
 
     async def delete(self, key: str, args, kwargs):
         _, _ = args, kwargs
-        self.__lock.locked()
+        self.__lock.acquire()
         self.__data[key] = None
         self.__lock.release()
-        return None
