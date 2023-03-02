@@ -9,9 +9,9 @@ from schemas import UserInput
 def test_add_user() -> int:
     user_input = UserInput(
         username='test user',
-        password='test password',
         email='test@email.test',
     )
+    user_input.password = 'test password'
     response = client.post('user',
                            json=user_input.dict(),
                            headers=AuthToken.headers)

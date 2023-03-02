@@ -107,13 +107,10 @@ class AsyncDatabase:
             password: bytes = hashlib.sha256(
                 Config.admin.password.encode()
             ).hexdigest().encode()
-            salt: bytes = bcrypt.gensalt()
-            password_hash: bytes = bcrypt.hashpw(password, salt)
 
             admin = SysUser(
                 username=Config.admin.username,
-                password_hash=password_hash.decode(),
-                salt=salt.decode(),
+                password_hash=bcrypt.hashpw(password, bcrypt.gensalt()),
                 email=Config.admin.email
             )
 

@@ -18,7 +18,7 @@ class RoleSchema(BaseModel):
 class UserInput(BaseModel):
     id: int = None
     username: str = None
-    password: str = None
+    password: bytes = None
     email: str = None
 
 

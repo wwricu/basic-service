@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, LargeBinary
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -10,8 +10,7 @@ class SysUser(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(20), unique=True, comment="username")
     email = Column(String(128), unique=True, comment="email")
-    password_hash = Column(String(128), comment="password hash")
-    salt = Column(String(128), comment="salt")
+    password_hash = Column(LargeBinary(length=1024), comment="password hash")
 
     resources = relationship("Resource", back_populates="owner")
     roles = relationship(
