@@ -1,10 +1,9 @@
 import asyncio
-import hashlib
 import jwt
-import secrets
 from datetime import datetime, timedelta
 from typing import cast, Coroutine
 
+import bcrypt
 from fastapi import Depends, Header, HTTPException, Request, Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from redis.asyncio import Redis
@@ -77,7 +76,7 @@ async def login_throttle(
     try:
         yield  # login here
     except Exception as e:
-        logger.info(f'failed to login', e)
+        logger.info('failed to login', e)
         await asyncio.gather(
             cast(Coroutine, redis.set(
                 f'login_failure:ip:{request.client.host}',
@@ -98,16 +97,13 @@ class SecurityService:
 
     @staticmethod
     def generate_salt() -> str:
-        return secrets.token_hex()
+        return bcrypt.gensalt().decode()
 
     @staticmethod
     def get_password_hash(plain_password: str, salt: str) -> str:
-        after_salt = hashlib.sha256(
-            plain_password.encode(encoding='utf-8')
-        ).hexdigest() + salt
-        return hashlib.sha256(
-            after_salt.encode(encoding='utf-8')
-        ).hexdigest()
+        return bcrypt.hashpw(
+            plain_password.encode(), salt.encode()
+        ).decode()
 
     @classmethod
     def verify_password(
@@ -116,7 +112,8 @@ class SecurityService:
         salt: str,
         password_hash: str
     ) -> bool:
-        return password_hash == cls.get_password_hash(plain_password, salt)
+        _ = salt
+        return bcrypt.checkpw(plain_password.encode(), password_hash.encode())
 
     @staticmethod
     def create_jwt_token(

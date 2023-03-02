@@ -1,7 +1,9 @@
 import asyncio
 import functools
+import hashlib
 from contextvars import ContextVar
 
+import bcrypt
 from sqlalchemy import text
 from sqlalchemy.engine import URL
 from sqlalchemy.exc import IntegrityError, OperationalError, ProgrammingError 
@@ -102,10 +104,16 @@ class AsyncDatabase:
         session: AsyncSession = cls.__session_maker()
         try:
             admin_role = SysRole(**Config.admin.role)
+            password: bytes = hashlib.sha256(
+                Config.admin.password.encode()
+            ).hexdigest().encode()
+            salt: bytes = bcrypt.gensalt()
+            password_hash: bytes = bcrypt.hashpw(password, salt)
+
             admin = SysUser(
                 username=Config.admin.username,
-                password_hash=Config.admin.password_hash,
-                salt=Config.admin.salt,
+                password_hash=password_hash.decode(),
+                salt=salt.decode(),
                 email=Config.admin.email
             )
 

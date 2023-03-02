@@ -16,9 +16,9 @@ class AsyncRedis:
     async def init_redis(cls):
         try:
             cls.__pool = ConnectionPool(**Config.redis.__dict__)
-        except Exception as e:
+        except (Exception,):
             Config.redis = None  # switch to memory storage
-            logger.warn('failed to connect to redis', e)
+            logger.warn('failed to connect to redis')
 
         redis = await cls.get_connection()
         await cast(Awaitable, redis.set('preview_dict', pickle.dumps(dict())))
@@ -47,7 +47,6 @@ class FakeRedis:
         cls.__lock.acquire()
         if cls.__instance is None:
             cls.__instance = cls()
-            return cls.__instance
         cls.__lock.release()
         return cls.__instance
 
@@ -64,19 +63,17 @@ class FakeRedis:
         **kwargs
     ):
         _, _ = args, kwargs
-        self.__lock.acquire()
         if isinstance(value, str):
             value = value.encode()
-        self.__data[key] = value
-        self.__lock.release()
+        with self.__lock:
+            self.__data[key] = value
         if ex > 0:
             asyncio.create_task(self.delete_timer(key, ex))
 
     async def delete(self, key: str, *args, **kwargs):
         _, _ = args, kwargs
-        self.__lock.acquire()
-        self.__data[key] = None
-        self.__lock.release()
+        with self.__lock:
+            self.__data[key] = None
 
     async def delete_timer(self, key: str, seconds: int):
         await asyncio.sleep(seconds)

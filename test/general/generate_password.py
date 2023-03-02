@@ -4,9 +4,9 @@ from service import SecurityService
 
 
 def generate_password(raw_password: str):
-    password = hashlib.sha256(raw_password.encode()).hexdigest()
-    salt = SecurityService.generate_salt()
-    password_hash = SecurityService.get_password_hash(password, salt)
+    password: str = hashlib.sha256(raw_password.encode()).hexdigest()
+    salt: str = SecurityService.generate_salt()
+    password_hash: str = SecurityService.get_password_hash(password, salt)
     print(f"""raw password: {password},
     salt: {salt},\n password_hash: {password_hash}""")
     assert SecurityService.verify_password(
