@@ -59,13 +59,15 @@ class FakeRedis:
         _, _ = args, kwargs
         return self.__data.get(key)
 
-    async def set(self, key: str, value: str, *args, **kwargs):
+    async def set(self, key: str, value: str | bytes, *args, **kwargs):
         _, _ = args, kwargs
         self.__lock.acquire()
-        self.__data[key] = value.encode()
+        if isinstance(value, str):
+            value = value.encode()
+        self.__data[key] = value
         self.__lock.release()
 
-    async def delete(self, key: str, args, kwargs):
+    async def delete(self, key: str, *args, **kwargs):
         _, _ = args, kwargs
         self.__lock.acquire()
         self.__data[key] = None

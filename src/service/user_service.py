@@ -26,7 +26,8 @@ class UserService:
         sys_user = SysUser(
             id=user_input.id,
             username=user_input.username,
-            email=user_input.email
+            email=user_input.email,
+            roles=[]
         )
 
         sys_user.salt = SecurityService.generate_salt()
@@ -44,22 +45,17 @@ class UserService:
         ))
 
     @staticmethod
-    async def modify_user(user_input: UserInput) -> UserOutput:
+    async def modify_user(user_input: SysUser) -> UserOutput:
         sys_user = (await BaseDao.select(
             SysUser(id=user_input.id), SysUser
         ))[0]
 
-        if user_input.username is not None:
-            sys_user.username = user_input.username
-        if user_input.email is not None:
-            sys_user.email = user_input.email
-        if user_input.password is not None:
+        if user_input.password_hash is not None:
             sys_user.password_hash = SecurityService.get_password_hash(
-                user_input.password, sys_user.salt
+                user_input.password_hash, sys_user.salt
             )
 
-        asyncio.create_task(BaseDao.update(sys_user, SysUser))
-        return UserOutput.init(sys_user)
+        return UserOutput.init(await BaseDao.update(user_input, SysUser))
 
     @staticmethod
     async def remove_user(user_input: UserInput) -> int:
