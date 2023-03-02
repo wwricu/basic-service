@@ -1,4 +1,7 @@
 aiosqlite~=0.18.0
 alembic~=1.9.4
 httpx~=0.23.3
+<<<<<<< HEAD
 psycopg2~=2.9.5
+=======
+>>>>>>> e9bbffa (add dev requirements, change alembic conn url)

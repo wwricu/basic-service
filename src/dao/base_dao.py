@@ -1,7 +1,7 @@
 import asyncio
 from typing import Type
 
-from sqlalchemy import select, Table
+from sqlalchemy import select, Select, Table
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .async_database import AsyncDatabase
@@ -28,7 +28,7 @@ class BaseDao:
         class_name: Table | Type,
         *, session: AsyncSession
     ):
-        stmt = select(class_name)
+        stmt: Select = select(class_name)
 
         for key in class_name.__mapper__.c.keys():
             attr = getattr(obj, key, None)
@@ -50,10 +50,9 @@ class BaseDao:
         class_name: Table | Type,
         *, session: AsyncSession
     ) -> any:
-        obj_update = await session.get(class_name, obj.id)
-        # obj_update = await session.scalar(
-        #     select(class_name).filter_by(id=obj.id)
-        # )
+        obj_update: Table | None = await session.get(class_name, obj.id)
+        if obj_update is None:
+            return
 
         for key in obj.__mapper__.c.keys():  # iter all column keys
             attr = getattr(obj, key, None)
@@ -88,7 +87,7 @@ class BaseDao:
         count, async_tasks = 0, []
         for obj in objs:
             async_tasks.append(BaseDao.select(obj, class_name))
-        res_group = await asyncio.gather(*async_tasks)
+        res_group: tuple = await asyncio.gather(*async_tasks)
         '''
         NOTICE:
         asyncio.gather will ONLY add the exact ASYNC functions

@@ -40,7 +40,7 @@ class HTTPService:
             async with client.get(cls.BING_URL) as response:
                 if response.status != 200:
                     raise FileNotFoundError
-                image_url = re.search(
+                image_url: str | None = re.search(
                     cls.BING_IMAGE_PATTERN,
                     (await response.read()).decode(
                         encoding=response.get_encoding()
