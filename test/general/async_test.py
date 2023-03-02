@@ -1,75 +1,53 @@
 import asyncio
+import time
 
 
-async def func1():
-    print('func1 bef')
-    await asyncio.sleep(3)
-    print('func1 aft')
-
-
-async def func2():
-    print('func2 bef')
-    await asyncio.sleep(3)
-    print('func2 aft')
-
-
-async def func3() -> int:
-    print('func3 bef')
-    await asyncio.sleep(3)
-    print('func3 aft')
-    return 1
-
-
-async def func4(i: int):
-    print('func4 bef')
-    await asyncio.sleep(3)
-    print('func4 aft', i)
+async def sleep(t: int, sign: str | None = ''):
+    print(f'before sleep {sign}')
+    await asyncio.sleep(t)
+    print(f'after sleep {sign}')
+    return t
 
 
 async def test():
+    # time: 4s
     tasks = []
     for i in range(5):
-        tasks.append(func1())
+        tasks.append(sleep(2, '1'))
     await asyncio.gather(*tasks)
     tasks.clear()
     for i in range(5):
-        tasks.append(func2())
+        tasks.append(sleep(2, '2'))
     await asyncio.gather(*tasks)
 
 
-async def test_arg():
-    tasks = []
+async def test_await_in_arg():
+    tasks = []  # 12s
     for i in range(5):
-        tasks.append(func4(await func3()))
+        tasks.append(sleep(await sleep(2)))
     await asyncio.gather(*tasks)
 
 
-async def test_arg2():
-    async def arg():
-        await func4(await func3())
+async def test_await_in_arg2():
+    async def await_in_arg():
+        await sleep(await sleep(2))
 
-    tasks = []
+    tasks = []  # 2s
     for i in range(5):
-        tasks.append(arg())
+        tasks.append(await_in_arg())
     await asyncio.gather(*tasks)
 
 
-async def test_append():
-    tasks, data = [], []
-    for i in range(5):
-        tasks.append(data.append(await func3()))
-    await asyncio.gather(*tasks)
-
-
-async def sleep(s: int, label: str | None = None):
-    await asyncio.sleep(s)
-    print('async end', label)
+async def run_with_sync():
+    asyncio.create_task(sleep(15))
+    print('sync end')
 
 
 async def main():
-    asyncio.create_task(sleep(5))
-    print('sync end')
-    await asyncio.sleep(10)
+    begin = time.time()
+    await run_with_sync()
+    print(f'time is {int(time.time() - begin)}')
+    await asyncio.sleep(20)
 
 
 if __name__ == '__main__':

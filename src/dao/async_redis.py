@@ -1,4 +1,5 @@
 from __future__ import annotations
+import asyncio
 import pickle
 from threading import Lock
 from typing import Awaitable, cast
@@ -13,12 +14,10 @@ class AsyncRedis:
 
     @classmethod
     async def init_redis(cls):
-        if Config.redis is None or cls.__pool is not None:
-            return
         try:
             cls.__pool = ConnectionPool(**Config.redis.__dict__)
         except Exception as e:
-            Config.redis = None
+            Config.redis = None  # switch to memory storage
             logger.warn('failed to connect to redis', e)
 
         redis = await cls.get_connection()
@@ -34,11 +33,12 @@ class AsyncRedis:
 
     @classmethod
     async def close(cls):
-        await cls.__pool.disconnect()
+        if cls.__pool is not None:
+            await cls.__pool.disconnect()
 
 
 class FakeRedis:
-    __data: dict[str, bytes | None] = None
+    __data: dict[str, bytes | None] = dict()
     __lock: Lock = Lock()
     __instance: FakeRedis = None
 
@@ -46,12 +46,8 @@ class FakeRedis:
     def get_instance(cls):
         cls.__lock.acquire()
         if cls.__instance is None:
-            instance = cls()
-            instance.__lock = Lock()
-            instance.__data = dict()
-            instance.__data.setdefault('count_dict', pickle.dumps(dict()))
-            instance.__data.setdefault('preview_dict', pickle.dumps(dict()))
-            cls.__instance = instance
+            cls.__instance = cls()
+            return cls.__instance
         cls.__lock.release()
         return cls.__instance
 
@@ -59,16 +55,29 @@ class FakeRedis:
         _, _ = args, kwargs
         return self.__data.get(key)
 
-    async def set(self, key: str, value: str | bytes, *args, **kwargs):
+    async def set(
+        self,
+        key: str,
+        value: str | bytes,
+        *args,
+        ex: int | None = 0,
+        **kwargs
+    ):
         _, _ = args, kwargs
         self.__lock.acquire()
         if isinstance(value, str):
             value = value.encode()
         self.__data[key] = value
         self.__lock.release()
+        if ex > 0:
+            asyncio.create_task(self.delete_timer(key, ex))
 
     async def delete(self, key: str, *args, **kwargs):
         _, _ = args, kwargs
         self.__lock.acquire()
         self.__data[key] = None
         self.__lock.release()
+
+    async def delete_timer(self, key: str, seconds: int):
+        await asyncio.sleep(seconds)
+        await self.delete(key)
