@@ -1,5 +1,3 @@
-import asyncio
-
 from dao import BaseDao
 from models import SysUser
 from schemas import UserInput, UserOutput

@@ -1,3 +1,5 @@
+from typing import cast, Coroutine
+
 from fastapi import APIRouter, Depends
 from redis.asyncio import Redis
 

@@ -27,7 +27,7 @@ def schedule_jobs():
     )
     scheduler.add_job(
         HTTPService.parse_bing_image_url,
-        CronTrigger(hour=9, timezone='Asia/Shanghai'),
+        CronTrigger(hour=1, timezone='US/Pacific'),
     )
     scheduler.start()
     logger.info('schedule jobs started')

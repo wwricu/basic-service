@@ -1,8 +1,8 @@
-from test import client
-from test.apis import AuthToken
-from test.apis.auth_controller import test_auth
+from test_client import client
+from apis_test import AuthToken
+from apis_test.auth_controller import test_auth
 
-from src.schemas import FolderInput
+from schemas import FolderInput
 
 
 def test_get_folder(url: str):
