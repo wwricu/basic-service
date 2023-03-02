@@ -1,9 +1,9 @@
-from test import client
-from test.apis import AuthToken
-from test.apis.auth_controller import test_auth
-from test.apis.content_controller import test_add_content
+from test_client import client
+from apis_test import AuthToken
+from apis_test.auth_controller import test_auth
+from apis_test.content_controller import test_add_content
 
-from src.schemas import TagSchema
+from schemas import TagSchema
 
 
 def test_add_tag(tag_name: str):

@@ -1,4 +1,6 @@
-from test import client
+import hashlib
+
+from test_client import client, test_method
 
 
 class AuthToken:
@@ -11,8 +13,17 @@ def test_fake_auth():
     AuthToken.headers = {}
 
 
+@test_method
 def test_auth():
-    payload = {'username': 'wwr', 'password': 'test password'}
+    password = hashlib.sha256('test_password'.encode()).hexdigest()
+    payload = {
+        'username': 'wwr',
+        'password': password
+    }
+    print(
+        'auth test controller',
+        f'plain password: {password}'
+    )
     response = client.post('/auth', data=payload)
     print(response.json())
     AuthToken.access_token = response.json()['access_token']
@@ -20,9 +31,11 @@ def test_auth():
     AuthToken.headers = {'Authorization': f'Bearer {AuthToken.access_token}',
                          'refresh-token': AuthToken.refresh_token}
     assert response.status_code == 200
+    print(response.json())
     return response.json()
 
 
+@test_method
 def test_get_user():
     response = client.get('/auth', headers=AuthToken.headers)
     print(response.json())

@@ -1,5 +1,5 @@
 import traceback
-from contextvars import ContextVar, copy_context, Context
+from contextvars import ContextVar
 
 
 ctx_str: ContextVar[str] = ContextVar('ctx_str', default='default')

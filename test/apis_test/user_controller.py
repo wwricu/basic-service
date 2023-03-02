@@ -1,14 +1,17 @@
-from test import client
-from test.apis import AuthToken
-from test.apis.auth_controller import test_auth
+from test_client import client, test_method
+from apis_test import AuthToken
+from apis_test.auth_controller import test_auth
 
-from src.schemas import UserInput
+from schemas import UserInput
 
 
+@test_method
 def test_add_user() -> int:
-    user_input = UserInput(username='test user',
-                           password='test password',
-                           email='test@email.test')
+    user_input = UserInput(
+        username='test user',
+        password='test password',
+        email='test@email.test',
+    )
     response = client.post('user',
                            json=user_input.dict(),
                            headers=AuthToken.headers)
@@ -17,28 +20,31 @@ def test_add_user() -> int:
     return response.json()['id']
 
 
+@test_method
 def test_remove_user(user_id: int):
     response = client.delete(f'/user/{user_id}',
                              headers=AuthToken.headers)
     assert response.status_code == 200
 
 
+@test_method
 def test_get_user(user_id: int):
     response = client.get(f'/user/{user_id}',
                           headers=AuthToken.headers)
     print(response.json())
     assert response.status_code == 200
-    assert response.json()[0]['username'] == 'after change'
-    return response.json()[0]['id']
+    assert response.json()[1]['username'] == 'after change'
+    return response.json()[1]['id']
 
 
+@test_method
 def test_modify_user(user_id: int):
     user_input = UserInput(id=user_id,
                            username='after change')
     response = client.put('/user',
                           json=user_input.dict(),
                           headers=AuthToken.headers)
-
+    print(response.json())
     assert response.status_code == 200
     assert response.json()['username'] == 'after change'
     assert response.json()['email'] == 'test@email.test'
