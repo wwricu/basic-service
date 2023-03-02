@@ -1,6 +1,6 @@
 from typing import Sequence, Type
 
-from sqlalchemy import func, select, Table
+from sqlalchemy import func, select, Select, Table
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dao.async_database import AsyncDatabase
@@ -17,7 +17,9 @@ class ResourceDao:
         obj_class: Table | Type = Resource,
         *, session: AsyncSession
     ) -> Sequence[any]:
-        stmt = select(obj_class).order_by(obj_class.updated_time.desc())
+        stmt: Select = select(obj_class).order_by(
+            obj_class.updated_time.desc()
+        )
 
         if parent_url is not None:
             stmt = stmt.where(obj_class.parent_url == parent_url)
@@ -49,7 +51,7 @@ class ResourceDao:
         obj_class: Table | Type = Resource,
         *, session: AsyncSession
     ) -> int:
-        stmt = select(func.count()).select_from(obj_class)
+        stmt: Select = select(func.count()).select_from(obj_class)
 
         if parent_url is not None:
             stmt = stmt.where(obj_class.parent_url == parent_url)

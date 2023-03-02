@@ -1,4 +1,3 @@
-import asyncio
 import functools
 import hashlib
 from contextvars import ContextVar
@@ -42,7 +41,7 @@ class AsyncDatabase:
     async def close(cls):
         close_all_sessions()
         if cls.__engine:
-            asyncio.create_task(cls.__engine.dispose())
+            await cls.__engine.dispose()
 
     @classmethod
     async def open_session(cls) -> AsyncSession:
