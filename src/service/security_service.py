@@ -96,24 +96,18 @@ class SecurityService:
     login_throttle: callable = login_throttle
 
     @staticmethod
-    def generate_salt() -> str:
-        return bcrypt.gensalt().decode()
-
-    @staticmethod
-    def get_password_hash(plain_password: str, salt: str) -> str:
-        return bcrypt.hashpw(
-            plain_password.encode(), salt.encode()
-        ).decode()
+    def get_password_hash(plain_password: bytes) -> bytes | None:
+        if plain_password is None:
+            return None
+        return bcrypt.hashpw(plain_password, bcrypt.gensalt())
 
     @classmethod
     def verify_password(
         cls,
-        plain_password: str,
-        salt: str,
-        password_hash: str
+        plain_password: bytes,
+        password_hash: bytes
     ) -> bool:
-        _ = salt
-        return bcrypt.checkpw(plain_password.encode(), password_hash.encode())
+        return bcrypt.checkpw(plain_password, password_hash)
 
     @staticmethod
     def create_jwt_token(

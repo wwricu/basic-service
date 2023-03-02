@@ -13,7 +13,6 @@ class UserService:
 
         assert SecurityService.verify_password(
             user_input.password,
-            sys_user.salt,
             sys_user.password_hash
         ) is True
 
@@ -24,13 +23,11 @@ class UserService:
         sys_user = SysUser(
             id=user_input.id,
             username=user_input.username,
+            password_hash=SecurityService.get_password_hash(
+                user_input.password
+            ),
             email=user_input.email,
             roles=[]
-        )
-
-        sys_user.salt = SecurityService.generate_salt()
-        sys_user.password_hash = SecurityService.get_password_hash(
-            user_input.password, sys_user.salt
         )
 
         return UserOutput.init(await BaseDao.insert(sys_user))
@@ -50,7 +47,7 @@ class UserService:
 
         if user_input.password_hash is not None:
             sys_user.password_hash = SecurityService.get_password_hash(
-                user_input.password_hash, sys_user.salt
+                user_input.password_hash
             )
 
         return UserOutput.init(await BaseDao.update(user_input, SysUser))

@@ -15,7 +15,7 @@ def test_fake_auth():
 
 @test_method
 def test_auth():
-    password = hashlib.sha256('test_password'.encode()).hexdigest()
+    password: str = hashlib.sha256('test_password'.encode()).hexdigest()
     payload = {
         'username': 'wwr',
         'password': password
