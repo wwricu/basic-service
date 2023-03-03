@@ -1,14 +1,14 @@
-from schemas.user import TokenResponse, UserInput, UserOutput
-from schemas.query import ResourceQuery
-from schemas.resource import (
+from .user import TokenResponse, UserInput, UserOutput
+from .query import ResourceQuery
+from .resource import (
     ContentInput,
     ContentOutput,
     FolderInput,
     FolderOutput,
     ResourcePreview
 )
-from schemas.tag import ContentTags, TagContents, TagSchema
-from schemas.third_party import WeatherSchema
+from .tag import ContentTags, TagContents, TagSchema
+from .third_party import WeatherSchema
 
 
 __all__ = [

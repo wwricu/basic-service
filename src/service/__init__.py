@@ -1,9 +1,9 @@
-from service.http_service import HTTPService
-from service.mail_service import MailService
-from service.resource_service import ResourceService
-from service.security_service import RoleRequired, SecurityService
-from service.tag_service import TagService
-from service.user_service import UserService
+from .http_service import HTTPService
+from .mail_service import MailService
+from .resource_service import ResourceService
+from .security_service import RoleRequired, SecurityService
+from .tag_service import TagService
+from .user_service import UserService
 
 __all__ = [
     'HTTPService',
