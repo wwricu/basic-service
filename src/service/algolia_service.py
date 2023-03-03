@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Awaitable
 
-from algoliasearch.search_client_async import SearchClient
+from algoliasearch.search_index_async import SearchClient
 
 from config import Config
 from dao import AsyncDatabase, BaseDao
@@ -23,6 +23,17 @@ class AlgoliaService:
             await index.save_objects_async([
                idx.dict() for idx in contents
             ])
+
+    @staticmethod
+    async def delete_contents(object_ids: list[int]):
+        if Config.algolia is None:
+            return
+        async with SearchClient.create(
+            Config.algolia.app_id,
+            Config.algolia.admin_key
+        ) as client:
+            index = client.init_index(Config.algolia.index_name)
+            await index.delete_objects_async(object_ids)
 
     @staticmethod
     async def search_content(keyword: str) -> dict:

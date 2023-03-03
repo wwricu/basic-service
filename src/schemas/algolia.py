@@ -8,7 +8,7 @@ from models import Content
 
 
 class AlgoliaPostIndex(BaseModel):
-    objectID: str
+    objectID: int
     title: str = ''
     category: str = ''
     tags: list[str] = []
@@ -22,7 +22,7 @@ class AlgoliaPostIndex(BaseModel):
     def parse_content(cls, content: Content):
         # this method must be called under session open
         index = cls(
-            objectID=str(content.id),
+            objectID=content.id,
             title=content.title,
             created_time=int(datetime.timestamp(content.created_time)),
             updated_time=int(datetime.timestamp(content.updated_time)),

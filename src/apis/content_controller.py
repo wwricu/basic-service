@@ -7,8 +7,13 @@ from redis.asyncio import Redis
 
 from dao import AsyncDatabase, AsyncRedis
 from models import Content, Resource
-from schemas import ContentInput, ContentOutput, UserOutput
-from service import RoleRequired, ResourceService, SecurityService
+from schemas import AlgoliaPostIndex, ContentInput, ContentOutput, UserOutput
+from service import (
+    AlgoliaService,
+    RoleRequired,
+    ResourceService,
+    SecurityService
+)
 
 
 content_router = APIRouter(
@@ -73,6 +78,10 @@ async def modify_content(
         Content(**content_input.dict())
     )
     for task in (
+        AlgoliaService.save_contents(
+            [AlgoliaPostIndex.parse_content(content)]
+        ) if content.parent_url == '/post'  # algolia save/delete task
+        else AlgoliaService.delete_contents([content.id]),
         ResourceService.trim_files(content_input.id, content_input.files),
         redis.set(f'content:id:{content.id}', pickle.dumps(content)),
         redis.set('count_dict', pickle.dumps(dict())),
@@ -92,6 +101,7 @@ async def delete_content(
     redis: Redis = Depends(AsyncRedis.get_connection)
 ):
     for task in (
+        AlgoliaService.delete_contents([content_id]),
         ResourceService.trim_files(content_id, set()),
         redis.delete(f'content:id:{content_id}'),
         redis.set('count_dict', pickle.dumps(dict())),
