@@ -1,3 +1,4 @@
 aiosqlite~=0.18.0
 alembic~=1.9.4
 httpx~=0.23.3
+psycopg2~=2.9.5
