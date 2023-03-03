@@ -3,7 +3,7 @@ import hashlib
 from contextvars import ContextVar
 
 import bcrypt
-from sqlalchemy import text
+from sqlalchemy import func, select, text
 from sqlalchemy.engine import URL
 from sqlalchemy.exc import IntegrityError, OperationalError, ProgrammingError 
 from sqlalchemy.ext.asyncio import (
@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.orm import close_all_sessions
 
 from config import Config, logger
-from models import Base, SysUser, SysRole
+from models import AlembicBase, AlembicVersion, Base, SysUser, SysRole
 
 
 ctx_db: ContextVar[AsyncSession | None] = ContextVar('ctx_db', default=None)
@@ -92,10 +92,12 @@ class AsyncDatabase:
         logger.info('database connected')
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+            await conn.run_sync(AlembicBase.metadata.create_all)
 
         # await commit() cannot be executed at the same time
         await cls.insert_admin()
         await cls.insert_root_folder()
+        await cls.insert_alembic_version()
 
     @classmethod
     async def insert_admin(cls):
@@ -133,6 +135,29 @@ class AsyncDatabase:
             for folder in Config.folders:
                 session.add(folder)
             await session.commit()
+        except IntegrityError:
+            pass
+        except Exception as e:
+            logger.warn(e)
+            await session.rollback()
+        finally:
+            await session.close()
+
+    @classmethod
+    async def insert_alembic_version(cls):
+        session: AsyncSession = cls.__session_maker()
+        try:
+            count = await session.scalar(
+                select(func.count()).select_from(AlembicVersion)
+            )
+            if count == 0:
+                logger.info('init alembic version')
+                session.add(AlembicVersion())
+                await session.commit()
+            version: AlembicVersion = (
+                await session.scalars(select(AlembicVersion))
+            ).one()
+            logger.info(f'alembic version is {version.version_num}')
         except IntegrityError:
             pass
         except Exception as e:
