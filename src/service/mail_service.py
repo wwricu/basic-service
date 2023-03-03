@@ -3,9 +3,9 @@ import datetime
 from email.mime.text import MIMEText
 from smtplib import SMTP
 
+from .http_service import HTTPService
 from config import Config, logger
 from schemas import WeatherSchema
-from service.http_service import HTTPService
 
 
 class MailService:

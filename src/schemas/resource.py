@@ -3,8 +3,8 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
+from .tag import TagSchema
 from models import Content, Folder, PostCategory, PostTag, Resource
-from schemas.tag import TagSchema
 
 
 class ResourceBase(BaseModel):

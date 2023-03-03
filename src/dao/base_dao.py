@@ -4,7 +4,7 @@ from typing import Type
 from sqlalchemy import select, Table
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from dao.async_database import AsyncDatabase
+from .async_database import AsyncDatabase
 
 
 class BaseDao:

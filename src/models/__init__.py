@@ -1,7 +1,7 @@
-from models.relations import ResourceTag, RolePermission, UserRole
-from models.resources import Content, Folder, Resource
-from models.sys_user import Base, SysPermission, SysRole, SysUser
-from models.tag import PostCategory, PostTag, Tag
+from .relations import ResourceTag, RolePermission, UserRole
+from .resources import Content, Folder, Resource
+from .sys_user import Base, SysPermission, SysRole, SysUser
+from .tag import PostCategory, PostTag, Tag
 
 __all__ = [
     "Base",

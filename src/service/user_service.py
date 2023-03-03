@@ -1,7 +1,7 @@
+from .security_service import SecurityService
 from dao import BaseDao
 from models import SysUser
 from schemas import UserInput, UserOutput
-from service.security_service import SecurityService
 
 
 class UserService:
