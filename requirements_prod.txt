@@ -1,13 +1,11 @@
-aiohttp~=3.8.4
-aiosqlite~=0.18.0
 alembic~=1.9.4
+aiohttp~=3.8.4
 anyio~=3.6.2
 APScheduler~=3.10.0
 asyncpg~=0.27.0
 bcrypt~=4.0.1
 fastapi~=0.89.1
-httpx~=0.23.3
-psycopg2~=2.9.5
+psycopg2-binary~=2.9.5
 pydantic~=1.10.4
 python-multipart~=0.0.5
 PyJWT~=2.6.0
