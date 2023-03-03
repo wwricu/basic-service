@@ -24,6 +24,7 @@ def test_auth():
         'auth test controller',
         f'plain password: {password}'
     )
+    # password is 10a6e6cc8311a3e2bcc09bf6c199adecd5dd59408c343e926b129c4914f3cb01
     response = client.post('/auth', data=payload)
     print(response.json())
     AuthToken.access_token = response.json()['access_token']

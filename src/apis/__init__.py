@@ -1,5 +1,3 @@
-from typing import cast, Coroutine
-
 from fastapi import APIRouter, Depends
 from redis.asyncio import Redis
 
@@ -10,8 +8,9 @@ from .file_controller import file_router
 from .folder_controller import folder_router
 from .tag_controller import tag_router
 from .user_controller import user_router
+from config import Config
 from dao import AsyncRedis
-from service import HTTPService
+from service import AlgoliaService, HTTPService, RoleRequired
 
 router = APIRouter()
 router.include_router(auth_router)
@@ -31,3 +30,14 @@ async def get_bing_image(redis: Redis = Depends(AsyncRedis.get_connection)):
     if url is None:
         return await HTTPService.parse_bing_image_url()
     return url.decode()
+
+
+@router.get(
+    '/refresh_algolia',
+    response_model=int,
+    dependencies=[Depends(RoleRequired('admin'))]
+)
+async def refresh_algolia_index(passcode: str):
+    if passcode != Config.admin.password:
+        return 0
+    return await AlgoliaService.refresh_all_contents()

@@ -24,6 +24,20 @@ class AdminConfig:
         self.role = role
 
 
+class AlgoliaConfig:
+    def __init__(
+        self,
+        app_id: str,
+        admin_key: str,
+        index_name: str,
+        search_key: str | None = None
+    ):
+        self.app_id = app_id
+        self.admin_key = admin_key
+        self.index_name = index_name
+        self.search_key = search_key
+
+
 class DatabaseConfig:
     def __init__(
         self,
@@ -99,6 +113,7 @@ class Config:
     jwt: JWTConfig = None
     static: StaticResource = None
     folders: list[Folder] = []
+    algolia: AlgoliaConfig = None
 
     @classmethod
     async def init_config(cls, filename: str = 'assets/config.json'):
@@ -127,6 +142,7 @@ class Config:
         folders: dict,
         mail: dict | None = None,
         redis: dict | None = None,
+        algolia: dict | None = None,
         **kwargs
     ):
         _ = kwargs
@@ -139,5 +155,7 @@ class Config:
             cls.mail = MailConfig(**mail)
         if redis is not None:
             cls.redis = RedisConfig(**redis)
+        if algolia is not None:
+            cls.algolia = AlgoliaConfig(**algolia)
         for folder in folders:
             cls.folders.append(Folder(**folder))

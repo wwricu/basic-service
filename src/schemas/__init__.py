@@ -1,3 +1,4 @@
+from .algolia import AlgoliaPostIndex
 from .user import TokenResponse, UserInput, UserOutput
 from .query import ResourceQuery
 from .resource import (
@@ -12,6 +13,7 @@ from .third_party import WeatherSchema
 
 
 __all__ = [
+    'AlgoliaPostIndex',
     'ContentInput',
     'ContentOutput',
     'ContentTags',

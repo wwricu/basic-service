@@ -50,6 +50,14 @@ class AsyncDatabase:
             yield session
 
     @classmethod
+    def use_database(cls, method: callable) -> callable:
+        @functools.wraps(method)
+        async def wrapper(*args, **kwargs):
+            async with cls.__session_maker():
+                return await method(*args, **kwargs)
+        return wrapper
+
+    @classmethod
     def database_session(cls, method: callable) -> callable:
         @functools.wraps(method)
         async def wrapper(*args, **kwargs):
