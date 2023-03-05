@@ -99,6 +99,11 @@ class SecurityService:
             redis.get(f'login_failure:username:{username}'),
             redis.get(f'2fa_code:username:{username}'),
         )
+        if len(sys_user) != 1:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f'no such user: {username}'
+            )
         sys_user = sys_user[0]
 
         if cls.verify_password(password, sys_user.password_hash) is False:
@@ -123,7 +128,7 @@ class SecurityService:
         if not isinstance(existed_code, bytes):
             # no 2fa code, generate 6 digits and return
             two_fa_code = str(secrets.randbelow(1000000)).zfill(6)
-            asyncio.create_task(MailService.send_mail(
+            asyncio.create_task(MailService.send_mail_async(
                 [sys_user.email],
                 subject=f'verification code for {username}',
                 message=two_fa_code
@@ -134,7 +139,9 @@ class SecurityService:
             )))
             raise HTTPException(
                 status_code=Status.HTTP_440_2FA_NEEDED,
-                detail='2FA enforced'
+                detail='please check the otp sent to {email}'.format(
+                    email=f'{sys_user.email[:1]}****'
+                )
             )
         if existed_code.decode() != two_fa_code:
             # failed 2fa
@@ -180,10 +187,15 @@ class APIThrottle:
         request: Request,
         redis: Redis = Depends(AsyncRedis.get_connection)
     ):
-        key = f'login_failure:url:{request.url}:ip:{request.client.host}'
+        key = 'throttle:url:{path}:method:{method}:ip:{ip}'.format(
+            path=request.url.path,
+            method=request.method,
+            ip=request.client.host
+        )
         if await redis.get(key) is not None:
-            message = 'too frequent access to {url} from {host}'.format(
-                url=request.url,
+            message = 'too frequent {method} to {path} from {host}'.format(
+                method=request.method,
+                path=request.url.path,
                 host=request.client.host
             )
             # HTTP 429 Too Many Requests
