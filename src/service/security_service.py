@@ -5,12 +5,12 @@ from datetime import datetime, timedelta
 from typing import cast, Coroutine
 
 import bcrypt
-from fastapi import Depends, Header, HTTPException, Request, Response
+from fastapi import Depends, Header, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordBearer
 from redis.asyncio import Redis
 
 from .mail_service import MailService
-from config import Config, logger
+from config import Config, logger, Status
 from dao import AsyncRedis, BaseDao
 from models import SysUser
 from schemas import UserInput, UserOutput
@@ -51,7 +51,10 @@ async def login_required(
     result: UserOutput = Depends(optional_login_required)
 ) -> UserOutput:
     if result is None:
-        raise HTTPException(status_code=401, detail='unauthenticated')
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='unauthenticated'
+        )
     return result
 
 
@@ -102,7 +105,10 @@ class SecurityService:
             await cast(Coroutine, redis.set(
                 f'login_failure:username:{username}', 'True'
             ))
-            raise HTTPException(status_code=401, detail='password mismatch')
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='password mismatch'
+            )
         '''
         1. First login success, nothing happens
         2. Login failed, set need_2fa
@@ -126,10 +132,16 @@ class SecurityService:
                 f'2fa_code:username:{username}',
                 two_fa_code, ex=600  # 10min
             )))
-            raise HTTPException(status_code=444, detail='2FA enforced')
+            raise HTTPException(
+                status_code=Status.HTTP_440_2FA_NEEDED,
+                detail='2FA enforced'
+            )
         if existed_code.decode() != two_fa_code:
             # failed 2fa
-            raise HTTPException(status_code=445, detail='failed 2fa')
+            raise HTTPException(
+                status_code=Status.HTTP_441_2FA_FAILED,
+                detail='failed 2fa'
+            )
         # success
         asyncio.create_task(cast(Coroutine, redis.delete(
             f'login_failure:username:{username}'
@@ -153,7 +165,10 @@ class RoleRequired:
             if role.name == 'admin' or self.required_role == role.name:
                 return user_output
 
-        raise HTTPException(status_code=403, detail='no permission')
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='no permission'
+        )
 
 
 class APIThrottle:
@@ -172,7 +187,10 @@ class APIThrottle:
                 host=request.client.host
             )
             # HTTP 429 Too Many Requests
-            raise HTTPException(status_code=429, detail=message)
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=message
+            )
         asyncio.create_task(cast(
             Coroutine, redis.set(key, '0', ex=self.throttle)
         ))

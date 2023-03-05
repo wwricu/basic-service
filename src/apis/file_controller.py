@@ -2,7 +2,15 @@ import asyncio
 import hashlib
 
 from anyio import Path
-from fastapi import APIRouter, Body, Depends, HTTPException, Request, UploadFile
+from fastapi import (
+    APIRouter,
+    Body,
+    Depends,
+    HTTPException,
+    Request,
+    status,
+    UploadFile
+)
 
 from config import Config
 from service import HTTPService, RoleRequired
@@ -69,7 +77,8 @@ async def save_file(file: bytes | UploadFile, content_path: Path, filename: str)
     await file_path.write_bytes(file)
     if not await Path.exists(file_path):
         raise HTTPException(
-            status_code=500, detail=f'failed to upload {filename}'
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f'failed to upload {filename}'
         )
     # Path.__fspath__()/__str__() aka original Path._path
     return {

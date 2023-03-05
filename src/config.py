@@ -1,5 +1,6 @@
 import json
 import logging
+from enum import IntEnum
 from types import MappingProxyType
 
 from anyio import Path
@@ -8,6 +9,11 @@ from models import Folder
 
 
 logger = logging.getLogger()
+
+
+class Status(IntEnum):
+    HTTP_440_2FA_NEEDED: int = 440
+    HTTP_441_2FA_FAILED: int = 441
 
 
 class AdminConfig:

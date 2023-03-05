@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Type, Sequence
 
 from anyio import Path
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 from config import Config
 from dao import BaseDao, ResourceDao
@@ -138,4 +138,7 @@ class ResourceService:
                 permission |= (resource.permission // 100) % 10
 
         if operation_mask & permission == 0:
-            raise HTTPException(status_code=403, detail='unauthorized')
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail='unauthorized'
+            )
