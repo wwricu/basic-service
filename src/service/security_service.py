@@ -1,16 +1,19 @@
 import asyncio
 import jwt
+import secrets
 from datetime import datetime, timedelta
 from typing import cast, Coroutine
 
 import bcrypt
 from fastapi import Depends, Header, HTTPException, Request, Response
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer
 from redis.asyncio import Redis
 
+from .mail_service import MailService
 from config import Config, logger
-from dao import AsyncRedis
-from schemas import UserOutput
+from dao import AsyncRedis, BaseDao
+from models import SysUser
+from schemas import UserInput, UserOutput
 
 
 oauth2_scheme_optional = OAuth2PasswordBearer(
@@ -52,48 +55,9 @@ async def login_required(
     return result
 
 
-async def login_throttle(
-    request: Request,
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    redis: Redis = Depends(AsyncRedis.get_connection)
-):
-    res = await asyncio.gather(
-        redis.get(f'login_failure:ip:{request.client.host}'),
-        redis.get(f'login_failure:username:{form_data.username}')
-    )
-    # NOTICE: everything except 0, False, None make any() True
-    if any(res):
-        logger.info(
-            f"""failed to login for {form_data.username},
-            from {request.client.host}""",
-        )
-        raise HTTPException(
-            status_code=403,
-            detail=f"""too frequent attempt,
-            username: {form_data.username}
-            address: {request.client.host}"""
-        )
-    try:
-        yield  # login here
-    except Exception as e:
-        logger.info('failed to login', e)
-        await asyncio.gather(
-            cast(Coroutine, redis.set(
-                f'login_failure:ip:{request.client.host}',
-                'True', ex=30
-            )),
-            cast(Coroutine, redis.set(
-                f'login_failure:username:{form_data.username}',
-                'True', ex=30
-            ))
-        )
-        raise HTTPException(status_code=401, detail='failed to login')
-
-
 class SecurityService:
     optional_login_required: callable = optional_login_required
     login_required: callable = login_required
-    login_throttle: callable = login_throttle
 
     @staticmethod
     def get_password_hash(plain_password: bytes) -> bytes | None:
@@ -119,6 +83,62 @@ class SecurityService:
         data.update({'exp': datetime.utcnow() + delta})
         return jwt.encode(payload=data, **Config.jwt.__dict__)
 
+    @classmethod
+    async def user_login_2fa(
+        cls,
+        username: str,
+        password: bytes,
+        two_fa_code: str | None = None
+    ):
+        redis = await AsyncRedis.get_connection()
+        sys_user, need_2fa, existed_code = await asyncio.gather(
+            BaseDao.select(UserInput(username=username), SysUser),
+            redis.get(f'login_failure:username:{username}'),
+            redis.get(f'2fa_code:username:{username}'),
+        )
+        sys_user = sys_user[0]
+
+        if cls.verify_password(password, sys_user.password_hash) is False:
+            await cast(Coroutine, redis.set(
+                f'login_failure:username:{username}', 'True'
+            ))
+            raise HTTPException(status_code=401, detail='password mismatch')
+        '''
+        1. First login success, nothing happens
+        2. Login failed, set need_2fa
+        3. Login success, after a failure (need_2fa set)
+            if no 2fa code then generate and send it
+            else raise exception
+        4. IP throttle controlled by another dependency
+        '''
+        if need_2fa is None:
+            return UserOutput.init(sys_user)
+        # 2fa enforced below
+        if not isinstance(existed_code, bytes):
+            # no 2fa code, generate 6 digits and return
+            two_fa_code = str(secrets.randbelow(1000000)).zfill(6)
+            asyncio.create_task(MailService.send_mail(
+                [sys_user.email],
+                subject=f'verification code for {username}',
+                message=two_fa_code
+            ))
+            asyncio.create_task(cast(Coroutine, redis.set(
+                f'2fa_code:username:{username}',
+                two_fa_code, ex=600  # 10min
+            )))
+            raise HTTPException(status_code=444, detail='2FA enforced')
+        if existed_code.decode() != two_fa_code:
+            # failed 2fa
+            raise HTTPException(status_code=445, detail='failed 2fa')
+        # success
+        asyncio.create_task(cast(Coroutine, redis.delete(
+            f'login_failure:username:{username}'
+        )))
+        asyncio.create_task(cast(Coroutine, redis.delete(
+            f'2fa_code:username:{username}'
+        )))
+        return UserOutput.init(sys_user)
+
 
 class RoleRequired:
     def __init__(self, required_role: str):
@@ -134,3 +154,25 @@ class RoleRequired:
                 return user_output
 
         raise HTTPException(status_code=403, detail='no permission')
+
+
+class APIThrottle:
+    def __init__(self, throttle: int | None = 30):
+        self.throttle = throttle
+
+    async def __call__(
+        self,
+        request: Request,
+        redis: Redis = Depends(AsyncRedis.get_connection)
+    ):
+        key = f'login_failure:url:{request.url}:ip:{request.client.host}'
+        if await redis.get(key) is not None:
+            message = 'too frequent access to {url} from {host}'.format(
+                url=request.url,
+                host=request.client.host
+            )
+            # HTTP 429 Too Many Requests
+            raise HTTPException(status_code=429, detail=message)
+        asyncio.create_task(cast(
+            Coroutine, redis.set(key, '0', ex=self.throttle)
+        ))

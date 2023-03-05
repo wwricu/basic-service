@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Header, Response
 from fastapi.security import OAuth2PasswordRequestForm
 
 from dao import AsyncDatabase
-from service import SecurityService, UserService
-from schemas import TokenResponse, UserInput, UserOutput
+from service import APIThrottle, SecurityService
+from schemas import TokenResponse, UserOutput
 
 
 auth_router = APIRouter(prefix='/auth', tags=['auth'])
@@ -21,15 +21,17 @@ async def get_current_user(
     '', response_model=TokenResponse,
     dependencies=[
         Depends(AsyncDatabase.open_session),
-        Depends(SecurityService.login_throttle),
+        Depends(APIThrottle(30))
     ]
 )
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user_output = await UserService.user_login(
-        UserInput(
-            username=form_data.username,
-            password=form_data.password.encode()
-        )
+async def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    two_fa_code: str | None = Header(default=None)
+):
+    user_output = await SecurityService.user_login_2fa(
+        form_data.username,
+        form_data.password.encode(),
+        two_fa_code
     )
 
     access_token = SecurityService.create_jwt_token(user_output)
@@ -37,7 +39,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         user_output, REFRESH_TIMEOUT_HOUR
     )
     return TokenResponse(
-        access_token=access_token, refresh_token=refresh_token
+        access_token=access_token,
+        refresh_token=refresh_token
     )
 
 
@@ -52,5 +55,6 @@ async def refresh(
     )
     response.headers['X-token-need-refresh'] = 'false'
     return TokenResponse(
-        access_token=access_token, refresh_token=refresh_token
+        access_token=access_token,
+        refresh_token=refresh_token
     )
