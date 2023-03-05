@@ -7,11 +7,9 @@
     "port": 5432,
     "database": "fastdb"
   },
-  "mail": {
-    "host": "smtp.office365.com",
-    "port": 587,
-    "username": "iswangwr@outlook.com",
-    "password": ""
+  "two_fa": {
+    "enforcement": false,
+    "jwt_key": "51b73f6883a157f0d003bdf533d877c25cb2a1b2b5f5a84dba5c8760c7be4112"
   },
   "jwt": {
     "key": "8cf395c08d690e754fdc05f074adbc0b1dee6ed3577c35c6533e01e4b7037363",

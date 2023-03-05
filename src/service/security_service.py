@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from typing import cast, Coroutine
 
 import bcrypt
-from fastapi import Depends, Header, HTTPException, Request, Response, status
+from fastapi import Body, Depends, Header, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordBearer
 from redis.asyncio import Redis
 
@@ -13,7 +13,7 @@ from .mail_service import MailService
 from config import Config, logger, Status
 from dao import AsyncRedis, BaseDao
 from models import SysUser
-from schemas import UserInput, UserOutput
+from schemas import TokenResponse, UserInput, UserOutput
 
 
 oauth2_scheme_optional = OAuth2PasswordBearer(
@@ -58,9 +58,52 @@ async def login_required(
     return result
 
 
+async def verify_2fa_token(
+    two_fa_token: str | None = Header(default=None)
+) -> UserOutput | None:
+    if two_fa_token is None:
+        return None
+    try:
+        data = jwt.decode(
+            jwt=two_fa_token,
+            key=Config.two_fa.jwt_key,
+            algorithms=[Config.jwt.algorithm]
+        )
+    except Exception as e:
+        logger.warn(e)
+        return None
+    return UserOutput(**data)
+
+
+async def check_2fa_code(
+    two_fa_code: str = Body(),
+    user_output: UserOutput = Depends(verify_2fa_token),
+    redis: Redis = Depends(AsyncRedis.get_connection)
+):
+    existed_code = await redis.get(
+        f'2fa_code:username:{user_output.username}'
+    )
+    if existed_code.decode() != two_fa_code:
+        raise HTTPException(
+            status_code=Status.HTTP_441_2FA_FAILED,
+            detail='otp mismatch, please try again'
+        )
+    asyncio.create_task(cast(Coroutine, redis.delete(
+        f'need_2fa:username:{user_output.username}'
+    )))
+    asyncio.create_task(cast(Coroutine, redis.delete(
+        f'2fa_code:username:{user_output.username}'
+    )))
+    return user_output
+
+
 class SecurityService:
+    ACCESS_TIMEOUT_HOUR, REFRESH_TIMEOUT_HOUR = 1, 24 * 7
+
     optional_login_required: callable = optional_login_required
     login_required: callable = login_required
+    check_2fa_code: callable = check_2fa_code
+    verify_2fa_token: callable = verify_2fa_token
 
     @staticmethod
     def get_password_hash(plain_password: bytes) -> bytes | None:
@@ -79,25 +122,67 @@ class SecurityService:
     @staticmethod
     def create_jwt_token(
         user_info: UserOutput,
-        timeout_hour: int | None = 1  # default for access_token
+        key: str,
+        **kwargs,   # default for access_token
     ) -> bytes:
         data = user_info.dict()
-        delta = timedelta(hours=timeout_hour)
+        delta = timedelta(**kwargs)
         data.update({'exp': datetime.utcnow() + delta})
-        return jwt.encode(payload=data, **Config.jwt.__dict__)
+        return jwt.encode(
+            payload=data,
+            key=key,
+            algorithm=Config.jwt.algorithm,
+            headers=Config.jwt.headers
+        )
 
     @classmethod
-    async def user_login_2fa(
+    def create_access_tokens(cls, user_output: UserOutput) -> TokenResponse:
+        return TokenResponse(
+            access_token=cls.create_jwt_token(
+                user_output,
+                Config.jwt.key,
+                hours=cls.ACCESS_TIMEOUT_HOUR
+            ),
+            refresh_token=cls.create_jwt_token(
+                user_output,
+                Config.jwt.key,
+                hours=cls.REFRESH_TIMEOUT_HOUR
+            )
+        )
+
+    @classmethod
+    async def generate_2fa_code(
+        cls,
+        user_output: UserOutput,
+        redis: Redis
+    ):
+        two_fa_code = str(secrets.randbelow(1000000)).zfill(6)
+        logger.info(f'2fa code for {user_output.username} is {two_fa_code}')
+        asyncio.create_task(MailService.send_mail_async(
+            [user_output.email],
+            subject=f'verification code for {user_output.username}',
+            message=two_fa_code
+        ))
+        '''
+        2fa_code and 2fa_token both has an expiration of 5 minutes
+        users can refresh 2fa_code one time per 30 seconds according
+        to api throttle imposed on /login, total expiration is 10min. 
+        '''
+        asyncio.create_task(cast(Coroutine, redis.set(
+            f'2fa_code:username:{user_output.username}',
+            two_fa_code, ex=300
+        )))
+
+    @classmethod
+    async def user_login(
         cls,
         username: str,
         password: bytes,
-        two_fa_code: str | None = None
     ):
         redis = await AsyncRedis.get_connection()
-        sys_user, need_2fa, existed_code = await asyncio.gather(
+        sys_user, need_2fa = await asyncio.gather(
             BaseDao.select(UserInput(username=username), SysUser),
-            redis.get(f'login_failure:username:{username}'),
-            redis.get(f'2fa_code:username:{username}'),
+            redis.get(f'need_2fa:username:{username}'),
         )
         if len(sys_user) != 1:
             raise HTTPException(
@@ -108,7 +193,7 @@ class SecurityService:
 
         if cls.verify_password(password, sys_user.password_hash) is False:
             await cast(Coroutine, redis.set(
-                f'login_failure:username:{username}', 'True'
+                f'need_2fa:username:{username}', 'True'
             ))
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -122,41 +207,22 @@ class SecurityService:
             else raise exception
         4. IP throttle controlled by another dependency
         '''
-        if need_2fa is None:
+        user_output = UserOutput.init(sys_user)
+        if need_2fa is None and Config.two_fa.enforcement is False:
             return UserOutput.init(sys_user)
         # 2fa enforced below
-        if not isinstance(existed_code, bytes):
+        # if not isinstance(existed_code, bytes):
             # no 2fa code, generate 6 digits and return
-            two_fa_code = str(secrets.randbelow(1000000)).zfill(6)
-            asyncio.create_task(MailService.send_mail_async(
-                [sys_user.email],
-                subject=f'verification code for {username}',
-                message=two_fa_code
-            ))
-            asyncio.create_task(cast(Coroutine, redis.set(
-                f'2fa_code:username:{username}',
-                two_fa_code, ex=600  # 10min
-            )))
-            raise HTTPException(
-                status_code=Status.HTTP_440_2FA_NEEDED,
-                detail='please check the otp sent to {email}'.format(
-                    email=f'{sys_user.email[:1]}****'
-                )
-            )
-        if existed_code.decode() != two_fa_code:
-            # failed 2fa
-            raise HTTPException(
-                status_code=Status.HTTP_441_2FA_FAILED,
-                detail='failed 2fa'
-            )
-        # success
-        asyncio.create_task(cast(Coroutine, redis.delete(
-            f'login_failure:username:{username}'
-        )))
-        asyncio.create_task(cast(Coroutine, redis.delete(
-            f'2fa_code:username:{username}'
-        )))
-        return UserOutput.init(sys_user)
+        await cls.generate_2fa_code(user_output, redis)
+        raise HTTPException(
+            status_code=Status.HTTP_440_2FA_NEEDED,
+            detail='please check the otp sent to {email}'.format(
+                email=f'{sys_user.email[:2]}****{sys_user.email[-2:]}'
+            ),
+            headers={'X-2fa-token': cls.create_jwt_token(
+                user_output, Config.two_fa.jwt_key, minutes=5
+            )}
+        )
 
 
 class RoleRequired:

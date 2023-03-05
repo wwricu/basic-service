@@ -111,6 +111,16 @@ class StaticResource:
         self.content_path = content_path
 
 
+class TwoFAConfig:
+    def __init__(
+        self,
+        enforcement: bool | None = False,
+        jwt_key: str | None = None
+    ):
+        self.enforcement = enforcement
+        self.jwt_key = jwt_key
+
+
 class Config:
     database: DatabaseConfig = None
     redis: RedisConfig = None
@@ -120,6 +130,7 @@ class Config:
     static: StaticResource = None
     folders: list[Folder] = []
     algolia: AlgoliaConfig = None
+    two_fa: TwoFAConfig = None
 
     @classmethod
     async def init_config(cls, filename: str = 'assets/config.json'):
@@ -146,6 +157,7 @@ class Config:
         jwt: dict,
         static: dict,
         folders: dict,
+        two_fa: dict,
         mail: dict | None = None,
         redis: dict | None = None,
         algolia: dict | None = None,
@@ -156,6 +168,7 @@ class Config:
         cls.admin = AdminConfig(**admin)
         cls.jwt = JWTConfig(**jwt)
         cls.static = StaticResource(**static)
+        cls.two_fa = TwoFAConfig(**two_fa)
         # mail and redis are optional
         if mail is not None:
             cls.mail = MailConfig(**mail)

@@ -61,7 +61,11 @@ async def startup():
         allow_credentials=True,
         allow_methods=['*'],
         allow_headers=['*'],
-        expose_headers=['X-token-need-refresh', 'X-content-id']
+        expose_headers=[
+            'X-token-need-refresh',
+            'X-content-id',
+            'X-2fa-token'
+        ]
     )
 
 
