@@ -6,30 +6,27 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
-from .sys_user import Base
+from .base_table import BaseTable
 from .tag import PostTag
 
 
-class Resource(Base):
+class Resource(BaseTable):
     def __init__(
         self,
-        id: int | None = None,
         title: str | None = None,
         url: str | None = None,
         permission: int | None = None,
         parent_url: str | None = None,
+        *args,
         **kwargs
     ):
-        _ = kwargs
-        super().__init__()
-        self.id = id
+        super().__init__(*args, **kwargs)
         self.title = title
         self.url = url
         self.permission = permission
         self.parent_url = parent_url
 
     __tablename__ = 'resource'
-    id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(255))
     url = Column(String(255), unique=True)
     this_url = Column(String(255), comment='For concat after rename')
@@ -85,8 +82,8 @@ class Resource(Base):
 
 
 class Folder(Resource):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     __tablename__ = 'folder'
     id = Column(
@@ -94,9 +91,6 @@ class Folder(Resource):
         ForeignKey('resource.id', ondelete='CASCADE'),
         primary_key=True
     )
-
-    # parent_id = Column(Integer, ForeignKey('resource.id'))
-    # sub_resource = relationship("Resource", foreign_keys=parent_id)
 
     __mapper_args__ = {
         'polymorphic_identity': 'folder',
@@ -110,9 +104,10 @@ class Content(Resource):
         category: dict = MappingProxyType({}),
         tags: list[dict] = (),
         content: bytes | None = None,
+        *args,
         **kwargs
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if category is not None:
             self.category_id = category.get('id')
         if tags is not None:

@@ -174,11 +174,24 @@ class SecurityService:
         )))
 
     @classmethod
+    def user_input_validation(cls, username: str, password: bytes):
+        try:
+            assert isinstance(username, str) and 3 <= len(username) <= 12
+            assert isinstance(password, bytes) and len(password) == 64
+        except AssertionError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='invalid username or password'
+            )
+
+    @classmethod
     async def user_login(
         cls,
         username: str,
         password: bytes,
     ):
+        cls.user_input_validation(username, password)
+
         redis = await AsyncRedis.get_connection()
         sys_user, need_2fa = await asyncio.gather(
             BaseDao.select(UserInput(username=username), SysUser),

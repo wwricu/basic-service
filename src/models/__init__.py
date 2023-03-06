@@ -1,13 +1,15 @@
+from .base_table import Base, BaseTable
 from .alembic import AlembicBase, AlembicVersion
 from .relations import ResourceTag, RolePermission, UserRole
 from .resources import Content, Folder, Resource
-from .sys_user import Base, SysPermission, SysRole, SysUser
+from .sys_user import SysPermission, SysRole, SysUser
 from .tag import PostCategory, PostTag, Tag
 
 __all__ = [
     'AlembicBase',
     'AlembicVersion',
     'Base',
+    'BaseTable',
     'Content',
     'Folder',
     'PostCategory',

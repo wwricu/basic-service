@@ -1,13 +1,11 @@
-from sqlalchemy import Column, Integer, String, LargeBinary
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, String, LargeBinary
 from sqlalchemy.orm import relationship
 
-Base = declarative_base()
+from .base_table import BaseTable
 
 
-class SysUser(Base):
+class SysUser(BaseTable):
     __tablename__ = 'sys_user'
-    id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(20), unique=True, comment="username")
     email = Column(String(128), unique=True, comment="email")
     password_hash = Column(LargeBinary(length=1024), comment="password hash")
@@ -21,9 +19,8 @@ class SysUser(Base):
     )
 
 
-class SysRole(Base):
+class SysRole(BaseTable):
     __tablename__ = 'sys_role'
-    id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(20), unique=True, comment="role name")
     description = Column(String(255), comment="role description")
 
@@ -42,9 +39,8 @@ class SysRole(Base):
     )
 
 
-class SysPermission(Base):
+class SysPermission(BaseTable):
     __tablename__ = 'sys_permission'
-    id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(20), unique=True, comment="permission name")
     description = Column(String(255), comment="permission description")
     roles = relationship(

@@ -1,33 +1,34 @@
 import asyncio
-from typing import Type
+from typing import cast, Type
 
 from sqlalchemy import select, Select, Table
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .async_database import AsyncDatabase
+from models import Base, BaseTable
 
 
 class BaseDao:
     @staticmethod
     @AsyncDatabase.database_session
-    async def insert(obj: Table, *, session: AsyncSession) -> any:
+    async def insert(obj: Base, *, session: AsyncSession) -> Base:
         session.add(obj)
         await session.commit()
         return obj
 
     @staticmethod
     @AsyncDatabase.database_session
-    async def insert_all(obj: list[Table], *, session: AsyncSession):
+    async def insert_all(obj: list[Base], *, session: AsyncSession):
         session.add_all(obj)
         await session.commit()
 
     @staticmethod
     @AsyncDatabase.database_session
     async def select(
-        obj: any,
+        obj: Base,
         class_name: Table | Type,
         *, session: AsyncSession
-    ):
+    ) -> list[Base]:
         stmt: Select = select(class_name)
 
         for key in class_name.__mapper__.c.keys():
@@ -41,16 +42,18 @@ class BaseDao:
         so we must use '.all()', '.first()' or '.one()',
         to fetch result(s) from them.
         '''
-        return (await session.scalars(stmt)).all()
+        return cast(list, (await session.scalars(stmt)).all())
 
     @staticmethod
     @AsyncDatabase.database_session
     async def update(
-        obj: any,
+        obj: BaseTable,
         class_name: Table | Type,
         *, session: AsyncSession
-    ) -> any:
-        obj_update: Table | None = await session.get(class_name, obj.id)
+    ) -> BaseTable | None:
+        obj_update: BaseTable | None = await session.get(
+            class_name, obj.id
+        )
         if obj_update is None:
             return
 
@@ -65,7 +68,7 @@ class BaseDao:
     @staticmethod
     @AsyncDatabase.database_session
     async def delete(
-        obj: any,
+        obj: BaseTable,
         class_name: Table | Type,
         *, session: AsyncSession
     ) -> int:  # return deleted id
@@ -80,7 +83,7 @@ class BaseDao:
     @staticmethod
     @AsyncDatabase.database_session
     async def delete_all(
-        objs: list,
+        objs: list[Base],
         class_name: Table | Type,
         *, session: AsyncSession
     ) -> int:  # return deleted count

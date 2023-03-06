@@ -1,28 +1,24 @@
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
-from .sys_user import Base
+from .base_table import BaseTable
 
 
-class Tag(Base):
-    def __init__(self, id: int | None = None, **kwargs):
-        _ = kwargs
-        super().__init__()
-        self.id = id
-
+class Tag(BaseTable):
     __tablename__ = 'tag'
-    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
 class PostTag(Tag):
     def __init__(
         self,
-        id: int | None = None,
         name: str | None = None,
+        *args,
         **kwargs
     ):
-        super().__init__(**kwargs)
-        self.id = id
+        super().__init__(*args, **kwargs)
         self.name = name
 
     __tablename__ = 'post_tag'
@@ -47,12 +43,11 @@ class PostTag(Tag):
 class PostCategory(Tag):
     def __init__(
         self,
-        id: int | None = None,
         name: str | None = None,
+        *args,
         **kwargs
     ):
-        super().__init__(**kwargs)
-        self.id = id
+        super().__init__(*args, **kwargs)
         self.name = name
 
     __tablename__ = 'post_category'
