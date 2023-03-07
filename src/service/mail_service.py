@@ -8,6 +8,7 @@ from threading import Thread
 import aiosmtplib
 
 from .http_service import HTTPService
+from .render_service import RenderService
 from config import Config, logger
 from schemas import WeatherSchema
 
@@ -103,22 +104,9 @@ class MailService:
     async def daily_mail(cls):
         try:
             weather = WeatherSchema.parse_obj(await HTTPService.get_weather())
-            message = f"""
-            <div
-            style="font-size: 24px;
-            font-family: Google Sans, Helvetica, sans-serif;"
-            >
-            <li>Weather in {weather.cityInfo.city}: {weather.data.forecast[0].type}</li>
-            <li>Air quality: {weather.data.quality}</li>
-            <li>
-            Temperature: {weather.data.forecast[0].low} ~ {weather.data.forecast[0].high}
-            </li>
-            <li>Humidity is {weather.data.shidu}</li>
-            <p>updated at {weather.cityInfo.updateTime}</p>
-            </div>
-            """
+            message = RenderService.daily_mail(weather)
         except Exception as e:
-            logger.warn('failed to get weather')
+            logger.warn('failed to render or get weather')
             message = e.__str__()
         asyncio.create_task(MailService.send_mail_async(
             ['iswangwr@outlook.com'],
