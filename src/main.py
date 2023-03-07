@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 
 from apis import router
 from config import Config, logger
-from dao import AsyncDatabase, AsyncRedis
+from dao import AsyncDatabase, AsyncRedis, init_admin
 from service import HTTPService, MailService
 
 
@@ -43,6 +43,7 @@ async def startup():
         AsyncDatabase.init_database(),
         AsyncRedis.init_redis()
     )
+    await init_admin(app)
     schedule_jobs()
 
     path = Path(Config.static.content_path)

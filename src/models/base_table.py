@@ -10,6 +10,5 @@ class BaseTable(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     def __init__(self, id: int | None = None, *args, **kwargs):
-        _, _ = args, kwargs
-        super().__init__()
+        super().__init__(*args, **kwargs)
         self.id = id

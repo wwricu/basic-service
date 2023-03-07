@@ -20,6 +20,9 @@ class SysUser(BaseTable):
 
 
 class SysRole(BaseTable):
+    def __repr__(self):
+        return self.name
+
     __tablename__ = 'sys_role'
     name = Column(String(20), unique=True, comment="role name")
     description = Column(String(255), comment="role description")
