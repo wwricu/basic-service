@@ -10,6 +10,7 @@ from fastapi.security import OAuth2PasswordBearer
 from redis.asyncio import Redis
 
 from .mail_service import MailService
+from .render_service import RenderService
 from config import Config, logger, Status
 from dao import AsyncRedis, BaseDao
 from models import SysUser
@@ -158,10 +159,11 @@ class SecurityService:
     ):
         two_fa_code = str(secrets.randbelow(1000000)).zfill(6)
         logger.info(f'2fa code for {user_output.username} is {two_fa_code}')
+        two_fa_page = RenderService.two_fa_code(two_fa_code)
         asyncio.create_task(MailService.send_mail_async(
             [user_output.email],
             subject=f'verification code for {user_output.username}',
-            message=two_fa_code
+            message=two_fa_page
         ))
         '''
         2fa_code and 2fa_token both has an expiration of 5 minutes

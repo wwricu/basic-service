@@ -3,60 +3,55 @@
 <head>
   <title>Weather Today</title>
   <style type="text/css">
-      @import url('https://fonts.googleapis.com/css2?family=Marcellus&display=swap');
       html, body {
           height: 100%;
       }
       .card {
-          padding: 10px 20px;
-          background-color: #ffffff;
-          border: solid #6f707d 1px;
-          border-radius: 10px;
           color: #6f707d;
-          font-family: 'Marcellus', monospace, sans-serif;
-          width: 20rem;
-          margin: 0 auto;
       }
       .card-title {
+          height: 100%;
           font-size: 1rem;
-          font-family: 'Marcellus', monospace, sans-serif;
+          font-family: fantasy, sans-serif;
       }
       .card-body {
-          margin: 3rem 0;
+          margin: 5rem 0 2rem 0;
           text-align: center;
           font-size: 3rem;
           color: #1C2331;
-          font-family: 'Marcellus', fantasy, sans-serif;
+          font-family: fantasy, sans-serif;
       }
       .card-note {
           font-size: 1rem;
-          font-family: 'Marcellus', monospace, sans-serif;
+          font-family: fantasy, sans-serif;
       }
   </style>
 </head>
 
 <body>
 <table align="center" cellpadding="0" cellspacing="0" width="100%">
-  <div class="card">
-    <div class="card-title">
-      <div style="float: left">{{ city }}/{{ type }}</div>
-      <div style="float: right">updated at: {{ updated_time }}</div>
-    </div>
-    <div class="card-body">
-      <div>{{ low }} ~ {{ high }}</div>
-    </div>
-    <div class="card-note">
-      <div>
-        wind speed: {{ wind_speed }} km/h
+  <tr>
+    <td class="card">
+      <div class="card-title">
+        <h4 style="float: left">{{ city }}/{{ type }}</h4>
+        <h4 style="float: right">updated at: {{ updated_time }}</h4>
       </div>
-      <div  style="margin: 0.5rem 0">
-        humidity: {{ humidity }}
+      <h4 class="card-body">
+        {{ low }} ~ {{ high }}
+      </h4>
+      <div class="card-note">
+        <p>
+          wind speed: {{ wind_speed }}
+        </p>
+        <p style="margin: 0.5rem 0">
+          humidity: {{ humidity }}
+        </p>
+        <p>
+          Air quality: {{ quality }}
+        </p>
       </div>
-      <div>
-        Air quality: {{ quality }}
-      </div>
-    </div>
-  </div>
+    </td>
+  </tr>
 </table>
 </body>
 </html>
