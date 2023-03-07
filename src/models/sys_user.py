@@ -5,6 +5,8 @@ from .base_table import BaseTable
 
 
 class SysUser(BaseTable):
+    def __str__(self):
+        return self.username
     __tablename__ = 'sys_user'
     username = Column(String(20), unique=True, comment="username")
     email = Column(String(128), unique=True, comment="email")
@@ -20,7 +22,7 @@ class SysUser(BaseTable):
 
 
 class SysRole(BaseTable):
-    def __repr__(self):
+    def __str__(self):
         return self.name
 
     __tablename__ = 'sys_role'
@@ -43,6 +45,8 @@ class SysRole(BaseTable):
 
 
 class SysPermission(BaseTable):
+    def __str__(self):
+        return self.name
     __tablename__ = 'sys_permission'
     name = Column(String(20), unique=True, comment="permission name")
     description = Column(String(255), comment="permission description")

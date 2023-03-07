@@ -30,16 +30,12 @@ async def optional_login_required(
     if access_token is None:
         return None
     try:
-        data = jwt.decode(
-            jwt=access_token,
-            key=Config.jwt.key,
-            algorithms=[Config.jwt.algorithm]
+        data = SecurityService.verify_jwt_token(
+            access_token, Config.jwt.key
         )
     except jwt.ExpiredSignatureError:
-        data = jwt.decode(
-            jwt=refresh_token,
-            key=Config.jwt.key,
-            algorithms=[Config.jwt.algorithm]
+        data = SecurityService.verify_jwt_token(
+            refresh_token, Config.jwt.key
         )
         response.headers['X-token-need-refresh'] = 'true'
     except Exception as e:
@@ -65,10 +61,8 @@ async def verify_2fa_token(
     if two_fa_token is None:
         return None
     try:
-        data = jwt.decode(
-            jwt=two_fa_token,
-            key=Config.two_fa.jwt_key,
-            algorithms=[Config.jwt.algorithm]
+        data = SecurityService.verify_jwt_token(
+            two_fa_token, Config.jwt.key
         )
     except Exception as e:
         logger.warn(e)
@@ -119,6 +113,14 @@ class SecurityService:
         password_hash: bytes
     ) -> bool:
         return bcrypt.checkpw(plain_password, password_hash)
+
+    @staticmethod
+    def verify_jwt_token(jwt_token: str | bytes, key: str) -> dict[str, any]:
+        return jwt.decode(
+            jwt=jwt_token,
+            key=key,
+            algorithms=[Config.jwt.algorithm]
+        )
 
     @staticmethod
     def create_jwt_token(
@@ -191,7 +193,7 @@ class SecurityService:
         cls,
         username: str,
         password: bytes,
-    ):
+    ) -> UserOutput:
         cls.user_input_validation(username, password)
 
         redis = await AsyncRedis.get_connection()
