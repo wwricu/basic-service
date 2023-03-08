@@ -26,6 +26,9 @@ class Resource(BaseTable):
         self.permission = permission
         self.parent_url = parent_url
 
+    def __str__(self):
+        return self.title if self.title else ''
+
     __tablename__ = 'resource'
     title = Column(String(255))
     url = Column(String(255), unique=True)

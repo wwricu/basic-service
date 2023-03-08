@@ -23,7 +23,7 @@ class SysUser(BaseTable):
 
 class SysRole(BaseTable):
     def __str__(self):
-        return self.name
+        return self.name if self.name else ''
 
     __tablename__ = 'sys_role'
     name = Column(String(20), unique=True, comment="role name")
@@ -46,7 +46,7 @@ class SysRole(BaseTable):
 
 class SysPermission(BaseTable):
     def __str__(self):
-        return self.name
+        return self.name if self.name else ''
     __tablename__ = 'sys_permission'
     name = Column(String(20), unique=True, comment="permission name")
     description = Column(String(255), comment="permission description")
