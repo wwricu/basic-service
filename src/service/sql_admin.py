@@ -20,6 +20,8 @@ from service import SecurityService
 
 
 class ContentAdmin(ModelView, model=Content):
+    can_edit = False
+    can_create = False
     column_list = [
         Content.title,
         Content.parent,

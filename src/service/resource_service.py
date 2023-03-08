@@ -76,13 +76,15 @@ class ResourceService:
         res = await BaseDao.update(resource, resource.__class__)
 
         if resource.url != old_resources[0].url:
+            tasks = []
             for sub in sub_resources:
                 """
                 foreign key restraint here:
                 must update parent url to make it existing
                 """
                 sub.parent_url = resource.url
-                asyncio.create_task(ResourceService.modify_resource(sub))
+                tasks.append(ResourceService.modify_resource(sub))
+            await asyncio.gather(*tasks)
         return res
 
     @staticmethod
