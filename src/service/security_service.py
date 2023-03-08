@@ -62,7 +62,7 @@ async def verify_2fa_token(
         return None
     try:
         data = SecurityService.verify_jwt_token(
-            two_fa_token, Config.jwt.key
+            two_fa_token, Config.two_fa.jwt_key
         )
     except Exception as e:
         logger.warn(e)
@@ -75,6 +75,11 @@ async def check_2fa_code(
     user_output: UserOutput = Depends(verify_2fa_token),
     redis: Redis = Depends(AsyncRedis.get_connection)
 ):
+    if user_output is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='failed to verify 2fa code'
+        )
     existed_code = await redis.get(
         f'2fa_code:username:{user_output.username}'
     )
@@ -94,6 +99,7 @@ async def check_2fa_code(
 
 class SecurityService:
     ACCESS_TIMEOUT_HOUR, REFRESH_TIMEOUT_HOUR = 1, 24 * 7
+    TWO_FA_TIMEOUT_MINUTE = 5
 
     optional_login_required: callable = optional_login_required
     login_required: callable = login_required
@@ -237,7 +243,9 @@ class SecurityService:
                 email=f'{sys_user.email[:2]}****{sys_user.email[-2:]}'
             ),
             headers={'X-2fa-token': cls.create_jwt_token(
-                user_output, Config.two_fa.jwt_key, minutes=5
+                user_output,
+                Config.two_fa.jwt_key,
+                minutes=cls.TWO_FA_TIMEOUT_MINUTE
             )}
         )
 

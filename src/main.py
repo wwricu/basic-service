@@ -16,7 +16,7 @@ from dao import AsyncDatabase, AsyncRedis
 from service import HTTPService, MailService, SqlAdmin
 
 
-app = FastAPI()
+app = FastAPI(title='wwr website', version='1.0.0')
 
 
 def schedule_jobs():

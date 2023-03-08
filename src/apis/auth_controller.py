@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 import config
@@ -8,13 +8,17 @@ from schemas import TokenResponse, UserOutput
 
 
 auth_router = APIRouter(prefix='/auth', tags=['auth'])
-ACCESS_TIMEOUT_HOUR, REFRESH_TIMEOUT_HOUR = 1, 24 * 7
 
 
 @auth_router.get('', response_model=UserOutput)
 async def get_current_user(
     user_output: UserOutput = Depends(SecurityService.optional_login_required)
 ):
+    if user_output is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='please login to get user info'
+        )
     return user_output
 
 
@@ -22,7 +26,7 @@ async def get_current_user(
     '', response_model=TokenResponse,
     dependencies=[
         Depends(AsyncDatabase.open_session),
-        Depends(APIThrottle(30)),
+        Depends(APIThrottle(30))
     ]
 )
 async def login(
@@ -50,7 +54,7 @@ async def login(
             status_code=config.Status.HTTP_440_2FA_NEEDED,
             detail='please check the otp sent to {email}'.format(
                 email=f'{user_output.email[:2]}****{user_output.email[-2:]}'
-            ),
+            )
         )
 
     user_output = await SecurityService.user_login(
@@ -60,9 +64,7 @@ async def login(
     return SecurityService.create_access_tokens(user_output)
 
 
-@auth_router.post(
-    '/2fa', response_model=TokenResponse
-)
+@auth_router.post('/2fa', response_model=TokenResponse)
 async def login_2fa(
     user_output: UserOutput = Depends(SecurityService.check_2fa_code)
 ):
