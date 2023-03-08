@@ -9,7 +9,7 @@ from models import Content, Folder, PostCategory, PostTag, Resource
 
 class ResourceBase(BaseModel):
     id: int = None
-    title: str = None
+    title: str = ''  # not null
     parent_url: str = None
     permission: int = None
 

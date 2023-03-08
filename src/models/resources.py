@@ -30,8 +30,8 @@ class Resource(BaseTable):
         return self.title if self.title else ''
 
     __tablename__ = 'resource'
-    title = Column(String(255))
-    url = Column(String(255), unique=True)
+    title = Column(String(255), nullable=False)
+    url = Column(String(255), unique=True, nullable=False)
     this_url = Column(String(255), comment='For concat after rename')
 
     owner_id = Column(Integer, ForeignKey('sys_user.id'))

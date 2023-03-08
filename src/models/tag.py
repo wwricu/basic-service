@@ -30,7 +30,7 @@ class PostTag(Tag):
         ForeignKey('tag.id', ondelete='CASCADE'),
         primary_key=True
     )
-    name = Column(String(128), unique=True)
+    name = Column(String(128), unique=True, nullable=False)
 
     posts = relationship(
         'Content',
@@ -59,7 +59,7 @@ class PostCategory(Tag):
         ForeignKey('tag.id', ondelete='CASCADE'),
         primary_key=True
     )
-    name = Column(String(128), unique=True)
+    name = Column(String(128), unique=True, nullable=False)
 
     posts = relationship('Content', back_populates='category')
     __mapper_args__ = {
