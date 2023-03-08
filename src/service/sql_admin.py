@@ -2,6 +2,7 @@ import hashlib
 from threading import Lock
 
 from fastapi import FastAPI, Request
+from jwt import InvalidTokenError
 from sqladmin import Admin, ModelView
 from sqladmin.authentication import AuthenticationBackend
 
@@ -133,10 +134,13 @@ class SqlAdmin(AuthenticationBackend):
         return True
 
     async def authenticate(self, request: Request) -> bool:
-        SecurityService.verify_jwt_token(
-            request.session.get('access_token'),
-            Config.jwt.key
-        )
+        try:
+            SecurityService.verify_jwt_token(
+                request.session.get('access_token'),
+                Config.jwt.key
+            )
+        except InvalidTokenError:
+            return False
         return True
 
     @classmethod
