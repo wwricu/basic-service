@@ -20,8 +20,11 @@ from service import SecurityService
 
 
 class ContentAdmin(ModelView, model=Content):
-    can_edit = False
+    name = "Post"
+    name_plural = "Posts"
+    icon = "fa-solid fa-book"
     can_create = False
+
     column_list = [
         Content.title,
         Content.parent,
@@ -31,10 +34,18 @@ class ContentAdmin(ModelView, model=Content):
         Content.permission
     ]
     column_details_list = column_list
-    form_columns = column_list
+    form_columns = [
+        Content.title,
+        Content.category,
+        Content.tags,
+    ]
 
 
 class SysRoleAdmin(ModelView, model=SysRole):
+    name = "Role"
+    name_plural = "Roles"
+    icon = "fa-solid fa-users"
+
     column_list = [
         SysRole.id,
         SysRole.name,
@@ -45,6 +56,10 @@ class SysRoleAdmin(ModelView, model=SysRole):
 
 
 class SysUserAdmin(ModelView, model=SysUser):
+    name = "User"
+    name_plural = "Users"
+    icon = "fa-solid fa-user"
+
     column_list = [
         SysUser.id,
         SysUser.username,
@@ -75,17 +90,25 @@ class SysUserAdmin(ModelView, model=SysUser):
 
 
 class PostCategoryAdmin(ModelView, model=PostCategory):
+    name = "Category"
+    name_plural = "Categories"
+    icon = "fa-solid fa-list"
+    can_view_details = False
+
     column_list = [PostCategory.name]
     column_details_list = column_list
     form_columns = column_list
-    can_view_details = False
 
 
 class PostTagAdmin(ModelView, model=PostTag):
+    name = "Tag"
+    name_plural = "Tags"
+    icon = "fa-solid fa-tag"
+    can_view_details = False
+
     column_list = [PostTag.name]
     column_details_list = column_list
     form_columns = column_list
-    can_view_details = False
 
 
 class SqlAdmin(AuthenticationBackend):
@@ -134,8 +157,8 @@ class SqlAdmin(AuthenticationBackend):
             ContentAdmin,
             PostCategoryAdmin,
             PostTagAdmin,
-            SysRoleAdmin,
             SysUserAdmin,
+            SysRoleAdmin,
         ):
             cls.__admin.add_view(view)
         cls.__lock.release()
