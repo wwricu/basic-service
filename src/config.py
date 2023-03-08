@@ -21,7 +21,7 @@ class AdminConfig:
         self,
         username: str,
         password: str,
-        email: str | None = None,
+        email: str,
         role: dict | None = MappingProxyType({'name': 'admin'})
     ):
         self.username = username
@@ -48,11 +48,11 @@ class DatabaseConfig:
     def __init__(
         self,
         drivername: str,
+        database: str,  # below can be omitted for sqlite
         username: str | None = None,
         password: str | None = None,
         host: str | None = None,
         port: int | None = None,
-        database: str | None = None
     ):
         self.drivername = drivername
         self.username = username
@@ -80,15 +80,35 @@ class JWTConfig:
 class MailConfig:
     def __init__(
         self,
-        host: str | None = None,
-        port: int = 0,
-        username: str | None = None,
-        password: str | None = None,
+        host: str,
+        port: int,
+        username: str,
+        password: str,
     ):
         self.host = host
         self.port = port
         self.username = username
         self.password = password
+
+
+class MiddlewareConfig:
+    def __init__(
+        self,
+        allow_origin_regex: str | None = 'https?://.*',
+        allow_credentials: bool | None = True,
+        allow_methods: list[str] | None = ('*',),
+        allow_headers: list[str] | None = ('*',),
+        expose_headers: list[str] | None = (
+            "X-token-need-refresh",
+            "X-content-id",
+            "X-2fa-token"
+        ),
+    ):
+        self.allow_origin_regex = allow_origin_regex
+        self.allow_credentials = allow_credentials
+        self.allow_methods = allow_methods
+        self.allow_headers = allow_headers
+        self.expose_headers = expose_headers
 
 
 class RedisConfig:
@@ -114,22 +134,24 @@ class StaticResource:
 class TwoFAConfig:
     def __init__(
         self,
+        jwt_key: str,
         enforcement: bool | None = False,
-        jwt_key: str | None = None
     ):
-        self.enforcement = enforcement
         self.jwt_key = jwt_key
+        self.enforcement = enforcement
 
 
 class Config:
-    database: DatabaseConfig = None
-    redis: RedisConfig = None
     admin: AdminConfig = None
-    mail: MailConfig = None
+    database: DatabaseConfig = None
+    folders: list[Folder] = []
     jwt: JWTConfig = None
     static: StaticResource = None
-    folders: list[Folder] = []
+    # compulsory above
     algolia: AlgoliaConfig = None
+    mail: MailConfig = None
+    middleware: MiddlewareConfig = None
+    redis: RedisConfig = None
     two_fa: TwoFAConfig = None
 
     @classmethod
@@ -152,29 +174,32 @@ class Config:
     @classmethod
     def load_json(
         cls,
-        database: dict,
         admin: dict,
+        database: dict,
+        folders: dict,
         jwt: dict,
         static: dict,
-        folders: dict,
         two_fa: dict,
+        algolia: dict | None = None,
+        middleware: dict | None = MappingProxyType({}),
         mail: dict | None = None,
         redis: dict | None = None,
-        algolia: dict | None = None,
+        *args,
         **kwargs
     ):
-        _ = kwargs
+        _, _ = args, kwargs
         cls.database = DatabaseConfig(**database)
         cls.admin = AdminConfig(**admin)
         cls.jwt = JWTConfig(**jwt)
         cls.static = StaticResource(**static)
         cls.two_fa = TwoFAConfig(**two_fa)
-        # mail and redis are optional
-        if mail is not None:
-            cls.mail = MailConfig(**mail)
-        if redis is not None:
-            cls.redis = RedisConfig(**redis)
+
         if algolia is not None:
             cls.algolia = AlgoliaConfig(**algolia)
         for folder in folders:
             cls.folders.append(Folder(**folder))
+        if mail is not None:
+            cls.mail = MailConfig(**mail)
+        cls.middleware = MiddlewareConfig(**middleware)
+        if redis is not None:
+            cls.redis = RedisConfig(**redis)

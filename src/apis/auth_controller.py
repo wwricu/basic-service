@@ -42,7 +42,7 @@ async def login(
         Additionally, webpage do not need to intentionally remove
         token because an expired token has no effect to normal login.
         The api was throttled within 30 seconds to limit generation
-        as well as possible vicious username-password login attempts.
+        as well as possible malicious username-password login attempts.
         '''
         redis = await AsyncRedis.get_connection()
         await SecurityService.generate_2fa_code(user_output, redis)

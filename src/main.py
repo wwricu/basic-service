@@ -58,15 +58,7 @@ async def startup():
     )
     app.add_middleware(
         CORSMiddleware,
-        allow_origin_regex='https?://.*',
-        allow_credentials=True,
-        allow_methods=['*'],
-        allow_headers=['*'],
-        expose_headers=[
-            'X-token-need-refresh',
-            'X-content-id',
-            'X-2fa-token'
-        ]
+        **Config.middleware.__dict__
     )
 
 

@@ -1,24 +1,4 @@
 {
-  "database": {
-    "drivername": "postgresql+asyncpg",
-    "username": "postgres",
-    "password": "153226",
-    "host": "127.0.0.1",
-    "port": 5432,
-    "database": "fastdb"
-  },
-  "two_fa": {
-    "enforcement": false,
-    "jwt_key": "51b73f6883a157f0d003bdf533d877c25cb2a1b2b5f5a84dba5c8760c7be4112"
-  },
-  "jwt": {
-    "key": "8cf395c08d690e754fdc05f074adbc0b1dee6ed3577c35c6533e01e4b7037363",
-    "algorithm": "HS256",
-    "headers": {
-      "alg": "HS256",
-      "typ": "JWT"
-    }
-  },
   "admin": {
     "username": "wwr",
     "password": "test_password",
@@ -27,9 +7,13 @@
       "name": "admin"
     }
   },
-  "static": {
-    "root_path": "static",
-    "content_path": "static/content"
+  "database": {
+    "drivername": "postgresql+asyncpg",
+    "username": "postgres",
+    "password": "153226",
+    "host": "127.0.0.1",
+    "port": 5432,
+    "database": "fastdb"
   },
   "folders": [
     {
@@ -51,5 +35,32 @@
       "owner_id": 1,
       "permission": 700
     }
-  ]
+  ],
+  "middleware": {
+    "allow_origin_regex": "https?://.*",
+    "allow_credentials": true,
+    "allow_methods": ["*"],
+    "allow_headers": ["*"],
+    "expose_headers": [
+      "X-token-need-refresh",
+      "X-content-id",
+      "X-2fa-token"
+    ]
+  },
+  "jwt": {
+    "key": "8cf395c08d690e754fdc05f074adbc0b1dee6ed3577c35c6533e01e4b7037363",
+    "algorithm": "HS256",
+    "headers": {
+      "alg": "HS256",
+      "typ": "JWT"
+    }
+  },
+  "static": {
+    "root_path": "static",
+    "content_path": "static/content"
+  },
+  "two_fa": {
+    "enforcement": false,
+    "jwt_key": "51b73f6883a157f0d003bdf533d877c25cb2a1b2b5f5a84dba5c8760c7be4112"
+  }
 }
