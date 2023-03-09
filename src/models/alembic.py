@@ -7,7 +7,7 @@ AlembicBase = declarative_base()
 
 class AlembicVersion(AlembicBase):
     __tablename__ = 'alembic_version'
-    ALEMBIC_VERSION: str = '69366a21b194'
+    ALEMBIC_VERSION: str = '5f1533ae3bf3'
     version_num = Column(String(32), primary_key=True, nullable=False)
 
     def __init__(self):

@@ -132,11 +132,10 @@ class SecurityService:
     def create_jwt_token(
         user_info: UserOutput,
         key: str,
-        **kwargs,   # default for access_token
+        **kwargs,  # key arguments for jwt expiry
     ) -> bytes:
         data = user_info.dict()
-        delta = timedelta(**kwargs)
-        data.update({'exp': datetime.utcnow() + delta})
+        data['exp'] = datetime.utcnow() + timedelta(**kwargs)
         return jwt.encode(
             payload=data,
             key=key,
