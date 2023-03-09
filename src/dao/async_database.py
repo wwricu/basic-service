@@ -120,7 +120,9 @@ class AsyncDatabase:
             admin = SysUser(
                 username=Config.admin.username,
                 password_hash=bcrypt.hashpw(password, bcrypt.gensalt()),
-                email=Config.admin.email
+                email=Config.admin.email,
+                two_fa_enforced=Config.admin.two_fa_enforced,
+                totp_key=Config.admin.totp_key
             )
 
             session.add(admin_role)

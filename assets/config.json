@@ -5,7 +5,9 @@
     "email": "iswangwr@gmail.com",
     "role": {
       "name": "admin"
-    }
+    },
+    "two_fa_enforced": false,
+    "totp_key": "DUVCCWUQTLAIVRR4UAOCSWDKO3DB5T4IJPB5M5FMYYN4CYRUPH6NJU6PO6MKLYWL"
   },
   "database": {
     "drivername": "postgresql+asyncpg",

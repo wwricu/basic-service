@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import cast, Coroutine
 
 import bcrypt
+import pyotp
 from fastapi import Body, Depends, Header, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordBearer
 from redis.asyncio import Redis
@@ -74,18 +75,30 @@ async def check_2fa_code(
     two_fa_code: str = Body(),
     user_output: UserOutput = Depends(verify_2fa_token),
     redis: Redis = Depends(AsyncRedis.get_connection)
-):
+) -> UserOutput:
     if user_output is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='failed to verify 2fa code'
+            detail='failed to verify 2fa token'
         )
+
+    totp_key: bytes = await redis.get(
+        f'totp_key:username:{user_output.username}'
+    )
+    if totp_key is not None:
+        if pyotp.TOTP(totp_key.decode()).verify(two_fa_code) is True:
+            return user_output
+        raise HTTPException(
+            status_code=Status.HTTP_442_2FA_FAILED,
+            detail='totp mismatch, please try again'
+        )
+
     existed_code = await redis.get(
         f'2fa_code:username:{user_output.username}'
     )
     if existed_code.decode() != two_fa_code:
         raise HTTPException(
-            status_code=Status.HTTP_441_2FA_FAILED,
+            status_code=Status.HTTP_442_2FA_FAILED,
             detail='otp mismatch, please try again'
         )
     asyncio.create_task(cast(Coroutine, redis.delete(
@@ -211,7 +224,7 @@ class SecurityService:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=f'no such user: {username}'
             )
-        sys_user = sys_user[0]
+        sys_user: SysUser = sys_user[0]
 
         if cls.verify_password(password, sys_user.password_hash) is False:
             await cast(Coroutine, redis.set(
@@ -230,17 +243,43 @@ class SecurityService:
         4. IP throttle controlled by another dependency
         '''
         user_output = UserOutput.init(sys_user)
-        if need_2fa is None and Config.two_fa.enforcement is False:
+        if (
+            need_2fa is None and
+            Config.two_fa.enforcement is False and
+            sys_user.two_fa_enforced is False
+        ):
             return UserOutput.init(sys_user)
-        # 2fa enforced below
-        # if not isinstance(existed_code, bytes):
-            # no 2fa code, generate 6 digits and return
-        await cls.generate_2fa_code(user_output, redis)
-        raise HTTPException(
-            status_code=Status.HTTP_440_2FA_NEEDED,
-            detail='please check the otp sent to {email}'.format(
+        '''
+        2fa enforced below
+        About 2fa method selection:
+        time based otp (TOTP) passcode is more secure than mail based
+        otp because attacks could happen after mail account leakage,
+        when a secure authentication co-exists with a compromised one,
+        the former authentication essentially lost its security. Also,
+        the mail based otp produces much spam so TOTP is prior to mail
+        based otp, users can disable TOTP by deleting their totp_key.
+        '''
+        if sys_user.totp_key is not None:
+            '''
+            if totp_key expired while 2fa_token not,
+            the authentication will be fallback to mail,
+            this could be a potential security breach.
+            '''
+            await cast(Coroutine, redis.set(
+                f'totp_key:username:{sys_user.username}',
+                sys_user.totp_key, ex=600
+            ))  # use totp if totp_key exists
+            status_code = Status.HTTP_441_TOTP_2FA_NEEDED
+            detail = 'please check your totp application'
+        else:
+            await cls.generate_2fa_code(user_output, redis)
+            status_code = Status.HTTP_440_MAIL_2FA_NEEDED
+            detail = 'please check the otp sent to {email}'.format(
                 email=f'{sys_user.email[:2]}****{sys_user.email[-2:]}'
-            ),
+            )
+        raise HTTPException(
+            status_code=status_code,
+            detail=detail,
             headers={'X-2fa-token': cls.create_jwt_token(
                 user_output,
                 Config.two_fa.jwt_key,

@@ -12,8 +12,9 @@ logger = logging.getLogger()
 
 
 class Status(IntEnum):
-    HTTP_440_2FA_NEEDED: int = 440
-    HTTP_441_2FA_FAILED: int = 441
+    HTTP_440_MAIL_2FA_NEEDED: int = 440
+    HTTP_441_TOTP_2FA_NEEDED: int = 441
+    HTTP_442_2FA_FAILED: int = 442
 
 
 class AdminConfig:
@@ -22,12 +23,16 @@ class AdminConfig:
         username: str,
         password: str,
         email: str,
-        role: dict | None = MappingProxyType({'name': 'admin'})
+        role: dict | None = MappingProxyType({'name': 'admin'}),
+        two_fa_enforced: bool | None = False,
+        totp_key: str | None = None
     ):
         self.username = username
         self.password = password
         self.email = email
         self.role = role
+        self.two_fa_enforced = two_fa_enforced
+        self.totp_key = totp_key
 
 
 class AlgoliaConfig:

@@ -64,15 +64,18 @@ class SysUserAdmin(ModelView, model=SysUser):
         SysUser.id,
         SysUser.username,
         SysUser.email,
-        SysUser.roles
+        SysUser.roles,
+        SysUser.two_fa_enforced,
+        SysUser.totp_key
     ]
     column_details_list = column_list
     form_columns = [
-        SysUser.id,
         SysUser.username,
         SysUser.password_hash,
         SysUser.email,
-        SysUser.roles
+        SysUser.roles,
+        SysUser.two_fa_enforced,
+        SysUser.totp_key
     ]
     column_labels = {SysUser.password_hash: "Password"}
 

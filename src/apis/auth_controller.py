@@ -49,9 +49,16 @@ async def login(
         as well as possible malicious username-password login attempts.
         '''
         redis = await AsyncRedis.get_connection()
+        if await redis.get(
+            f'totp_key:username:{user_output.username}'
+        ) is not None:
+            raise HTTPException(
+                status_code=config.Status.HTTP_441_TOTP_2FA_NEEDED,
+                detail='please check your totp application'
+            )
         await SecurityService.generate_2fa_code(user_output, redis)
         raise HTTPException(
-            status_code=config.Status.HTTP_440_2FA_NEEDED,
+            status_code=config.Status.HTTP_440_MAIL_2FA_NEEDED,
             detail='please check the otp sent to {email}'.format(
                 email=f'{user_output.email[:2]}****{user_output.email[-2:]}'
             )
@@ -64,7 +71,10 @@ async def login(
     return SecurityService.create_access_tokens(user_output)
 
 
-@auth_router.post('/2fa', response_model=TokenResponse)
+@auth_router.post(
+    '/2fa', response_model=TokenResponse,
+    dependencies=[Depends(APIThrottle(10))]
+)
 async def login_2fa(
     user_output: UserOutput = Depends(SecurityService.check_2fa_code)
 ):
