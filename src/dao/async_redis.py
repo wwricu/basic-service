@@ -36,10 +36,11 @@ class AsyncRedis(StrictRedis):
     async def get_connection(cls) -> AsyncRedis:
         if Config.redis is None:
             return FakeRedis.get_instance()
-        return AsyncRedis(connection_pool=cls.__pool)
+        return cls(connection_pool=cls.__pool)
 
     @classmethod
     async def close_connection(cls):
+        # 'close' and 'disconnect' was used by base class
         if cls.__pool is not None:
             await cls.__pool.disconnect()
 
@@ -50,7 +51,7 @@ class FakeRedis(AsyncRedis):
     __instance: FakeRedis = None
 
     @classmethod
-    def get_instance(cls):
+    def get_instance(cls) -> AsyncRedis:
         cls.__lock.acquire()
         if cls.__instance is None:
             cls.__instance = cls()

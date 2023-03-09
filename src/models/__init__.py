@@ -22,5 +22,5 @@ __all__ = [
     'SysPermission',
     'SysRole',
     'SysUser',
-    'UserRole',
+    'UserRole'
 ]

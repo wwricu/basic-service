@@ -23,11 +23,11 @@ def schedule_jobs():
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
         MailService.daily_mail,
-        CronTrigger(hour=8, timezone='Asia/Shanghai'),
+        CronTrigger(hour=8, timezone='Asia/Shanghai')
     )
     scheduler.add_job(
         HTTPService.parse_bing_image_url,
-        CronTrigger(hour=1, timezone='US/Pacific'),
+        CronTrigger(hour=1, timezone='US/Pacific')
     )
     scheduler.start()
     logger.info('schedule jobs started')

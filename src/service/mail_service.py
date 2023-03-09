@@ -24,7 +24,7 @@ class MailService:
         cls,
         recipients: list[str],
         subject: str | None = None,
-        message: str | None = None,
+        message: str | None = None
     ):
         if Config.mail is None:
             return
@@ -41,7 +41,7 @@ class MailService:
             hostname=Config.mail.host,
             port=Config.mail.port,
             start_tls=False,
-            use_tls=False,
+            use_tls=False
         )
         try:
             await smtp.connect()
@@ -62,7 +62,7 @@ class MailService:
         cls,
         recipients: list[str],
         subject: str | None = None,
-        message: str | None = None,
+        message: str | None = None
     ):
         if Config.mail is None:
             return
@@ -111,5 +111,5 @@ class MailService:
         asyncio.create_task(MailService.send_mail_async(
             ['iswangwr@outlook.com'],
             f'Today is {datetime.datetime.today().date()}',
-            message,
+            message
         ))

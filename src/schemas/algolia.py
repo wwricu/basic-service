@@ -22,7 +22,7 @@ class AlgoliaPostIndex(BaseModel):
             objectID=content.id,
             title=content.title,
             created_time=int(datetime.timestamp(content.created_time)),
-            updated_time=int(datetime.timestamp(content.updated_time)),
+            updated_time=int(datetime.timestamp(content.updated_time))
         )
         if content.category_id is not None:
             index.category = content.category.name

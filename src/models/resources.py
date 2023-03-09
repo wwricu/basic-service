@@ -97,7 +97,7 @@ class Folder(Resource):
 
     __mapper_args__ = {
         'polymorphic_identity': 'folder',
-        'inherit_condition': id == Resource.id,
+        'inherit_condition': id == Resource.id
     }
 
 
@@ -148,5 +148,5 @@ class Content(Resource):
 
     __mapper_args__ = {
         'polymorphic_identity': 'content',
-        'inherit_condition': id == Resource.id,
+        'inherit_condition': id == Resource.id
     }

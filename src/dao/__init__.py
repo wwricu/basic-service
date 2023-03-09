@@ -7,5 +7,5 @@ __all__ = [
     'AsyncDatabase',
     'AsyncRedis',
     'BaseDao',
-    'ResourceDao',
+    'ResourceDao'
 ]

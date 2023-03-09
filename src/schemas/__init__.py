@@ -26,5 +26,5 @@ __all__ = [
     'TokenResponse',
     'UserInput',
     'UserOutput',
-    'WeatherSchema',
+    'WeatherSchema'
 ]

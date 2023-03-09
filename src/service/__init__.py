@@ -19,5 +19,5 @@ __all__ = [
     'SecurityService',
     'SqlAdmin',
     'TagService',
-    'UserService',
+    'UserService'
 ]

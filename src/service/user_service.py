@@ -7,7 +7,7 @@ from schemas import UserInput, UserOutput
 class UserService:
     @staticmethod
     async def user_login(
-        user_input: UserInput,
+        user_input: UserInput
     ) -> UserOutput:
         sys_user = (await BaseDao.select(user_input, SysUser))[0]
 

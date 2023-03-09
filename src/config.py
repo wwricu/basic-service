@@ -57,7 +57,7 @@ class DatabaseConfig:
         username: str | None = None,
         password: str | None = None,
         host: str | None = None,
-        port: int | None = None,
+        port: int | None = None
     ):
         self.drivername = drivername
         self.username = username
@@ -88,7 +88,7 @@ class MailConfig:
         host: str,
         port: int,
         username: str,
-        password: str,
+        password: str
     ):
         self.host = host
         self.port = port
@@ -107,7 +107,7 @@ class MiddlewareConfig:
             "X-token-need-refresh",
             "X-content-id",
             "X-2fa-token"
-        ),
+        )
     ):
         self.allow_origin_regex = allow_origin_regex
         self.allow_credentials = allow_credentials
@@ -140,7 +140,7 @@ class TwoFAConfig:
     def __init__(
         self,
         jwt_key: str,
-        enforcement: bool | None = False,
+        enforcement: bool | None = False
     ):
         self.jwt_key = jwt_key
         self.enforcement = enforcement

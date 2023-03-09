@@ -39,7 +39,7 @@ class PostTag(Tag):
     )
     __mapper_args__ = {
         'polymorphic_identity': 'post_tag',
-        'inherit_condition': id == Tag.id,
+        'inherit_condition': id == Tag.id
     }
 
 
@@ -64,5 +64,5 @@ class PostCategory(Tag):
     posts = relationship('Content', back_populates='category')
     __mapper_args__ = {
         'polymorphic_identity': 'post_category',
-        'inherit_condition': id == Tag.id,
+        'inherit_condition': id == Tag.id
     }

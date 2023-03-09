@@ -208,14 +208,14 @@ class SecurityService:
     async def user_login(
         cls,
         username: str,
-        password: bytes,
+        password: bytes
     ) -> UserOutput:
         cls.user_input_validation(username, password)
 
         redis = await AsyncRedis.get_connection()
         sys_user, need_2fa = await asyncio.gather(
             BaseDao.select(UserInput(username=username), SysUser),
-            redis.get(f'need_2fa:username:{username}'),
+            redis.get(f'need_2fa:username:{username}')
         )
         if len(sys_user) != 1:
             raise HTTPException(

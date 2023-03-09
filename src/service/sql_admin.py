@@ -13,7 +13,7 @@ from models import (
     PostCategory,
     PostTag,
     SysRole,
-    SysUser,
+    SysUser
 )
 from schemas import UserOutput
 from service import SecurityService
@@ -65,8 +65,7 @@ class SysUserAdmin(ModelView, model=SysUser):
         SysUser.username,
         SysUser.email,
         SysUser.roles,
-        SysUser.two_fa_enforced,
-        SysUser.totp_key
+        SysUser.two_fa_enforced
     ]
     column_details_list = column_list
     form_columns = [
@@ -163,7 +162,7 @@ class SqlAdmin(AuthenticationBackend):
             PostCategoryAdmin,
             PostTagAdmin,
             SysUserAdmin,
-            SysRoleAdmin,
+            SysRoleAdmin
         ):
             cls.__admin.add_view(view)
         cls.__lock.release()
