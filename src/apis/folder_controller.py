@@ -3,7 +3,6 @@ import pickle
 from typing import cast, Coroutine
 
 from fastapi import APIRouter, Depends
-from redis.asyncio import Redis
 
 from dao import AsyncDatabase, AsyncRedis
 from models import Content, Folder, Resource
@@ -43,7 +42,7 @@ async def get_sub_count(
     url: str = None,
     resource_query: ResourceQuery = Depends(),
     cur_user: UserOutput = Depends(SecurityService.optional_login_required),
-    redis: Redis = Depends(AsyncRedis.get_connection)
+    redis: AsyncRedis = Depends(AsyncRedis.get_connection)
 ):
     if len(url) > 0 and url[0] != '/':
         url = f'/{url}'
@@ -87,7 +86,7 @@ async def get_folder(
     url: str = '',
     resource_query: ResourceQuery = Depends(),
     cur_user: UserOutput = Depends(SecurityService.optional_login_required),
-    redis: Redis = Depends(AsyncRedis.get_connection)
+    redis: AsyncRedis = Depends(AsyncRedis.get_connection)
 ):
     if len(url) > 0 and url[0] != '/':
         url = f'/{url}'

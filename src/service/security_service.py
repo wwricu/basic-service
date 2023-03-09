@@ -8,7 +8,6 @@ import bcrypt
 import pyotp
 from fastapi import Body, Depends, Header, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordBearer
-from redis.asyncio import Redis
 
 from .mail_service import MailService
 from .render_service import RenderService
@@ -74,7 +73,7 @@ async def verify_2fa_token(
 async def check_2fa_code(
     two_fa_code: str = Body(),
     user_output: UserOutput = Depends(verify_2fa_token),
-    redis: Redis = Depends(AsyncRedis.get_connection)
+    redis: AsyncRedis = Depends(AsyncRedis.get_connection)
 ) -> UserOutput:
     if user_output is None:
         raise HTTPException(
@@ -175,7 +174,7 @@ class SecurityService:
     async def generate_2fa_code(
         cls,
         user_output: UserOutput,
-        redis: Redis
+        redis: AsyncRedis
     ):
         two_fa_code = str(secrets.randbelow(1000000)).zfill(6)
         logger.info(f'2fa code for {user_output.username} is {two_fa_code}')
@@ -314,7 +313,7 @@ class APIThrottle:
     async def __call__(
         self,
         request: Request,
-        redis: Redis = Depends(AsyncRedis.get_connection)
+        redis: AsyncRedis = Depends(AsyncRedis.get_connection)
     ):
         key = 'throttle:url:{path}:method:{method}:ip:{ip}'.format(
             path=request.url.path,

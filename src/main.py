@@ -65,7 +65,7 @@ async def startup():
 @app.on_event('shutdown')
 async def shutdown():
     await asyncio.gather(
-        AsyncRedis.close(),
+        AsyncRedis.close_connection(),
         AsyncDatabase.close()
     )
     logger.info('see u later')

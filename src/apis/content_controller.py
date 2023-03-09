@@ -3,7 +3,6 @@ import pickle
 from typing import cast, Coroutine
 
 from fastapi import APIRouter, Depends
-from redis.asyncio import Redis
 
 from dao import AsyncDatabase, AsyncRedis
 from models import Content, Resource
@@ -27,7 +26,7 @@ content_router = APIRouter(
 async def add_content(
     content_input: ContentInput,
     cur_user: UserOutput = Depends(RoleRequired('admin')),
-    redis: Redis = Depends(AsyncRedis.get_connection)
+    redis: AsyncRedis = Depends(AsyncRedis.get_connection)
 ):
     content = Content(**content_input.dict())
     content.owner_id = cur_user.id
@@ -49,7 +48,7 @@ async def add_content(
 async def get_content(
     content_id: int,
     cur_user: UserOutput = Depends(SecurityService.optional_login_required),
-    redis: Redis = Depends(AsyncRedis.get_connection)
+    redis: AsyncRedis = Depends(AsyncRedis.get_connection)
 ):
     contents_str = await redis.get(f'content:id:{content_id}')
     if contents_str is not None:
@@ -71,7 +70,7 @@ async def get_content(
 )
 async def modify_content(
     content_input: ContentInput,
-    redis: Redis = Depends(AsyncRedis.get_connection)
+    redis: AsyncRedis = Depends(AsyncRedis.get_connection)
 ):
     await ResourceService.reset_content_tags(Content(**content_input.dict()))
     content = await ResourceService.modify_resource(
@@ -98,7 +97,7 @@ async def modify_content(
 )
 async def delete_content(
     content_id: int,
-    redis: Redis = Depends(AsyncRedis.get_connection)
+    redis: AsyncRedis = Depends(AsyncRedis.get_connection)
 ):
     for task in (
         AlgoliaService.delete_contents([content_id]),

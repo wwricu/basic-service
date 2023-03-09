@@ -4,13 +4,19 @@ import pickle
 from threading import Lock
 from typing import Awaitable, cast
 
-from redis.asyncio import ConnectionPool, Redis, StrictRedis
+from redis.asyncio import ConnectionPool, StrictRedis
 
 from config import Config, logger
 
 
-class AsyncRedis:
+class AsyncRedis(StrictRedis):
     __pool: ConnectionPool = None
+
+    async def set(self, *args, **kwargs) -> bool | None:
+        return await cast(Awaitable, super().set(*args, **kwargs))
+
+    async def delete(self, *args):
+        await cast(Awaitable, super().delete(*args))
 
     @classmethod
     async def init_redis(cls):
@@ -26,13 +32,13 @@ class AsyncRedis:
         logger.info('redis connected')
 
     @classmethod
-    async def get_connection(cls) -> Redis:
+    async def get_connection(cls) -> AsyncRedis:
         if Config.redis is None:
-            return cast(Redis, FakeRedis.get_instance())
-        return StrictRedis(connection_pool=cls.__pool)
+            return cast(AsyncRedis, FakeRedis.get_instance())
+        return AsyncRedis(connection_pool=cls.__pool)
 
     @classmethod
-    async def close(cls):
+    async def close_connection(cls):
         if cls.__pool is not None:
             await cls.__pool.disconnect()
 

@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from redis import Redis
 
 from config import Config
 from dao import AsyncRedis
@@ -13,7 +12,7 @@ default_router = APIRouter(prefix='/default', tags=['default'])
     '/bing', response_model=str,
     dependencies=[Depends(APIThrottle(60))]
 )
-async def get_bing_image(redis: Redis = Depends(AsyncRedis.get_connection)):
+async def get_bing_image(redis: AsyncRedis = Depends(AsyncRedis.get_connection)):
     url: bytes = await redis.get('bing_image_url')
     if url is None:
         return await HTTPService.parse_bing_image_url()
