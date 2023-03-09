@@ -1,5 +1,4 @@
 import re
-from typing import cast, Coroutine
 
 import aiohttp
 
@@ -49,5 +48,5 @@ class HTTPService:
                 if image_url is None:
                     return 'failed to get bing image url'
                 url = f'{cls.BING_URL}{image_url.__str__()}'
-                await cast(Coroutine, redis.set('bing_image_url', url))
+                await redis.set('bing_image_url', url)
                 return url

@@ -1,6 +1,5 @@
 import asyncio
 import pickle
-from typing import cast, Coroutine
 
 from fastapi import APIRouter, Depends
 
@@ -34,11 +33,11 @@ async def add_content(
     content.parent_url = '/draft'
 
     content = await ResourceService.add_resource(content)
-    for task in cast(tuple[Coroutine], (
+    for task in (
         redis.set(f'content:id:{content.id}', pickle.dumps(content)),
         redis.set('count_dict', pickle.dumps(dict())),
         redis.set('preview_dict', pickle.dumps(dict()))
-    )):
+    ):
         asyncio.create_task(task)
 
     return content.id
@@ -55,10 +54,9 @@ async def get_content(
         contents = [pickle.loads(contents_str)]
     else:
         contents = await ResourceService.find_resources(Content(id=content_id))
-        asyncio.create_task(cast(
-            Coroutine,
+        asyncio.create_task(
             redis.set(f'content:id:{content_id}', pickle.dumps(contents[0]))
-        ))
+        )
     assert len(contents) == 1
     ResourceService.check_permission(contents[0], cur_user, 1)
     return ContentOutput.init(contents[0])

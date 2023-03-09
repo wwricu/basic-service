@@ -2,7 +2,6 @@ import asyncio
 import jwt
 import secrets
 from datetime import datetime, timedelta
-from typing import cast, Coroutine
 
 import bcrypt
 import pyotp
@@ -100,12 +99,12 @@ async def check_2fa_code(
             status_code=Status.HTTP_442_2FA_FAILED,
             detail='otp mismatch, please try again'
         )
-    asyncio.create_task(cast(Coroutine, redis.delete(
+    asyncio.create_task(redis.delete(
         f'need_2fa:username:{user_output.username}'
-    )))
-    asyncio.create_task(cast(Coroutine, redis.delete(
+    ))
+    asyncio.create_task(redis.delete(
         f'2fa_code:username:{user_output.username}'
-    )))
+    ))
     return user_output
 
 
@@ -189,10 +188,10 @@ class SecurityService:
         users can refresh 2fa_code one time per 30 seconds according
         to api throttle imposed on /login, total expiration is 10min. 
         '''
-        asyncio.create_task(cast(Coroutine, redis.set(
+        asyncio.create_task(redis.set(
             f'2fa_code:username:{user_output.username}',
             two_fa_code, ex=300
-        )))
+        ))
 
     @classmethod
     def user_input_validation(cls, username: str, password: bytes):
@@ -226,9 +225,7 @@ class SecurityService:
         sys_user: SysUser = sys_user[0]
 
         if cls.verify_password(password, sys_user.password_hash) is False:
-            await cast(Coroutine, redis.set(
-                f'need_2fa:username:{username}', 'True'
-            ))
+            await redis.set(f'need_2fa:username:{username}', 'True')
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='password mismatch'
@@ -264,10 +261,10 @@ class SecurityService:
             the authentication will be fallback to mail,
             this could be a potential security breach.
             '''
-            await cast(Coroutine, redis.set(
+            await redis.set(
                 f'totp_key:username:{sys_user.username}',
                 sys_user.totp_key, ex=600
-            ))  # use totp if totp_key exists
+            )  # use totp if totp_key exists
             status_code = Status.HTTP_441_TOTP_2FA_NEEDED
             detail = 'please check your totp application'
         else:
@@ -331,6 +328,6 @@ class APIThrottle:
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail=message
             )
-        asyncio.create_task(cast(
-            Coroutine, redis.set(key, '0', ex=self.throttle)
-        ))
+        asyncio.create_task(
+            redis.set(key, '0', ex=self.throttle)
+        )

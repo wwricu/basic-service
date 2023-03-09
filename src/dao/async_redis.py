@@ -12,6 +12,7 @@ from config import Config, logger
 class AsyncRedis(StrictRedis):
     __pool: ConnectionPool = None
 
+    # override two methods below ONLY for type hint
     async def set(self, *args, **kwargs) -> bool | None:
         return await cast(Awaitable, super().set(*args, **kwargs))
 
@@ -27,14 +28,14 @@ class AsyncRedis(StrictRedis):
             logger.warn('failed to connect to redis')
 
         redis = await cls.get_connection()
-        await cast(Awaitable, redis.set('preview_dict', pickle.dumps(dict())))
-        await cast(Awaitable, redis.set('count_dict', pickle.dumps(dict())))
+        await redis.set('preview_dict', pickle.dumps(dict()))
+        await redis.set('count_dict', pickle.dumps(dict()))
         logger.info('redis connected')
 
     @classmethod
     async def get_connection(cls) -> AsyncRedis:
         if Config.redis is None:
-            return cast(AsyncRedis, FakeRedis.get_instance())
+            return FakeRedis.get_instance()
         return AsyncRedis(connection_pool=cls.__pool)
 
     @classmethod
@@ -43,7 +44,7 @@ class AsyncRedis(StrictRedis):
             await cls.__pool.disconnect()
 
 
-class FakeRedis:
+class FakeRedis(AsyncRedis):
     __data: dict[str, bytes | None] = dict()
     __lock: Lock = Lock()
     __instance: FakeRedis = None
