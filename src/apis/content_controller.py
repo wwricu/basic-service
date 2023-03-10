@@ -54,9 +54,9 @@ async def get_content(
         contents = [pickle.loads(contents_str)]
     else:
         contents = await ResourceService.find_resources(Content(id=content_id))
-        asyncio.create_task(
-            redis.set(f'content:id:{content_id}', pickle.dumps(contents[0]))
-        )
+        asyncio.create_task(redis.set(
+            f'content:id:{content_id}', pickle.dumps(contents[0])
+        ))
     assert len(contents) == 1
     ResourceService.check_permission(contents[0], cur_user, 1)
     return ContentOutput.init(contents[0])
