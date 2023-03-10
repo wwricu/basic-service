@@ -46,12 +46,8 @@ class MailService:
         try:
             await smtp.connect()
             await smtp.starttls()
-            await smtp.login(Config.mail.username,
-                             Config.mail.password)
-            await smtp.send_message(
-                recipients=recipients,
-                message=msg
-            )
+            await smtp.login(Config.mail.username, Config.mail.password)
+            await smtp.send_message(recipients=recipients, message=msg)
         except aiosmtplib.SMTPException as e:
             logger.warn('failed to send mail', e)
         finally:
@@ -75,10 +71,7 @@ class MailService:
         except Exception as e:
             logger.error('failed compose email', e)
 
-        smtp = SMTP(
-            host=Config.mail.host,
-            port=Config.mail.port
-        )
+        smtp = SMTP(host=Config.mail.host, port=Config.mail.port)
         try:
             smtp.starttls()
             smtp.login(

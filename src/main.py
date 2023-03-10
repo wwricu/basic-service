@@ -56,18 +56,12 @@ async def startup():
         StaticFiles(directory=Config.static.root_path),
         name=Config.static.root_path
     )
-    app.add_middleware(
-        CORSMiddleware,
-        **Config.middleware.__dict__
-    )
+    app.add_middleware(CORSMiddleware, **Config.middleware.__dict__)
 
 
 @app.on_event('shutdown')
 async def shutdown():
-    await asyncio.gather(
-        AsyncRedis.close_connection(),
-        AsyncDatabase.close()
-    )
+    await asyncio.gather(AsyncRedis.close_connection(), AsyncDatabase.close())
     logger.info('see u later')
 
 

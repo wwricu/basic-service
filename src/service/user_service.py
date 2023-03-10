@@ -29,7 +29,6 @@ class UserService:
             email=user_input.email,
             roles=[]
         )
-
         return UserOutput.init(await BaseDao.insert(sys_user))
 
     @staticmethod

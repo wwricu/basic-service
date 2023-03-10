@@ -72,15 +72,11 @@ async def get_sub_count(
             Content
         )
         count_dict[key] = count
-        asyncio.create_task(
-            redis.set('count_dict', pickle.dumps(count_dict))
-        )
+        asyncio.create_task(redis.set('count_dict', pickle.dumps(count_dict)))
     return count
 
 
-@folder_router.get(
-    '/sub_content/{url:path}', response_model=list[ResourcePreview]
-)
+@folder_router.get('/sub_content/{url:path}', response_model=list[ResourcePreview])
 async def get_folder(
     url: str = '',
     resource_query: ResourceQuery = Depends(),

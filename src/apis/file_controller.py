@@ -19,9 +19,7 @@ from service import HTTPService, RoleRequired
 file_router = APIRouter(prefix='/file', tags=['file'])
 
 
-@file_router.post(
-    '/static/upload', dependencies=[Depends(RoleRequired('admin'))]
-)
+@file_router.post('/static/upload', dependencies=[Depends(RoleRequired('admin'))])
 async def upload(files: list[UploadFile], request: Request):
     async_tasks, content_path = [], Path('{path}/{content_id}'.format(
         path=Config.static.content_path,
@@ -35,9 +33,7 @@ async def upload(files: list[UploadFile], request: Request):
     return {'files': await asyncio.gather(*async_tasks)}
 
 
-@file_router.post(
-    '/static/url', dependencies=[Depends(RoleRequired('admin'))]
-)
+@file_router.post('/static/url', dependencies=[Depends(RoleRequired('admin'))])
 async def upload(request: Request, url: str = Body(embed=True)):
     # embed: expect {"url": "str"} instead of "str"
     content_path = Path('{path}/{content_id}'.format(

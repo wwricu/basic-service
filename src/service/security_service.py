@@ -337,6 +337,4 @@ class APIThrottle:
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail=message
             )
-        asyncio.create_task(
-            redis.set(key, '0', ex=self.throttle)
-        )
+        asyncio.create_task(redis.set(key, '0', ex=self.throttle))

@@ -51,9 +51,7 @@ class BaseDao:
         class_name: Table | Type,
         *, session: AsyncSession
     ) -> BaseTable | None:
-        obj_update: BaseTable | None = await session.get(
-            class_name, obj.id
-        )
+        obj_update: BaseTable | None = await session.get(class_name, obj.id)
         if obj_update is None:
             return
 
