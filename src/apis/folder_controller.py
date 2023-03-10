@@ -59,10 +59,10 @@ async def get_sub_count(
     ResourceService.check_permission(folders[0], cur_user, 1)
 
     count_dict: dict = pickle.loads(await redis.get('count_dict'))
-    key = (
-        f'count:url{url}:'
-        + f'category_name:{resource_query.category_name}:'
-        + f'tag_name:{resource_query.tag_name}:'
+    key = 'count:url:{url}:category_name:{category}:tag_name:{tag}'.format(
+        url=url,
+        category=resource_query.category_name,
+        tag=resource_query.tag_name
     )
     count = count_dict.get(key)
     if count is None:
@@ -100,11 +100,11 @@ async def get_folder(
 
     preview_dict: dict = pickle.loads(await redis.get('preview_dict'))
     key = (
-        f'preview:url{url}:'
+        f'preview:url:{url}:'
         + f'category_name:{resource_query.category_name}:'
         + f'tag_name:{resource_query.tag_name}:'
         + f'page_idx:{resource_query.page_idx}:'
-        + f'page_size:{resource_query.page_size}:'
+        + f'page_size:{resource_query.page_size}'
     )
     sub_resources = preview_dict.get(key)
     if sub_resources is None:
