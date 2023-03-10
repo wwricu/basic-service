@@ -1,6 +1,5 @@
 from __future__ import annotations
 import asyncio
-import pickle
 from threading import Lock
 from typing import Awaitable, cast
 
@@ -19,6 +18,9 @@ class AsyncRedis(StrictRedis):
     async def delete(self, *args):
         await cast(Awaitable, super().delete(*args))
 
+    async def hset(self, *args, **kwargs):
+        await cast(Awaitable, super().hset(*args, **kwargs))
+
     @classmethod
     async def init_redis(cls):
         try:
@@ -26,10 +28,6 @@ class AsyncRedis(StrictRedis):
         except (Exception,):
             Config.redis = None  # switch to memory storage
             logger.warn('failed to connect to redis')
-
-        redis = await cls.get_connection()
-        await redis.set('preview_dict', pickle.dumps(dict()))
-        await redis.set('count_dict', pickle.dumps(dict()))
         logger.info('redis connected')
 
     @classmethod
@@ -46,7 +44,7 @@ class AsyncRedis(StrictRedis):
 
 
 class FakeRedis(AsyncRedis):
-    __data: dict[str, bytes | None] = dict()
+    __data: dict[str, bytes | dict | None] = dict()
     __lock: Lock = Lock()
     __instance: FakeRedis = None
 
@@ -77,6 +75,30 @@ class FakeRedis(AsyncRedis):
             self.__data[key] = value
         if ex > 0:
             asyncio.create_task(self.delete_timer(key, ex))
+
+    async def hget(self, key: str, field: str, *args, **kwargs) -> bytes | None:
+        with self.__lock:
+            hash_map: dict[str, bytes | None] = self.__data.get(key)
+            return hash_map.get(field) if isinstance(hash_map, dict) else None
+
+    async def hset(
+        self,
+        key: str,
+        field: str,
+        value: str | bytes,
+        *args,
+        **kwargs
+    ):
+        self.__lock.acquire()
+        hash_map = self.__data.get(key)
+        if hash_map is None:
+            hash_map: dict[str, bytes | None] = dict()
+        assert isinstance(hash_map, dict)
+        if isinstance(value, str):
+            value = value.encode()
+        hash_map[field] = value
+        self.__data[key] = hash_map
+        self.__lock.release()
 
     async def delete(self, key: str, *args, **kwargs):
         _, _ = args, kwargs

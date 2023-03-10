@@ -35,8 +35,8 @@ async def add_content(
     content = await ResourceService.add_resource(content)
     for task in (
         redis.set(f'content:id:{content.id}', pickle.dumps(content)),
-        redis.set('count_dict', pickle.dumps(dict())),
-        redis.set('preview_dict', pickle.dumps(dict()))
+        redis.delete('count_dict'),
+        redis.delete('preview_dict')
     ):
         asyncio.create_task(task)
 
@@ -81,8 +81,8 @@ async def modify_content(
         else AlgoliaService.delete_contents([content.id]),
         ResourceService.trim_files(content_input.id, content_input.files),
         redis.set(f'content:id:{content.id}', pickle.dumps(content)),
-        redis.set('count_dict', pickle.dumps(dict())),
-        redis.set('preview_dict', pickle.dumps(dict()))
+        redis.delete('count_dict'),
+        redis.delete('preview_dict')
     ):
         asyncio.create_task(task)
 
@@ -101,8 +101,8 @@ async def delete_content(
         AlgoliaService.delete_contents([content_id]),
         ResourceService.trim_files(content_id, set()),
         redis.delete(f'content:id:{content_id}'),
-        redis.set('count_dict', pickle.dumps(dict())),
-        redis.set('preview_dict', pickle.dumps(dict()))
+        redis.delete('count_dict'),
+        redis.delete('preview_dict')
     ):
         asyncio.create_task(task)
     return await ResourceService.remove_resource(Resource(id=content_id))

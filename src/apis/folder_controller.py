@@ -58,21 +58,20 @@ async def get_sub_count(
     assert len(folders) == 1
     ResourceService.check_permission(folders[0], cur_user, 1)
 
-    count_dict: dict = pickle.loads(await redis.get('count_dict'))
-    key = 'count:url:{url}:category_name:{category}:tag_name:{tag}'.format(
+    field = 'count:url:{url}:category_name:{category}:tag_name:{tag}'.format(
         url=url,
         category=resource_query.category_name,
         tag=resource_query.tag_name
     )
-    count = count_dict.get(key)
-    if count is None:
-        count = await ResourceService.find_sub_count(
-            folders[0].url,
-            resource_query,
-            Content
-        )
-        count_dict[key] = count
-        asyncio.create_task(redis.set('count_dict', pickle.dumps(count_dict)))
+    count = await redis.hget('count_dict', field)
+    if count is not None:
+        return int(count.decode())
+    count = await ResourceService.find_sub_count(
+        folders[0].url,
+        resource_query,
+        Content
+    )
+    asyncio.create_task(redis.hset('count_dict', field, str(count)))
     return count
 
 
@@ -91,30 +90,30 @@ async def get_folder(
         folders = pickle.loads(folders_str)
     else:
         folders = await ResourceService.find_resources(Folder(url=url))
-        asyncio.create_task(
-            redis.set(f'folder:url:{url}', pickle.dumps(folders))
-        )
+        asyncio.create_task(redis.set(
+            f'folder:url:{url}', pickle.dumps(folders)
+        ))
 
     assert len(folders) == 1
     ResourceService.check_permission(folders[0], cur_user, 1)
 
-    preview_dict: dict = pickle.loads(await redis.get('preview_dict'))
-    key = (
+    field = (
         f'preview:url:{url}:'
         + f'category_name:{resource_query.category_name}:'
         + f'tag_name:{resource_query.tag_name}:'
         + f'page_idx:{resource_query.page_idx}:'
         + f'page_size:{resource_query.page_size}'
     )
-    sub_resources = preview_dict.get(key)
+    sub_resources = await redis.hget('preview_dict', field)
     if sub_resources is None:
         sub_resources = await ResourceService.find_sub_resources(
             url, resource_query, Content
         )
-        preview_dict[key] = sub_resources
-        asyncio.create_task(
-            redis.set('preview_dict', pickle.dumps(preview_dict))
-        )
+        asyncio.create_task(redis.hset(
+            'preview_dict', field, pickle.dumps(sub_resources)
+        ))
+    else:
+        sub_resources = pickle.loads(sub_resources)
     return [ResourcePreview.init(x) for x in sub_resources]
 
 
