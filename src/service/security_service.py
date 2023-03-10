@@ -80,30 +80,39 @@ async def check_2fa_code(
             detail='failed to verify 2fa token'
         )
 
+    totp_key, existed_code = await asyncio.gather(
+        redis.get(f'totp_key:username:{user_output.username}'),
+        redis.get(f'2fa_code:username:{user_output.username}')
+    )
     totp_key: bytes = await redis.get(
         f'totp_key:username:{user_output.username}'
     )
-    if totp_key is not None:
-        if pyotp.TOTP(totp_key.decode()).verify(two_fa_code) is True:
-            return user_output
+    if isinstance(totp_key, bytes):
+        if pyotp.TOTP(totp_key.decode()).verify(two_fa_code) is False:
+            raise HTTPException(
+                status_code=Status.HTTP_442_2FA_FAILED,
+                detail='totp mismatch, please try again'
+            )
+        asyncio.create_task(redis.delete(  # success
+            f'totp_key:username:{user_output.username}'
+        ))
+    elif isinstance(existed_code, bytes):
+        if existed_code.decode() != two_fa_code:
+            raise HTTPException(
+                status_code=Status.HTTP_442_2FA_FAILED,
+                detail='otp mismatch, please try again'
+            )
+        asyncio.create_task(redis.delete(  # success
+            f'2fa_code:username:{user_output.username}'
+        ))
+    else:
         raise HTTPException(
-            status_code=Status.HTTP_442_2FA_FAILED,
-            detail='totp mismatch, please try again'
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='no available otp, please contact system admin'
         )
-
-    existed_code = await redis.get(
-        f'2fa_code:username:{user_output.username}'
-    )
-    if existed_code.decode() != two_fa_code:
-        raise HTTPException(
-            status_code=Status.HTTP_442_2FA_FAILED,
-            detail='otp mismatch, please try again'
-        )
+    # success
     asyncio.create_task(redis.delete(
         f'need_2fa:username:{user_output.username}'
-    ))
-    asyncio.create_task(redis.delete(
-        f'2fa_code:username:{user_output.username}'
     ))
     return user_output
 
