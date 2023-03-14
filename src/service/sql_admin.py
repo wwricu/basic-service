@@ -85,9 +85,7 @@ class SysUserAdmin(ModelView, model=SysUser):
         is_created: bool
     ) -> None:
         data['password_hash'] = SecurityService.get_password_hash(
-            hashlib.sha256(
-                data['password_hash'].encode()
-            ).hexdigest().encode()
+            hashlib.sha256(data['password_hash'].encode()).hexdigest().encode()
         )
 
 

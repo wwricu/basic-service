@@ -149,11 +149,13 @@ class SecurityService:
         )
 
     @staticmethod
-    def create_jwt_token(
-        user_info: UserOutput,
-        key: str,
-        **kwargs,  # key arguments for jwt expiry
-    ) -> bytes:
+    def create_jwt_token(user_info: UserOutput, key: str, **kwargs) -> bytes:
+        """
+        :param user_info: UserOutput pydantic model
+        :param key: secrets for jwt encoding
+        :param kwargs: key arguments for datetime.timedelta
+        :return: jwt token bytes
+        """
         data = user_info.dict()
         data['exp'] = datetime.utcnow() + timedelta(**kwargs)
         return jwt.encode(
@@ -214,11 +216,7 @@ class SecurityService:
             )
 
     @classmethod
-    async def user_login(
-        cls,
-        username: str,
-        password: bytes
-    ) -> UserOutput:
+    async def user_login(cls, username: str, password: bytes) -> UserOutput:
         cls.user_input_validation(username, password)
 
         redis = await AsyncRedis.get_connection()
