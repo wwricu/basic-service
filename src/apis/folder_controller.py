@@ -75,7 +75,10 @@ async def get_sub_count(
     return count
 
 
-@folder_router.get('/sub_content/{url:path}', response_model=list[ResourcePreview])
+@folder_router.get(
+    '/sub_content/{url:path}',
+    response_model=list[ResourcePreview]
+)
 async def get_folder(
     url: str = '',
     resource_query: ResourceQuery = Depends(),

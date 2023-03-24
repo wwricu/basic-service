@@ -76,7 +76,14 @@ class FakeRedis(AsyncRedis):
         if ex > 0:
             asyncio.create_task(self.delete_timer(key, ex))
 
-    async def hget(self, key: str, field: str, *args, **kwargs) -> bytes | None:
+    async def hget(
+        self,
+        key: str,
+        field: str,
+        *args,
+        **kwargs
+    ) -> bytes | None:
+        _, _ = args, kwargs
         with self.__lock:
             hash_map: dict[str, bytes | None] = self.__data.get(key)
             return hash_map.get(field) if isinstance(hash_map, dict) else None
@@ -89,6 +96,7 @@ class FakeRedis(AsyncRedis):
         *args,
         **kwargs
     ):
+        _, _ = args, kwargs
         self.__lock.acquire()
         hash_map = self.__data.get(key)
         if hash_map is None:

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-import config
+from config import Status
 from dao import AsyncDatabase, AsyncRedis
 from service import APIThrottle, SecurityService
 from schemas import TokenResponse, UserOutput
@@ -53,12 +53,12 @@ async def login(
             f'totp_key:username:{user_output.username}'
         ) is not None:
             raise HTTPException(
-                status_code=config.Status.HTTP_441_TOTP_2FA_NEEDED,
+                status_code=Status.HTTP_441_TOTP_2FA_NEEDED,
                 detail='please check your totp application'
             )
         await SecurityService.generate_2fa_code(user_output, redis)
         raise HTTPException(
-            status_code=config.Status.HTTP_440_MAIL_2FA_NEEDED,
+            status_code=Status.HTTP_440_MAIL_2FA_NEEDED,
             detail='please check the otp sent to {email}'.format(
                 email=f'{user_output.email[:2]}****{user_output.email[-2:]}'
             )

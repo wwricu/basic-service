@@ -35,7 +35,7 @@ class SysUser(BaseTable):
     with `base64.b32encode(secrets.token_bytes(nbytes=40)).decode()`
     base32 use 32 aka 2^5 ASCII characters to present 5 bits, so
     40 bytes aka 320 bits will be separated to 320 / 5 = 64 groups,
-    to form a base32 string with a length of 64. 
+    to form a base32 string with a length of 64.
     '''
     two_fa_enforced = Column(Boolean, nullable=False, default=False)
     totp_key = Column(String(64), nullable=True)  # 64 length base32 string

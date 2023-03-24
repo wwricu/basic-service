@@ -19,7 +19,10 @@ from service import HTTPService, RoleRequired
 file_router = APIRouter(prefix='/file', tags=['file'])
 
 
-@file_router.post('/static/upload', dependencies=[Depends(RoleRequired('admin'))])
+@file_router.post(
+    '/static/upload',
+    dependencies=[Depends(RoleRequired('admin'))]
+)
 async def upload(files: list[UploadFile], request: Request):
     async_tasks, content_path = [], Path('{path}/{content_id}'.format(
         path=Config.static.content_path,
@@ -34,7 +37,7 @@ async def upload(files: list[UploadFile], request: Request):
 
 
 @file_router.post('/static/url', dependencies=[Depends(RoleRequired('admin'))])
-async def upload(request: Request, url: str = Body(embed=True)):
+async def rewrite_url(request: Request, url: str = Body(embed=True)):
     # embed: expect {"url": "str"} instead of "str"
     content_path = Path('{path}/{content_id}'.format(
         path=Config.static.content_path,
@@ -52,10 +55,10 @@ async def upload(request: Request, url: str = Body(embed=True)):
     return res
 
 
-async def save_file(file: bytes | UploadFile, content_path: Path, filename: str):
+async def save_file(file: bytes | UploadFile, path: Path, filename: str):
     """
     :param file: file payload or UploadFile, read it out if later
-    :param content_path:
+    :param path:
     Path object of expected parent folder, without leading/tailing slash
     :param filename: original file name with suffix
     :return: {
@@ -66,7 +69,7 @@ async def save_file(file: bytes | UploadFile, content_path: Path, filename: str)
     if not isinstance(file, bytes):
         file = await file.read()
 
-    file_path = content_path.joinpath('{real_name}.{suffix}'.format(
+    file_path = path.joinpath('{real_name}.{suffix}'.format(
         real_name=hashlib.md5(filename.encode(encoding='utf-8')).hexdigest(),
         suffix=filename.split('.')[-1]
     ))

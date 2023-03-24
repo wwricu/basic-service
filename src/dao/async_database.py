@@ -5,7 +5,7 @@ from contextvars import ContextVar
 import bcrypt
 from sqlalchemy import func, select, text
 from sqlalchemy.engine import URL
-from sqlalchemy.exc import IntegrityError, OperationalError, ProgrammingError 
+from sqlalchemy.exc import IntegrityError, OperationalError, ProgrammingError
 from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     AsyncEngine,

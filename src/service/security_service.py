@@ -5,7 +5,15 @@ from datetime import datetime, timedelta
 
 import bcrypt
 import pyotp
-from fastapi import Body, Depends, Header, HTTPException, Request, Response, status
+from fastapi import (
+    Body,
+    Depends,
+    Header,
+    HTTPException,
+    Request,
+    Response,
+    status
+)
 from fastapi.security import OAuth2PasswordBearer
 
 from .mail_service import MailService
@@ -197,7 +205,7 @@ class SecurityService:
         '''
         2fa_code and 2fa_token both has an expiration of 5 minutes
         users can refresh 2fa_code one time per 30 seconds according
-        to api throttle imposed on /login, total expiration is 10min. 
+        to api throttle imposed on /login, total expiration is 10min.
         '''
         asyncio.create_task(redis.set(
             f'2fa_code:username:{user_output.username}',

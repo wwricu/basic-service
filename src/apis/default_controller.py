@@ -12,7 +12,7 @@ default_router = APIRouter(prefix='/default', tags=['default'])
     '/bing', response_model=str,
     dependencies=[Depends(APIThrottle(60))]
 )
-async def get_bing_image(redis: AsyncRedis = Depends(AsyncRedis.get_connection)):
+async def bing_url(redis: AsyncRedis = Depends(AsyncRedis.get_connection)):
     url: bytes = await redis.get('bing_image_url')
     if url is None:
         return await HTTPService.parse_bing_image_url()

@@ -35,7 +35,7 @@ def schedule_jobs():
 
 @app.on_event('startup')
 async def startup():
-    # print() cannot print every unicode character, change to uft-8 under windows
+    # print() cannot print every unicode character under unicode windows
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
 
     await Config.init_config()
