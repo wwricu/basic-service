@@ -18,7 +18,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 from .mail_service import MailService
 from .render_service import RenderService
-from config import Config, logger, Status
+from config import Config, CustomHeaders, logger, Status
 from dao import AsyncRedis, BaseDao, RedisKey
 from models import SysUser
 from schemas import TokenResponse, UserInput, UserOutput
@@ -44,7 +44,7 @@ async def optional_login_required(
         data = SecurityService.verify_jwt_token(
             refresh_token, Config.jwt.key
         )
-        response.headers['X-token-need-refresh'] = 'true'
+        response.headers[CustomHeaders.TOKEN_NEED_REFRESH] = 'true'
     except Exception as e:
         logger.warn(e)
         return None
@@ -288,7 +288,7 @@ class SecurityService:
         raise HTTPException(
             status_code=status_code,
             detail=detail,
-            headers={'X-2fa-token': cls.create_jwt_token(
+            headers={CustomHeaders.TWO_FA_TOKEN: cls.create_jwt_token(
                 user_output,
                 Config.two_fa.jwt_key,
                 minutes=cls.TWO_FA_TIMEOUT_MINUTE

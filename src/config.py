@@ -1,6 +1,6 @@
 import json
 import logging
-from enum import IntEnum
+from enum import IntEnum, StrEnum, unique
 from types import MappingProxyType
 
 from anyio import Path
@@ -11,6 +11,14 @@ from models import Folder
 logger = logging.getLogger()
 
 
+@unique
+class CustomHeaders(StrEnum):
+    CONTENT_ID: str = 'x-content-id'  # input header use lower case x
+    TOKEN_NEED_REFRESH: str = 'X-token-need-refresh'
+    TWO_FA_TOKEN: str = 'X-2fa-token'
+
+
+@unique
 class Status(IntEnum):
     HTTP_440_MAIL_2FA_NEEDED: int = 440
     HTTP_441_TOTP_2FA_NEEDED: int = 441

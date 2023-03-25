@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from config import Status
+from config import CustomHeaders, Status
 from dao import AsyncDatabase, AsyncRedis, RedisKey
 from service import APIThrottle, SecurityService
 from schemas import TokenResponse, UserOutput
@@ -86,5 +86,5 @@ async def refresh(
     response: Response,
     cur_user: UserOutput = Depends(SecurityService.login_required)
 ):
-    response.headers['X-token-need-refresh'] = 'false'
+    response.headers[CustomHeaders.TOKEN_NEED_REFRESH] = 'false'
     return SecurityService.create_access_tokens(cur_user)

@@ -12,7 +12,7 @@ from fastapi import (
     UploadFile
 )
 
-from config import Config
+from config import Config, CustomHeaders
 from service import HTTPService, RoleRequired
 
 
@@ -26,7 +26,10 @@ file_router = APIRouter(prefix='/file', tags=['file'])
 async def upload(files: list[UploadFile], request: Request):
     async_tasks, content_path = [], Path('{path}/{content_id}'.format(
         path=Config.static.content_path,
-        content_id=request.headers.get('x-content-id', default='default')
+        content_id=request.headers.get(
+            CustomHeaders.CONTENT_ID,
+            default='default'
+        )
     ))
     if not await Path.exists(content_path):
         await Path.mkdir(content_path)
@@ -41,7 +44,10 @@ async def rewrite_url(request: Request, url: str = Body(embed=True)):
     # embed: expect {"url": "str"} instead of "str"
     content_path = Path('{path}/{content_id}'.format(
         path=Config.static.content_path,
-        content_id=request.headers.get('x-content-id', default='default')
+        content_id=request.headers.get(
+            CustomHeaders.CONTENT_ID,
+            default='default'
+        )
     ))
     if not await Path.exists(content_path):
         await Path.mkdir(content_path)
