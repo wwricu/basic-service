@@ -14,3 +14,7 @@ class BaseTable(Base):
         _, _ = args, kwargs
         super().__init__()
         self.id = id
+
+    def __getattr__(self, name: str):
+        _ = name
+        return None
