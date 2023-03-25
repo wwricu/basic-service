@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from config import Config
-from dao import AsyncRedis
+from dao import AsyncRedis, RedisKey
 from service import AlgoliaService, APIThrottle, HTTPService
 
 
@@ -13,7 +13,7 @@ default_router = APIRouter(prefix='/default', tags=['default'])
     dependencies=[Depends(APIThrottle(60))]
 )
 async def bing_url(redis: AsyncRedis = Depends(AsyncRedis.get_connection)):
-    url: bytes = await redis.get('bing_image_url')
+    url: bytes = await redis.get(RedisKey.BING_IMAGE_URL)
     if url is None:
         return await HTTPService.parse_bing_image_url()
     return url.decode()

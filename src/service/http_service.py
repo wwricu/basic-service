@@ -2,7 +2,7 @@ import re
 
 import aiohttp
 
-from dao import AsyncRedis
+from dao import AsyncRedis, RedisKey
 
 
 class HTTPService:
@@ -48,5 +48,5 @@ class HTTPService:
                 if image_url is None:
                     return 'failed to get bing image url'
                 url = f'{cls.BING_URL}{image_url.__str__()}'
-                await redis.set('bing_image_url', url)
+                await redis.set(RedisKey.BING_IMAGE_URL, url)
                 return url

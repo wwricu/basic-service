@@ -3,7 +3,7 @@ import pickle
 
 from fastapi import APIRouter, Depends
 
-from dao import AsyncDatabase, AsyncRedis
+from dao import AsyncDatabase, AsyncRedis, RedisKey
 from models import Content, Folder, Resource
 from schemas import (
     FolderInput,
@@ -46,24 +46,24 @@ async def get_sub_count(
     if len(url) > 0 and url[0] != '/':
         url = f'/{url}'
 
-    folders_str = await redis.get(f'folder:url:{url}')
+    folders_str = await redis.get(RedisKey.folder(url))
     if folders_str is not None:
         folders = pickle.loads(folders_str)
     else:
         folders = await ResourceService.find_resources(Folder(url=url))
         asyncio.create_task(redis.set(
-            f'folder:url:{url}', pickle.dumps(folders)
+            RedisKey.folder(url), pickle.dumps(folders)
         ))
 
     assert len(folders) == 1
     ResourceService.check_permission(folders[0], cur_user, 1)
 
-    field = 'count:url:{url}:category_name:{category}:tag_name:{tag}'.format(
-        url=url,
-        category=resource_query.category_name,
-        tag=resource_query.tag_name
+    field = RedisKey.count_field(
+        url,
+        resource_query.category_name,
+        resource_query.tag_name
     )
-    count_str = await redis.hget('count_dict', field)
+    count_str = await redis.hget(RedisKey.COUNT_DICT, field)
     if count_str is not None:
         return int(count_str.decode())
     count = await ResourceService.find_sub_count(
@@ -71,7 +71,7 @@ async def get_sub_count(
         resource_query,
         Content
     )
-    asyncio.create_task(redis.hset('count_dict', field, str(count)))
+    asyncio.create_task(redis.hset(RedisKey.COUNT_DICT, field, str(count)))
     return count
 
 
@@ -88,26 +88,26 @@ async def get_folder(
     if len(url) > 0 and url[0] != '/':
         url = f'/{url}'
 
-    folders_str = await redis.get(f'folder:url:{url}')
+    folders_str = await redis.get(RedisKey.folder(url))
     if folders_str is not None:
         folders = pickle.loads(folders_str)
     else:
         folders = await ResourceService.find_resources(Folder(url=url))
         asyncio.create_task(redis.set(
-            f'folder:url:{url}', pickle.dumps(folders)
+            RedisKey.folder(url), pickle.dumps(folders)
         ))
 
     assert len(folders) == 1
     ResourceService.check_permission(folders[0], cur_user, 1)
 
-    field = (
-        f'preview:url:{url}:'
-        + f'category_name:{resource_query.category_name}:'
-        + f'tag_name:{resource_query.tag_name}:'
-        + f'page_idx:{resource_query.page_idx}:'
-        + f'page_size:{resource_query.page_size}'
+    field = RedisKey.preview_field(
+        url,
+        resource_query.category_name,
+        resource_query.tag_name,
+        resource_query.page_idx,
+        resource_query.page_size
     )
-    resource_str = await redis.hget('preview_dict', field)
+    resource_str = await redis.hget(RedisKey.PREVIEW_DICT, field)
     if resource_str is not None:
         return [ResourcePreview.init(x) for x in pickle.loads(resource_str)]
 
@@ -115,7 +115,7 @@ async def get_folder(
         url, resource_query, Content
     )
     asyncio.create_task(redis.hset(
-        'preview_dict', field, pickle.dumps(sub_resources)
+        RedisKey.PREVIEW_DICT, field, pickle.dumps(sub_resources)
     ))
     return [ResourcePreview.init(x) for x in sub_resources]
 

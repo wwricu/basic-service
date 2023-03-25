@@ -19,7 +19,7 @@ from fastapi.security import OAuth2PasswordBearer
 from .mail_service import MailService
 from .render_service import RenderService
 from config import Config, logger, Status
-from dao import AsyncRedis, BaseDao
+from dao import AsyncRedis, BaseDao, RedisKey
 from models import SysUser
 from schemas import TokenResponse, UserInput, UserOutput
 
@@ -89,11 +89,8 @@ async def check_2fa_code(
         )
 
     totp_key, existed_code = await asyncio.gather(
-        redis.get(f'totp_key:username:{user_output.username}'),
-        redis.get(f'2fa_code:username:{user_output.username}')
-    )
-    totp_key: bytes = await redis.get(
-        f'totp_key:username:{user_output.username}'
+        redis.get(RedisKey.totp_key(user_output.username)),
+        redis.get(RedisKey.two_fa_code(user_output.username))
     )
     if isinstance(totp_key, bytes):
         if pyotp.TOTP(totp_key.decode()).verify(two_fa_code) is False:
@@ -102,7 +99,7 @@ async def check_2fa_code(
                 detail='totp mismatch, please try again'
             )
         asyncio.create_task(redis.delete(  # success
-            f'totp_key:username:{user_output.username}'
+            RedisKey.totp_key(user_output.username)
         ))
     elif isinstance(existed_code, bytes):
         if existed_code.decode() != two_fa_code:
@@ -111,7 +108,7 @@ async def check_2fa_code(
                 detail='otp mismatch, please try again'
             )
         asyncio.create_task(redis.delete(  # success
-            f'2fa_code:username:{user_output.username}'
+            RedisKey.two_fa_code(user_output.username)
         ))
     else:
         raise HTTPException(
@@ -120,7 +117,7 @@ async def check_2fa_code(
         )
     # success
     asyncio.create_task(redis.delete(
-        f'need_2fa:username:{user_output.username}'
+        RedisKey.need_2fa(user_output.username)
     ))
     return user_output
 
@@ -208,7 +205,7 @@ class SecurityService:
         to api throttle imposed on /login, total expiration is 10min.
         '''
         asyncio.create_task(redis.set(
-            f'2fa_code:username:{user_output.username}',
+            RedisKey.two_fa_code(user_output.username),
             two_fa_code, ex=300
         ))
 
@@ -230,7 +227,7 @@ class SecurityService:
         redis = await AsyncRedis.get_connection()
         sys_user, need_2fa = await asyncio.gather(
             BaseDao.select(UserInput(username=username), SysUser),
-            redis.get(f'need_2fa:username:{username}')
+            redis.get(RedisKey.need_2fa(username))
         )
         if len(sys_user) != 1:
             raise HTTPException(
@@ -240,7 +237,7 @@ class SecurityService:
         sys_user: SysUser = sys_user[0]
 
         if cls.verify_password(password, sys_user.password_hash) is False:
-            await redis.set(f'need_2fa:username:{username}', 'True')
+            await redis.set(RedisKey.need_2fa(username), 'True')
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='password mismatch'
@@ -277,7 +274,7 @@ class SecurityService:
             this could be a potential security breach.
             '''
             await redis.set(
-                f'totp_key:username:{sys_user.username}',
+                RedisKey.totp_key(sys_user.username),
                 sys_user.totp_key, ex=600
             )  # use totp if totp_key exists
             status_code = Status.HTTP_441_TOTP_2FA_NEEDED
@@ -327,10 +324,10 @@ class APIThrottle:
         request: Request,
         redis: AsyncRedis = Depends(AsyncRedis.get_connection)
     ):
-        key = 'throttle:url:{path}:method:{method}:ip:{ip}'.format(
-            path=request.url.path,
-            method=request.method,
-            ip=request.client.host
+        key = RedisKey.throttle(
+            request.url.path,
+            request.method,
+            request.client.host
         )
         if await redis.get(key) is not None:
             message = 'too frequent {method} to {path} from {host}'.format(

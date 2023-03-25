@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from config import Status
-from dao import AsyncDatabase, AsyncRedis
+from dao import AsyncDatabase, AsyncRedis, RedisKey
 from service import APIThrottle, SecurityService
 from schemas import TokenResponse, UserOutput
 
@@ -50,7 +50,7 @@ async def login(
         '''
         redis = await AsyncRedis.get_connection()
         if await redis.get(
-            f'totp_key:username:{user_output.username}'
+            RedisKey.totp_key(user_output.username)
         ) is not None:
             raise HTTPException(
                 status_code=Status.HTTP_441_TOTP_2FA_NEEDED,

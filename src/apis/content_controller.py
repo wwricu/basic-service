@@ -3,7 +3,7 @@ import pickle
 
 from fastapi import APIRouter, Depends
 
-from dao import AsyncDatabase, AsyncRedis
+from dao import AsyncDatabase, AsyncRedis, RedisKey
 from models import Content, Resource
 from schemas import AlgoliaPostIndex, ContentInput, ContentOutput, UserOutput
 from service import (
@@ -34,9 +34,9 @@ async def add_content(
 
     content = await ResourceService.add_resource(content)
     for task in (
-        redis.set(f'content:id:{content.id}', pickle.dumps(content)),
-        redis.delete('count_dict'),
-        redis.delete('preview_dict')
+        redis.set(RedisKey.content(content.id), pickle.dumps(content)),
+        redis.delete(RedisKey.COUNT_DICT),
+        redis.delete(RedisKey.PREVIEW_DICT)
     ):
         asyncio.create_task(task)
 
@@ -49,13 +49,13 @@ async def get_content(
     cur_user: UserOutput = Depends(SecurityService.optional_login_required),
     redis: AsyncRedis = Depends(AsyncRedis.get_connection)
 ):
-    contents_str = await redis.get(f'content:id:{content_id}')
+    contents_str = await redis.get(RedisKey.content(content_id))
     if contents_str is not None:
         contents = [pickle.loads(contents_str)]
     else:
         contents = await ResourceService.find_resources(Content(id=content_id))
         asyncio.create_task(redis.set(
-            f'content:id:{content_id}', pickle.dumps(contents[0])
+            RedisKey.content(content_id), pickle.dumps(contents[0])
         ))
     assert len(contents) == 1
     ResourceService.check_permission(contents[0], cur_user, 1)
@@ -80,9 +80,9 @@ async def modify_content(
         ) if content.parent_url == '/post'  # algolia save/delete task
         else AlgoliaService.delete_contents([content.id]),
         ResourceService.trim_files(content_input.id, content_input.files),
-        redis.set(f'content:id:{content.id}', pickle.dumps(content)),
-        redis.delete('count_dict'),
-        redis.delete('preview_dict')
+        redis.set(RedisKey.content(content.id), pickle.dumps(content)),
+        redis.delete(RedisKey.COUNT_DICT),
+        redis.delete(RedisKey.PREVIEW_DICT)
     ):
         asyncio.create_task(task)
 
@@ -100,9 +100,9 @@ async def delete_content(
     for task in (
         AlgoliaService.delete_contents([content_id]),
         ResourceService.trim_files(content_id, set()),
-        redis.delete(f'content:id:{content_id}'),
-        redis.delete('count_dict'),
-        redis.delete('preview_dict')
+        redis.delete(RedisKey.content(content_id)),
+        redis.delete(RedisKey.COUNT_DICT),
+        redis.delete(RedisKey.PREVIEW_DICT)
     ):
         asyncio.create_task(task)
     return await ResourceService.remove_resource(Resource(id=content_id))

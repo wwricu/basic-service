@@ -116,3 +116,61 @@ class FakeRedis(AsyncRedis):
     async def delete_timer(self, key: str, seconds: int):
         await asyncio.sleep(seconds)
         await self.delete(key)
+
+
+class RedisKey:
+    BING_IMAGE_URL = 'bing_image_url'
+    COUNT_DICT = 'count_dict'
+    PREVIEW_DICT = 'preview_dict'
+
+    @staticmethod
+    def totp_key(username: str) -> str:
+        return f'totp_key:username:{username}'
+
+    @staticmethod
+    def two_fa_code(username: str) -> str:
+        return f'2fa_code:username:{username}'
+
+    @staticmethod
+    def need_2fa(username: str) -> str:
+        return f'need_2fa:username:{username}'
+
+    @staticmethod
+    def throttle(path: str, method: str, ip: str | int) -> str:
+        return 'throttle:url:{path}:method:{method}:ip:{ip}'
+
+    @staticmethod
+    def content(content_id: str | int) -> str:
+        return f'content:id:{content_id}'
+
+    @staticmethod
+    def folder(url: str) -> str:
+        return f'folder:url:{url}'
+
+    @staticmethod
+    def preview_field(
+        url: str,
+        category_name: str,
+        tag_name: str,
+        page_idx: int | str,
+        page_size: int | str
+    ) -> str:
+        return (
+            f'preview:url:{url}:'
+            + f'category_name:{category_name}:'
+            + f'tag_name:{tag_name}:'
+            + f'page_idx:{page_idx}:'
+            + f'page_size:{page_size}'
+        )
+
+    @staticmethod
+    def count_field(
+        url: str,
+        category_name: str,
+        tag_name: str,
+    ) -> str:
+        return 'count:url:{}:category_name:{}:tag_name:{}'.format(
+            url,
+            category_name,
+            tag_name
+        )
