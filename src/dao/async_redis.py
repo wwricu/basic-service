@@ -136,7 +136,7 @@ class RedisKey:
 
     @staticmethod
     def throttle(path: str, method: str, ip: str | int) -> str:
-        return 'throttle:url:{path}:method:{method}:ip:{ip}'
+        return f'throttle:url:{path}:method:{method}:ip:{ip}'
 
     @staticmethod
     def content(content_id: str | int) -> str:

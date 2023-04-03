@@ -225,16 +225,16 @@ class SecurityService:
         cls.user_input_validation(username, password)
 
         redis = await AsyncRedis.get_connection()
-        sys_user, need_2fa = await asyncio.gather(
+        sys_users, need_2fa = await asyncio.gather(
             BaseDao.select(UserInput(username=username), SysUser),
             redis.get(RedisKey.need_2fa(username))
         )
-        if len(sys_user) != 1:
+        if len(sys_users) != 1:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=f'no such user: {username}'
             )
-        sys_user: SysUser = sys_user[0]
+        sys_user: SysUser = sys_users[0]
 
         if cls.verify_password(password, sys_user.password_hash) is False:
             await redis.set(RedisKey.need_2fa(username), 'True')
