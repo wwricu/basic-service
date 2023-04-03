@@ -56,8 +56,7 @@ class BaseDao:
             return
 
         for key in obj.__mapper__.c.keys():  # iter all column keys
-            attr = getattr(obj, key, None)
-            if attr is not None:
+            if (attr := getattr(obj, key, None)) is not None:
                 setattr(obj_update, key, attr)
 
         await session.commit()
@@ -88,7 +87,7 @@ class BaseDao:
         count, async_tasks = 0, []
         for obj in objs:
             async_tasks.append(BaseDao.select(obj, class_name))
-        res_group: tuple = await asyncio.gather(*async_tasks)
+        res_group: list = await asyncio.gather(*async_tasks)
         '''
         NOTICE:
         asyncio.gather will ONLY add the exact ASYNC functions

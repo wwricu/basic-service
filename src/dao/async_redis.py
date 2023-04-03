@@ -98,8 +98,7 @@ class FakeRedis(AsyncRedis):
     ):
         _, _ = args, kwargs
         self.__lock.acquire()
-        hash_map = self.__data.get(key)
-        if hash_map is None:
+        if (hash_map := self.__data.get(key)) is None:
             hash_map: dict[str, bytes | None] = dict()
         assert isinstance(hash_map, dict)
         if isinstance(value, str):

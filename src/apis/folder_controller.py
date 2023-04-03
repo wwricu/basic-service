@@ -46,8 +46,7 @@ async def get_sub_count(
     if len(url) > 0 and url[0] != '/':
         url = f'/{url}'
 
-    folders_str = await redis.get(RedisKey.folder(url))
-    if folders_str is not None:
+    if (folders_str := await redis.get(RedisKey.folder(url))) is not None:
         folders = pickle.loads(folders_str)
     else:
         folders = await ResourceService.find_resources(Folder(url=url))
@@ -88,8 +87,7 @@ async def get_folder(
     if len(url) > 0 and url[0] != '/':
         url = f'/{url}'
 
-    folders_str = await redis.get(RedisKey.folder(url))
-    if folders_str is not None:
+    if (folders_str := await redis.get(RedisKey.folder(url))) is not None:
         folders = pickle.loads(folders_str)
     else:
         folders = await ResourceService.find_resources(Folder(url=url))

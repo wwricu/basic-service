@@ -30,8 +30,7 @@ async def startup():
     await SqlAdmin.init(app)
     Config.schedule_jobs()
 
-    path = Path(Config.static.content_path)
-    if not await Path.exists(path):
+    if not await Path.exists(path := Path(Config.static.content_path)):
         await Path.mkdir(path)
 
     app.include_router(router)

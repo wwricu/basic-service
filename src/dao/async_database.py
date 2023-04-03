@@ -61,8 +61,7 @@ class AsyncDatabase:
     def database_session(cls, method: callable) -> callable:
         @functools.wraps(method)
         async def wrapper(*args, **kwargs):
-            session = ctx_db.get()
-            if session is not None:
+            if (session := ctx_db.get()) is not None:
                 return await method(*args, session=session, **kwargs)
             async with cls.__session_maker() as session:
                 return await method(*args, session=session, **kwargs)
