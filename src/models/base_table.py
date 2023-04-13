@@ -15,6 +15,16 @@ class BaseTable(Base):
         super().__init__()
         self.id = id
 
+    """
+    WARNING:
+    THIS IS NOT STABLE
+    SQLAlchemy uses __getattr__ methods for its functionality,
+    so it must NOT be shadowed,
+    or the implementation of BaseModel will NOT be set.
+    A compromise alternative is to check whether the unfounded
+    attribute is one of our keys and return None if true.
+    """
     def __getattr__(self, name: str):
-        _ = name
-        return None
+        if name in self.__mapper__.c.keys():
+            return None
+        raise AttributeError
