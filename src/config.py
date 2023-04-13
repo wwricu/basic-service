@@ -4,11 +4,8 @@ from enum import IntEnum, StrEnum, unique
 from types import MappingProxyType
 
 from anyio import Path
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
 
 from models import Folder
-from service import HTTPService, MailService
 
 
 logger = logging.getLogger()
@@ -219,17 +216,3 @@ class Config:
         cls.middleware = MiddlewareConfig(**middleware)
         if redis is not None:
             cls.redis = RedisConfig(**redis)
-
-    @staticmethod
-    def schedule_jobs():
-        scheduler = AsyncIOScheduler()
-        scheduler.add_job(
-            MailService.daily_mail,
-            CronTrigger(hour=8, timezone='Asia/Shanghai')
-        )
-        scheduler.add_job(
-            HTTPService.parse_bing_image_url,
-            CronTrigger(hour=1, timezone='US/Pacific')
-        )
-        scheduler.start()
-        logger.info('schedule jobs started')

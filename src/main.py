@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from apis import router
 from config import Config, logger
 from dao import AsyncDatabase, AsyncRedis
-from service import SqlAdmin
+from service import schedule_jobs, SqlAdmin
 
 
 app = FastAPI(version='1.0.0')
@@ -28,7 +28,7 @@ async def startup():
         AsyncRedis.init_redis()
     )
     await SqlAdmin.init(app)
-    Config.schedule_jobs()
+    schedule_jobs()
 
     if not await Path.exists(path := Path(Config.static.content_path)):
         await Path.mkdir(path)
