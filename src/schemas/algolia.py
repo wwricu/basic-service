@@ -24,7 +24,7 @@ class AlgoliaPostIndex(BaseModel):
             created_time=int(datetime.timestamp(content.created_time)),
             updated_time=int(datetime.timestamp(content.updated_time))
         )
-        if content.category_id is not None:
+        if content.category_id is not None and content.category is not None:
             index.category = content.category.name
         if content.tags is not None:
             index.tags = [tag.name for tag in content.tags]
