@@ -6,15 +6,15 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile
 
 from sqlalchemy import select, update, desc
 
-from service.storage import storage_put
 from wwricu.domain.common import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, EntityRelation, PostResource
 from wwricu.domain.enum import PostStatusEnum, PostResourceTypeEnum
 from wwricu.domain.input import PostCreateRO, PostUpdateRO, BatchIdRO, PostRequestRO
 from wwricu.domain.output import PostDetailVO, FileUploadVO
-from wwricu.domain.context import admin_only
+from wwricu.service.common import admin_only
 from wwricu.service.database import session
 from wwricu.service.post import get_post_by_id, delete_post_cover
+from wwricu.service.storage import storage_put
 from wwricu.service.tag import (
     update_category,
     update_tags,
@@ -32,7 +32,6 @@ post_api = APIRouter(prefix='/post', tags=['Post Management'], dependencies=[Dep
 async def create_post(post_create: PostCreateRO) -> PostDetailVO:
     blog_post = BlogPost(
         title=post_create.title,
-        cover=post_create.cover,
         content=post_create.content,
         status=PostStatusEnum.DRAFT
     )

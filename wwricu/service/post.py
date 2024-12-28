@@ -1,9 +1,8 @@
 from sqlalchemy import delete, select
 
-from domain.entity import PostResource
-from domain.enum import PostResourceTypeEnum
-from service.storage import storage_delete
-from wwricu.domain.entity import BlogPost
+from wwricu.service.storage import storage_delete
+from wwricu.domain.entity import BlogPost, PostResource
+from wwricu.domain.enum import PostResourceTypeEnum
 from wwricu.service.database import session
 
 

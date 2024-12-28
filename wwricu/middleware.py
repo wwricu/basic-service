@@ -7,8 +7,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 
-from wwricu.domain.context import admin_user
-from wwricu.service.common import hmac_verify
+from wwricu.service.common import admin_user, hmac_verify
 from wwricu.domain.common import CommonConstant
 from wwricu.service.cache import cache_get
 

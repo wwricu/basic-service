@@ -15,7 +15,6 @@ class PostRequestRO(BaseModel):
 
 class PostCreateRO(BaseModel):
     title: str
-    cover: str | None = None
     content: str | None = None
     tag_id_list: list[int] = field(default_factory=list)
     category_id: int | None = None

@@ -6,7 +6,7 @@ from wwricu.domain.entity import PostTag, EntityRelation, BlogPost
 from wwricu.domain.enum import TagTypeEnum, RelationTypeEnum
 from wwricu.domain.input import TagRO, TagBatchRO
 from wwricu.domain.output import TagVO
-from wwricu.domain.context import admin_only
+from wwricu.service.common import admin_only
 from wwricu.service.database import session
 
 

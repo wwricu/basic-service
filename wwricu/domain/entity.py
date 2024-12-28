@@ -19,8 +19,7 @@ class Base(DeclarativeBase):
 
 class BlogPost(Base):
     __tablename__ = 'wwr_blog_post'
-    title: Mapped[str] = mapped_column(String(EntityConstant.USER_STRING_LEN), index=True)
-    cover: Mapped[str] = mapped_column(TEXT(), nullable=True)
+    title: Mapped[str] = mapped_column(String(EntityConstant.USER_STRING_LEN), default='', index=True)
     content: Mapped[str] = mapped_column(TEXT(), default='')
     status: Mapped[str] = mapped_column(
         String(EntityConstant.ENUM_STRING_LEN),

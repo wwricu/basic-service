@@ -46,10 +46,18 @@ class PostPreviewVO(BaseModel):
         return preview
 
 
+class PostResourceVO(BaseModel):
+    id: int
+    name: str | None = None
+    key: str
+    url: str
+    type: PostResourceTypeEnum
+
+
 class PostDetailVO(BaseModel):
     id: int
     title: str | None = None
-    cover: str | None = None
+    cover: PostResourceVO | None = None
     content: str = ''
     tag_list: list[TagVO] = field(default_factory=list)
     category: TagVO | None = None
@@ -62,7 +70,6 @@ class PostDetailVO(BaseModel):
         post_detail = cls(
             id=post.id,
             title=post.title,
-            cover=post.cover,
             content=post.content,
             status=PostStatusEnum(post.status),
             create_time=post.create_time,
@@ -71,13 +78,6 @@ class PostDetailVO(BaseModel):
         post_detail.category = TagVO.of(category)
         post_detail.tag_list = [TagVO.of(tag) for tag in tag_list]
         return post_detail
-
-
-class PostResourceVO(BaseModel):
-    id: int
-    name: str
-    url: str
-    type: PostResourceTypeEnum
 
 
 class FileUploadVO(BaseModel):
