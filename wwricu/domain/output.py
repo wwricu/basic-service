@@ -3,14 +3,9 @@ from __future__ import annotations
 from dataclasses import field
 from datetime import datetime
 
-from pydantic import BaseModel as PydanticBaseModel, ConfigDict
-
+from wwricu.domain.common import BaseModel
 from wwricu.domain.entity import BlogPost, PostTag
 from wwricu.domain.enum import TagTypeEnum, PostResourceTypeEnum, PostStatusEnum
-
-
-class BaseModel(PydanticBaseModel):
-    model_config =  ConfigDict(from_attributes=True)
 
 
 class TagVO(BaseModel):

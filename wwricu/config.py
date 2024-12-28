@@ -1,6 +1,11 @@
 import json
 from logging import CRITICAL
 
+import requests
+from loguru import logger as log
+
+from wwricu.domain.common import GithubContentResponse, CommonConstant
+
 
 class ConfigClass(object):
     @classmethod
@@ -42,6 +47,11 @@ class AdminConfig(ConfigClass):
     secure_key_bytes: bytes
 
 
+class ConfigCenter(ConfigClass):
+    url: str
+    headers: dict[str, str]
+
+
 class Config(ConfigClass):
     app: str = 'main:app'
     host: str = '0.0.0.0'
@@ -57,7 +67,19 @@ class Config(ConfigClass):
         StorageConfig.init(**storage_config)
 
 
-def init(path: str = 'conf/config.json'):
-    with open(path) as f:
-        text = json.load(f)
-    Config.load(**text)
+def download_config():
+    with open(CommonConstant.CONFIG_CENTER_PATH) as f:
+        json_data = json.load(f)
+    ConfigCenter.init(**json_data)
+    response = requests.get(ConfigCenter.url, headers=ConfigCenter.headers)
+    content_response = GithubContentResponse.model_validate(response.json())
+    response = requests.get(content_response.download_url)
+    with open(CommonConstant.CONFIG_PATH, 'wb+') as f:
+        f.write(response.content)
+    log.info(f'Download {ConfigCenter.url} to {CommonConstant.CONFIG_PATH}')
+
+
+if not __debug__:
+    download_config()
+with open(CommonConstant.CONFIG_PATH) as conf:
+    Config.load(**json.load(conf))

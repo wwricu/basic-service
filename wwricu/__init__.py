@@ -1,3 +1,1 @@
-from wwricu import config
-
-config.init()
+import wwricu.config

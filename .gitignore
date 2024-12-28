@@ -5,7 +5,7 @@ conf
 dist
 wwricu.egg-info
 **/__pycache__
-
+*.json
 *.pyc
 *.iml
 *.sqlite3
