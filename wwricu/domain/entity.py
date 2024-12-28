@@ -54,6 +54,8 @@ class EntityRelation(Base):
 
 class PostResource(Base):
     __tablename__ = 'wwr_post_resource'
-    name: Mapped[str] = mapped_column(String(EntityConstant.USER_STRING_LEN))
+    post_id: Mapped[int] = mapped_column(Integer(), index=True)
+    name: Mapped[str] = mapped_column(String(EntityConstant.USER_STRING_LEN), nullable=True)
+    key: Mapped[str] = mapped_column(String(EntityConstant.LONG_STRING_LEN))
     type: Mapped[str] = mapped_column(String(EntityConstant.ENUM_STRING_LEN), nullable=True)
     url: Mapped[str] = mapped_column(TEXT(), nullable=True)

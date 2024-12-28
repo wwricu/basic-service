@@ -26,7 +26,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
 class AspectMiddleware(BaseHTTPMiddleware):
     @override
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
-        log.info(f'{request.method} {request.url.path} {await request.body()}')
+        log.info(f'{request.method} {request.url.path} {await request.json()}')
         try:
             return await call_next(request)
         except Exception as e:

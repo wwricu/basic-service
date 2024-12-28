@@ -1,17 +1,20 @@
 import asyncio
+import io
+import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile
 
 from sqlalchemy import select, update, desc
 
+from service.storage import storage_put
 from wwricu.domain.common import HttpErrorDetail
-from wwricu.domain.entity import BlogPost, EntityRelation
-from wwricu.domain.enum import PostStatusEnum
+from wwricu.domain.entity import BlogPost, EntityRelation, PostResource
+from wwricu.domain.enum import PostStatusEnum, PostResourceTypeEnum
 from wwricu.domain.input import PostCreateRO, PostUpdateRO, BatchIdRO, PostRequestRO
-from wwricu.domain.output import PostDetailVO
+from wwricu.domain.output import PostDetailVO, FileUploadVO
 from wwricu.domain.context import admin_only
 from wwricu.service.database import session
-from wwricu.service.post import get_post_by_id
+from wwricu.service.post import get_post_by_id, delete_post_cover
 from wwricu.service.tag import (
     update_category,
     update_tags,
@@ -110,3 +113,18 @@ async def delete_post(batch: BatchIdRO):
     result = await session.execute(stmt)
     await session.execute(tag_stmt)
     return result.rowcount
+
+
+@post_api.post('/upload', response_model=FileUploadVO)
+async def upload(post_id: int, file_type: str, file: UploadFile) -> FileUploadVO:
+    if (post := await get_post_by_id(post_id)) is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
+    await delete_post_cover(post_id)
+    type_enum = PostResourceTypeEnum(file_type)
+    if type_enum == PostResourceTypeEnum.COVER_IMAGE:
+        await delete_post_cover(post_id)
+    key = f'{post_id}_{uuid.uuid4().hex}'
+    url = await storage_put(key, io.BytesIO(await file.read()))
+    session.add(PostResource(name=file.filename, key=key, type=type_enum, post_id=post.id, url=url))
+    await session.flush()
+    return FileUploadVO(name=file.filename, key=key, location=url)

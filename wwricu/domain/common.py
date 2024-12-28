@@ -26,8 +26,9 @@ class CommonConstant(object):
 
 
 class EntityConstant(object):
-    USER_STRING_LEN: int = 64
     ENUM_STRING_LEN: int = 32
+    USER_STRING_LEN: int = 64
+    LONG_STRING_LEN: int = 128
 
 
 class ConfigCenterConst(object):

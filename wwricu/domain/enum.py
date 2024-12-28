@@ -12,9 +12,9 @@ class PostStatusEnum(StrEnum):
 
 
 class PostResourceTypeEnum(StrEnum):
-    MD: str = 'markdown'
     IMAGE: str = 'image'
-    HTML: str = 'html'
+    COVER_IMAGE: str = 'cover'
+    COMMON: str = 'common'
 
 
 class RelationTypeEnum(StrEnum):

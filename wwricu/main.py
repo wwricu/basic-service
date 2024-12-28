@@ -12,8 +12,6 @@ from wwricu.middleware import middlewares
 
 @asynccontextmanager
 async def lifespan(fast_api: FastAPI):
-    if __debug__:
-        log.warning('APP RUNNING ON DEBUG MODE')
     log.info(f'{CommonConstant.APP_TITLE} {CommonConstant.APP_VERSION} Startup')
     fast_api.include_router(api_router)
     log.info(f'listening on {Config.host}:{Config.port}')

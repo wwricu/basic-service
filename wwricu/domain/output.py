@@ -82,4 +82,5 @@ class PostResourceVO(BaseModel):
 
 class FileUploadVO(BaseModel):
     name: str
+    key: str
     location: str

@@ -87,6 +87,8 @@ def download_config():
 
 
 def init():
+    if __debug__:
+        log.warning('APP RUNNING ON DEBUG MODE')
     try:
         download_config()
     except Exception as e:
