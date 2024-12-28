@@ -1,5 +1,4 @@
 import json
-import sys
 from logging import CRITICAL
 
 
@@ -59,7 +58,6 @@ class Config(ConfigClass):
 
 
 def init(path: str = 'conf/config.json'):
-    sys.tracebacklimit = 0
     with open(path) as f:
         text = json.load(f)
     Config.load(**text)

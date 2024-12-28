@@ -5,12 +5,12 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status, UploadFile
 from loguru import logger as log
 
-from service.common import hmac_sign
 from wwricu.domain.common import CommonConstant, HttpErrorDetail
 from wwricu.domain.input import LoginRO
 from wwricu.domain.output import FileUploadVO
 from wwricu.domain.context import admin_only
 from wwricu.service.cache import cache_delete, cache_set
+from wwricu.service.common import hmac_sign
 from wwricu.service.database import database_session
 from wwricu.service.storage import storage_put
 
