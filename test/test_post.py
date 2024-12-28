@@ -2,16 +2,13 @@ from loguru import logger as log
 from fastapi import status
 
 from wwricu.domain.enum import PostStatusEnum
-from wwricu.domain.input import PostCreateRO, PostUpdateRO, BatchIdRO
+from wwricu.domain.input import PostUpdateRO, BatchIdRO
 
 from test.test_client import client
 
 
 def test_create_post():
-    post = PostCreateRO(
-        title='Test Title',
-    )
-    response = client.post('/post/create', json=post.model_dump())
+    response = client.get('/post/create')
     assert response.status_code == status.HTTP_200_OK
     log.info(response.json())
 

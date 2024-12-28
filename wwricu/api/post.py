@@ -9,7 +9,7 @@ from sqlalchemy import select, update, desc
 from wwricu.domain.common import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, EntityRelation, PostResource
 from wwricu.domain.enum import PostStatusEnum, PostResourceTypeEnum
-from wwricu.domain.input import PostCreateRO, PostUpdateRO, BatchIdRO, PostRequestRO
+from wwricu.domain.input import PostUpdateRO, BatchIdRO, PostRequestRO
 from wwricu.domain.output import PostDetailVO, FileUploadVO
 from wwricu.service.common import admin_only
 from wwricu.service.database import session
@@ -28,20 +28,12 @@ from wwricu.service.tag import (
 post_api = APIRouter(prefix='/post', tags=['Post Management'], dependencies=[Depends(admin_only)])
 
 
-@post_api.post('/create', response_model=PostDetailVO)
-async def create_post(post_create: PostCreateRO) -> PostDetailVO:
-    blog_post = BlogPost(
-        title=post_create.title,
-        content=post_create.content,
-        status=PostStatusEnum.DRAFT
-    )
+@post_api.get('/create', response_model=PostDetailVO)
+async def create_post() -> PostDetailVO:
+    blog_post = BlogPost(status=PostStatusEnum.DRAFT)
     session.add(blog_post)
     await session.flush()
-    category, tag_list = await asyncio.gather(
-        update_category(blog_post, post_create.category_id),
-        update_tags(blog_post, post_create.tag_id_list)
-    )
-    return PostDetailVO.of(blog_post, category, tag_list)
+    return PostDetailVO.of(blog_post)
 
 
 @post_api.post('/all', response_model=list[PostDetailVO])
@@ -70,7 +62,7 @@ async def get_post_detail(post_id: int) -> PostDetailVO | None:
         return None
     category, tag_list = await asyncio.gather(
         get_post_category(post),
-        get_post_tags(post),
+        get_post_tags(post)
     )
     return PostDetailVO.of(post, category, tag_list)
 

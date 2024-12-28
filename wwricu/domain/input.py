@@ -13,13 +13,6 @@ class PostRequestRO(BaseModel):
     deleted: bool = None
 
 
-class PostCreateRO(BaseModel):
-    title: str
-    content: str | None = None
-    tag_id_list: list[int] = field(default_factory=list)
-    category_id: int | None = None
-
-
 class PostUpdateRO(BaseModel):
     id: int
     title: str | None = None
