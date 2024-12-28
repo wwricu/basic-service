@@ -1,11 +1,14 @@
 import base64
 import json
+import os
 from logging import CRITICAL
 
 import requests
+from requests import Response
 from loguru import logger as log
 
-from wwricu.domain.common import GithubContentResponse, CommonConstant
+from wwricu.domain.common import CommonConstant, ConfigCenterConst
+from wwricu.domain.input import GithubContentVO
 
 
 class ConfigClass(object):
@@ -48,11 +51,6 @@ class AdminConfig(ConfigClass):
     secure_key_bytes: bytes
 
 
-class ConfigCenter(ConfigClass):
-    url: str
-    headers: dict[str, str]
-
-
 class Config(ConfigClass):
     app: str = 'main:app'
     host: str = '0.0.0.0'
@@ -69,19 +67,30 @@ class Config(ConfigClass):
 
 
 def download_config():
-    with open(CommonConstant.CONFIG_CENTER_PATH) as f:
-        json_data = json.load(f)
-    ConfigCenter.init(**json_data)
-    response = requests.get(ConfigCenter.url, headers=ConfigCenter.headers)
-    github_response = GithubContentResponse.model_validate(response.json())
-    content = base64.b64decode(github_response.content.encode())
+    try:
+        with open(CommonConstant.TOKEN_PATH) as f:
+            token = f.readline()
+    except (Exception,):
+        token = os.environ.get(ConfigCenterConst.TOKEN_KEY)
+    if not token:
+        log.info('Config center disabled')
+        return
+    response: Response = requests.get(ConfigCenterConst.URL, headers=dict(
+        Accept=ConfigCenterConst.ACCEPT,
+        Authorization=ConfigCenterConst.AUTHORIZATION.format(token=token.strip())
+    ))
+    github_response = GithubContentVO.model_validate(response.json())
+    content: bytes = base64.b64decode(github_response.content.encode())
     with open(CommonConstant.CONFIG_PATH, 'wb+') as f:
         f.write(content)
-    log.info(f'Download {ConfigCenter.url} to {CommonConstant.CONFIG_PATH}')
+        log.info(f'Download {ConfigCenterConst.URL} to {CommonConstant.CONFIG_PATH}')
 
 
-if not __debug__:
-    download_config()
-with open(CommonConstant.CONFIG_PATH) as conf:
-    Config.load(**json.load(conf))
-    log.info('Config init')
+def init():
+    try:
+        download_config()
+    except Exception as e:
+        log.warning(f'Failed to download config: {e}')
+    with open(CommonConstant.CONFIG_PATH) as conf:
+        Config.load(**json.load(conf))
+        log.info('Config init')

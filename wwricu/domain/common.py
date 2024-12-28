@@ -21,11 +21,8 @@ class CommonConstant(object):
     APP_TITLE: str = 'wwr.icu'
     APP_VERSION: str = 'v2.0.0'
     CONFIG_PATH: str = 'conf/config.json'
-    CONFIG_CENTER_PATH: str = 'conf/config_center.json'
-
-
-class ConfigConstant(object):
-    pass
+    TOKEN_PATH: str = 'conf/github_token.txt'
+    STORE_RET_KEY: str = 'key'
 
 
 class EntityConstant(object):
@@ -33,11 +30,8 @@ class EntityConstant(object):
     ENUM_STRING_LEN: int = 32
 
 
-class StorageConstant(object):
-    RET_KEY: str = 'key'
-
-
-class GithubContentResponse(BaseModel):
-    name: str
-    content: str
-    download_url: str
+class ConfigCenterConst(object):
+    URL: str = 'https://api.github.com/repos/wwricu/config/contents/config.json'
+    ACCEPT: str = 'application/vnd.github+json'
+    AUTHORIZATION: str = 'Bearer {token}'
+    TOKEN_KEY: str = 'github_token'

@@ -4,13 +4,13 @@ from fastapi import HTTPException, status
 from qiniu import Auth, put_data, BucketManager
 
 from wwricu.config import StorageConfig
-from wwricu.domain.common import StorageConstant, HttpErrorDetail
+from wwricu.domain.common import CommonConstant, HttpErrorDetail
 
 
 async def storage_put(key: str, data: io.BytesIO) -> str:
     token = client.upload_token(StorageConfig.bucket, key)
     ret, response = put_data(token, key, data)
-    if ret.get(StorageConstant.RET_KEY) != key:
+    if ret.get(CommonConstant.STORE_RET_KEY) != key:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=HttpErrorDetail.UPLOAD_FAILURE)
     return f'{StorageConfig.domain}/{key}'
 

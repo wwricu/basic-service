@@ -1,6 +1,6 @@
-from pydantic import BaseModel
 from dataclasses import field
 
+from wwricu.domain.common import BaseModel
 from wwricu.domain.enum import PostStatusEnum, TagTypeEnum
 
 
@@ -63,3 +63,9 @@ class TagRequestRO(BaseModel):
 class TagBatchRO(BaseModel):
     id_list: list[int] = field(default_factory=list)
     type: TagTypeEnum
+
+
+class GithubContentVO(BaseModel):
+    name: str
+    content: str
+    download_url: str
