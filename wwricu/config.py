@@ -1,3 +1,4 @@
+import base64
 import json
 from logging import CRITICAL
 
@@ -72,10 +73,10 @@ def download_config():
         json_data = json.load(f)
     ConfigCenter.init(**json_data)
     response = requests.get(ConfigCenter.url, headers=ConfigCenter.headers)
-    content_response = GithubContentResponse.model_validate(response.json())
-    response = requests.get(content_response.download_url)
+    github_response = GithubContentResponse.model_validate(response.json())
+    content = base64.b64decode(github_response.content.encode())
     with open(CommonConstant.CONFIG_PATH, 'wb+') as f:
-        f.write(response.content)
+        f.write(content)
     log.info(f'Download {ConfigCenter.url} to {CommonConstant.CONFIG_PATH}')
 
 
@@ -83,3 +84,4 @@ if not __debug__:
     download_config()
 with open(CommonConstant.CONFIG_PATH) as conf:
     Config.load(**json.load(conf))
+    log.info('Config init')

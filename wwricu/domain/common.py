@@ -39,5 +39,5 @@ class StorageConstant(object):
 
 class GithubContentResponse(BaseModel):
     name: str
-    sha: str
+    content: str
     download_url: str
