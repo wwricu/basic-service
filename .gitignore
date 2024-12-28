@@ -2,6 +2,8 @@ venv
 .idea
 .vscode
 conf
+dist
+wwricu.egg-info
 **/__pycache__
 
 *.pyc
