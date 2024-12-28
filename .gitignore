@@ -1,7 +1,7 @@
 venv
 .idea
 .vscode
-
+conf
 **/__pycache__
 
 *.pyc
