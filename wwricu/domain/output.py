@@ -4,7 +4,7 @@ from dataclasses import field
 from datetime import datetime
 
 from wwricu.domain.common import BaseModel
-from wwricu.domain.entity import BlogPost, PostTag
+from wwricu.domain.entity import BlogPost, PostTag, PostResource
 from wwricu.domain.enum import TagTypeEnum, PostResourceTypeEnum, PostStatusEnum
 
 
@@ -66,10 +66,16 @@ class PostDetailVO(BaseModel):
     update_time: datetime | None = None
 
     @classmethod
-    def of(cls, post: BlogPost, category: PostTag | None = None, tag_list: list[PostTag] | None = ()) -> PostDetailVO:
+    def of(cls,
+        post: BlogPost,
+        category: PostTag | None = None,
+        tag_list: list[PostTag] | None = (),
+        cover: PostResource | None = None
+    ) -> PostDetailVO:
         post_detail = cls(
             id=post.id,
             title=post.title,
+            cover=cover,
             content=post.content,
             status=PostStatusEnum(post.status),
             create_time=post.create_time,
@@ -81,6 +87,7 @@ class PostDetailVO(BaseModel):
 
 
 class FileUploadVO(BaseModel):
+    id: int
     name: str
     key: str
     location: str

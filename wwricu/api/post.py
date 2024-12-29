@@ -13,7 +13,7 @@ from wwricu.domain.input import PostUpdateRO, BatchIdRO, PostRequestRO
 from wwricu.domain.output import PostDetailVO, FileUploadVO
 from wwricu.service.common import admin_only
 from wwricu.service.database import session
-from wwricu.service.post import get_post_by_id, delete_post_cover
+from wwricu.service.post import get_post_by_id, delete_post_cover, get_post_cover
 from wwricu.service.storage import storage_put
 from wwricu.service.tag import (
     update_category,
@@ -60,20 +60,24 @@ async def select_post(post: PostRequestRO) -> list[PostDetailVO]:
 async def get_post_detail(post_id: int) -> PostDetailVO | None:
     if (post := await get_post_by_id(post_id)) is None:
         return None
-    category, tag_list = await asyncio.gather(
+    category, tag_list, cover = await asyncio.gather(
         get_post_category(post),
-        get_post_tags(post)
+        get_post_tags(post),
+        get_post_cover(post)
     )
-    return PostDetailVO.of(post, category, tag_list)
+    return PostDetailVO.of(post, category, tag_list, cover)
 
 
 @post_api.post('/update', response_model=PostDetailVO)
 async def update_post(post_update: PostUpdateRO) -> PostDetailVO:
     if (blog_post := await get_post_by_id(post_update.id)) is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
+    if blog_post.cover_id is not None and blog_post.cover_id != post_update.cover_id:
+        await delete_post_cover(blog_post)
     stmt = update(BlogPost).where(BlogPost.id == post_update.id).values(
         title=post_update.title,
         content=post_update.content,
+        cover_id=post_update.cover_id,
         status=post_update.status,
         category_id=post_update.category_id
     )
@@ -109,12 +113,10 @@ async def delete_post(batch: BatchIdRO):
 async def upload(file: UploadFile, post_id: int = Form(), file_type: str = Form()) -> FileUploadVO:
     if (post := await get_post_by_id(post_id)) is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
-    await delete_post_cover(post_id)
     type_enum = PostResourceTypeEnum(file_type)
-    if type_enum == PostResourceTypeEnum.COVER_IMAGE:
-        await delete_post_cover(post_id)
-    key = f'{post_id}_{uuid.uuid4().hex}'
+    key = f'{post_id}_{type_enum}_{uuid.uuid4().hex}'
     url = await storage_put(key, io.BytesIO(await file.read()))
-    session.add(PostResource(name=file.filename, key=key, type=type_enum, post_id=post.id, url=url))
+    resource = PostResource(name=file.filename, key=key, type=type_enum, post_id=post.id, url=url)
+    session.add(resource)
     await session.flush()
-    return FileUploadVO(name=file.filename, key=key, location=url)
+    return FileUploadVO(id=resource.id, name=file.filename, key=key, location=url)

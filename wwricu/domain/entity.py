@@ -20,6 +20,7 @@ class Base(DeclarativeBase):
 class BlogPost(Base):
     __tablename__ = 'wwr_blog_post'
     title: Mapped[str] = mapped_column(String(EntityConstant.USER_STRING_LEN), default='', index=True)
+    cover_id: Mapped[int] = mapped_column(Integer(), nullable=True)
     content: Mapped[str] = mapped_column(TEXT(), default='')
     status: Mapped[str] = mapped_column(
         String(EntityConstant.ENUM_STRING_LEN),
@@ -54,7 +55,11 @@ class EntityRelation(Base):
 class PostResource(Base):
     __tablename__ = 'wwr_post_resource'
     post_id: Mapped[int] = mapped_column(Integer(), index=True)
-    name: Mapped[str] = mapped_column(String(EntityConstant.USER_STRING_LEN), nullable=True)
-    key: Mapped[str] = mapped_column(String(EntityConstant.LONG_STRING_LEN))
+    name: Mapped[str] = mapped_column(
+        String(EntityConstant.USER_STRING_LEN),
+        nullable=True,
+        comment='File original name'
+    )
+    key: Mapped[str] = mapped_column(String(EntityConstant.LONG_STRING_LEN), comment='OSS Key')
     type: Mapped[str] = mapped_column(String(EntityConstant.ENUM_STRING_LEN), nullable=True)
-    url: Mapped[str] = mapped_column(TEXT(), nullable=True)
+    url: Mapped[str] = mapped_column(TEXT(), nullable=True, comment='Public url')

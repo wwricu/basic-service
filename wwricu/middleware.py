@@ -12,6 +12,15 @@ from wwricu.domain.common import CommonConstant
 from wwricu.service.cache import cache_get
 
 
+body_white_list = set('/post/upload')
+
+
+async def get_body(request: Request) -> bytes:
+    if request.url.path in body_white_list:
+        return b''
+    return await request.body()
+
+
 class PerformanceMiddleware(BaseHTTPMiddleware):
     @override
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
@@ -25,7 +34,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
 class AspectMiddleware(BaseHTTPMiddleware):
     @override
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
-        log.info(f'{request.method} {request.url.path} {await request.body()}')
+        log.info(f'{request.method} {request.url.path} {await get_body(request)}')
         try:
             return await call_next(request)
         except Exception as e:

@@ -12,7 +12,7 @@ async def storage_put(key: str, data: io.BytesIO) -> str:
     ret, response = put_data(token, key, data)
     if ret.get(CommonConstant.STORE_RET_KEY) != key:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=HttpErrorDetail.UPLOAD_FAILURE)
-    return f'{StorageConfig.domain}/{key}'
+    return f'http://{StorageConfig.domain}/{key}'
 
 
 async def storage_delete(key: str) -> bool:

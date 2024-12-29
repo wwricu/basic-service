@@ -16,6 +16,7 @@ class PostRequestRO(BaseModel):
 class PostUpdateRO(BaseModel):
     id: int
     title: str | None = None
+    cover_id: int | None = None
     status: PostStatusEnum | None = None
     content: str | None = None
     tag_id_list: list[int] = field(default_factory=list)
