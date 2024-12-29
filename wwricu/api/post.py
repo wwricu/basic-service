@@ -73,7 +73,6 @@ async def update_post(post_update: PostUpdateRO) -> PostDetailVO:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     stmt = update(BlogPost).where(BlogPost.id == post_update.id).values(
         title=post_update.title,
-        cover=post_update.cover,
         content=post_update.content,
         status=post_update.status,
         category_id=post_update.category_id
