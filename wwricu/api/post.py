@@ -2,7 +2,7 @@ import asyncio
 import io
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile
+from fastapi import APIRouter, Depends, Form, HTTPException, status, UploadFile
 
 from sqlalchemy import select, update, desc
 
@@ -106,7 +106,7 @@ async def delete_post(batch: BatchIdRO):
 
 
 @post_api.post('/upload', response_model=FileUploadVO)
-async def upload(post_id: int, file_type: str, file: UploadFile) -> FileUploadVO:
+async def upload(file: UploadFile, post_id: int = Form(), file_type: str = Form()) -> FileUploadVO:
     if (post := await get_post_by_id(post_id)) is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     await delete_post_cover(post_id)

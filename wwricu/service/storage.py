@@ -20,4 +20,4 @@ async def storage_delete(key: str) -> bool:
     return bucket.delete(StorageConfig.bucket, key) is None
 
 
-client = Auth(StorageConfig.access_key, StorageConfig.security_key)
+client = Auth(StorageConfig.access_key, StorageConfig.secure_key)

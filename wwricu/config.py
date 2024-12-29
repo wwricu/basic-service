@@ -22,7 +22,7 @@ class ConfigClass(object):
 class StorageConfig(ConfigClass):
     bucket: str
     domain: str
-    security_key: str
+    secure_key: str
     access_key: str
     timeout: int = 3600
 
