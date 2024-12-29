@@ -3,8 +3,8 @@ import json
 import os
 from logging import CRITICAL
 
-import requests
-from requests import Response
+import httpx
+from httpx import Response
 from loguru import logger as log
 
 from wwricu.domain.common import CommonConstant, ConfigCenterConst
@@ -75,7 +75,7 @@ def download_config():
     if not token:
         log.info('Config center disabled')
         return
-    response: Response = requests.get(ConfigCenterConst.URL, headers=dict(
+    response: Response = httpx.get(ConfigCenterConst.URL, headers=dict(
         Accept=ConfigCenterConst.ACCEPT,
         Authorization=ConfigCenterConst.AUTHORIZATION.format(token=token.strip())
     ))

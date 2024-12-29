@@ -7,13 +7,12 @@ from wwricu.domain.common import CommonConstant, HttpErrorDetail
 from wwricu.domain.input import LoginRO
 from wwricu.service.cache import cache_delete, cache_set
 from wwricu.service.common import admin_only, hmac_sign
-from wwricu.service.database import database_session
 
 
-api_router = APIRouter(tags=['Common API'], dependencies=[Depends(database_session)])
+common_api = APIRouter(tags=['Common API'])
 
 
-@api_router.post('/login')
+@common_api.post('/login')
 async def login(login_request: LoginRO, response: Response):
     if login_request.username != login_request.password:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_PASSWORD)
@@ -24,7 +23,7 @@ async def login(login_request: LoginRO, response: Response):
     response.set_cookie(CommonConstant.SESSION_SIGN, session_sign)
 
 
-@api_router.get('/logout', dependencies=[Depends(admin_only)])
+@common_api.get('/logout', dependencies=[Depends(admin_only)])
 async def logout(request: Request, response: Response):
     if (session_id := request.cookies.get(CommonConstant.SESSION_ID)) is None:
         return

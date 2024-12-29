@@ -25,7 +25,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
 class AspectMiddleware(BaseHTTPMiddleware):
     @override
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
-        log.info(f'{request.method} {request.url.path} {await request.json()}')
+        log.info(f'{request.method} {request.url.path} {await request.body()}')
         try:
             return await call_next(request)
         except Exception as e:
@@ -51,18 +51,19 @@ class AuthMiddleware(BaseHTTPMiddleware):
 # noinspection PyTypeChecker
 middlewares = [
     Middleware(AspectMiddleware),
-    Middleware(AuthMiddleware),
-    Middleware(
-        CORSMiddleware,
-        allow_origins=['*'],
-        allow_credentials=True,
-        allow_methods=['*'],
-        allow_headers=['*'],
-        expose_headers=['*']
-    )
+    Middleware(AuthMiddleware)
 ]
 
 
 if __debug__ is True:
     # noinspection PyTypeChecker
     middlewares.insert(0, Middleware(PerformanceMiddleware))
+    # noinspection PyTypeChecker
+    middlewares.append(Middleware(
+        CORSMiddleware,
+        allow_origins=['*'],
+        allow_credentials=True,
+        allow_methods=['*'],
+        allow_headers=['*'],
+        expose_headers=['*']
+    ))

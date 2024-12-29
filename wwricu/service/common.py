@@ -4,13 +4,20 @@ import hmac
 from contextlib import asynccontextmanager
 from contextvars import ContextVar
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, FastAPI
+from loguru import logger as log
 
-from wwricu.domain.common import HttpErrorDetail
+from wwricu.domain.common import HttpErrorDetail, CommonConstant
 from wwricu.config import AdminConfig, Config
 
 
-admin: ContextVar[bool] = ContextVar('admin', default=False)
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    log.info(f'{CommonConstant.APP_TITLE} {CommonConstant.APP_VERSION} Startup')
+    log.info(f'listening on {Config.host}:{Config.port}')
+    yield
+    log.info('THE END')
+    await log.complete()
 
 
 async def admin_only():
@@ -37,4 +44,5 @@ def hmac_verify(plain: str, sign: str) -> bool:
     return hmac_sign(plain) == sign
 
 
+admin: ContextVar[bool] = ContextVar('admin', default=False)
 secure_key = base64.b64decode(AdminConfig.secure_key.encode(Config.encoding))
