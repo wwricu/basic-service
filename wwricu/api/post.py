@@ -113,7 +113,7 @@ async def upload(file: UploadFile, post_id: int = Form(), file_type: str = Form(
     if (post := await get_post_by_id(post_id)) is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     type_enum = PostResourceTypeEnum(file_type)
-    key = f'{post_id}_{type_enum}_{uuid.uuid4().hex}'
+    key = f'post/{post_id}/{type_enum}_{uuid.uuid4().hex}'
     url = put_object(key, await file.read())
     resource = PostResource(name=file.filename, key=key, type=type_enum, post_id=post.id, url=url)
     session.add(resource)
