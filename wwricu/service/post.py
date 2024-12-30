@@ -1,6 +1,6 @@
 from sqlalchemy import delete, select
 
-from wwricu.service.storage import storage_delete
+from wwricu.service.storage import delete_object
 from wwricu.domain.entity import BlogPost, PostResource
 from wwricu.domain.enum import PostResourceTypeEnum
 from wwricu.service.database import session
@@ -29,7 +29,7 @@ async def delete_post_cover(post: BlogPost) -> int:
     )
     if (resource := await session.scalar(stmt)) is None:
         return 0
-    await storage_delete(resource.key)
+    delete_object(resource.key)
     stmt = delete(PostResource).where(PostResource.id == resource.id)
     result = await session.execute(stmt)
     return result.rowcount

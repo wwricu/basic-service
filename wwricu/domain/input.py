@@ -55,9 +55,3 @@ class TagRequestRO(BaseModel):
 class TagBatchRO(BaseModel):
     id_list: list[int] = field(default_factory=list)
     type: TagTypeEnum
-
-
-class GithubContentVO(BaseModel):
-    name: str
-    content: str
-    download_url: str

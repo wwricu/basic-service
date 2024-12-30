@@ -1,5 +1,4 @@
 import asyncio
-import io
 import uuid
 
 from fastapi import APIRouter, Depends, Form, HTTPException, status, UploadFile
@@ -14,7 +13,7 @@ from wwricu.domain.output import PostDetailVO, FileUploadVO
 from wwricu.service.common import admin_only
 from wwricu.service.database import session
 from wwricu.service.post import get_post_by_id, delete_post_cover, get_post_cover
-from wwricu.service.storage import storage_put
+from wwricu.service.storage import put_object
 from wwricu.service.tag import (
     update_category,
     update_tags,
@@ -115,7 +114,7 @@ async def upload(file: UploadFile, post_id: int = Form(), file_type: str = Form(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     type_enum = PostResourceTypeEnum(file_type)
     key = f'{post_id}_{type_enum}_{uuid.uuid4().hex}'
-    url = await storage_put(key, io.BytesIO(await file.read()))
+    url = put_object(key, await file.read())
     resource = PostResource(name=file.filename, key=key, type=type_enum, post_id=post.id, url=url)
     session.add(resource)
     await session.flush()

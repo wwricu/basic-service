@@ -1,3 +1,6 @@
+from datetime import datetime
+
+from botocore.response import StreamingBody
 from pydantic import BaseModel as PydanticBaseModel, ConfigDict
 
 
@@ -36,3 +39,30 @@ class ConfigCenterConst(object):
     ACCEPT: str = 'application/vnd.github+json'
     AUTHORIZATION: str = 'Bearer {token}'
     TOKEN_KEY: str = 'github_token'
+
+
+class AmazonS3ResponseMetaData(BaseModel):
+    RequestId: str
+    HostId: str
+    HTTPStatusCode: int
+    HTTPHeaders: dict
+
+
+class AmazonS3Response(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True, from_attributes=True)
+    ResponseMetadata: dict
+    AcceptRanges: str
+    LastModified: datetime
+    ContentLength: int
+    ETag: str
+    ContentType: str
+    ServerSideEncryption: str
+    Metadata: dict
+    ResponseMetadata: dict
+    Body: StreamingBody
+
+
+class GithubContentResponse(BaseModel):
+    name: str
+    content: str
+    download_url: str
