@@ -8,7 +8,7 @@ from sqlalchemy import select, update, desc
 from wwricu.domain.common import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, EntityRelation, PostResource
 from wwricu.domain.enum import PostStatusEnum, PostResourceTypeEnum
-from wwricu.domain.input import PostUpdateRO, BatchIdRO, PostRequestRO
+from wwricu.domain.input import PostUpdateRO, PostRequestRO
 from wwricu.domain.output import PostDetailVO, FileUploadVO
 from wwricu.service.common import admin_only
 from wwricu.service.database import session
@@ -99,10 +99,10 @@ async def patch_post(post_update: PostUpdateRO) -> PostDetailVO:
     return PostDetailVO.of(blog_post, category, tag_list)
 
 
-@post_api.post('/delete', response_model=int)
-async def delete_post(batch: BatchIdRO):
-    stmt = update(BlogPost).where(BlogPost.id.in_(batch.id_list)).values(deleted=True)
-    tag_stmt = update(EntityRelation).where(EntityRelation.src_id.in_(batch.id_list)).values(deleted=True)
+@post_api.get('/delete/{post_id}', response_model=int)
+async def delete_post(post_id: int):
+    stmt = update(BlogPost).where(BlogPost.id == post_id).values(deleted=True)
+    tag_stmt = update(EntityRelation).where(EntityRelation.src_id == post_id).values(deleted=True)
     result = await session.execute(stmt)
     await session.execute(tag_stmt)
     return result.rowcount

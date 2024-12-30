@@ -2,7 +2,7 @@ from loguru import logger as log
 from fastapi import status
 
 from wwricu.domain.enum import PostStatusEnum
-from wwricu.domain.input import PostUpdateRO, BatchIdRO
+from wwricu.domain.input import PostUpdateRO
 
 from test.test_client import client
 
@@ -20,13 +20,6 @@ def test_patch_post():
         status=PostStatusEnum.PUBLISHED
     )
     response = client.post('/post/patch', json=post.model_dump())
-    log.info(response.json())
-
-
-def test_delete_post():
-    batch = BatchIdRO(id_list=[27, 26])
-    response = client.post('/post/delete', json=batch.model_dump())
-    assert response.status_code == status.HTTP_200_OK
     log.info(response.json())
 
 
