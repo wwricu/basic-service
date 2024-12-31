@@ -51,6 +51,3 @@ class TagRequestRO(BaseModel):
     page_size: int | None = 0
     page_index: int | None = 0
     type: TagTypeEnum | None = TagTypeEnum.POST_TAG
-
-
-

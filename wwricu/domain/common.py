@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from botocore.response import StreamingBody
+from loguru import logger as log
 from pydantic import BaseModel as PydanticBaseModel, ConfigDict
 
 
@@ -66,3 +67,19 @@ class GithubContentResponse(BaseModel):
     name: str
     content: str
     download_url: str
+
+
+def retry(max_try: int = 3):
+    def decorator(func: callable):
+        def wrapper(*args, **kwargs):
+            t = max_try
+            while True:
+                try:
+                    t -= 1
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    if t == 0:
+                        raise e
+                    log.info(f'{func.__name__} retry {max_try - t} times')
+        return wrapper
+    return decorator

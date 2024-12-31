@@ -7,7 +7,7 @@ import httpx
 from httpx import Response
 from loguru import logger as log
 
-from wwricu.domain.common import CommonConstant, ConfigCenterConst, GithubContentResponse
+from wwricu.domain.common import CommonConstant, ConfigCenterConst, GithubContentResponse, retry
 
 
 class ConfigClass(object):
@@ -65,6 +65,7 @@ class Config(ConfigClass):
         StorageConfig.init(**storage_config)
 
 
+@retry()
 def download_config():
     try:
         with open(CommonConstant.TOKEN_PATH) as f:
