@@ -1,5 +1,3 @@
-import asyncio
-
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select, desc
 
@@ -9,7 +7,7 @@ from wwricu.domain.enum import PostStatusEnum
 from wwricu.domain.input import PostRequestRO, TagRequestRO
 from wwricu.domain.output import TagVO, PostDetailVO
 from wwricu.service.database import session
-from wwricu.service.tag import get_posts_tag_lists, get_posts_category, get_post_category, get_post_tags
+from wwricu.service.post import get_all_post_details
 
 
 open_api = APIRouter(prefix='/open', tags=['Open API'])
@@ -25,11 +23,7 @@ async def get_all_posts(post: PostRequestRO) -> list[PostDetailVO]:
         (post.page_index - 1) * post.page_size
     )
     all_posts = (await session.scalars(stmt)).all()
-    post_cat_dict, post_tag_dict = await asyncio.gather(
-        get_posts_category(all_posts),
-        get_posts_tag_lists(all_posts)
-    )
-    return [PostDetailVO.of(post, post_cat_dict.get(post.id), post_tag_dict.get(post.id)) for post in all_posts]
+    return await get_all_post_details(all_posts)
 
 
 @open_api.get('/post/detail/{post_id}', response_model=PostDetailVO)
@@ -41,11 +35,7 @@ async def get_post_detail(post_id: int) -> PostDetailVO:
     )
     if (post := await session.scalar(stmt)) is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
-    category, tag_list = asyncio.gather(
-        get_post_category(post),
-        get_post_tags(post),
-    )
-    return PostDetailVO.of(post, category, tag_list)
+    return await get_post_detail(post)
 
 
 @open_api.post('/tags')

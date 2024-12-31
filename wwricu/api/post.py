@@ -1,4 +1,3 @@
-import asyncio
 import uuid
 
 from fastapi import APIRouter, Depends, Form, HTTPException, status, UploadFile
@@ -12,16 +11,9 @@ from wwricu.domain.input import PostUpdateRO, PostRequestRO
 from wwricu.domain.output import PostDetailVO, FileUploadVO
 from wwricu.service.common import admin_only
 from wwricu.service.database import session
-from wwricu.service.post import get_post_by_id, delete_post_cover, get_post_cover
+from wwricu.service.post import get_post_by_id, delete_post_cover, get_all_post_details, get_post_detail
 from wwricu.service.storage import put_object
-from wwricu.service.tag import (
-    update_category,
-    update_tags,
-    get_posts_category,
-    get_posts_tag_lists,
-    get_post_category,
-    get_post_tags
-)
+from wwricu.service.tag import update_category, update_tags
 
 
 post_api = APIRouter(prefix='/post', tags=['Post Management'], dependencies=[Depends(admin_only)])
@@ -32,7 +24,7 @@ async def create_post() -> PostDetailVO:
     blog_post = BlogPost(status=PostStatusEnum.DRAFT)
     session.add(blog_post)
     await session.flush()
-    return PostDetailVO.of(blog_post)
+    return PostDetailVO.model_validate(blog_post)
 
 
 @post_api.post('/all', response_model=list[PostDetailVO])
@@ -48,23 +40,14 @@ async def select_post(post: PostRequestRO) -> list[PostDetailVO]:
     if post.deleted is not None:
         stmt = stmt.where(BlogPost.deleted == post.deleted)
     all_posts = (await session.scalars(stmt)).all()
-    post_cat_dict, post_tag_dict = await asyncio.gather(
-        get_posts_category(all_posts),
-        get_posts_tag_lists(all_posts)
-    )
-    return [PostDetailVO.of(post, post_cat_dict.get(post.id), post_tag_dict.get(post.id)) for post in all_posts]
+    return await get_all_post_details(all_posts)
 
 
 @post_api.get('/detail/{post_id}', response_model=PostDetailVO | None)
-async def get_post_detail(post_id: int) -> PostDetailVO | None:
+async def get_post(post_id: int) -> PostDetailVO | None:
     if (post := await get_post_by_id(post_id)) is None:
         return None
-    category, tag_list, cover = await asyncio.gather(
-        get_post_category(post),
-        get_post_tags(post),
-        get_post_cover(post)
-    )
-    return PostDetailVO.of(post, category, tag_list, cover)
+    return await get_post_detail(post)
 
 
 @post_api.post('/update', response_model=PostDetailVO)
@@ -81,22 +64,18 @@ async def update_post(post_update: PostUpdateRO) -> PostDetailVO:
         category_id=post_update.category_id
     )
     await session.execute(stmt)
-    category = await update_category(blog_post, post_update.category_id)
-    tag_list = await update_tags(blog_post, post_update.tag_id_list)
-    return PostDetailVO.of(blog_post, category, tag_list)
+    await update_category(blog_post, post_update.category_id)
+    await update_tags(blog_post, post_update.tag_id_list)
+    return await get_post_detail(blog_post)
 
 
-@post_api.post('/patch', response_model=PostDetailVO)
-async def patch_post(post_update: PostUpdateRO) -> PostDetailVO:
-    if (blog_post := await get_post_by_id(post_update.id)) is None:
+@post_api.get('/status/{post_id}', response_model=PostDetailVO)
+async def update_post_status(post_id: int, post_status: str) -> PostDetailVO:
+    if (blog_post := await get_post_by_id(post_id)) is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
-    kwargs = post_update.model_dump()
-    kwargs = {k: v for k, v in kwargs.items() if k in BlogPost.__table__.c and v is not None}
-    stmt = update(BlogPost).where(BlogPost.id == post_update.id).values(**kwargs)
+    stmt = update(BlogPost).where(BlogPost.id == blog_post.id).values(status=PostStatusEnum(post_status))
     await session.execute(stmt)
-    category = await update_category(blog_post, post_update.category_id)
-    tag_list = await update_tags(blog_post, post_update.tag_id_list)
-    return PostDetailVO.of(blog_post, category, tag_list)
+    return await get_post_detail(blog_post)
 
 
 @post_api.get('/delete/{post_id}', response_model=int)

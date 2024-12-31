@@ -36,8 +36,9 @@ class LoginRO(BaseModel):
     otp: str | None = None
 
 
-class BatchIdRO(BaseModel):
+class TagBatchRO(BaseModel):
     id_list: list[int] = field(default_factory=list)
+    type: TagTypeEnum
 
 
 class TagRO(BaseModel):
@@ -50,3 +51,6 @@ class TagRequestRO(BaseModel):
     page_size: int | None = 0
     page_index: int | None = 0
     type: TagTypeEnum | None = TagTypeEnum.POST_TAG
+
+
+
