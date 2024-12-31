@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, Form, HTTPException, status, UploadFile
+from fastapi import APIRouter, Depends, Form, HTTPException, status as http_status, UploadFile
 
 from sqlalchemy import select, update, desc
 
@@ -53,7 +53,7 @@ async def get_post(post_id: int) -> PostDetailVO | None:
 @post_api.post('/update', response_model=PostDetailVO)
 async def update_post(post_update: PostUpdateRO) -> PostDetailVO:
     if (blog_post := await get_post_by_id(post_update.id)) is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     if blog_post.cover_id is not None and blog_post.cover_id != post_update.cover_id:
         await delete_post_cover(blog_post)
     stmt = update(BlogPost).where(BlogPost.id == post_update.id).values(
@@ -70,10 +70,10 @@ async def update_post(post_update: PostUpdateRO) -> PostDetailVO:
 
 
 @post_api.get('/status/{post_id}', response_model=PostDetailVO)
-async def update_post_status(post_id: int, post_status: str) -> PostDetailVO:
+async def update_post_status(post_id: int, status: str) -> PostDetailVO:
     if (blog_post := await get_post_by_id(post_id)) is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
-    stmt = update(BlogPost).where(BlogPost.id == blog_post.id).values(status=PostStatusEnum(post_status))
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
+    stmt = update(BlogPost).where(BlogPost.id == blog_post.id).values(status=PostStatusEnum(status))
     await session.execute(stmt)
     return await get_post_detail(blog_post)
 
@@ -90,7 +90,7 @@ async def delete_post(post_id: int):
 @post_api.post('/upload', response_model=FileUploadVO)
 async def upload(file: UploadFile, post_id: int = Form(), file_type: str = Form()) -> FileUploadVO:
     if (post := await get_post_by_id(post_id)) is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     type_enum = PostResourceTypeEnum(file_type)
     key = f'post/{post_id}/{type_enum}_{uuid.uuid4().hex}'
     url = put_object(key, await file.read())
