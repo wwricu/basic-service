@@ -12,11 +12,8 @@ from wwricu.domain.common import CommonConstant
 from wwricu.service.cache import cache_get
 
 
-body_white_list = set('/post/upload')
-
-
 async def get_body(request: Request) -> bytes:
-    if request.url.path in body_white_list:
+    if (content_type := request.headers.get('Content-Type')) is None or content_type.lower() == 'multipart/form-data':
         return b''
     return await request.body()
 

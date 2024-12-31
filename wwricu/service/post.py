@@ -1,9 +1,14 @@
+import asyncio
+from typing import Sequence
+
 from sqlalchemy import delete, select
 
-from wwricu.service.storage import storage_delete
+from wwricu.domain.output import PostDetailVO, TagVO, PostResourceVO
+from wwricu.service.storage import delete_object
 from wwricu.domain.entity import BlogPost, PostResource
 from wwricu.domain.enum import PostResourceTypeEnum
 from wwricu.service.database import session
+from wwricu.service.tag import get_post_category, get_post_tags
 
 
 async def get_post_by_id(post_id: int) -> BlogPost:
@@ -29,7 +34,7 @@ async def delete_post_cover(post: BlogPost) -> int:
     )
     if (resource := await session.scalar(stmt)) is None:
         return 0
-    await storage_delete(resource.key)
+    delete_object(resource.key)
     stmt = delete(PostResource).where(PostResource.id == resource.id)
     result = await session.execute(stmt)
     return result.rowcount
@@ -38,3 +43,32 @@ async def delete_post_cover(post: BlogPost) -> int:
 async def clean_post_resource():
     """delete all unused files from oss"""
     pass
+
+
+async def get_posts_cover(post_list: Sequence[BlogPost]) -> dict[int, PostResource]:
+    cat_stmt = select(PostResource).where(
+        PostResource.type == PostResourceTypeEnum.COVER_IMAGE).where(
+        PostResource.deleted == False).where(
+        PostResource.id.in_(post.cover_id for post in post_list)
+    )
+    resource_dict = {res.id: res for res in (await session.scalars(cat_stmt)).all()}
+    return {post.id: resource_dict.get(post.cover_id) for post in post_list}
+
+
+async def get_post_detail(blog_post: BlogPost) -> PostDetailVO:
+    category, tags, cover = await asyncio.gather(
+        get_post_category(blog_post),
+        get_post_tags(blog_post),
+        get_post_cover(blog_post),
+    )
+    post_detail = PostDetailVO.model_validate(blog_post)
+    post_detail.tag_list = [TagVO.model_validate(tag) for tag in tags]
+    if category is not None:
+        post_detail.category = TagVO.model_validate(category)
+    if cover is not None:
+        post_detail.cover = PostResourceVO.model_validate(cover)
+    return post_detail
+
+
+async def get_all_post_details(post_list: Sequence[BlogPost]) -> list[PostDetailVO]:
+    return await asyncio.gather(*[get_post_detail(post) for post in post_list])

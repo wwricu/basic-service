@@ -7,8 +7,7 @@ import httpx
 from httpx import Response
 from loguru import logger as log
 
-from wwricu.domain.common import CommonConstant, ConfigCenterConst
-from wwricu.domain.input import GithubContentVO
+from wwricu.domain.common import CommonConstant, ConfigCenterConst, GithubContentResponse, retry
 
 
 class ConfigClass(object):
@@ -20,11 +19,11 @@ class ConfigClass(object):
 
 
 class StorageConfig(ConfigClass):
-    bucket: str
-    domain: str
-    secure_key: str
+    region: str
+    s3: str = 's3'
     access_key: str
-    timeout: int = 3600
+    secret_key: str
+    bucket: str
 
 
 class DatabaseConfig(ConfigClass):
@@ -66,6 +65,7 @@ class Config(ConfigClass):
         StorageConfig.init(**storage_config)
 
 
+@retry()
 def download_config():
     try:
         with open(CommonConstant.TOKEN_PATH) as f:
@@ -79,7 +79,7 @@ def download_config():
         Accept=ConfigCenterConst.ACCEPT,
         Authorization=ConfigCenterConst.AUTHORIZATION.format(token=token.strip())
     ))
-    github_response = GithubContentVO.model_validate(response.json())
+    github_response = GithubContentResponse.model_validate(response.json())
     content: bytes = base64.b64decode(github_response.content.encode())
     with open(CommonConstant.CONFIG_PATH, 'wb+') as f:
         f.write(content)
