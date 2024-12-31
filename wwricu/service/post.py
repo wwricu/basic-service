@@ -62,9 +62,11 @@ async def get_post_detail(blog_post: BlogPost) -> PostDetailVO:
         get_post_cover(blog_post),
     )
     post_detail = PostDetailVO.model_validate(blog_post)
-    post_detail.category = TagVO.model_validate(category)
     post_detail.tag_list = [TagVO.model_validate(tag) for tag in tags]
-    post_detail.cover = PostResourceVO.model_validate(cover)
+    if category is not None:
+        post_detail.category = TagVO.model_validate(category)
+    if cover is not None:
+        post_detail.cover = PostResourceVO.model_validate(cover)
     return post_detail
 
 
