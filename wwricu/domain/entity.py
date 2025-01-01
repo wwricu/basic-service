@@ -22,6 +22,7 @@ class BlogPost(Base):
     title: Mapped[str] = mapped_column(String(EntityConstant.USER_STRING_LEN), default='', index=True)
     cover_id: Mapped[int] = mapped_column(Integer(), nullable=True)
     content: Mapped[str] = mapped_column(TEXT(), default='')
+    preview: Mapped[str] = mapped_column(TEXT(), default='')
     status: Mapped[str] = mapped_column(
         String(EntityConstant.ENUM_STRING_LEN),
         default=PostStatusEnum.DRAFT.value,

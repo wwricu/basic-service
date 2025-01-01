@@ -15,10 +15,17 @@ open_api = APIRouter(prefix='/open', tags=['Open API'])
 
 @open_api.post('/post/all', response_model=list[PostDetailVO])
 async def get_all_posts(post: PostRequestRO) -> list[PostDetailVO]:
-    stmt = select(BlogPost).where(
+    stmt = select(
+        BlogPost.id,
+        BlogPost.preview,
+        BlogPost.cover_id,
+        BlogPost.category_id,
+        BlogPost.create_time,
+        BlogPost.update_time
+    ).where(
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED).order_by(
-        desc(BlogPost.create_time)).limit(
+        desc(BlogPost.update_time)).limit(
         post.page_size).offset(
         (post.page_index - 1) * post.page_size
     )
@@ -28,7 +35,14 @@ async def get_all_posts(post: PostRequestRO) -> list[PostDetailVO]:
 
 @open_api.get('/post/detail/{post_id}', response_model=PostDetailVO)
 async def get_post_detail(post_id: int) -> PostDetailVO:
-    stmt = select(BlogPost).where(
+    stmt = select(
+        BlogPost.id,
+        BlogPost.content,
+        BlogPost.cover_id,
+        BlogPost.category_id,
+        BlogPost.create_time,
+        BlogPost.update_time
+    ).where(
         BlogPost.id == post_id).where(
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED
