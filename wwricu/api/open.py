@@ -1,11 +1,13 @@
+import asyncio
+
 from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, func
 
 from wwricu.domain.common import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, PostTag
 from wwricu.domain.enum import PostStatusEnum
 from wwricu.domain.input import PostRequestRO, TagRequestRO
-from wwricu.domain.output import TagVO, PostDetailVO
+from wwricu.domain.output import TagVO, PostDetailVO, PostDetailPageVO
 from wwricu.service.database import session
 from wwricu.service.post import get_all_post_details
 
@@ -13,9 +15,9 @@ from wwricu.service.post import get_all_post_details
 open_api = APIRouter(prefix='/open', tags=['Open API'])
 
 
-@open_api.post('/post/all', response_model=list[PostDetailVO])
-async def get_all_posts(post: PostRequestRO) -> list[PostDetailVO]:
-    stmt = select(
+@open_api.post('/post/all', response_model=PostDetailPageVO)
+async def get_all_posts(post: PostRequestRO) -> PostDetailPageVO:
+    post_stmt = select(
         BlogPost.id,
         BlogPost.preview,
         BlogPost.cover_id,
@@ -29,8 +31,13 @@ async def get_all_posts(post: PostRequestRO) -> list[PostDetailVO]:
         post.page_size).offset(
         (post.page_index - 1) * post.page_size
     )
-    all_posts = (await session.scalars(stmt)).all()
-    return await get_all_post_details(all_posts)
+    count_stmt = select(func.count(BlogPost.id)).where(
+        BlogPost.deleted == False).where(
+        BlogPost.status == PostStatusEnum.PUBLISHED
+    )
+    posts_result, count = await asyncio.gather(session.scalars(post_stmt), session.scalar(count_stmt))
+    all_posts = await get_all_post_details(posts_result.all())
+    return PostDetailPageVO(page_index=post.page_index, page_size=post.page_size, count=count, post_details=all_posts)
 
 
 @open_api.get('/post/detail/{post_id}', response_model=PostDetailVO)
