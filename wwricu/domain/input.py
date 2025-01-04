@@ -14,12 +14,14 @@ class PostRequestRO(BaseModel):
 
 
 class PostUpdateRO(BaseModel):
+    """All not null fields are mandatory"""
     id: int
-    title: str | None = None
+    title: str
     cover_id: int | None = None
-    status: PostStatusEnum | None = None
-    content: str | None = None
-    tag_id_list: list[int] = field(default_factory=list)
+    preview: str
+    status: PostStatusEnum
+    content: str
+    tag_id_list: list[int]
     category_id: int | None = None
 
 

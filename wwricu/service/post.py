@@ -59,7 +59,7 @@ async def get_post_detail(blog_post: BlogPost) -> PostDetailVO:
     category, tags, cover = await asyncio.gather(
         get_post_category(blog_post),
         get_post_tags(blog_post),
-        get_post_cover(blog_post),
+        get_post_cover(blog_post)
     )
     post_detail = PostDetailVO.model_validate(blog_post)
     post_detail.tag_list = [TagVO.model_validate(tag) for tag in tags]

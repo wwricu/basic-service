@@ -59,6 +59,7 @@ async def update_post(post_update: PostUpdateRO) -> PostDetailVO:
     stmt = update(BlogPost).where(BlogPost.id == post_update.id).values(
         title=post_update.title,
         content=post_update.content,
+        preview=post_update.preview,
         cover_id=post_update.cover_id,
         status=post_update.status,
         category_id=post_update.category_id

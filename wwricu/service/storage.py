@@ -11,7 +11,7 @@ def get_object(key: str) -> bytes | None:
     return response.Body.read()
 
 
-def put_object(key: str, data: bytes):
+def put_object(key: str, data: bytes) -> str:
     s3_client.put_object(Bucket=StorageConfig.bucket, Key=key, Body=data)
     return f'https://{StorageConfig.s3}.{StorageConfig.region}.amazonaws.com/{StorageConfig.bucket}/{key}'
 

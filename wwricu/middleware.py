@@ -7,9 +7,8 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 
-from wwricu.service.common import admin_user, hmac_verify
+from wwricu.service.common import validate_cookie, admin
 from wwricu.domain.common import CommonConstant
-from wwricu.service.cache import cache_get
 
 
 async def get_body(request: Request) -> bytes:
@@ -42,16 +41,13 @@ class AuthMiddleware(BaseHTTPMiddleware):
     @override
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
         session_id = request.cookies.get(CommonConstant.SESSION_ID)
-        session_sign = request.cookies.get(CommonConstant.SESSION_SIGN)
-        issue_time = cache_get(session_id)
-        if (
-            __debug__ is True or
-            isinstance(issue_time, int) and
-            0 < int(time.time()) - issue_time < CommonConstant.EXPIRE_TIME and
-            hmac_verify(session_id, session_sign) is True
-        ):
-            async with admin_user():
-                return await call_next(request)
+        cookie_sign = request.cookies.get(CommonConstant.SESSION_SIGN)
+        if await validate_cookie(session_id, cookie_sign):
+            admin.set(True)
+        try:
+            return await call_next(request)
+        finally:
+            admin.set(False)
 
 
 # noinspection PyTypeChecker
