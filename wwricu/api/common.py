@@ -19,8 +19,8 @@ async def login(login_request: LoginRO, response: Response):
     session_id = uuid.uuid4().hex
     session_sign = hmac_sign(session_id)
     await cache_set(session_id, int(time.time()))
-    response.set_cookie(CommonConstant.SESSION_ID, session_id, secure=True)
-    response.set_cookie(CommonConstant.SESSION_SIGN, session_sign, secure=True)
+    response.set_cookie(CommonConstant.SESSION_ID, session_id, secure=True, httponly=True, samesite='lax')
+    response.set_cookie(CommonConstant.SESSION_SIGN, session_sign, secure=True, samesite='lax')
 
 
 @common_api.get('/logout', dependencies=[Depends(admin_only)])
