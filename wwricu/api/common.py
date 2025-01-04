@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 from wwricu.domain.common import CommonConstant, HttpErrorDetail
 from wwricu.domain.input import LoginRO
-from wwricu.service.cache import cache_delete, cache_set, cache_get
-from wwricu.service.common import admin_only, hmac_sign, hmac_verify
+from wwricu.service.cache import cache_delete, cache_set
+from wwricu.service.common import admin_only, hmac_sign, validate_cookie
 
 common_api = APIRouter(tags=['Common API'])
 
@@ -33,8 +33,5 @@ async def logout(request: Request, response: Response):
 @common_api.get('/info', response_model=bool)
 async def info(request: Request):
     session_id = request.cookies.get(CommonConstant.SESSION_ID)
-    session_sign = request.cookies.get(CommonConstant.SESSION_SIGN)
-    issue_time = int(cache_get(session_id))
-    if 0 < int(time.time()) - issue_time < CommonConstant.EXPIRE_TIME and hmac_verify(session_id, session_sign) is True:
-        return True
-    return False
+    cookie_sign = request.cookies.get(CommonConstant.SESSION_SIGN)
+    return validate_cookie(session_id, cookie_sign)
