@@ -37,10 +37,10 @@ def hmac_verify(plain: str, sign: str) -> bool:
     return hmac_sign(plain) == sign
 
 
-def validate_cookie(session_id: str, cookie_sign: str) -> bool:
+async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
     if __debug__ is True:
         return True
-    if session_id is None or cookie_sign is None or not isinstance(issue_time := cache_get(session_id), int):
+    if session_id is None or cookie_sign is None or not isinstance(issue_time := await cache_get(session_id), int):
         return False
     if 0 < int(time.time()) - issue_time < CommonConstant.EXPIRE_TIME and hmac_verify(session_id, cookie_sign) is True:
         return True

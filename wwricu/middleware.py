@@ -42,7 +42,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
         session_id = request.cookies.get(CommonConstant.SESSION_ID)
         cookie_sign = request.cookies.get(CommonConstant.SESSION_SIGN)
-        if validate_cookie(session_id, cookie_sign):
+        if await validate_cookie(session_id, cookie_sign):
             admin.set(True)
         try:
             return await call_next(request)
