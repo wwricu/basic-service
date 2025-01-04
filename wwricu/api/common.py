@@ -15,10 +15,10 @@ async def login(login_request: LoginRO, response: Response):
     if login_request.username != login_request.password:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_PASSWORD)
     session_id = uuid.uuid4().hex
-    session_sign = hmac_sign(session_id)
-    await cache_set(session_id, 30 * 24 * 60 * 60)
+    cookie_sign = hmac_sign(session_id)
+    await cache_set(session_id, CommonConstant.COOKIE_TIMEOUT_SECOND)
     response.set_cookie(CommonConstant.SESSION_ID, session_id, secure=True, httponly=True, samesite='lax')
-    response.set_cookie(CommonConstant.SESSION_SIGN, session_sign, secure=True, samesite='lax')
+    response.set_cookie(CommonConstant.COOKIE_SIGN, cookie_sign, secure=True, httponly=True, samesite='lax')
 
 
 @common_api.get('/logout', dependencies=[Depends(admin_only)])
@@ -32,5 +32,7 @@ async def logout(request: Request, response: Response):
 @common_api.get('/info', response_model=bool)
 async def info(request: Request):
     session_id = request.cookies.get(CommonConstant.SESSION_ID)
-    cookie_sign = request.cookies.get(CommonConstant.SESSION_SIGN)
-    return await validate_cookie(session_id, cookie_sign)
+    cookie_sign = request.cookies.get(CommonConstant.COOKIE_SIGN)
+    if valid := await validate_cookie(session_id, cookie_sign):
+        await cache_set(session_id, CommonConstant.COOKIE_TIMEOUT_SECOND)
+    return valid
