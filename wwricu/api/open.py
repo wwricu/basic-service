@@ -19,6 +19,7 @@ open_api = APIRouter(prefix='/open', tags=['Open API'])
 async def get_all_posts(post: PostRequestRO) -> PostDetailPageVO:
     post_stmt = select(
         BlogPost.id,
+        BlogPost.title,
         BlogPost.preview,
         BlogPost.cover_id,
         BlogPost.category_id,
@@ -35,7 +36,7 @@ async def get_all_posts(post: PostRequestRO) -> PostDetailPageVO:
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED
     )
-    posts_result, count = await asyncio.gather(session.scalars(post_stmt), session.scalar(count_stmt))
+    posts_result, count = await asyncio.gather(session.execute(post_stmt), session.scalar(count_stmt))
     all_posts = await get_all_post_details(posts_result.all())
     return PostDetailPageVO(page_index=post.page_index, page_size=post.page_size, count=count, post_details=all_posts)
 

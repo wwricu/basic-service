@@ -11,12 +11,6 @@ from wwricu.service.common import validate_cookie, admin
 from wwricu.domain.common import CommonConstant
 
 
-async def get_body(request: Request) -> bytes:
-    if (content_type := request.headers.get('Content-Type')) is None or content_type.lower() == 'multipart/form-data':
-        return b''
-    return await request.body()
-
-
 class PerformanceMiddleware(BaseHTTPMiddleware):
     @override
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
@@ -30,7 +24,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
 class AspectMiddleware(BaseHTTPMiddleware):
     @override
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
-        log.info(f'{request.method} {request.url.path} {await get_body(request)}')
+        log.info(f'{request.method} {request.url.path}')
         try:
             return await call_next(request)
         except Exception as e:
