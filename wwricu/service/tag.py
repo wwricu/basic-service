@@ -74,6 +74,8 @@ async def get_post_category(post: BlogPost) -> PostTag:
 
 
 async def get_posts_tag_lists(post_list: Sequence[BlogPost]) -> dict[int, list[PostTag]]:
+    if not post_list:
+        return dict()
     post_tags_dict = {post.id: [] for post in post_list}
     relation_stmt = select(EntityRelation).where(
         EntityRelation.type == RelationTypeEnum.POST_TAG).where(
@@ -81,6 +83,8 @@ async def get_posts_tag_lists(post_list: Sequence[BlogPost]) -> dict[int, list[P
         EntityRelation.src_id.in_(post_tags_dict.keys())
     )
     tag_relations = (await session.scalars(relation_stmt)).all()
+    if not tag_relations:
+        return dict()
     tag_dict = {tag.id: tag for tag in await get_tags_by_ids([relation.dst_id for relation in tag_relations])}
     for relation in tag_relations:
         post_tags = post_tags_dict.get(relation.src_id)
@@ -90,6 +94,8 @@ async def get_posts_tag_lists(post_list: Sequence[BlogPost]) -> dict[int, list[P
 
 
 async def get_posts_category(post_list: Sequence[BlogPost]) -> dict[int, PostTag]:
+    if not post_list:
+        return dict()
     cat_stmt = select(PostTag).where(
         PostTag.type == TagTypeEnum.POST_CAT).where(
         PostTag.deleted == False).where(
