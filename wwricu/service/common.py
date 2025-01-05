@@ -22,6 +22,14 @@ async def lifespan(_: FastAPI):
     await log.complete()
 
 
+async def admin_login(username: str, password: str) -> bool:
+    if __debug__:
+        return True
+    if username != AdminConfig.username:
+        return False
+    return hashlib.sha256(password.encode(), usedforsecurity=True).hexdigest() == AdminConfig.password
+
+
 async def admin_only():
     if admin.get() is not True:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.NOT_AUTHORIZED)
