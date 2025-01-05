@@ -1,14 +1,15 @@
+import asyncio
 import uuid
 
 from fastapi import APIRouter, Depends, Form, HTTPException, status as http_status, UploadFile
 
-from sqlalchemy import select, update, desc
+from sqlalchemy import desc, func, select, update
 
 from wwricu.domain.common import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, EntityRelation, PostResource
 from wwricu.domain.enum import PostStatusEnum, PostResourceTypeEnum
 from wwricu.domain.input import PostUpdateRO, PostRequestRO
-from wwricu.domain.output import PostDetailVO, FileUploadVO
+from wwricu.domain.output import PostDetailVO, FileUploadVO, PostDetailPageVO
 from wwricu.service.common import admin_only
 from wwricu.service.database import session
 from wwricu.service.post import get_post_by_id, delete_post_cover, get_all_post_details, get_post_detail
@@ -27,20 +28,25 @@ async def create_post() -> PostDetailVO:
     return PostDetailVO.model_validate(blog_post)
 
 
-@post_api.post('/all', response_model=list[PostDetailVO])
-async def select_post(post: PostRequestRO) -> list[PostDetailVO]:
-    stmt = select(BlogPost).where(
-        BlogPost.deleted == False).order_by(
+@post_api.post('/all', response_model=PostDetailPageVO)
+async def select_post(post: PostRequestRO) -> PostDetailPageVO:
+    post_stmt = select(BlogPost).order_by(
         desc(BlogPost.create_time)).limit(
         post.page_size).offset(
         (post.page_index - 1) * post.page_size
     )
+    count_stmt = select(func.count(BlogPost.id))
+
     if post.status is not None:
-        stmt = stmt.where(BlogPost.status == post.status.value)
+        post_stmt = post_stmt.where(BlogPost.status == post.status.value)
+        count_stmt = count_stmt.where(BlogPost.status == post.status.value)
     if post.deleted is not None:
-        stmt = stmt.where(BlogPost.deleted == post.deleted)
-    all_posts = (await session.scalars(stmt)).all()
-    return await get_all_post_details(all_posts)
+        post_stmt = post_stmt.where(BlogPost.deleted == post.deleted)
+        count_stmt = count_stmt.where(BlogPost.deleted == post.deleted)
+
+    posts_result, count = await asyncio.gather(session.scalars(post_stmt), session.scalar(count_stmt))
+    all_posts = await get_all_post_details(posts_result.all())
+    return PostDetailPageVO(page_index=post.page_index, page_size=post.page_size, count=count, post_details=all_posts)
 
 
 @post_api.get('/detail/{post_id}', response_model=PostDetailVO | None)

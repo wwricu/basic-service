@@ -41,6 +41,13 @@ class PostDetailVO(BaseModel):
     update_time: datetime | None = None
 
 
+class PostDetailPageVO(BaseModel):
+    page_index: int
+    page_size: int
+    count: int
+    post_details: list[PostDetailVO] = field(default_factory=list)
+
+
 class FileUploadVO(BaseModel):
     id: int
     name: str

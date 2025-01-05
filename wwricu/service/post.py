@@ -8,7 +8,7 @@ from wwricu.service.storage import delete_object
 from wwricu.domain.entity import BlogPost, PostResource
 from wwricu.domain.enum import PostResourceTypeEnum
 from wwricu.service.database import session
-from wwricu.service.tag import get_post_category, get_post_tags
+from wwricu.service.tag import get_post_category, get_post_tags, get_posts_category, get_posts_tag_lists
 
 
 async def get_post_by_id(post_id: int) -> BlogPost:
@@ -71,4 +71,16 @@ async def get_post_detail(blog_post: BlogPost) -> PostDetailVO:
 
 
 async def get_all_post_details(post_list: Sequence[BlogPost]) -> list[PostDetailVO]:
-    return await asyncio.gather(*[get_post_detail(post) for post in post_list])
+    categories, tags = await asyncio.gather(
+        get_posts_category(post_list),
+        get_posts_tag_lists(post_list)
+    )
+    result = []
+    for post in post_list:
+        detail = PostDetailVO.model_validate(post)
+        if category := categories.get(post.id):
+            detail.category = TagVO.model_validate(category)
+        if tag_list := tags.get(post.id):
+            detail.tag_list = TagVO.model_validate(tag_list)
+        result.append(detail)
+    return result
