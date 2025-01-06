@@ -1,0 +1,42 @@
+name: Build Artifact
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - "**.yml"
+      - "**.md"
+      - "**.sh"
+      - "**.json"
+      - ".gitignore"
+  workflow_dispatch:
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    permissions: write-all
+  defaults:
+    run:
+      working-directory: basic-service
+      shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: basic-service
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip' # caching pip dependencies
+      - run: |
+          pip install -r requirements.txt
+          python -m build
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: basic-service
+          path: dist
+          overwrite: true
+      - name: Attest
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: 'basic-service/dist/**/*.tar.gz, basic-service/dist/**/*.zip'
