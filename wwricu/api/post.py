@@ -14,8 +14,7 @@ from wwricu.service.common import admin_only
 from wwricu.service.database import session
 from wwricu.service.post import get_post_by_id, delete_post_cover, get_all_post_details, get_post_detail
 from wwricu.service.storage import put_object
-from wwricu.service.tag import update_category, update_tags
-
+from wwricu.service.tag import update_category, update_tags, get_category_by_name, get_post_ids_by_tag_names
 
 post_api = APIRouter(prefix='/post', tags=['Post Management'], dependencies=[Depends(admin_only)])
 
@@ -30,19 +29,22 @@ async def create_post() -> PostDetailVO:
 
 @post_api.post('/all', response_model=PostDetailPageVO)
 async def select_post(post: PostRequestRO) -> PostDetailPageVO:
-    post_stmt = select(BlogPost).order_by(
+    stmt = select(BlogPost)
+    if post.status is not None:
+        stmt = stmt.where(BlogPost.status == post.status.value)
+    if post.deleted is not None:
+        stmt = stmt.where(BlogPost.deleted == post.deleted)
+    if category := await get_category_by_name(post.category):
+        stmt = stmt.where(BlogPost.category_id == category.id)
+    if post.tag_list is not None:
+        post_id_list = await get_post_ids_by_tag_names(post.tag_list)
+        stmt = stmt.where(BlogPost.id.in_(post_id_list))
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    post_stmt = stmt.order_by(
         desc(BlogPost.create_time)).limit(
         post.page_size).offset(
         (post.page_index - 1) * post.page_size
     )
-    count_stmt = select(func.count(BlogPost.id))
-
-    if post.status is not None:
-        post_stmt = post_stmt.where(BlogPost.status == post.status.value)
-        count_stmt = count_stmt.where(BlogPost.status == post.status.value)
-    if post.deleted is not None:
-        post_stmt = post_stmt.where(BlogPost.deleted == post.deleted)
-        count_stmt = count_stmt.where(BlogPost.deleted == post.deleted)
 
     posts_result, count = await asyncio.gather(session.scalars(post_stmt), session.scalar(count_stmt))
     all_posts = await get_all_post_details(posts_result.all())

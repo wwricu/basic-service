@@ -10,8 +10,9 @@ async def database_session() -> AsyncSession:
     try:
         yield session
     finally:
-        await session.commit()
-        await session.remove()
+        if session.registry.registry:
+            await session.commit()
+            await session.remove()
 
 
 @asynccontextmanager

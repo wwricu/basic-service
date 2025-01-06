@@ -25,6 +25,36 @@ async def get_category_by_id(category_id: int) -> PostTag:
     return await session.scalar(stmt)
 
 
+async def get_category_by_name(category_name: str) -> PostTag | None:
+    if category_name is None:
+        return None
+    stmt = select(PostTag).where(
+        PostTag.type == TagTypeEnum.POST_CAT).where(
+        PostTag.deleted == False).where(
+        PostTag.name == category_name
+    )
+    return await session.scalar(stmt)
+
+
+async def get_post_ids_by_tag_names(tag_name: list[str]) -> list[int]:
+    if not tag_name:
+        return []
+    stmt = select(PostTag).where(
+        PostTag.type == TagTypeEnum.POST_TAG).where(
+        PostTag.deleted == False).where(
+        PostTag.id.in_(tag_name)
+    )
+    tag_list = (await session.scalar(stmt)).all()
+    if not tag_list:
+        return []
+    stmt = select(EntityRelation).where(
+        EntityRelation.type == RelationTypeEnum.POST_TAG).where(
+        EntityRelation.deleted == False).where(
+        EntityRelation.src_id.in_(tag.id for tag in tag_list)
+    )
+    return [relation.src_id for relation in (await session.scalar(stmt)).all()]
+
+
 async def update_tags(post: BlogPost, tag_id_list: list[int] | None = None) -> list[PostTag]:
     if tag_id_list is None:
         return []

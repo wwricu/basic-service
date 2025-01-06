@@ -10,14 +10,14 @@ from wwricu.domain.input import PostRequestRO, TagRequestRO
 from wwricu.domain.output import TagVO, PostDetailVO, PostDetailPageVO
 from wwricu.service.database import session
 from wwricu.service.post import get_all_post_details
-
+from wwricu.service.tag import get_category_by_name, get_post_ids_by_tag_names
 
 open_api = APIRouter(prefix='/open', tags=['Open API'])
 
 
 @open_api.post('/post/all', response_model=PostDetailPageVO)
 async def get_all_posts(post: PostRequestRO) -> PostDetailPageVO:
-    post_stmt = select(
+    stmt = select(
         BlogPost.id,
         BlogPost.title,
         BlogPost.preview,
@@ -27,14 +27,18 @@ async def get_all_posts(post: PostRequestRO) -> PostDetailPageVO:
         BlogPost.update_time
     ).where(
         BlogPost.deleted == False).where(
-        BlogPost.status == PostStatusEnum.PUBLISHED).order_by(
-        desc(BlogPost.update_time)).limit(
+        BlogPost.status == PostStatusEnum.PUBLISHED
+    )
+    if category := await get_category_by_name(post.category):
+        stmt = stmt.where(BlogPost.category_id == category.id)
+    if post.tag_list is not None:
+        post_id_list = await get_post_ids_by_tag_names(post.tag_list)
+        stmt = stmt.where(BlogPost.id.in_(post_id_list))
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    post_stmt = stmt.order_by(
+        desc(BlogPost.create_time)).limit(
         post.page_size).offset(
         (post.page_index - 1) * post.page_size
-    )
-    count_stmt = select(func.count(BlogPost.id)).where(
-        BlogPost.deleted == False).where(
-        BlogPost.status == PostStatusEnum.PUBLISHED
     )
     posts_result, count = await asyncio.gather(session.execute(post_stmt), session.scalar(count_stmt))
     all_posts = await get_all_post_details(posts_result.all())

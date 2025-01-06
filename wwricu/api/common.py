@@ -5,14 +5,14 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from wwricu.domain.common import CommonConstant, HttpErrorDetail
 from wwricu.domain.input import LoginRO
 from wwricu.service.cache import cache_delete, cache_set
-from wwricu.service.common import admin_only, hmac_sign, validate_cookie
+from wwricu.service.common import admin_only, hmac_sign, validate_cookie, admin_login
 
 common_api = APIRouter(tags=['Common API'])
 
 
 @common_api.post('/login')
 async def login(login_request: LoginRO, response: Response):
-    if login_request.username != login_request.password:
+    if admin_login(login_request.username, login_request.password) is not True:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_PASSWORD)
     session_id = uuid.uuid4().hex
     cookie_sign = hmac_sign(session_id)

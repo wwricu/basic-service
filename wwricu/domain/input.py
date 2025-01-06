@@ -7,8 +7,8 @@ from wwricu.domain.enum import PostStatusEnum, TagTypeEnum
 class PostRequestRO(BaseModel):
     page_index: int = 1
     page_size: int = 10
-    tag_list: list[str] | None = field(default_factory=list)
-    cat_id: str | None = None
+    tag_list: list[str] | None = None
+    category: str | None = None
     status: PostStatusEnum | None = None
     deleted: bool = None
 
