@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import String, Integer, Boolean, TEXT, DateTime, func
+from sqlalchemy import String, Integer, Boolean, TEXT, DateTime, func, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from wwricu.domain.common import EntityConstant
@@ -33,14 +33,9 @@ class BlogPost(Base):
 
 class PostTag(Base):
     __tablename__ = 'wwr_post_tag'
+    __table_args__ = (UniqueConstraint('name', 'type', name='uix_name_type'),)
     name: Mapped[str] = mapped_column(String(EntityConstant.USER_STRING_LEN))
     type: Mapped[str] = mapped_column(String(EntityConstant.ENUM_STRING_LEN))
-
-
-class PostTagRelation(Base):
-    __tablename__ = 'wwr_post_tag_relation'
-    post_id: Mapped[int] = mapped_column(Integer())
-    tag_id: Mapped[int] = mapped_column(Integer())
 
 
 class EntityRelation(Base):
