@@ -34,7 +34,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: basic-service
-          path: dist
+          path: basic-service/dist
           overwrite: true
       - name: Attest
         uses: actions/attest-build-provenance@v1

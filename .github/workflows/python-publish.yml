@@ -31,7 +31,7 @@ jobs:
       id-token: write
     environment:
       name: pypi
-      url: https://pypi.org/p/wwr.icu
+      url: https://pypi.org/project/wwricu
     steps:
       - name: Retrieve release distributions
         uses: actions/download-artifact@v4
