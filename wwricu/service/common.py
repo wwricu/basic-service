@@ -5,6 +5,7 @@ import time
 from contextlib import asynccontextmanager
 from contextvars import ContextVar
 
+import bcrypt
 from fastapi import HTTPException, status, FastAPI
 from loguru import logger as log
 
@@ -27,7 +28,7 @@ async def admin_login(username: str, password: str) -> bool:
         return True
     if username != AdminConfig.username:
         return False
-    return hashlib.sha256(password.encode(), usedforsecurity=True).hexdigest() == AdminConfig.password
+    return bcrypt.checkpw(password.encode(), base64.b64decode(AdminConfig.password))
 
 
 async def admin_only():
