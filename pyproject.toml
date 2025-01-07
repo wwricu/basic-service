@@ -18,7 +18,6 @@ dependencies = [
     'uvicorn==0.32.1'
 ]
 
-
 [project.scripts]
 wwricu = 'main:main'
 

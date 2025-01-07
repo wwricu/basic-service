@@ -18,7 +18,7 @@ async def get_tags_by_ids(tag_id_list: list[int] = ()) -> list[PostTag]:
 
 async def get_category_by_id(category_id: int) -> PostTag:
     stmt = select(PostTag).where(
-        PostTag.type == TagTypeEnum.POST_CAT.value).where(
+        PostTag.type == TagTypeEnum.POST_CAT).where(
         PostTag.deleted == False).where(
         PostTag.id == category_id
     )

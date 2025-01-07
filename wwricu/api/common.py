@@ -7,6 +7,7 @@ from wwricu.domain.input import LoginRO
 from wwricu.service.cache import cache_delete, cache_set
 from wwricu.service.common import admin_only, hmac_sign, validate_cookie, admin_login
 
+
 common_api = APIRouter(tags=['Common API'])
 
 

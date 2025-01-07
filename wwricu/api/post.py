@@ -16,6 +16,7 @@ from wwricu.service.post import get_post_by_id, delete_post_cover, get_all_post_
 from wwricu.service.storage import put_object
 from wwricu.service.tag import update_category, update_tags, get_category_by_name, get_post_ids_by_tag_names
 
+
 post_api = APIRouter(prefix='/post', tags=['Post Management'], dependencies=[Depends(admin_only)])
 
 
