@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.scripts]
-wwricu = 'main:main'
+wwricu = 'wwricu.main:main'
 
 [tool.setuptools.packages]
 find = {}
