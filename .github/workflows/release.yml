@@ -1,8 +1,8 @@
-name: Build Artifact
+name: Release Distribution
 on:
   push:
-    branches:
-      - master
+    tags:
+      - "v**"
     paths-ignore:
       - "**.yml"
       - "**.md"
@@ -11,8 +11,8 @@ on:
       - ".gitignore"
   workflow_dispatch:
 jobs:
-  build:
-    name: Build
+  release_github:
+    name: Release on github
     runs-on: ubuntu-latest
     permissions: write-all
     defaults:
@@ -30,11 +30,9 @@ jobs:
       - run: |
           python -m pip install build
           python -m build
-      - uses: actions/upload-artifact@v4
-        with:
-          name: basic-service
-          path: basic-service/dist
-          overwrite: true
+      - run: gh release create ${{ github.ref_name }} --title ${{ github.ref_name }} --generate-notes --latest ./dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/attest-build-provenance@v1
         with:
           subject-path: 'basic-service/dist/**/*.tar.gz, basic-service/dist/**/*.whl'
