@@ -10,7 +10,7 @@ from wwricu.middleware import middlewares
 
 app = FastAPI(
     title=CommonConstant.APP_TITLE,
-    version=CommonConstant.APP_VERSION,
+    version=Config.version,
     lifespan=lifespan,
     middleware=middlewares,
     debug=__debug__

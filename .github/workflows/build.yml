@@ -1,14 +1,19 @@
-name: Build Artifact
+name: Build
 on:
   push:
     branches:
       - master
+      - release
     paths-ignore:
       - "**.yml"
       - "**.md"
       - "**.sh"
       - "**.json"
-      - ".gitignore"
+      - "**.txt"
+      - "**.sql"
+      - "**.csv"
+      - "**.gitignore"
+      - "Dockerfile"
   workflow_dispatch:
 jobs:
   build:
@@ -30,13 +35,11 @@ jobs:
       - run: |
           python -m pip install build
           python -m build
-      - name: Upload
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: basic-service
           path: basic-service/dist
           overwrite: true
-      - name: Attest
-        uses: actions/attest-build-provenance@v1
+      - uses: actions/attest-build-provenance@v1
         with:
-          subject-path: 'basic-service/dist/**/*.tar.gz, basic-service/dist/**/*.zip'
+          subject-path: 'basic-service/dist/**/*.tar.gz, basic-service/dist/**/*.whl'

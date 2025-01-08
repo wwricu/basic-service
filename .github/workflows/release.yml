@@ -1,0 +1,28 @@
+name: Release
+on:
+  push:
+    branches:
+      - 'release'
+    paths:
+      - 'version.txt'
+  workflow_dispatch:
+jobs:
+  github:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - id: build
+        run: |
+          echo version=$(cat version.txt) >> $GITHUB_ENV
+          python -m pip install build
+          python -m build
+      - run: gh release create ${{ env.version }} --title ${{ env.version }} --generate-notes --latest ./dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: 'dist/**/*.tar.gz, dist/**/*.whl'

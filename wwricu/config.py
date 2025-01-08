@@ -56,10 +56,14 @@ class Config(ConfigClass):
     port: int = 8000
     log_level: int = CRITICAL
     encoding: str = 'utf-8'
+    version_file: str = 'version.txt'
+    version: str = 'stable'
 
     @classmethod
     def load(cls, admin_config: dict, database_config: dict, storage_config: dict, **kwargs):
         cls.init(**kwargs)
+        with open(cls.version_file) as f:
+            cls.version = f.readline().strip()
         AdminConfig.init(**admin_config)
         DatabaseConfig.init(**database_config)
         StorageConfig.init(**storage_config)
