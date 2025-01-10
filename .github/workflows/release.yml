@@ -1,16 +1,10 @@
-name: Release Distribution
+name: Release
 on:
   push:
-    tags:
-      - '[0-9]+.[0-9]+.[0-9]+'
-    paths-ignore:
-      - '**.yml'
-      - '**.md'
-      - '**.sh'
-      - '**.json'
-      - '**.txt'
-      - '**.sql'
-      - '.gitignore'
+    branches:
+      - 'release'
+    paths:
+      - 'version.txt'
   workflow_dispatch:
 jobs:
   release_github:
@@ -27,12 +21,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: |
+      - id: build
+        run: |
+          echo "version=$(cat version.txt)" >> "$GITHUB_OUTPUT"
           python -m pip install build
           python -m build
       - uses: softprops/action-gh-release@v2
         with:
           files: dist/*
+          name: ${{ steps.build.outputs.version }}
       - uses: actions/attest-build-provenance@v1
         with:
           subject-path: 'basic-service/dist/**/*.tar.gz, basic-service/dist/**/*.whl'
@@ -45,7 +42,7 @@ jobs:
         working-directory: basic-service
     environment:
       name: pypi
-      url: https://pypi.org/project/wwricu/${{ github.ref_name }}
+      url: https://pypi.org/project/wwricu
     steps:
       - uses: actions/checkout@v4
         with:
@@ -64,6 +61,11 @@ jobs:
     needs: release_github
     permissions: write-all
     steps:
+      - uses: actions/checkout@v4
+        with:
+          path: basic-service
+      - id: version
+        run: echo "version=$(cat version.txt)" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
@@ -74,4 +76,4 @@ jobs:
           push: true
           sbom: true
           provenance: mode=max
-          tags: wwricu/basic-service:${{ github.ref_name }}, wwricu/basic-service:latest
+          tags: wwricu/basic-service:${{ steps.version.outputs.version }}, wwricu/basic-service:latest
