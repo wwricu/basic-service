@@ -26,10 +26,9 @@ jobs:
           echo "version=$(cat version.txt)" >> "$GITHUB_OUTPUT"
           python -m pip install build
           python -m build
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*
-          name: ${{ steps.build.outputs.version }}
+      - run: gh release create ${{ steps.build.outputs.version }} --title ${{ steps.build.outputs.version }} --generate-notes --latest ./dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/attest-build-provenance@v1
         with:
           subject-path: 'basic-service/dist/**/*.tar.gz, basic-service/dist/**/*.whl'
