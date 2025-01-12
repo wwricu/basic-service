@@ -22,10 +22,11 @@ class CommonConstant(object):
     SESSION_ID: str = 'session_id'
     COOKIE_SIGN: str = 'sign'
     EXPIRE_TIME: int = 60 * 60 * 24 * 7
-    APP_TITLE: str = 'wwr.icu'
+    APP_NAME: str = 'wwr.icu'
     APP_VERSION: str = 'v2.0.0'
-    CONFIG_PATH: str = 'config.json'
-    TOKEN_PATH: str = 'github_token.txt'
+    CONFIG_DIR: str = 'conf'
+    CONFIG_FILE: str = 'config.json'
+    TOKEN_FILE: str = 'github_token.txt'
     STORE_RET_KEY: str = 'key'
     COOKIE_TIMEOUT_SECOND: int = 30 * 24 * 60 * 60
 
