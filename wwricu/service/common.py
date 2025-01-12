@@ -16,7 +16,7 @@ from wwricu.service.cache import cache_get
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    log.info(f'{CommonConstant.APP_TITLE} {CommonConstant.APP_VERSION} Startup')
+    log.info(f'{CommonConstant.APP_NAME} {CommonConstant.APP_VERSION} Startup')
     log.info(f'listening on {Config.host}:{Config.port}')
     yield
     log.info('THE END')

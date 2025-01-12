@@ -20,6 +20,8 @@ jobs:
           echo version=$(cat version.txt) >> $GITHUB_ENV
           python -m pip install build
           python -m build
+          mv dist/wwricu-$(cat version.txt).tar.gz dist/wwricu.tar.gz
+          cd dist && tar -czf dist.tar.gz wwricu.tar.gz
       - run: gh release create ${{ env.version }} --title ${{ env.version }} --generate-notes --latest ./dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
