@@ -1,9 +1,10 @@
 venv
 .idea
 .vscode
-conf
+build
 dist
 wwricu.egg-info
+**/conf
 **/__pycache__
 *.json
 *.pyc

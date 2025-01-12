@@ -55,14 +55,10 @@ class Config(ConfigClass):
     port: int = 8000
     log_level: int = CRITICAL
     encoding: str = 'utf-8'
-    version_file: str = 'version.txt'
-    version: str = 'stable'
 
     @classmethod
     def load(cls, admin_config: dict, database_config: dict, storage_config: dict, **kwargs):
         cls.init(**kwargs)
-        with open(cls.version_file) as f:
-            cls.version = f.readline().strip()
         AdminConfig.init(**admin_config)
         DatabaseConfig.init(**database_config)
         StorageConfig.init(**storage_config)
@@ -71,7 +67,7 @@ class Config(ConfigClass):
 @retry()
 def download_config():
     try:
-        with open(CommonConstant.TOKEN_PATH) as f:
+        with open(f'{CommonConstant.CONFIG_DIR}/{CommonConstant.TOKEN_FILE}') as f:
             token = f.readline()
     except (Exception,):
         token = os.environ.get(ConfigCenterConst.TOKEN_KEY)
@@ -84,18 +80,19 @@ def download_config():
     ))
     github_response = GithubContentResponse.model_validate(response.json())
     content: bytes = base64.b64decode(github_response.content.encode())
-    with open(CommonConstant.CONFIG_PATH, 'wb+') as f:
+    with open(f'{CommonConstant.CONFIG_DIR}/{CommonConstant.CONFIG_FILE}', 'wb+') as f:
         f.write(content)
-        log.info(f'Download {ConfigCenterConst.URL} to {CommonConstant.CONFIG_PATH}')
+        log.info(f'Download {ConfigCenterConst.URL} to {CommonConstant.CONFIG_DIR}/{CommonConstant.CONFIG_FILE}')
 
 
 def init():
+    os.makedirs(CommonConstant.CONFIG_DIR, exist_ok=True)
     if __debug__:
         log.warning('APP RUNNING ON DEBUG MODE')
     try:
         download_config()
     except Exception as e:
         log.warning(f'Failed to download config: {e}')
-    with open(CommonConstant.CONFIG_PATH) as conf:
+    with open(f'{CommonConstant.CONFIG_DIR}/{CommonConstant.CONFIG_FILE}') as conf:
         Config.load(**json.load(conf))
         log.info('Config init')
