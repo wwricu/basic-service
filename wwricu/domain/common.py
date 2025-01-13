@@ -31,3 +31,11 @@ class EntityConstant(object):
     ENUM_STRING_LEN: int = 32
     USER_STRING_LEN: int = 64
     LONG_STRING_LEN: int = 128
+
+
+class LoginConstant(object):
+    LOCK_TIME: int = 30 * 60
+    MAX_TRY: int = 3
+    TRY_TIMEOUT: int = 5 * 60
+    FAILURE_TIME_KEY: str = 'login_failed_time'
+    LOCK_KEY: str = 'login_lock_key'
