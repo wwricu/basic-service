@@ -1,13 +1,11 @@
-import base64
 import json
-import os
 from logging import CRITICAL
 
-import httpx
-from httpx import Response
+import boto3
 from loguru import logger as log
 
-from wwricu.domain.common import CommonConstant, ConfigCenterConst, GithubContentResponse, retry
+from wwricu.domain.common import CommonConstant
+from wwricu.domain.third import AWSConst, AWSSSMResponse
 
 
 class ConfigClass(object):
@@ -64,35 +62,22 @@ class Config(ConfigClass):
         StorageConfig.init(**storage_config)
 
 
-@retry()
 def download_config():
-    try:
-        with open(f'{CommonConstant.CONFIG_DIR}/{CommonConstant.TOKEN_FILE}') as f:
-            token = f.readline()
-    except (Exception,):
-        token = os.environ.get(ConfigCenterConst.TOKEN_KEY)
-    if not token:
-        log.info('Config center disabled')
-        return
-    response: Response = httpx.get(ConfigCenterConst.URL, headers=dict(
-        Accept=ConfigCenterConst.ACCEPT,
-        Authorization=ConfigCenterConst.AUTHORIZATION.format(token=token.strip())
-    ))
-    github_response = GithubContentResponse.model_validate(response.json())
-    content: bytes = base64.b64decode(github_response.content.encode())
-    with open(f'{CommonConstant.CONFIG_DIR}/{CommonConstant.CONFIG_FILE}', 'wb+') as f:
-        f.write(content)
-        log.info(f'Download {ConfigCenterConst.URL} to {CommonConstant.CONFIG_DIR}/{CommonConstant.CONFIG_FILE}')
+    ssm_client = boto3.client(AWSConst.ssm, region_name=AWSConst.region)
+    content = ssm_client.get_parameter(Name=AWSConst.config_key, WithDecryption=False)
+    response = AWSSSMResponse.model_validate(content)
+    with open(CommonConstant.CONFIG_FILE, 'wt+') as f:
+        f.write(response.Parameter.Value)
 
 
 def init():
-    os.makedirs(CommonConstant.CONFIG_DIR, exist_ok=True)
     if __debug__:
         log.warning('APP RUNNING ON DEBUG MODE')
     try:
         download_config()
+        log.info(f'config downloaded')
     except Exception as e:
-        log.warning(f'Failed to download config: {e}')
-    with open(f'{CommonConstant.CONFIG_DIR}/{CommonConstant.CONFIG_FILE}') as conf:
-        Config.load(**json.load(conf))
-        log.info('Config init')
+        log.warning(f'Failed to download config: {e}, load locally')
+    with open(CommonConstant.CONFIG_FILE) as f:
+        Config.load(**json.load(f))
+    log.info('Config init')
