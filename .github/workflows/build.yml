@@ -31,7 +31,6 @@ jobs:
           python -m pip install build
           python -m build
           mv dist/wwricu-$(cat version.txt).tar.gz dist/wwricu.tar.gz
-          cd dist && tar -czf dist.tar.gz wwricu.tar.gz
       - uses: actions/upload-artifact@v4
         with:
           name: basic-service

@@ -10,6 +10,8 @@ jobs:
   github:
     runs-on: ubuntu-latest
     permissions: write-all
+    outputs:
+      version: ${{ steps.build.outputs.version }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -18,13 +20,29 @@ jobs:
       - id: build
         run: |
           echo version=$(cat version.txt) >> $GITHUB_ENV
+          echo version=$(cat version.txt) >> $GITHUB_OUTPUT
           python -m pip install build
           python -m build
-          cd dist && mv wwricu-$(cat version.txt).tar.gz wwricu.tar.gz
-          tar wwricu.tar.gz -czf wwricu.tar.gz
+          mv dist/wwricu-$(cat version.txt).tar.gz dist/wwricu.tar.gz
       - run: gh release create ${{ env.version }} --title ${{ env.version }} --generate-notes --latest ./dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/attest-build-provenance@v1
         with:
           subject-path: 'dist/**/*.tar.gz, dist/**/*.whl'
+  dockerhub:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    needs: github
+    steps:
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          username: wwricu
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          push: true
+          sbom: true
+          provenance: mode=max
+          tags: wwricu/basic-service:${{ needs.github.outputs.version }}, wwricu/basic-service:latest

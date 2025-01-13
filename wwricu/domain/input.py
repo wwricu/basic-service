@@ -25,12 +25,6 @@ class PostUpdateRO(BaseModel):
     category_id: int | None = None
 
 
-class PostResourceRO(BaseModel):
-    type: str
-    payload: str
-    name: str | None = None
-
-
 class LoginRO(BaseModel):
     username: str
     password: str
