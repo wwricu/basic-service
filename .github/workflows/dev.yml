@@ -1,0 +1,27 @@
+name: dev
+on:
+  push:
+    branches:
+      - 'dev'
+  workflow_dispatch:
+jobs:
+  github:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    outputs:
+      version: ${{ steps.build.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - id: build
+        run: |
+          python -m pip install build
+          python -m build
+          mv dist/wwricu-$(cat version.txt).tar.gz dist/wwricu.tar.gz
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: dev
+          files: dist/*
+          make_latest: true

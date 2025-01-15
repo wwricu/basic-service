@@ -7,7 +7,7 @@ from wwricu.domain.common import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, PostTag
 from wwricu.domain.enum import PostStatusEnum
 from wwricu.domain.input import PostRequestRO, TagRequestRO
-from wwricu.domain.output import TagVO, PostDetailVO, PostDetailPageVO
+from wwricu.domain.output import TagVO, PostDetailVO, PageVO
 from wwricu.service.database import session
 from wwricu.service.post import get_all_post_details
 from wwricu.service.tag import get_category_by_name, get_post_ids_by_tag_names
@@ -15,8 +15,8 @@ from wwricu.service.tag import get_category_by_name, get_post_ids_by_tag_names
 open_api = APIRouter(prefix='/open', tags=['Open API'])
 
 
-@open_api.post('/post/all', response_model=PostDetailPageVO)
-async def get_all_posts(post: PostRequestRO) -> PostDetailPageVO:
+@open_api.post('/post/all', response_model=PageVO[PostDetailVO])
+async def get_all_posts(post: PostRequestRO) -> PageVO[PostDetailVO]:
     stmt = select(
         BlogPost.id,
         BlogPost.title,
@@ -42,7 +42,7 @@ async def get_all_posts(post: PostRequestRO) -> PostDetailPageVO:
     )
     posts_result, count = await asyncio.gather(session.execute(post_stmt), session.scalar(count_stmt))
     all_posts = await get_all_post_details(posts_result.all())
-    return PostDetailPageVO(page_index=post.page_index, page_size=post.page_size, count=count, post_details=all_posts)
+    return PageVO(page_index=post.page_index, page_size=post.page_size, count=count, post_details=all_posts)
 
 
 @open_api.get('/post/detail/{post_id}', response_model=PostDetailVO)
