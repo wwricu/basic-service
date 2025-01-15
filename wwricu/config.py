@@ -1,5 +1,7 @@
 import json
 import logging
+import os
+import sys
 from logging import CRITICAL
 from types import FrameType
 from typing import cast
@@ -82,9 +84,15 @@ class InterceptHandler(logging.Handler):
 
 
 def log_config():
+    log.remove()
+    if __debug__:
+        log.add(sys.stdout, level=logging.DEBUG)
+    os.makedirs(CommonConstant.LOG_PATH, exist_ok=True)
+    log.add(f'{CommonConstant.LOG_PATH}/{{time:YYYY-MM-DD}}.log', level=logging.INFO, rotation='00:00')
     for logger_name in CommonConstant.OVERRIDE_LOGGER_NAME:
         if logger := logging.getLogger(logger_name):
             logger.handlers = [InterceptHandler()]
+
 
 
 def download_config():
