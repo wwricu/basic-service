@@ -1,5 +1,10 @@
 import json
+import logging
+import os
+import sys
 from logging import CRITICAL
+from types import FrameType
+from typing import cast
 
 import boto3
 from loguru import logger as log
@@ -62,6 +67,34 @@ class Config(ConfigClass):
         StorageConfig.init(**storage_config)
 
 
+class InterceptHandler(logging.Handler):
+    def emit(self, record: logging.LogRecord) -> None:  # pragma: no cover
+        # Get corresponding Loguru level if it exists
+        try:
+            level = log.level(record.levelname).name
+        except ValueError:
+            level = str(record.levelno)
+
+        # Find caller from where originated the logged message
+        frame, depth = logging.currentframe(), 2
+        while frame.f_code.co_filename == logging.__file__:  # noqa: WPS609
+            frame = cast(FrameType, frame.f_back)
+            depth += 1
+        log.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+
+
+def log_config():
+    log.remove()
+    if __debug__:
+        log.add(sys.stdout, level=logging.DEBUG)
+    os.makedirs(CommonConstant.LOG_PATH, exist_ok=True)
+    log.add(f'{CommonConstant.LOG_PATH}/{{time:YYYY-MM-DD}}.log', level=logging.INFO, rotation='00:00')
+    for logger_name in CommonConstant.OVERRIDE_LOGGER_NAME:
+        if logger := logging.getLogger(logger_name):
+            logger.handlers = [InterceptHandler()]
+
+
+
 def download_config():
     ssm_client = boto3.client(AWSConst.ssm, region_name=AWSConst.region)
     content = ssm_client.get_parameter(Name=AWSConst.config_key, WithDecryption=False)
@@ -71,6 +104,7 @@ def download_config():
 
 
 def init():
+    log_config()
     if __debug__:
         log.warning('APP RUNNING ON DEBUG MODE')
     try:

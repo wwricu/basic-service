@@ -25,6 +25,8 @@ class CommonConstant(object):
     TOKEN_FILE: str = 'github_token.txt'
     STORE_RET_KEY: str = 'key'
     COOKIE_TIMEOUT_SECOND: int = 30 * 24 * 60 * 60
+    OVERRIDE_LOGGER_NAME = ('uvicorn.access', 'uvicorn')
+    LOG_PATH: str = 'logs'
 
 
 class EntityConstant(object):

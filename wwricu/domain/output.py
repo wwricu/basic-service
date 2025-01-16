@@ -41,11 +41,11 @@ class PostDetailVO(BaseModel):
     update_time: datetime | None = None
 
 
-class PostDetailPageVO(BaseModel):
+class PageVO[T](BaseModel):
     page_index: int
     page_size: int
     count: int
-    post_details: list[PostDetailVO] = field(default_factory=list)
+    post_details: list[T] = field(default_factory=list)
 
 
 class FileUploadVO(BaseModel):
