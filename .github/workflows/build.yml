@@ -5,15 +5,14 @@ on:
       - master
       - release
     paths-ignore:
-      - "**.yml"
-      - "**.md"
-      - "**.sh"
-      - "**.json"
-      - "**.txt"
-      - "**.sql"
-      - "**.csv"
-      - "**.gitignore"
-      - "Dockerfile"
+      - '**.yml'
+      - '**.md'
+      - '**.sh'
+      - '**.json'
+      - '**.txt'
+      - '**.sql'
+      - '**.csv'
+      - '**.gitignore'
 jobs:
   build:
     name: Build
@@ -27,4 +26,7 @@ jobs:
       - run: |
           python -m pip install build
           python -m build
-
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          tags: wwricu/basic-service:build

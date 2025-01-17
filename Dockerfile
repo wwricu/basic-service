@@ -8,4 +8,3 @@ RUN pip3 install --disable-pip-version-check --no-cache-dir wwricu.tar.gz && rm 
 && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo 'Asia/Shanghai' > /etc/timezone
 
 CMD ["wwricu"]
-
