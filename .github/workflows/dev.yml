@@ -51,6 +51,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions: write-all
+    continue-on-error: true
     needs: github
     steps:
       - uses: appleboy/ssh-action@master
@@ -60,6 +61,7 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             docker stop basic-service
+            docker rm basic-service
             docker rmi wwricu/basic-service:dev
             cd /deploy
             docker-compose -f docker-compose-dev.yml up -d
