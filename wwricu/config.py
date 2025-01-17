@@ -23,10 +23,8 @@ class ConfigClass(object):
 
 class StorageConfig(ConfigClass):
     region: str
-    s3: str = 's3'
-    access_key: str
-    secret_key: str
     bucket: str
+    private_bucket: str
 
 
 class DatabaseConfig(ConfigClass):
@@ -109,7 +107,7 @@ def init():
         log.warning('APP RUNNING ON DEBUG MODE')
     try:
         download_config()
-        log.info(f'config downloaded')
+        log.info(f'Downloaded config file as {CommonConstant.CONFIG_FILE}')
     except Exception as e:
         log.warning(f'Failed to download config: {e}, load locally')
     with open(CommonConstant.CONFIG_FILE) as f:
