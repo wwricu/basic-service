@@ -14,12 +14,10 @@ on:
       - "**.csv"
       - "**.gitignore"
       - "Dockerfile"
-  workflow_dispatch:
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    permissions: write-all
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -27,15 +25,6 @@ jobs:
           python-version: '3.12'
           cache: 'pip'
       - run: |
-          echo version=$(cat version.txt) >> $GITHUB_ENV
           python -m pip install build
           python -m build
-          mv dist/wwricu-$(cat version.txt).tar.gz dist/wwricu.tar.gz
-      - uses: actions/upload-artifact@v4
-        with:
-          name: basic-service
-          path: dist
-          overwrite: true
-      - uses: actions/attest-build-provenance@v1
-        with:
-          subject-path: 'dist/**/*.tar.gz, dist/**/*.whl'
+
