@@ -12,11 +12,11 @@ async def cache_delete(key: str):
         task.cancel()
 
 
-async def cache_set(key: str, value: any, second: int | None = 600):
+async def cache_set(key: str, value: any, second: int = 600):
     if task := timeout_callback.pop(key, None):
         task.cancel()
     cache_data[key] = value
-    if second is not None and second > 0:
+    if second > 0:
         timeout_callback[key] = asyncio.create_task(timeout(key, second))
 
 
