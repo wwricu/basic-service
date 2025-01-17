@@ -48,3 +48,18 @@ jobs:
           push: true
           file: DockerfileDev
           tags: wwricu/basic-service:dev
+  deploy:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    needs: github
+    steps:
+      - uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEV_HOSTNAME }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            docker stop basic-service
+            docker rmi wwricu/basic-service:dev
+            cd /deploy
+            docker-compose -f docker-compose-dev.yml up -d
