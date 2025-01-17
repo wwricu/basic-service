@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions: write-all
     continue-on-error: true
-    needs: github
+    needs: dockerhub
     steps:
       - uses: appleboy/ssh-action@master
         with:
