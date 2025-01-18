@@ -16,6 +16,7 @@ async def open_session() -> AsyncSession:
     finally:
         if session.registry.registry:
             await session.commit()
+            await session.close()
             await session.remove()
 
 
