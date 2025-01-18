@@ -45,6 +45,6 @@ async def info(request: Request) -> bool:
 @common_api.get('/database', dependencies=[Depends(admin_only)])
 async def database(action: DatabaseActionEnum | None = DatabaseActionEnum.RESTORE):
     if action == DatabaseActionEnum.RESTORE:
-        database_restore()
+        await database_restore()
     elif action == DatabaseActionEnum.BACKUP:
         database_backup()
