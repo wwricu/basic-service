@@ -28,21 +28,9 @@ class StorageConfig(ConfigClass):
 
 
 class DatabaseConfig(ConfigClass):
-    engine: str
-    username: str
-    password: str
-    host: str
-    port: int
-    database: str
     url: str
-
-    @classmethod
-    def get_url(cls):
-        try:
-            return cls.url
-        except (Exception,):
-            return f'{cls.engine}://{cls.username}:{cls.password}@{cls.host}:{cls.port}/{cls.database}'
-
+    database: str
+    dynamo_region: str = 'OREGON'
 
 class AdminConfig(ConfigClass):
     username: str

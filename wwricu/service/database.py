@@ -41,6 +41,6 @@ def database_backup():
 
 
 database_init()
-engine = create_async_engine(DatabaseConfig.get_url(), echo=__debug__)
+engine = create_async_engine(DatabaseConfig.url, echo=__debug__)
 session_maker = async_sessionmaker(bind=engine, expire_on_commit=False)
 session = async_scoped_session(session_maker, scopefunc=current_task)
