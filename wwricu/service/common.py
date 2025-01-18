@@ -10,13 +10,15 @@ from loguru import logger as log
 
 from wwricu.domain.common import HttpErrorDetail, CommonConstant
 from wwricu.config import AdminConfig, Config
-from wwricu.service.cache import cache_get
+from wwricu.service.cache import cache_get, cache_dump, cache_load
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     log.info(f'listening on {Config.host}:{Config.port}')
+    await cache_dump()
     yield
+    await cache_load()
     log.info('THE END')
     await log.complete()
 
