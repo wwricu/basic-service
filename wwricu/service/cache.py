@@ -40,7 +40,7 @@ async def cache_dump():
 
 
 async def cache_load():
-    with open(CommonConstant.CACHE_DUMP_FILE, 'b') as f:
+    with open(CommonConstant.CACHE_DUMP_FILE, 'rb') as f:
         persist_data, persist_timeout = pickle.loads(f.read())
     now = int(time.time())
     for key, value in persist_data:

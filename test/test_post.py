@@ -1,12 +1,17 @@
 from loguru import logger as log
 from fastapi import status
 
+from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from test.test_client import client
 from wwricu.domain.entity import PostTag, EntityRelation, BlogPost
 from wwricu.domain.enum import TagTypeEnum
+from wwricu.main import app
 from wwricu.service.post import get_all_post_details
+
+
+client = TestClient(app)
+
 
 
 def test_create_post():
