@@ -28,8 +28,8 @@ async def create_post() -> PostDetailVO:
     return PostDetailVO.model_validate(blog_post)
 
 
-@post_api.post('/all', response_model=PageVO)
-async def select_post(post: PostRequestRO) -> PageVO:
+@post_api.post('/all', response_model=PageVO[PostDetailVO])
+async def select_post(post: PostRequestRO) -> PageVO[PostDetailVO]:
     stmt = select(BlogPost)
     if post.status is not None:
         stmt = stmt.where(BlogPost.status == post.status.value)

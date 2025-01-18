@@ -104,23 +104,21 @@ async def get_post_category(post: BlogPost) -> PostTag:
 
 
 async def get_posts_tag_lists(post_list: Sequence[BlogPost]) -> dict[int, list[PostTag]]:
-    if not post_list:
-        return dict()
-    post_tags_dict = {post.id: [] for post in post_list}
-    relation_stmt = select(EntityRelation).where(
+    stmt = select(PostTag, EntityRelation.src_id).join(
+        EntityRelation, PostTag.id == EntityRelation.dst_id).where(
+        PostTag.deleted == False).where(
+        PostTag.type == TagTypeEnum.POST_TAG).where(
         EntityRelation.type == RelationTypeEnum.POST_TAG).where(
         EntityRelation.deleted == False).where(
-        EntityRelation.src_id.in_(post_tags_dict.keys())
+        EntityRelation.src_id.in_(post.id for post in post_list)
     )
-    tag_relations = (await session.scalars(relation_stmt)).all()
-    if not tag_relations:
-        return dict()
-    tag_dict = {tag.id: tag for tag in await get_tags_by_ids([relation.dst_id for relation in tag_relations])}
-    for relation in tag_relations:
-        post_tags = post_tags_dict.get(relation.src_id)
-        tag = tag_dict.get(relation.dst_id)
-        post_tags.append(tag)
-    return post_tags_dict
+
+    query_result = (await session.execute(stmt)).all()
+    result = {post.id: [] for post in post_list}
+    for post_tag, post_id in query_result:
+        if (post_tag_list := result.get(post_id)) is not None:
+            post_tag_list.append(post_tag)
+    return result
 
 
 async def get_posts_category(post_list: Sequence[BlogPost]) -> dict[int, PostTag]:

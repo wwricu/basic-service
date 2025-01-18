@@ -1,3 +1,4 @@
+import time
 from typing import override
 
 from loguru import logger as log
@@ -10,11 +11,11 @@ from starlette.requests import Request
 class AspectMiddleware(BaseHTTPMiddleware):
     @override
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
-        log.info(f'{request.method} {request.url.path}')
+        begin = time.time()
         try:
             return await call_next(request)
-        except Exception as e:
-            log.exception(e)
+        finally:
+            log.info(f'{request.method} {request.url.path} {int((time.time() - begin) * 1000)} ms')
 
 
 # noinspection PyTypeChecker

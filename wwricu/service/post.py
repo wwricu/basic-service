@@ -80,7 +80,6 @@ async def get_all_post_details(post_list: Sequence[BlogPost]) -> list[PostDetail
         detail = PostDetailVO.model_validate(post)
         if category := categories.get(post.id):
             detail.category = TagVO.model_validate(category)
-        if tag_list := tags.get(post.id):
-            detail.tag_list = TagVO.model_validate(tag_list)
+        detail.tag_list = [TagVO.model_validate(tag) for tag in tags.get(post.id, [])]
         result.append(detail)
     return result
