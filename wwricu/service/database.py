@@ -40,7 +40,17 @@ def database_backup():
         put_object(DatabaseConfig.database, f.read(), StorageConfig.private_bucket)
 
 
-database_init()
+def database_restore():
+    if os.path.exists(DatabaseConfig.database):
+        os.remove(DatabaseConfig.database)
+    if database := get_object(DatabaseConfig.database, bucket=StorageConfig.private_bucket):
+        log.info(f'Download database as {DatabaseConfig.database}')
+        with open(DatabaseConfig.database, mode='wb+') as f:
+            f.write(database)
+
+
+if not os.path.exists(DatabaseConfig.database):
+    database_restore()
 engine = create_async_engine(DatabaseConfig.url, echo=__debug__)
 session_maker = async_sessionmaker(bind=engine, expire_on_commit=False)
 session = async_scoped_session(session_maker, scopefunc=current_task)

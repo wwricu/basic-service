@@ -3,7 +3,9 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
+from service.database import database_restore, database_backup
 from wwricu.domain.common import CommonConstant, HttpErrorDetail
+from wwricu.domain.enum import DatabaseActionEnum
 from wwricu.domain.input import LoginRO
 from wwricu.service.cache import cache_delete, cache_set
 from wwricu.service.common import admin_only, hmac_sign, validate_cookie, admin_login
@@ -38,3 +40,11 @@ async def info(request: Request) -> bool:
     if valid := await validate_cookie(session_id, cookie_sign):
         await cache_set(session_id, int(time.time()), CommonConstant.COOKIE_TIMEOUT_SECOND)
     return valid
+
+
+@common_api.get('/database', dependencies=[Depends(admin_only)])
+async def database(action: DatabaseActionEnum | None = DatabaseActionEnum.RESTORE):
+    if action == DatabaseActionEnum.RESTORE:
+        database_restore()
+    elif action == DatabaseActionEnum.BACKUP:
+        database_backup()
