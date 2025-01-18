@@ -1,4 +1,5 @@
 import asyncio
+import os
 import pickle
 import time
 
@@ -40,12 +41,15 @@ async def cache_dump():
 
 
 async def cache_load():
+    if not os.path.exists(CommonConstant.CACHE_DUMP_FILE):
+        return
     with open(CommonConstant.CACHE_DUMP_FILE, 'rb') as f:
         persist_data, persist_timeout = pickle.loads(f.read())
     now = int(time.time())
-    for key, value in persist_data:
+    for key, value in persist_data.items():
         if (second := persist_timeout.get(key, 0) - now) > 0:
             await cache_set(key, value, second)
+    os.remove(CommonConstant.CACHE_DUMP_FILE)
 
 
 cache_data: dict[str, any] = dict()
