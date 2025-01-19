@@ -10,7 +10,7 @@ from loguru import logger as log
 
 from wwricu.domain.common import HttpErrorDetail, CommonConstant
 from wwricu.config import AdminConfig, Config
-from wwricu.service.cache import cache_get, cache_dump, cache_load, cache_data
+from wwricu.service.cache import cache_get, cache_dump, cache_load
 
 
 @asynccontextmanager

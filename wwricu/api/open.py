@@ -9,7 +9,7 @@ from wwricu.domain.enum import PostStatusEnum
 from wwricu.domain.input import PostRequestRO, TagRequestRO
 from wwricu.domain.output import TagVO, PostDetailVO, PageVO
 from wwricu.service.database import session
-from wwricu.service.post import get_all_post_details, get_post_detail
+from wwricu.service.post import get_posts_preview, get_post_detail
 from wwricu.service.tag import get_category_by_name, get_post_ids_by_tag_names
 
 open_api = APIRouter(prefix='/open', tags=['Open API'])
@@ -41,7 +41,7 @@ async def get_all_posts(post: PostRequestRO) -> PageVO[PostDetailVO]:
         (post.page_index - 1) * post.page_size
     )
     posts_result, count = await asyncio.gather(session.execute(post_stmt), session.scalar(count_stmt))
-    all_posts = await get_all_post_details(posts_result.all())
+    all_posts = await get_posts_preview(posts_result.all())
     return PageVO(page_index=post.page_index, page_size=post.page_size, count=count, post_details=all_posts)
 
 

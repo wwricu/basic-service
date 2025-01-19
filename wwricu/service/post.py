@@ -1,5 +1,4 @@
 import asyncio
-from typing import Sequence
 
 from sqlalchemy import delete, select
 
@@ -45,17 +44,8 @@ async def clean_post_resource():
     pass
 
 
-async def get_posts_cover(post_list: Sequence[BlogPost]) -> dict[int, PostResource]:
-    cat_stmt = select(PostResource).where(
-        PostResource.type == PostResourceTypeEnum.COVER_IMAGE).where(
-        PostResource.deleted == False).where(
-        PostResource.id.in_(post.cover_id for post in post_list)
-    )
-    resource_dict = {res.id: res for res in (await session.scalars(cat_stmt)).all()}
-    return {post.id: resource_dict.get(post.cover_id) for post in post_list}
-
-
 async def get_post_detail(blog_post: BlogPost) -> PostDetailVO:
+    # TODO: optimize with join
     category, tags, cover = await asyncio.gather(
         get_post_category(blog_post),
         get_post_tags(blog_post),
@@ -70,7 +60,7 @@ async def get_post_detail(blog_post: BlogPost) -> PostDetailVO:
     return post_detail
 
 
-async def get_all_post_details(post_list: Sequence[BlogPost]) -> list[PostDetailVO]:
+async def get_posts_preview(post_list: list[BlogPost]) -> list[PostDetailVO]:
     categories, tags = await asyncio.gather(
         get_posts_category(post_list),
         get_posts_tag_lists(post_list)

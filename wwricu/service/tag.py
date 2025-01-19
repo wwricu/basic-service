@@ -1,5 +1,3 @@
-from typing import Sequence
-
 from sqlalchemy import select, update
 
 from wwricu.domain.entity import BlogPost, PostTag, EntityRelation
@@ -101,7 +99,7 @@ async def get_post_category(post: BlogPost) -> PostTag:
     return await session.scalar(stmt)
 
 
-async def get_posts_tag_lists(post_list: Sequence[BlogPost]) -> dict[int, list[PostTag]]:
+async def get_posts_tag_lists(post_list: list[BlogPost]) -> dict[int, list[PostTag]]:
     stmt = select(PostTag, EntityRelation.src_id).join(
         EntityRelation, PostTag.id == EntityRelation.dst_id).where(
         PostTag.deleted == False).where(
@@ -119,7 +117,7 @@ async def get_posts_tag_lists(post_list: Sequence[BlogPost]) -> dict[int, list[P
     return result
 
 
-async def get_posts_category(post_list: Sequence[BlogPost]) -> dict[int, PostTag]:
+async def get_posts_category(post_list: list[BlogPost]) -> dict[int, PostTag]:
     if not post_list:
         return dict()
     cat_stmt = select(PostTag).where(
