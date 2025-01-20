@@ -13,11 +13,13 @@ from wwricu.config import DatabaseConfig, StorageConfig
 async def open_session() -> AsyncSession:
     try:
         yield session
+        await session.commit()
+    except Exception as e:
+        await session.rollback()
+        raise e
     finally:
-        if session.registry.registry:
-            await session.commit()
-            await session.close()
-            await session.remove()
+        await session.close()
+        await session.remove()
 
 
 @asynccontextmanager
