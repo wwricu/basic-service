@@ -1,4 +1,4 @@
-name: dev
+name: Deploy dev
 on:
   push:
     branches:
@@ -29,7 +29,7 @@ jobs:
           cp dist/wwricu-$(cat version.txt).tar.gz dist/wwricu.tar.gz
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: dev
+          tag_name: snapshot
           files: dist/*
           make_latest: false
           prerelease: true
@@ -46,4 +46,22 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           push: true
-          tags: wwricu/basic-service:dev
+          file: DockerfileDev
+          tags: wwricu/basic-service:snapshot
+  deploy:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    continue-on-error: true
+    needs: dockerhub
+    steps:
+      - uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEV_HOSTNAME }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            docker stop basic-service
+            docker rm basic-service
+            docker rmi wwricu/basic-service:snapshot
+            cd /deploy
+            docker-compose -f docker-compose-dev.yml up -d

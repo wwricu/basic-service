@@ -12,6 +12,9 @@ class AWSConst(object):
     region = 'us-west-2'
     aws_domain = 'amazonaws.com'
     config_key: str = '/basic-service/config/config.json'
+    dynamo_url: str = 'amazondynamodb:///?Access Key={ak}&Secret Key={sk}&Domain=amazonaws.com&Region={region}'
+    AWS_ACCESS_KEY_ID: str = 'AWS_ACCESS_KEY_ID'
+    AWS_SECRET_ACCESS_KEY: str = 'AWS_SECRET_ACCESS_KEY'
 
 
 class AWSS3ResponseMetaData(BaseModel):

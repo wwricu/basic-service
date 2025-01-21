@@ -20,3 +20,8 @@ class PostResourceTypeEnum(StrEnum):
 class RelationTypeEnum(StrEnum):
     POST_TAG: str = 'post_tag'
     POST_RES: str = 'post_resource'
+
+
+class DatabaseActionEnum(StrEnum):
+    BACKUP: str = 'backup'
+    RESTORE: str = 'restore'

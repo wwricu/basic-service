@@ -10,3 +10,4 @@ wwricu.egg-info
 *.pyc
 *.iml
 *.sqlite3
+*.pkl

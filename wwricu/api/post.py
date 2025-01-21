@@ -12,7 +12,7 @@ from wwricu.domain.input import PostUpdateRO, PostRequestRO
 from wwricu.domain.output import PostDetailVO, FileUploadVO, PageVO
 from wwricu.service.common import admin_only
 from wwricu.service.database import session
-from wwricu.service.post import get_post_by_id, delete_post_cover, get_all_post_details, get_post_detail
+from wwricu.service.post import get_post_by_id, delete_post_cover, get_posts_preview, get_post_detail
 from wwricu.service.storage import put_object
 from wwricu.service.tag import update_category, update_tags, get_category_by_name, get_post_ids_by_tag_names
 
@@ -28,8 +28,8 @@ async def create_post() -> PostDetailVO:
     return PostDetailVO.model_validate(blog_post)
 
 
-@post_api.post('/all', response_model=PageVO)
-async def select_post(post: PostRequestRO) -> PageVO:
+@post_api.post('/all', response_model=PageVO[PostDetailVO])
+async def select_post(post: PostRequestRO) -> PageVO[PostDetailVO]:
     stmt = select(BlogPost)
     if post.status is not None:
         stmt = stmt.where(BlogPost.status == post.status.value)
@@ -48,7 +48,7 @@ async def select_post(post: PostRequestRO) -> PageVO:
     )
 
     posts_result, count = await asyncio.gather(session.scalars(post_stmt), session.scalar(count_stmt))
-    all_posts = await get_all_post_details(posts_result.all())
+    all_posts = await get_posts_preview(posts_result.all())
     return PageVO(page_index=post.page_index, page_size=post.page_size, count=count, post_details=all_posts)
 
 
