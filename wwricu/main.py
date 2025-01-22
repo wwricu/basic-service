@@ -1,3 +1,5 @@
+import os
+
 import uvicorn
 from fastapi import FastAPI
 
@@ -13,7 +15,8 @@ app = FastAPI(
     version='0.0.1',
     lifespan=lifespan,
     middleware=middlewares,
-    debug=__debug__
+    debug=__debug__,
+    root_path=os.getenv('ROOT_PATH', '/')
 )
 app.include_router(api_router)
 
