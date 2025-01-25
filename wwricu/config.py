@@ -32,6 +32,14 @@ class DatabaseConfig(ConfigClass):
     database: str
     dynamo_region: str = 'OREGON'
 
+
+class RedisConfig(ConfigClass):
+    host: str
+    port: int
+    username: str
+    password: str
+
+
 class AdminConfig(ConfigClass):
     username: str
     password: str
@@ -46,11 +54,12 @@ class Config(ConfigClass):
     encoding: str = 'utf-8'
 
     @classmethod
-    def load(cls, admin_config: dict, database_config: dict, storage_config: dict, **kwargs):
+    def load(cls, admin_config: dict, database_config: dict, storage_config: dict, redis_config: dict, **kwargs):
         cls.init(**kwargs)
         AdminConfig.init(**admin_config)
         DatabaseConfig.init(**database_config)
         StorageConfig.init(**storage_config)
+        RedisConfig.init(**redis_config)
 
 
 def log_config():

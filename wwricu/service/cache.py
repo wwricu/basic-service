@@ -1,9 +1,27 @@
+import abc
 import asyncio
 import os
 import pickle
 import time
 
+import redis  # aioredis is not ready for python3.12 yet
+
+from wwricu.config import RedisConfig
 from wwricu.domain.common import CommonConstant
+
+
+class CacheService(abc.ABC):
+    @abc.abstractmethod
+    async def get(self, key: str) -> any:
+        pass
+
+    @abc.abstractmethod
+    async def set(self, key: str, value: any, second: int):
+        pass
+
+    @abc.abstractmethod
+    async def delete(self, key: str):
+        pass
 
 
 async def timeout(key: str, second: int):
@@ -50,6 +68,35 @@ async def cache_load():
         if (second := persist_timeout.get(key, 0) - now) > 0:
             await cache_set(key, value, second)
     os.remove(CommonConstant.CACHE_DUMP_FILE)
+
+
+class RedisCache(CacheService):
+    redis: redis.Redis
+
+    def __init__(self):
+        self.redis = redis.Redis(
+            username=RedisConfig.username,
+            password=RedisConfig.password,
+            host=RedisConfig.host,
+            port=RedisConfig.port
+        )
+
+    async def get(self, key: str) -> any:
+        value = await self.redis.get(key)
+        if value is not None:
+            return pickle.loads(value)
+
+    async def set(self, key: str, value: any, second: int):
+        if value is not None:
+            value = pickle.dumps(value)
+        await self.redis.set(key, value)
+
+    async def delete(self, key: str):
+        await self.redis.delete(key)
+
+
+cache: CacheService = RedisCache()
+
 
 
 cache_data: dict[str, any] = dict()
