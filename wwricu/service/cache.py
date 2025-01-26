@@ -1,76 +1,45 @@
-import abc
 import asyncio
-import os
 import pickle
 import time
 
-import redis  # aioredis is not ready for python3.12 yet
+import redis.asyncio as redis
+from loguru import logger as log
 
 from wwricu.config import RedisConfig
-from wwricu.domain.common import CommonConstant
 
 
-class CacheService(abc.ABC):
-    @abc.abstractmethod
+class LocalCache:
+    cache_data: dict[str, any] = dict()
+    cache_timeout: dict[str, int] = dict()
+    timeout_callback: dict[str, asyncio.Task] = dict()
+
+    async def timeout(self, key: str, second: int):
+        await asyncio.sleep(second)
+        await self.delete(key)
+
     async def get(self, key: str) -> any:
-        pass
+        if 0 < self.cache_timeout.get(key, 0) < int(time.time()):
+            return None
+        return self.cache_data.get(key)
 
-    @abc.abstractmethod
     async def set(self, key: str, value: any, second: int):
-        pass
+        if second is None or second <= 0:
+            second = 600
+        if task := self.timeout_callback.pop(key, None):
+            task.cancel()
+        self.cache_data[key] = value
+        if second > 0:
+            self.timeout_callback[key] = asyncio.create_task(self.timeout(key, second))
+            self.cache_timeout[key] = int(time.time()) + second
 
-    @abc.abstractmethod
     async def delete(self, key: str):
-        pass
+        self.cache_data.pop(key)
+        self.cache_timeout.pop(key)
+        if task := self.timeout_callback.pop(key, None):
+            task.cancel()
 
 
-async def timeout(key: str, second: int):
-    await asyncio.sleep(second)
-    await cache_delete(key)
-
-
-async def cache_delete(key: str):
-    cache_data.pop(key)
-    cache_timeout.pop(key)
-    if task := timeout_callback.pop(key, None):
-        task.cancel()
-
-
-async def cache_set(key: str, value: any, second: int = 600):
-    if second is None or second <= 0:
-        second = 600
-    if task := timeout_callback.pop(key, None):
-        task.cancel()
-    cache_data[key] = value
-    if second > 0:
-        timeout_callback[key] = asyncio.create_task(timeout(key, second))
-        cache_timeout[key] = int(time.time()) + second
-
-
-async def cache_get(key: str) -> any:
-    if 0 < cache_timeout.get(key, 0) < int(time.time()):
-        return None
-    return cache_data.get(key)
-
-
-async def cache_dump():
-    with open(CommonConstant.CACHE_DUMP_FILE, 'wb+') as f:
-        f.write(pickle.dumps((cache_data, cache_timeout)))
-
-
-async def cache_load():
-    if not os.path.exists(CommonConstant.CACHE_DUMP_FILE):
-        return
-    with open(CommonConstant.CACHE_DUMP_FILE, 'rb') as f:
-        persist_data, persist_timeout = pickle.loads(f.read())
-    now = int(time.time())
-    for key, value in persist_data.items():
-        if (second := persist_timeout.get(key, 0) - now) > 0:
-            await cache_set(key, value, second)
-    os.remove(CommonConstant.CACHE_DUMP_FILE)
-
-
-class RedisCache(CacheService):
+class RedisCache:
     redis: redis.Redis
 
     def __init__(self):
@@ -89,16 +58,40 @@ class RedisCache(CacheService):
     async def set(self, key: str, value: any, second: int):
         if value is not None:
             value = pickle.dumps(value)
-        await self.redis.set(key, value)
+        await self.redis.set(key, value, ex=second)
 
     async def delete(self, key: str):
         await self.redis.delete(key)
 
 
-cache: CacheService = RedisCache()
+class Cache:
+    redis_client: RedisCache
+    local_cache: LocalCache
+
+    def __init__(self):
+        self.redis_client = RedisCache()
+        self.local_cache = LocalCache()
+
+    async def get(self, key: str) -> any:
+        try:
+            return await self.redis_client.get(key)
+        except Exception as e:
+            log.warning(f'Get cache key {key} from local cache {e}')
+            return await self.local_cache.get(key)
+
+    async def set(self, key: str, value: any, second: int = 600):
+        try:
+            await self.redis_client.set(key, value, second)
+        except Exception as e:
+            log.warning(f'Set cache key {key} to local cache {e}')
+            return await self.local_cache.set(key, value, second)
+
+    async def delete(self, key: str):
+        try:
+            await self.redis_client.delete(key)
+        except Exception as e:
+            log.warning(f'Delete cache key {key} from local cache {e}')
+            return await self.local_cache.delete(key)
 
 
-
-cache_data: dict[str, any] = dict()
-cache_timeout: dict[str, int] = dict()
-timeout_callback: dict[str, asyncio.Task] = dict()
+cache = Cache()

@@ -10,15 +10,13 @@ from loguru import logger as log
 
 from wwricu.domain.common import HttpErrorDetail, CommonConstant
 from wwricu.config import AdminConfig, Config
-from wwricu.service.cache import cache_get, cache_dump, cache_load
+from wwricu.service.cache import cache
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     log.info(f'listening on {Config.host}:{Config.port}')
-    await cache_load()
     yield
-    await cache_dump()
     log.info('THE END')
     await log.complete()
 
@@ -51,7 +49,7 @@ def hmac_verify(plain: str, sign: str) -> bool:
 async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
     if __debug__ is True:
         return True
-    if session_id is None or cookie_sign is None or not isinstance(issue_time := await cache_get(session_id), int):
+    if session_id is None or cookie_sign is None or not isinstance(issue_time := await cache.get(session_id), int):
         return False
     if 0 <= int(time.time()) - issue_time < CommonConstant.EXPIRE_TIME and hmac_verify(session_id, cookie_sign) is True:
         return True
