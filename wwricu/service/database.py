@@ -1,18 +1,17 @@
 import importlib
 import os
 from asyncio import current_task
-from contextlib import asynccontextmanager
 
 from loguru import logger as log
-from sqlalchemy.ext.asyncio import async_scoped_session, async_sessionmaker, create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import async_scoped_session, async_sessionmaker, create_async_engine
 
 from wwricu.service.storage import get_object, put_object
 from wwricu.config import DatabaseConfig, StorageConfig
 
 
-async def open_session() -> AsyncSession:
+async def open_session():
     try:
-        yield session
+        yield
         await session.commit()
     except Exception as e:
         await session.rollback()
@@ -20,12 +19,6 @@ async def open_session() -> AsyncSession:
     finally:
         await session.close()
         await session.remove()
-
-
-@asynccontextmanager
-async def new_session() -> AsyncSession:
-    async with AsyncSession(engine) as s, s.begin():
-        yield s
 
 
 def database_init():
