@@ -48,5 +48,5 @@ async def database_restore():
 
 database_init()
 engine = create_async_engine(DatabaseConfig.url, echo=__debug__)
-session_maker = async_sessionmaker(bind=engine, expire_on_commit=False)
+session_maker = async_sessionmaker(bind=engine, close_resets_only=False)
 session = async_scoped_session(session_maker, scopefunc=current_task)
