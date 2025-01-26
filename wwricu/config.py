@@ -3,8 +3,6 @@ import logging
 import os
 import sys
 from logging import CRITICAL
-from types import FrameType
-from typing import cast
 
 import boto3
 from loguru import logger as log
@@ -30,7 +28,6 @@ class StorageConfig(ConfigClass):
 class DatabaseConfig(ConfigClass):
     url: str
     database: str
-    dynamo_region: str = 'OREGON'
 
 
 class RedisConfig(ConfigClass):
@@ -44,7 +41,6 @@ class AdminConfig(ConfigClass):
     username: str
     password: str
     secure_key: str
-    secure_key_bytes: bytes
 
 
 class Config(ConfigClass):
@@ -52,10 +48,14 @@ class Config(ConfigClass):
     port: int = 8000
     log_level: int = CRITICAL
     encoding: str = 'utf-8'
+    version: str = 'NO VERSION'
 
     @classmethod
     def load(cls, admin_config: dict, database_config: dict, storage_config: dict, redis_config: dict, **kwargs):
         cls.init(**kwargs)
+        if os.path.exists(CommonConstant.VERSION_FILE):
+            with open(CommonConstant.VERSION_FILE) as f:
+                cls.version = f.read().strip()
         AdminConfig.init(**admin_config)
         DatabaseConfig.init(**database_config)
         StorageConfig.init(**storage_config)
