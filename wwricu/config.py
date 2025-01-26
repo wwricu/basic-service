@@ -3,8 +3,6 @@ import logging
 import os
 import sys
 from logging import CRITICAL
-from types import FrameType
-from typing import cast
 
 import boto3
 from loguru import logger as log
@@ -23,34 +21,26 @@ class ConfigClass(object):
 
 class StorageConfig(ConfigClass):
     region: str
-    s3: str = 's3'
-    access_key: str
-    secret_key: str
     bucket: str
+    private_bucket: str
 
 
 class DatabaseConfig(ConfigClass):
-    engine: str
-    username: str
-    password: str
+    url: str
+    database: str
+
+
+class RedisConfig(ConfigClass):
     host: str
     port: int
-    database: str
-    url: str
-
-    @classmethod
-    def get_url(cls):
-        try:
-            return cls.url
-        except (Exception,):
-            return f'{cls.engine}://{cls.username}:{cls.password}@{cls.host}:{cls.port}/{cls.database}'
+    username: str
+    password: str
 
 
 class AdminConfig(ConfigClass):
     username: str
     password: str
     secure_key: str
-    secure_key_bytes: bytes
 
 
 class Config(ConfigClass):
@@ -58,41 +48,27 @@ class Config(ConfigClass):
     port: int = 8000
     log_level: int = CRITICAL
     encoding: str = 'utf-8'
+    version: str = 'NO VERSION'
 
     @classmethod
-    def load(cls, admin_config: dict, database_config: dict, storage_config: dict, **kwargs):
+    def load(cls, admin_config: dict, database_config: dict, storage_config: dict, redis_config: dict, **kwargs):
         cls.init(**kwargs)
+        if os.path.exists(CommonConstant.VERSION_FILE):
+            with open(CommonConstant.VERSION_FILE) as f:
+                cls.version = f.read().strip()
         AdminConfig.init(**admin_config)
         DatabaseConfig.init(**database_config)
         StorageConfig.init(**storage_config)
-
-
-class InterceptHandler(logging.Handler):
-    def emit(self, record: logging.LogRecord) -> None:  # pragma: no cover
-        # Get corresponding Loguru level if it exists
-        try:
-            level = log.level(record.levelname).name
-        except ValueError:
-            level = str(record.levelno)
-
-        # Find caller from where originated the logged message
-        frame, depth = logging.currentframe(), 2
-        while frame.f_code.co_filename == logging.__file__:  # noqa: WPS609
-            frame = cast(FrameType, frame.f_back)
-            depth += 1
-        log.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+        RedisConfig.init(**redis_config)
 
 
 def log_config():
+    logging.Logger.manager.loggerDict.clear()
     log.remove()
     if __debug__:
         log.add(sys.stdout, level=logging.DEBUG)
     os.makedirs(CommonConstant.LOG_PATH, exist_ok=True)
     log.add(f'{CommonConstant.LOG_PATH}/{{time:YYYY-MM-DD}}.log', level=logging.INFO, rotation='00:00')
-    for logger_name in CommonConstant.OVERRIDE_LOGGER_NAME:
-        if logger := logging.getLogger(logger_name):
-            logger.handlers = [InterceptHandler()]
-
 
 
 def download_config():
@@ -109,7 +85,7 @@ def init():
         log.warning('APP RUNNING ON DEBUG MODE')
     try:
         download_config()
-        log.info(f'config downloaded')
+        log.info(f'Downloaded config file as {CommonConstant.CONFIG_FILE}')
     except Exception as e:
         log.warning(f'Failed to download config: {e}, load locally')
     with open(CommonConstant.CONFIG_FILE) as f:

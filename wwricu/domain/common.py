@@ -19,14 +19,11 @@ class CommonConstant(object):
     COOKIE_SIGN: str = 'sign'
     EXPIRE_TIME: int = 60 * 60 * 24 * 7
     APP_NAME: str = 'wwr.icu'
-    APP_VERSION: str = 'v2.0.0'
-    CONFIG_DIR: str = 'conf'
+    VERSION_FILE: str = 'version.txt'
     CONFIG_FILE: str = 'config.json'
-    TOKEN_FILE: str = 'github_token.txt'
-    STORE_RET_KEY: str = 'key'
     COOKIE_TIMEOUT_SECOND: int = 30 * 24 * 60 * 60
-    OVERRIDE_LOGGER_NAME = ('uvicorn.access', 'uvicorn')
     LOG_PATH: str = 'logs'
+    ROOT_PATH: str = 'ROOT_PATH'
 
 
 class EntityConstant(object):

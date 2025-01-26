@@ -12,6 +12,7 @@ pandas==2.2.3
 pydantic==2.10.3
 pytest==8.3.4
 python-multipart==0.0.19
+redis==5.2.1
 requests==2.32.3
 setuptools==75.6.0
 starlette==0.41.3

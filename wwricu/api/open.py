@@ -9,7 +9,7 @@ from wwricu.domain.enum import PostStatusEnum
 from wwricu.domain.input import PostRequestRO, TagRequestRO
 from wwricu.domain.output import TagVO, PostDetailVO, PageVO
 from wwricu.service.database import session
-from wwricu.service.post import get_all_post_details
+from wwricu.service.post import get_posts_preview, get_post_detail
 from wwricu.service.tag import get_category_by_name, get_post_ids_by_tag_names
 
 open_api = APIRouter(prefix='/open', tags=['Open API'])
@@ -41,12 +41,12 @@ async def get_all_posts(post: PostRequestRO) -> PageVO[PostDetailVO]:
         (post.page_index - 1) * post.page_size
     )
     posts_result, count = await asyncio.gather(session.execute(post_stmt), session.scalar(count_stmt))
-    all_posts = await get_all_post_details(posts_result.all())
+    all_posts = await get_posts_preview(posts_result.all())
     return PageVO(page_index=post.page_index, page_size=post.page_size, count=count, post_details=all_posts)
 
 
 @open_api.get('/post/detail/{post_id}', response_model=PostDetailVO)
-async def get_post_detail(post_id: int) -> PostDetailVO:
+async def get_open_post_detail(post_id: int) -> PostDetailVO:
     stmt = select(
         BlogPost.id,
         BlogPost.content,
@@ -59,7 +59,7 @@ async def get_post_detail(post_id: int) -> PostDetailVO:
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED
     )
-    if (post := await session.scalar(stmt)) is None:
+    if (post := (await session.execute(stmt)).one()) is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     return await get_post_detail(post)
 

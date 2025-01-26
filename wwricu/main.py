@@ -1,3 +1,5 @@
+import os
+
 import uvicorn
 from fastapi import FastAPI
 
@@ -10,10 +12,11 @@ from wwricu.middleware import middlewares
 
 app = FastAPI(
     title=CommonConstant.APP_NAME,
-    version='0.0.1',
+    version=Config.version,
     lifespan=lifespan,
     middleware=middlewares,
-    debug=__debug__
+    debug=__debug__,
+    root_path=os.getenv(CommonConstant.ROOT_PATH, '/')
 )
 app.include_router(api_router)
 
