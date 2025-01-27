@@ -33,7 +33,7 @@ async def update_tag(tag_update: TagRO) -> TagVO:
 
 
 @tag_api.post('/delete', response_model=int)
-async def delete_tags(tag_batch: TagBatchRO):
+async def delete_tags(tag_batch: TagBatchRO) -> int:
     post_stmt = update(PostTag).where(
         PostTag.type == tag_batch.type).where(
         PostTag.id.in_(tag_batch.id_list)).values(

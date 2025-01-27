@@ -89,7 +89,7 @@ async def update_post_status(post_id: int, status: str) -> PostDetailVO:
 
 
 @post_api.get('/delete/{post_id}', response_model=int)
-async def delete_post(post_id: int):
+async def delete_post(post_id: int) -> int:
     stmt = update(BlogPost).where(BlogPost.id == post_id).values(deleted=True)
     tag_stmt = update(EntityRelation).where(EntityRelation.src_id == post_id).values(deleted=True)
     result = await session.execute(stmt)
