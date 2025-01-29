@@ -8,6 +8,7 @@ import boto3
 from loguru import logger as log
 
 from wwricu.domain.common import CommonConstant
+from wwricu.domain.enum import EnvironmentEnum
 from wwricu.domain.third import AWSConst, AWSSSMResponse
 
 
@@ -71,23 +72,23 @@ def log_config():
     log.add(f'{CommonConstant.LOG_PATH}/{{time:YYYY-MM-DD}}.log', level=logging.INFO, rotation='00:00')
 
 
-def download_config():
+def get_config(env: EnvironmentEnum) -> dict:
+    log.info(f'{env=}')
+    if env == EnvironmentEnum.LOCAL:
+        with open(CommonConstant.CONFIG_FILE) as f:
+            return json.loads(f.read())
     ssm_client = boto3.client(AWSConst.ssm, region_name=AWSConst.region)
-    content = ssm_client.get_parameter(Name=AWSConst.config_key, WithDecryption=False)
+    content = ssm_client.get_parameter(Name=AWSConst.CONFIG.format(env=env), WithDecryption=False)
     response = AWSSSMResponse.model_validate(content)
     with open(CommonConstant.CONFIG_FILE, 'wt+') as f:
         f.write(response.Parameter.Value)
+    return json.loads(response.Parameter.Value)
 
 
 def init():
     log_config()
     if __debug__:
         log.warning('APP RUNNING ON DEBUG MODE')
-    try:
-        download_config()
-        log.info(f'Downloaded config file as {CommonConstant.CONFIG_FILE}')
-    except Exception as e:
-        log.warning(f'Failed to download config: {e}, load locally')
-    with open(CommonConstant.CONFIG_FILE) as f:
-        Config.load(**json.load(f))
+    env = os.getenv(CommonConstant.ENV_KEY, EnvironmentEnum.LOCAL)
+    Config.load(**get_config(env))
     log.info('Config init')
