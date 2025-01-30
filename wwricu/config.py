@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import sys
-from logging import CRITICAL
 
 import boto3
 from loguru import logger as log
@@ -47,7 +46,7 @@ class AdminConfig(ConfigClass):
 class Config(ConfigClass):
     host: str = '0.0.0.0'
     port: int = 8000
-    log_level: int = CRITICAL
+    log_level: int = logging.CRITICAL
     encoding: str = 'utf-8'
     version: str = 'NO VERSION'
 
