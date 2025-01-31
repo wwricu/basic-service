@@ -11,7 +11,7 @@ from loguru import logger as log
 from wwricu.domain.common import HttpErrorDetail, CommonConstant
 from wwricu.config import AdminConfig, Config
 from wwricu.service.cache import cache
-from wwricu.service.database import engine
+from wwricu.service.database import database_backup, engine
 
 
 @asynccontextmanager
@@ -19,6 +19,7 @@ async def lifespan(_: FastAPI):
     log.info(f'listening on {Config.host}:{Config.port}')
     yield
     await engine.dispose()
+    database_backup()
     log.info('THE END')
     await log.complete()
 
