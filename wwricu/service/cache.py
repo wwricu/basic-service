@@ -1,23 +1,46 @@
 import asyncio
+import atexit
+import os.path
 import pickle
 import time
 from typing import Protocol
 
 import redis.asyncio as redis
+from loguru import logger as log
 from sqlalchemy import Integer, String, BLOB, select, delete, update, create_engine
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine
 from sqlalchemy.orm import Mapped, mapped_column, Session
-from wwricu.domain.entity import Base
-
-from wwricu.domain.common import EntityConstant
 
 from wwricu.config import RedisConfig
+from wwricu.domain.entity import Base
+from wwricu.domain.common import EntityConstant
 
 
 class LocalCache:
     cache_data: dict[str, any] = dict()
     cache_timeout: dict[str, int] = dict()
     timeout_callback: dict[str, asyncio.Task] = dict()
+    cache_name: str = 'cache.pkl'
+
+    def __init__(self):
+        atexit.register(self.cache_dump)
+        asyncio.create_task(self.cache_load())
+
+    async def cache_load(self):
+        if not os.path.exists(self.cache_name):
+            return
+        log.info('Load cache from pickle')
+        with open(self.cache_name, 'rb') as f:
+            self.cache_data, self.cache_timeout = pickle.loads(f.read())
+        now = int(time.time())
+        for key, value in self.cache_data.items():
+            if (second := self.cache_timeout.get(key, 0) - now) > 0:
+                await self.set(key, value, second)
+
+    def cache_dump(self):
+        log.info('Dump cache to pickle')
+        with open(self.cache_name, 'wb+') as f:
+            f.write(pickle.dumps((self.cache_data, self.cache_timeout)))
 
     async def timeout(self, key: str, second: int):
         await asyncio.sleep(second)
@@ -74,6 +97,7 @@ class RedisCache:
 
 class SqliteCache:
     engine: AsyncEngine
+
     class CacheTable(Base):
         __tablename__ = 'cache'
         id: Mapped[int] = mapped_column(Integer(), primary_key=True)
@@ -86,12 +110,12 @@ class SqliteCache:
         self.engine = create_async_engine(f'sqlite+aiosqlite:///{database}', echo=__debug__)
         engine = create_engine(f'sqlite:///{database}', echo=__debug__)
         self.CacheTable.metadata.create_all(engine)
-        with Session(engine) as session:
+        with Session(engine) as session, session.begin():
             stmt = delete(self.CacheTable).where(self.CacheTable.expire < int(time.time()))
             session.execute(stmt)
 
     async def get(self, key: str) -> any:
-        async with AsyncSession(self.engine) as session:
+        async with AsyncSession(self.engine) as session, session.begin():
             stmt = select(self.CacheTable).where(self.CacheTable.key == key)
             if (value := (await session.execute(stmt)).fetchone()) is None:
                 return None
@@ -104,7 +128,7 @@ class SqliteCache:
             second = 600
         if value is not None:
             value = pickle.dumps(value)
-        async with AsyncSession(self.engine) as session:
+        async with AsyncSession(self.engine) as session, session.begin():
             stmt = select(self.CacheTable).where(self.CacheTable.key == key)
             if await session.scalar(stmt) is not None:
                 stmt = update(self.CacheTable).where(self.CacheTable.key == key).values(
@@ -118,7 +142,7 @@ class SqliteCache:
             asyncio.create_task(self.timeout(key, second))
 
     async def delete(self, key: str):
-        async with AsyncSession(self.engine) as session:
+        async with AsyncSession(self.engine) as session, session.begin():
             stmt = select(self.CacheTable).where(self.CacheTable.key == key)
             if await session.scalar(stmt) is not None:
                 stmt = delete(self.CacheTable).where(self.CacheTable.key == key)
@@ -132,10 +156,12 @@ class SqliteCache:
 class Cache(Protocol):
     async def get(self, key: str) -> any:
         pass
+
     async def set(self, key: str, value: any, second: int):
         pass
+
     async def delete(self, key: str):
         pass
 
 
-cache: Cache = SqliteCache()
+cache: Cache = LocalCache()
