@@ -12,7 +12,7 @@ def get_object(key: str, bucket: str = StorageConfig.bucket) -> bytes | None:
 
 
 def put_object(key: str, data: bytes, bucket: str = StorageConfig.bucket) -> str:
-    s3_client.put_object(Bucket=StorageConfig.bucket, Key=key, Body=data)
+    s3_client.put_object(Bucket=bucket, Key=key, Body=data)
     return f'https://{AWSConst.s3}.{StorageConfig.region}.{AWSConst.aws_domain}/{bucket}/{key}'
 
 

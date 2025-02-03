@@ -6,19 +6,20 @@ from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
+from starlette.responses import Response
 
 
 class AspectMiddleware(BaseHTTPMiddleware):
     @override
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
-        begin = time.time()
+        b = time.time()
         log.info(f'{request.method} {request.url.path}')
         try:
-            return await call_next(request)
+            response: Response = await call_next(request)
+            log.info(f'{request.method} {request.url.path} {response.status_code} {int((time.time() - b) * 1000)} ms')
+            return response
         except Exception as e:
             log.exception(e)
-        finally:
-            log.info(f'{request.method} {request.url.path} {int((time.time() - begin) * 1000)} ms')
 
 
 # noinspection PyTypeChecker

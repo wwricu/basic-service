@@ -24,6 +24,7 @@ class CommonConstant(object):
     COOKIE_TIMEOUT_SECOND: int = 30 * 24 * 60 * 60
     LOG_PATH: str = 'logs'
     ROOT_PATH: str = 'ROOT_PATH'
+    ENV_KEY: str = 'ENV'
 
 
 class EntityConstant(object):
