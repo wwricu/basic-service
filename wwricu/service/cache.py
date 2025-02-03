@@ -24,9 +24,10 @@ class LocalCache:
 
     def __init__(self):
         atexit.register(self.cache_dump)
-        asyncio.create_task(self.cache_load())
+        self.cache_load()
 
-    async def cache_load(self):
+
+    def cache_load(self):
         if not os.path.exists(self.cache_name):
             return
         log.info('Load cache from pickle')
@@ -35,7 +36,8 @@ class LocalCache:
         now = int(time.time())
         for key, value in self.cache_data.items():
             if (second := self.cache_timeout.get(key, 0) - now) > 0:
-                await self.set(key, value, second)
+                self.cache_data[key] = value
+                self.cache_timeout[key] = now + second
 
     def cache_dump(self):
         log.info('Dump cache to pickle')
@@ -48,6 +50,8 @@ class LocalCache:
 
     async def get(self, key: str) -> any:
         if 0 < self.cache_timeout.get(key, 0) < int(time.time()):
+            self.cache_data.pop(key)
+            self.cache_timeout.pop(key)
             return None
         return self.cache_data.get(key)
 
