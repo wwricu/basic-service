@@ -10,15 +10,8 @@ from wwricu.config import DatabaseConfig, StorageConfig
 
 
 async def open_session():
-    try:
+    async with session.begin():
         yield
-        await session.commit()
-    except Exception as e:
-        await session.rollback()
-        raise e
-    finally:
-        await session.close()
-        await session.remove()
 
 
 def database_init():
@@ -48,5 +41,5 @@ async def database_restore():
 
 database_init()
 engine = create_async_engine(DatabaseConfig.url, echo=__debug__)
-session_maker = async_sessionmaker(bind=engine, expire_on_commit=False)
+session_maker = async_sessionmaker(bind=engine)
 session = async_scoped_session(session_maker, scopefunc=current_task)

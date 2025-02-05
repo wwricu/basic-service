@@ -11,4 +11,5 @@ wwricu.egg-info
 *.iml
 *.sqlite3
 *.pkl
+cache.*
 *.log

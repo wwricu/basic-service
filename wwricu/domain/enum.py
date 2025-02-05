@@ -25,3 +25,9 @@ class RelationTypeEnum(StrEnum):
 class DatabaseActionEnum(StrEnum):
     BACKUP: str = 'backup'
     RESTORE: str = 'restore'
+
+
+class EnvironmentEnum(StrEnum):
+    LOCAL: str = 'local'
+    DEVELOPMENT: str = 'development'
+    PRODUCTION: str = 'production'

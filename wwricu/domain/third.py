@@ -11,8 +11,7 @@ class AWSConst(object):
     ssm: str = 'ssm'
     region = 'us-west-2'
     aws_domain = 'amazonaws.com'
-    config_key: str = '/basic-service/config/config.json'
-    dynamo_url: str = 'amazondynamodb:///?Access Key={ak}&Secret Key={sk}&Domain=amazonaws.com&Region={region}'
+    CONFIG: str = '/basic-service/{env}/config.json'
     AWS_ACCESS_KEY_ID: str = 'AWS_ACCESS_KEY_ID'
     AWS_SECRET_ACCESS_KEY: str = 'AWS_SECRET_ACCESS_KEY'
 

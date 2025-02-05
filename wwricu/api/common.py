@@ -18,7 +18,9 @@ common_api = APIRouter(tags=['Common API'])
 async def login(login_request: LoginRO, response: Response):
     if await admin_login(login_request.username, login_request.password) is not True:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_PASSWORD)
-    session_id = uuid.uuid4().hex
+    if (session_id := await cache.get(login_request.username)) is None:
+        session_id = uuid.uuid4().hex
+        await cache.set(login_request.username, session_id, CommonConstant.COOKIE_TIMEOUT_SECOND)
     cookie_sign = hmac_sign(session_id)
     await cache.set(session_id, int(time.time()), CommonConstant.COOKIE_TIMEOUT_SECOND)
     response.set_cookie(CommonConstant.SESSION_ID, session_id, secure=True, httponly=True, samesite='lax')
