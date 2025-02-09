@@ -49,6 +49,7 @@ async def get_all_posts(post: PostRequestRO) -> PageVO[PostDetailVO]:
 async def get_open_post_detail(post_id: int) -> PostDetailVO:
     stmt = select(
         BlogPost.id,
+        BlogPost.title,
         BlogPost.content,
         BlogPost.cover_id,
         BlogPost.category_id,
