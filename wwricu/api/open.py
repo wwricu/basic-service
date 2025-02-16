@@ -3,6 +3,9 @@ import asyncio
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select, desc, func
 
+from domain.entity import PostCategory
+from domain.input import CategoryRO
+from domain.output import CategoryVO
 from wwricu.domain.common import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, PostTag
 from wwricu.domain.enum import PostStatusEnum
@@ -42,7 +45,7 @@ async def get_all_posts(post: PostRequestRO) -> PageVO[PostDetailVO]:
     )
     posts_result, count = await asyncio.gather(session.execute(post_stmt), session.scalar(count_stmt))
     all_posts = await get_posts_preview(posts_result.all())
-    return PageVO(page_index=post.page_index, page_size=post.page_size, count=count, post_details=all_posts)
+    return PageVO(page_index=post.page_index, page_size=post.page_size, count=count, data=all_posts)
 
 
 @open_api.get('/post/detail/{post_id}', response_model=PostDetailVO)
@@ -65,12 +68,31 @@ async def get_open_post_detail(post_id: int) -> PostDetailVO:
     return await get_post_detail(post)
 
 
-@open_api.post('/tags')
-async def get_all_tags(get_tag: PageRO) -> list[TagVO]:
-    stmt = select(PostTag).where(
-        PostTag.deleted == False).order_by(
-        desc(PostTag.update_time)
+@open_api.post('/tags', response_model=PageVO[TagVO])
+async def get_all_tags(get_tag: PageRO) -> PageVO[TagVO]:
+    stmt = select(PostTag).where(PostTag.deleted == False)
+    tag_stmt = stmt.order_by(desc(PostTag.update_time))
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    if get_tag.page_index and get_tag.page_size:
+        tag_stmt = tag_stmt.limit(get_tag.page_size).offset((get_tag.page_index - 1) * get_tag.page_size)
+    tag_result, count = await asyncio.gather(
+        session.scalars(tag_stmt),
+        session.scalar(count_stmt)
     )
-    if get_tag.page_index > 0 and get_tag.page_size > 0:
-        stmt = stmt.limit(get_tag.page_size).offset((get_tag.page_index - 1) * get_tag.page_size)
-    return [TagVO.model_validate(tag) for tag in (await session.scalars(stmt)).all()]
+    data = [TagVO.model_validate(tag) for tag in tag_result.all()]
+    return PageVO(page_index=get_tag.page_index, page_size=get_tag.page_size, count=count, data=data)
+
+
+@open_api.post('/category', response_model=PageVO[CategoryVO])
+async def get_all_category(get_category: CategoryRO) -> PageVO[CategoryVO]:
+    stmt = select(PostCategory).where(PostCategory.deleted == False)
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    category_stmt = stmt.order_by(desc(PostCategory.update_time))
+    if get_category.page_index and get_category.page_size:
+        category_stmt = category_stmt.limit(get_category.page_size).offset((get_category.page_index - 1) * get_category.page_size)
+    category_result, count = await asyncio.gather(
+        session.scalars(category_stmt),
+        session.scalar(count_stmt)
+    )
+    data = [CategoryVO.model_validate(category) for category in category_result.all()]
+    return PageVO(page_index=get_category.page_index, page_size=get_category.page_size, count=count, data=data)

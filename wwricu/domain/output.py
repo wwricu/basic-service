@@ -35,11 +35,19 @@ class PostDetailVO(BaseModel):
     update_time: datetime | None = None
 
 
+class CategoryVO(BaseModel):
+    id: int
+    name: str
+    parent: int | None = None
+    post_count: int = 0
+    category_count: int = 0
+
+
 class PageVO[T](BaseModel):
     page_index: int
     page_size: int
     count: int
-    post_details: list[T] = field(default_factory=list)
+    data: list[T] = field(default_factory=list)
 
 
 class FileUploadVO(BaseModel):

@@ -33,9 +33,15 @@ class LoginRO(BaseModel):
 class TagRO(BaseModel):
     id: int | None = None
     name: str
-    description: str | None = None
+    parent: int | None = None
 
 
 class PageRO(BaseModel):
-    page_size: int | None = 0
-    page_index: int | None = 0
+    page_size: int | None = None
+    page_index: int | None = None
+
+
+class CategoryRO(PageRO):
+    id: int | None = None
+    name: str
+    parent: int | None = None
