@@ -1,13 +1,12 @@
 from sqlalchemy import select, update
 
 from wwricu.domain.entity import BlogPost, PostTag, EntityRelation
-from wwricu.domain.enum import TagTypeEnum, RelationTypeEnum
+from wwricu.domain.enum import RelationTypeEnum
 from wwricu.service.database import session
 
 
 async def get_tags_by_ids(tag_id_list: list[int] = ()) -> list[PostTag]:
     stmt = select(PostTag).where(
-        PostTag.type == TagTypeEnum.POST_TAG).where(
         PostTag.deleted == False).where(
         PostTag.id.in_(tag_id_list)
     )
@@ -16,7 +15,6 @@ async def get_tags_by_ids(tag_id_list: list[int] = ()) -> list[PostTag]:
 
 async def get_category_by_id(category_id: int) -> PostTag:
     stmt = select(PostTag).where(
-        PostTag.type == TagTypeEnum.POST_CAT).where(
         PostTag.deleted == False).where(
         PostTag.id == category_id
     )
@@ -27,7 +25,6 @@ async def get_category_by_name(category_name: str) -> PostTag | None:
     if category_name is None:
         return None
     stmt = select(PostTag).where(
-        PostTag.type == TagTypeEnum.POST_CAT).where(
         PostTag.deleted == False).where(
         PostTag.name == category_name
     )
@@ -44,7 +41,6 @@ async def get_post_ids_by_tag_names(tag_name: list[str]) -> list[int]:
         PostTag.deleted == False).where(
         EntityRelation.deleted == False).where(
         BlogPost.deleted == False).where(
-        PostTag.type == TagTypeEnum.POST_TAG).where(
         EntityRelation.type == RelationTypeEnum.POST_TAG).where(
         PostTag.name.in_(tag_name)
     )
@@ -92,7 +88,6 @@ async def get_post_tags(post: BlogPost) -> list[PostTag]:
 
 async def get_post_category(post: BlogPost) -> PostTag:
     stmt = select(PostTag).where(
-        PostTag.type == TagTypeEnum.POST_CAT).where(
         PostTag.deleted == False).where(
         PostTag.id == post.category_id
     )
@@ -103,7 +98,6 @@ async def get_posts_tag_lists(post_list: list[BlogPost]) -> dict[int, list[PostT
     stmt = select(PostTag, EntityRelation.src_id).join(
         EntityRelation, PostTag.id == EntityRelation.dst_id).where(
         PostTag.deleted == False).where(
-        PostTag.type == TagTypeEnum.POST_TAG).where(
         EntityRelation.type == RelationTypeEnum.POST_TAG).where(
         EntityRelation.deleted == False).where(
         EntityRelation.src_id.in_(post.id for post in post_list)
@@ -121,7 +115,6 @@ async def get_posts_category(post_list: list[BlogPost]) -> dict[int, PostTag]:
     if not post_list:
         return dict()
     cat_stmt = select(PostTag).where(
-        PostTag.type == TagTypeEnum.POST_CAT).where(
         PostTag.deleted == False).where(
         PostTag.id.in_([post.category_id for post in post_list])
     )

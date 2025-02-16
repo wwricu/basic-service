@@ -1,7 +1,5 @@
-from dataclasses import field
-
 from wwricu.domain.common import BaseModel
-from wwricu.domain.enum import PostStatusEnum, TagTypeEnum
+from wwricu.domain.enum import PostStatusEnum
 
 
 class PostRequestRO(BaseModel):
@@ -32,18 +30,12 @@ class LoginRO(BaseModel):
     otp: str | None = None
 
 
-class TagBatchRO(BaseModel):
-    id_list: list[int] = field(default_factory=list)
-    type: TagTypeEnum
-
-
 class TagRO(BaseModel):
     id: int | None = None
     name: str
-    type: TagTypeEnum | None = TagTypeEnum.POST_TAG
+    description: str | None = None
 
 
-class TagRequestRO(BaseModel):
+class PageRO(BaseModel):
     page_size: int | None = 0
     page_index: int | None = 0
-    type: TagTypeEnum | None = TagTypeEnum.POST_TAG

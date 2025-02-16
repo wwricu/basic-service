@@ -3,7 +3,9 @@ import os
 from asyncio import current_task
 
 from loguru import logger as log
+from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import async_scoped_session, async_sessionmaker, create_async_engine
+from wwricu.domain.entity import Base
 
 from wwricu.service.storage import get_object, put_object
 from wwricu.config import DatabaseConfig, StorageConfig
@@ -12,6 +14,12 @@ from wwricu.config import DatabaseConfig, StorageConfig
 async def open_session():
     async with session.begin():
         yield
+
+
+def database_create():
+    sync_engine = create_engine(f'sqlite:///{DatabaseConfig.database}', echo=True)
+    with sync_engine.connect() as conn, conn.begin():
+        Base.metadata.create_all(sync_engine)
 
 
 def database_init():
@@ -39,7 +47,8 @@ async def database_restore():
     importlib.reload(importlib.import_module(__name__))
 
 
-database_init()
+# database_init()
+database_create()
 engine = create_async_engine(DatabaseConfig.url, echo=__debug__)
 session_maker = async_sessionmaker(bind=engine)
 session = async_scoped_session(session_maker, scopefunc=current_task)

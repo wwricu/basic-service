@@ -1,11 +1,6 @@
 from enum import StrEnum
 
 
-class TagTypeEnum(StrEnum):
-    POST_TAG: str = 'post_tag'
-    POST_CAT: str = 'post_category'
-
-
 class PostStatusEnum(StrEnum):
     PUBLISHED = 'published'
     DRAFT = 'draft'

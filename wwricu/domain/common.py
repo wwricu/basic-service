@@ -31,3 +31,4 @@ class EntityConstant(object):
     ENUM_STRING_LEN: int = 32
     USER_STRING_LEN: int = 64
     LONG_STRING_LEN: int = 128
+    TEXT_STRING_LEN: int = 1024

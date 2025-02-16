@@ -6,7 +6,7 @@ from sqlalchemy import select, desc, func
 from wwricu.domain.common import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, PostTag
 from wwricu.domain.enum import PostStatusEnum
-from wwricu.domain.input import PostRequestRO, TagRequestRO
+from wwricu.domain.input import PostRequestRO, PageRO
 from wwricu.domain.output import TagVO, PostDetailVO, PageVO
 from wwricu.service.database import session
 from wwricu.service.post import get_posts_preview, get_post_detail
@@ -66,10 +66,9 @@ async def get_open_post_detail(post_id: int) -> PostDetailVO:
 
 
 @open_api.post('/tags')
-async def get_all_tags(get_tag: TagRequestRO) -> list[TagVO]:
+async def get_all_tags(get_tag: PageRO) -> list[TagVO]:
     stmt = select(PostTag).where(
-        PostTag.deleted == False).where(
-        PostTag.type == get_tag.type).order_by(
+        PostTag.deleted == False).order_by(
         desc(PostTag.update_time)
     )
     if get_tag.page_index > 0 and get_tag.page_size > 0:
