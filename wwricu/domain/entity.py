@@ -32,6 +32,11 @@ class BlogPost(Base):
 
 
 class PostTag(Base):
+    """
+    Why we have to separate Tag and Category: these two item are NOT same after all.
+    They need different renderings on page, they will finally need different structure and logics one day.
+    It is not wise to store they in a same table just because of their current same structure.
+    """
     __tablename__ = 'wwr_post_tag'
     __table_args__ = (UniqueConstraint('name', 'type', name='uix_name_type'),)
     name: Mapped[str] = mapped_column(String(EntityConstant.USER_STRING_LEN))

@@ -8,9 +8,10 @@ from wwricu.domain.entity import BlogPost, PostTag
 from wwricu.domain.enum import PostStatusEnum
 from wwricu.domain.input import PostRequestRO, TagRequestRO
 from wwricu.domain.output import TagVO, PostDetailVO, PageVO
+from wwricu.service.category import get_category_by_name
 from wwricu.service.database import session
 from wwricu.service.post import get_posts_preview, get_post_detail
-from wwricu.service.tag import get_category_by_name, get_post_ids_by_tag_names
+from wwricu.service.tag import get_post_ids_by_tag_names
 
 open_api = APIRouter(prefix='/open', tags=['Open API'])
 
