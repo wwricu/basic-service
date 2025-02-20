@@ -25,6 +25,17 @@ async def get_category_by_name(category_name: str) -> PostTag | None:
     return await session.scalar(stmt)
 
 
+async def update_category_count(post: BlogPost, increment: int = 1) -> int:
+    stmt = update(PostTag).where(
+        PostTag.id == post.category_id).where(
+        PostTag.deleted == False).where(
+        PostTag.type == TagTypeEnum.POST_CAT).values(
+        count=PostTag.count + increment
+    )
+    result = await session.execute(stmt)
+    return result.rowcount
+
+
 async def update_category(post: BlogPost, category_id: int | None = None) -> PostTag | None:
     if category_id is None:
         return None

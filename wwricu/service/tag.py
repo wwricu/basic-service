@@ -46,6 +46,13 @@ async def update_tags(post: BlogPost, tag_id_list: list[int] | None = None) -> l
     return tags
 
 
+async def update_tag_count(post: BlogPost, increment: int = 1) -> int:
+    post_tags = await get_post_tags(post)
+    stmt = update(PostTag).where(PostTag.id.in_(tag.id for tag in post_tags)).values(count=PostTag.count + increment)
+    result = await session.execute(stmt)
+    return result.rowcount
+
+
 async def get_post_tags(post: BlogPost) -> list[PostTag]:
     stmt = select(EntityRelation).where(
         EntityRelation.type == RelationTypeEnum.POST_TAG).where(
