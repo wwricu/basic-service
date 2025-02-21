@@ -1,5 +1,3 @@
-from dataclasses import field
-
 from wwricu.domain.common import BaseModel
 from wwricu.domain.enum import PostStatusEnum, TagTypeEnum
 
@@ -30,11 +28,6 @@ class LoginRO(BaseModel):
     password: str
     captcha: str | None = None
     otp: str | None = None
-
-
-class TagBatchRO(BaseModel):
-    id_list: list[int] = field(default_factory=list)
-    type: TagTypeEnum
 
 
 class TagRO(BaseModel):
