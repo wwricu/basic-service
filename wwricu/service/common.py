@@ -11,12 +11,16 @@ from loguru import logger as log
 from wwricu.domain.common import HttpErrorDetail, CommonConstant
 from wwricu.config import AdminConfig, Config
 from wwricu.service.cache import cache
+from wwricu.service.category import reset_category_count
 from wwricu.service.database import database_backup, engine
+from wwricu.service.tag import reset_tag_count
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     log.info(f'listening on {Config.host}:{Config.port}')
+    await reset_tag_count()
+    await reset_category_count()
     yield
     await engine.dispose()
     database_backup()
