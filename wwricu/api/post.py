@@ -67,6 +67,10 @@ async def update_post(post_update: PostUpdateRO) -> PostDetailVO:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     if blog_post.cover_id is not None and blog_post.cover_id != post_update.cover_id:
         await delete_post_cover(blog_post)
+
+    await update_category(blog_post, post_update)
+    await update_tags(blog_post, post_update)
+
     stmt = update(BlogPost).where(BlogPost.id == post_update.id).values(
         title=post_update.title,
         content=post_update.content,
@@ -76,12 +80,7 @@ async def update_post(post_update: PostUpdateRO) -> PostDetailVO:
         category_id=post_update.category_id
     )
     await session.execute(stmt)
-    if post_update.status is not None and post_update.status != blog_post.status:
-        increment = 1 if post_update.status == PostStatusEnum.PUBLISHED else -1
-        await update_category_count(blog_post, increment)
-        await update_tag_count(blog_post, increment)
-    await update_category(blog_post, post_update.category_id)
-    await update_tags(blog_post, post_update.tag_id_list)
+
     return await get_post_detail(blog_post)
 
 
