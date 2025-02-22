@@ -1,4 +1,4 @@
-from sqlalchemy import select, update, func
+from sqlalchemy import select, update, func, case
 
 from wwricu.domain.entity import BlogPost, PostTag
 from wwricu.domain.enum import TagTypeEnum, PostStatusEnum
@@ -36,18 +36,28 @@ async def update_category_count(post: BlogPost, increment: int = 1) -> int:
     return result.rowcount
 
 
-async def update_category(post: BlogPost, category_id: int | None = None) -> PostTag | None:
-    if category_id is None:
-        return None
+async def update_category(post: BlogPost, category_id: int):
     category = await get_category_by_id(category_id)
     if category is None:
         return None
+
+    if post.status == PostStatusEnum.PUBLISHED:
+        stmt = update(PostTag).where(
+            PostTag.deleted == False).where(
+            PostTag.type == TagTypeEnum.POST_CAT).values(
+            count=case(
+                (PostTag.count == category_id, PostTag.count + 1),
+                (PostTag.count == post.category_id, PostTag.count - 1),  # never match if no category
+                else_=PostTag.count
+            )
+        )
+        await session.execute(stmt)
+
     stmt = update(BlogPost).where(
         BlogPost.id == post.id).where(
         BlogPost.deleted == False
     ).values(category_id=category.id)
     await session.execute(stmt)
-    return category
 
 
 async def get_post_category(post: BlogPost) -> PostTag:

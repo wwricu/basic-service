@@ -1,4 +1,4 @@
-from sqlalchemy import select, update, func
+from sqlalchemy import select, update, func, case
 
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
@@ -31,19 +31,31 @@ async def get_post_ids_by_tag_names(tag_name: list[str]) -> list[int]:
     return (await session.scalars(stmt)).all()
 
 
-async def update_tags(post: BlogPost, tag_id_list: list[int] | None = None) -> list[PostTag]:
-    if tag_id_list is None:
-        return []
+async def update_tags(post: BlogPost, tag_id_list: list[int]):
     tags = await get_tags_by_ids(tag_id_list)
+
+    if post.status == PostStatusEnum.PUBLISHED:
+        curr_list, next_list = {tag.id for tag in tags}, set(tag_id_list)
+        stmt = update(PostTag).where(
+            PostTag.deleted == False).where(
+            PostTag.type == TagTypeEnum.POST_TAG).values(
+            count=case(
+                (PostTag.count.in_(next_list - curr_list), PostTag.count + 1),
+                (PostTag.count.in_(curr_list - next_list), PostTag.count - 1),  # never match if no category
+                else_=PostTag.count
+            )
+        )
+        await session.execute(stmt)
+
     stmt = update(EntityRelation).where(
         EntityRelation.type == RelationTypeEnum.POST_TAG).where(
         EntityRelation.deleted == False).where(
         EntityRelation.src_id == post.id
     ).values(deleted=True)
     await session.execute(stmt)
+
     relations = [EntityRelation(src_id=post.id, dst_id=t.id, type=RelationTypeEnum.POST_TAG) for t in tags]
     session.add_all(relations)
-    return tags
 
 
 async def update_tag_count(post: BlogPost, increment: int = 1) -> int:
