@@ -17,13 +17,17 @@ from wwricu.domain.common import EntityConstant
 
 
 class LocalCache:
-    cache_data: dict[str, any] = dict()
-    cache_timeout: dict[str, int] = dict()
-    timeout_callback: dict[str, asyncio.Task] = dict()
+    # DO NOT init class variables so that they will not be inited when the class is not instantiated
+    cache_data: dict[str, any]
+    cache_timeout: dict[str, int]
+    timeout_callback: dict[str, asyncio.Task]
     cache_name: str = 'cache.pkl'
 
     def __init__(self):
         atexit.register(self.cache_dump)
+        self.cache_data = dict()
+        self.cache_timeout = dict()
+        self.timeout_callback = dict()
         self.cache_load()
 
 
@@ -50,8 +54,8 @@ class LocalCache:
 
     async def get(self, key: str) -> any:
         if 0 < self.cache_timeout.get(key, 0) < int(time.time()):
-            self.cache_data.pop(key)
-            self.cache_timeout.pop(key)
+            self.cache_data.pop(key, None)
+            self.cache_timeout.pop(key, None)
             return None
         return self.cache_data.get(key)
 
@@ -66,8 +70,8 @@ class LocalCache:
             self.cache_timeout[key] = int(time.time()) + second
 
     async def delete(self, key: str):
-        self.cache_data.pop(key)
-        self.cache_timeout.pop(key)
+        self.cache_data.pop(key, None)
+        self.cache_timeout.pop(key, None)
         if task := self.timeout_callback.pop(key, None):
             task.cancel()
 

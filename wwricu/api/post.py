@@ -14,8 +14,8 @@ from wwricu.service.common import admin_only
 from wwricu.service.database import session
 from wwricu.service.post import get_post_by_id, delete_post_cover, get_posts_preview, get_post_detail
 from wwricu.service.storage import put_object
-from wwricu.service.tag import update_category, update_tags, get_category_by_name, get_post_ids_by_tag_names
-
+from wwricu.service.tag import update_tags, get_post_ids_by_tag_names, update_tag_count
+from wwricu.service.category import update_category, get_category_by_name, update_category_count
 
 post_api = APIRouter(prefix='/post', tags=['Post Management'], dependencies=[Depends(admin_only)])
 
@@ -25,6 +25,8 @@ async def create_post() -> PostDetailVO:
     blog_post = BlogPost(status=PostStatusEnum.DRAFT)
     session.add(blog_post)
     await session.flush()
+    await update_category_count(blog_post)
+    await update_tag_count(blog_post)
     return PostDetailVO.model_validate(blog_post)
 
 
@@ -65,6 +67,10 @@ async def update_post(post_update: PostUpdateRO) -> PostDetailVO:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     if blog_post.cover_id is not None and blog_post.cover_id != post_update.cover_id:
         await delete_post_cover(blog_post)
+
+    await update_category(blog_post, post_update)
+    await update_tags(blog_post, post_update)
+
     stmt = update(BlogPost).where(BlogPost.id == post_update.id).values(
         title=post_update.title,
         content=post_update.content,
@@ -74,8 +80,7 @@ async def update_post(post_update: PostUpdateRO) -> PostDetailVO:
         category_id=post_update.category_id
     )
     await session.execute(stmt)
-    await update_category(blog_post, post_update.category_id)
-    await update_tags(blog_post, post_update.tag_id_list)
+
     return await get_post_detail(blog_post)
 
 
@@ -90,6 +95,10 @@ async def update_post_status(post_id: int, status: str) -> PostDetailVO:
 
 @post_api.get('/delete/{post_id}', response_model=int)
 async def delete_post(post_id: int) -> int:
+    if (post := await get_post_by_id(post_id)) is None:
+        return 0
+    await update_category_count(post, -1)
+    await update_tag_count(post, -1)
     stmt = update(BlogPost).where(BlogPost.id == post_id).values(deleted=True)
     tag_stmt = update(EntityRelation).where(EntityRelation.src_id == post_id).values(deleted=True)
     result = await session.execute(stmt)

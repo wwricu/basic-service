@@ -13,3 +13,4 @@ wwricu.egg-info
 *.pkl
 cache.*
 *.log
+.env.local

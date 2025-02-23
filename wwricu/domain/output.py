@@ -4,7 +4,6 @@ from dataclasses import field
 from datetime import datetime
 
 from wwricu.domain.common import BaseModel
-from wwricu.domain.entity import PostTag
 from wwricu.domain.enum import TagTypeEnum, PostResourceTypeEnum, PostStatusEnum
 
 
@@ -12,12 +11,7 @@ class TagVO(BaseModel):
     id: int
     name: str
     type: TagTypeEnum
-
-    @classmethod
-    def of(cls, tag: PostTag) -> TagVO | None:
-        if tag is None:
-            return None
-        return cls(id=tag.id, name=tag.name, type=TagTypeEnum(tag.type))
+    count: int | None = None
 
 
 class PostResourceVO(BaseModel):

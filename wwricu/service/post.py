@@ -6,8 +6,9 @@ from wwricu.domain.output import PostDetailVO, TagVO, PostResourceVO
 from wwricu.service.storage import delete_object
 from wwricu.domain.entity import BlogPost, PostResource
 from wwricu.domain.enum import PostResourceTypeEnum
+from wwricu.service.category import get_post_category, get_posts_category
 from wwricu.service.database import session
-from wwricu.service.tag import get_post_category, get_post_tags, get_posts_category, get_posts_tag_lists
+from wwricu.service.tag import get_post_tags, get_posts_tag_lists
 
 
 async def get_post_by_id(post_id: int) -> BlogPost:

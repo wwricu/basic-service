@@ -2,6 +2,7 @@ import time
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from wwricu.config import AdminConfig
 
 from wwricu.domain.common import CommonConstant, HttpErrorDetail
 from wwricu.domain.enum import DatabaseActionEnum
@@ -32,7 +33,9 @@ async def logout(request: Request, response: Response):
     if (session_id := request.cookies.get(CommonConstant.SESSION_ID)) is None:
         return
     await cache.delete(session_id)
+    await cache.delete(AdminConfig.username)
     response.delete_cookie(CommonConstant.SESSION_ID)
+    response.delete_cookie(CommonConstant.COOKIE_SIGN)
 
 
 @common_api.get('/info', response_model=bool)
