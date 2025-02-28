@@ -1,11 +1,12 @@
 import asyncio
 
 from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import HTMLResponse
 from sqlalchemy import select, desc, func
 
 from wwricu.domain.common import HttpErrorDetail
-from wwricu.domain.entity import BlogPost, PostTag
-from wwricu.domain.enum import PostStatusEnum
+from wwricu.domain.entity import BlogPost, PostTag, SysConfig
+from wwricu.domain.enum import ConfigKeyEnum, PostStatusEnum
 from wwricu.domain.input import PostRequestRO, TagRequestRO
 from wwricu.domain.output import TagVO, PostDetailVO, PageVO
 from wwricu.service.category import get_category_by_name
@@ -66,7 +67,7 @@ async def get_open_post_detail(post_id: int) -> PostDetailVO:
     return await get_post_detail(post)
 
 
-@open_api.post('/tags')
+@open_api.post('/tags', response_model=list[TagVO])
 async def get_all_tags(get_tag: TagRequestRO) -> list[TagVO]:
     stmt = select(PostTag).where(
         PostTag.deleted == False).where(
@@ -76,3 +77,9 @@ async def get_all_tags(get_tag: TagRequestRO) -> list[TagVO]:
     if get_tag.page_index > 0 and get_tag.page_size > 0:
         stmt = stmt.limit(get_tag.page_size).offset((get_tag.page_index - 1) * get_tag.page_size)
     return [TagVO.model_validate(tag) for tag in (await session.scalars(stmt)).all()]
+
+
+@open_api.get('/about', response_class=HTMLResponse)
+async def about() -> str | None:
+    stmt = select(SysConfig.value).where(SysConfig.key == ConfigKeyEnum.ABOUT_CONTENT).where(SysConfig.deleted == False)
+    return await session.scalar(stmt)
