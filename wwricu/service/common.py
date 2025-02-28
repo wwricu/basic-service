@@ -26,9 +26,7 @@ async def lifespan(_: FastAPI):
         await asyncio.to_thread(
             command.upgrade,
             alembic.config.Config(CommonConstant.ALEMBIC_CONFIG_PATH),
-            CommonConstant.ALEMBIC_TARGET_REVISION,
-            False,
-            None
+            CommonConstant.ALEMBIC_TARGET_REVISION, False, None
         )
         await reset_tag_count()
         await reset_category_count()

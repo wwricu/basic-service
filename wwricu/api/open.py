@@ -26,8 +26,7 @@ async def get_all_posts(post: PostRequestRO) -> PageVO[PostDetailVO]:
         BlogPost.cover_id,
         BlogPost.category_id,
         BlogPost.create_time,
-        BlogPost.update_time
-    ).where(
+        BlogPost.update_time).where(
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED
     )
@@ -56,8 +55,7 @@ async def get_open_post_detail(post_id: int) -> PostDetailVO:
         BlogPost.cover_id,
         BlogPost.category_id,
         BlogPost.create_time,
-        BlogPost.update_time
-    ).where(
+        BlogPost.update_time).where(
         BlogPost.id == post_id).where(
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED

@@ -99,14 +99,11 @@ class RedisCache:
 
 
 class Cache(Protocol):
-    async def get(self, key: str) -> any:
-        pass
+    async def get(self, key: str) -> any:...
 
-    async def set(self, key: str, value: any, second: int):
-        pass
+    async def set(self, key: str, value: any, second: int):...
 
-    async def delete(self, key: str):
-        pass
+    async def delete(self, key: str):...
 
 
 cache: Cache = LocalCache()

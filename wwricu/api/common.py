@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select, update
 
 from wwricu.config import AdminConfig
-
 from wwricu.domain.common import CommonConstant, HttpErrorDetail
 from wwricu.domain.entity import SysConfig
 from wwricu.domain.enum import DatabaseActionEnum
