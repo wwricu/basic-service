@@ -25,6 +25,8 @@ class CommonConstant(object):
     LOG_PATH: str = 'logs'
     ROOT_PATH: str = 'ROOT_PATH'
     ENV_KEY: str = 'ENV'
+    ALEMBIC_CONFIG_PATH: str = 'alembic.ini'
+    ALEMBIC_TARGET_REVISION: str = 'head'
 
 
 class EntityConstant(object):

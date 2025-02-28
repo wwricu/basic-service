@@ -31,3 +31,11 @@ class EnvironmentEnum(StrEnum):
     LOCAL: str = 'local'
     DEVELOPMENT: str = 'development'
     PRODUCTION: str = 'production'
+
+
+class ConfigKeyEnum(StrEnum):
+    ABOUT_CONTENT: str = 'about_content'
+    ABOUT_AVATAR: str = 'about_avatar'
+    TOTP_SECRET: str = 'totp_secret'
+    USERNAME: str = 'username'
+    PASSWORD: str = 'password'

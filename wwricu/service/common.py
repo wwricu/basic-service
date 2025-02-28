@@ -1,10 +1,14 @@
+import asyncio
 import base64
 import hashlib
 import hmac
 import time
 from contextlib import asynccontextmanager
 
+import alembic
 import bcrypt
+from alembic import command
+from alembic.config import Config
 from fastapi import FastAPI, HTTPException, Request, status
 from loguru import logger as log
 
@@ -12,20 +16,28 @@ from wwricu.domain.common import HttpErrorDetail, CommonConstant
 from wwricu.config import AdminConfig, Config
 from wwricu.service.cache import cache
 from wwricu.service.category import reset_category_count
-from wwricu.service.database import database_backup, engine
+from wwricu.service.database import engine
 from wwricu.service.tag import reset_tag_count
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    log.info(f'listening on {Config.host}:{Config.port}')
-    await reset_tag_count()
-    await reset_category_count()
-    yield
-    await engine.dispose()
-    database_backup()
-    log.info('THE END')
-    await log.complete()
+    try:
+        await asyncio.to_thread(
+            command.upgrade,
+            alembic.config.Config(CommonConstant.ALEMBIC_CONFIG_PATH),
+            CommonConstant.ALEMBIC_TARGET_REVISION,
+            False,
+            None
+        )
+        await reset_tag_count()
+        await reset_category_count()
+        log.info(f'listening on {Config.host}:{Config.port}')
+        yield
+    finally:
+        await engine.dispose()
+        log.info('THE END')
+        await log.complete()
 
 
 async def admin_login(username: str, password: str) -> bool:
