@@ -45,7 +45,7 @@ class PostTag(Base):
 
 
 class EntityRelation(Base):
-    __tablename__ = 'wwr_entity_tag_relation'
+    __tablename__ = 'wwr_entity_relation'
     src_id: Mapped[int] = mapped_column(Integer, index=True)
     dst_id: Mapped[int] = mapped_column(Integer, index=True)
     type: Mapped[RelationTypeEnum] = mapped_column(
