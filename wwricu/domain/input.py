@@ -1,5 +1,5 @@
 from wwricu.domain.common import BaseModel
-from wwricu.domain.enum import PostStatusEnum, TagTypeEnum
+from wwricu.domain.enum import ConfigKeyEnum, PostStatusEnum, TagTypeEnum
 
 
 class PostRequestRO(BaseModel):
@@ -40,3 +40,8 @@ class TagRequestRO(BaseModel):
     page_size: int | None = 0
     page_index: int | None = 0
     type: TagTypeEnum | None = TagTypeEnum.POST_TAG
+
+
+class ConfigRO(BaseModel):
+    key: ConfigKeyEnum
+    value: str | None = None

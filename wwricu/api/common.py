@@ -2,15 +2,17 @@ import time
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from sqlalchemy import select, update
+
 from wwricu.config import AdminConfig
 
 from wwricu.domain.common import CommonConstant, HttpErrorDetail
+from wwricu.domain.entity import SysConfig
 from wwricu.domain.enum import DatabaseActionEnum
-from wwricu.domain.input import LoginRO
+from wwricu.domain.input import LoginRO, ConfigRO
 from wwricu.service.cache import cache
 from wwricu.service.common import admin_only, hmac_sign, validate_cookie, admin_login
-from wwricu.service.database import database_restore, database_backup
-
+from wwricu.service.database import database_restore, database_backup, session
 
 common_api = APIRouter(tags=['Common API'])
 
@@ -53,3 +55,19 @@ async def database(action: DatabaseActionEnum | None = DatabaseActionEnum.RESTOR
         await database_restore()
     elif action == DatabaseActionEnum.BACKUP:
         database_backup()
+
+
+@common_api.post('/set_config', dependencies=[Depends(admin_only)])
+async def set_config(config: ConfigRO):
+    stmt = select(SysConfig).where(SysConfig.key == config.key).where(SysConfig.deleted == False)
+    if await session.scalar(stmt) is None:
+        session.add(SysConfig(key=config.key, value=config.value))
+        return
+    stmt = update(SysConfig).where(SysConfig.key == config.key).values(value=config.value)
+    await session.execute(stmt)
+
+
+@common_api.get('/get_config', dependencies=[Depends(admin_only)])
+async def set_config(key: str) -> str | None:
+    stmt = select(SysConfig.value).where(SysConfig.key == key).where(SysConfig.deleted == False)
+    return await session.scalar(stmt)

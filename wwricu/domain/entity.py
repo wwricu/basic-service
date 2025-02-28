@@ -58,6 +58,12 @@ class PostResource(Base):
     __tablename__ = 'wwr_post_resource'
     post_id: Mapped[int] = mapped_column(Integer, index=True)
     name: Mapped[str] = mapped_column(String(EntityConstant.USER_STRING_LEN), nullable=True)
-    key: Mapped[str] = mapped_column(String(EntityConstant.LONG_STRING_LEN), comment='OSS Key')
+    key: Mapped[str] = mapped_column(String(EntityConstant.LONG_STRING_LEN))
     type: Mapped[str] = mapped_column(String(EntityConstant.ENUM_STRING_LEN), nullable=True)
-    url: Mapped[str] = mapped_column(TEXT, nullable=True, comment='Public url')
+    url: Mapped[str] = mapped_column(TEXT, nullable=True)
+
+
+class SysConfig(Base):
+    __tablename__ = 'wwr_sys_config'
+    key: Mapped[str] = mapped_column(String(EntityConstant.USER_STRING_LEN), nullable=False, unique=True)
+    value: Mapped[str] = mapped_column(TEXT, nullable=True)
