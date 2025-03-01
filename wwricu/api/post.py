@@ -10,7 +10,7 @@ from wwricu.domain.entity import BlogPost, EntityRelation, PostResource
 from wwricu.domain.enum import PostStatusEnum, PostResourceTypeEnum
 from wwricu.domain.input import PostUpdateRO, PostRequestRO
 from wwricu.domain.output import PostDetailVO, FileUploadVO, PageVO
-from wwricu.service.common import admin_only
+from wwricu.service.common import admin_only, update_system_count
 from wwricu.service.database import session
 from wwricu.service.post import get_post_by_id, delete_post_cover, get_posts_preview, get_post_detail
 from wwricu.service.storage import put_object
@@ -20,7 +20,7 @@ from wwricu.service.category import update_category, get_category_by_name, updat
 post_api = APIRouter(prefix='/post', tags=['Post Management'], dependencies=[Depends(admin_only)])
 
 
-@post_api.get('/create', response_model=PostDetailVO)
+@post_api.get('/create', dependencies=[Depends(update_system_count)], response_model=PostDetailVO)
 async def create_post() -> PostDetailVO:
     blog_post = BlogPost(status=PostStatusEnum.DRAFT)
     session.add(blog_post)
@@ -61,7 +61,7 @@ async def get_post(post_id: int) -> PostDetailVO | None:
     return await get_post_detail(post)
 
 
-@post_api.post('/update', response_model=PostDetailVO)
+@post_api.post('/update', dependencies=[Depends(update_system_count)], response_model=PostDetailVO)
 async def update_post(post_update: PostUpdateRO) -> PostDetailVO:
     if (blog_post := await get_post_by_id(post_update.id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
@@ -84,7 +84,7 @@ async def update_post(post_update: PostUpdateRO) -> PostDetailVO:
     return await get_post_detail(blog_post)
 
 
-@post_api.get('/status/{post_id}', response_model=PostDetailVO)
+@post_api.get('/status/{post_id}', dependencies=[Depends(update_system_count)], response_model=PostDetailVO)
 async def update_post_status(post_id: int, status: str) -> PostDetailVO:
     if (blog_post := await get_post_by_id(post_id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
@@ -93,7 +93,7 @@ async def update_post_status(post_id: int, status: str) -> PostDetailVO:
     return await get_post_detail(blog_post)
 
 
-@post_api.get('/delete/{post_id}', response_model=int)
+@post_api.get('/delete/{post_id}', dependencies=[Depends(update_system_count)], response_model=int)
 async def delete_post(post_id: int) -> int:
     if (post := await get_post_by_id(post_id)) is None:
         return 0

@@ -1,14 +1,14 @@
 import asyncio
 
 from fastapi import APIRouter, HTTPException, status
-from fastapi.responses import HTMLResponse
 from sqlalchemy import select, desc, func
 
 from wwricu.domain.common import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, PostTag, SysConfig
-from wwricu.domain.enum import ConfigKeyEnum, PostStatusEnum
+from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, PostStatusEnum
 from wwricu.domain.input import PostRequestRO, TagRequestRO
-from wwricu.domain.output import TagVO, PostDetailVO, PageVO
+from wwricu.domain.output import TagVO, PostDetailVO, PageVO, AboutPageVO
+from wwricu.service.cache import cache
 from wwricu.service.category import get_category_by_name
 from wwricu.service.database import session
 from wwricu.service.post import get_posts_preview, get_post_detail
@@ -77,7 +77,13 @@ async def get_all_tags(get_tag: TagRequestRO) -> list[TagVO]:
     return [TagVO.model_validate(tag) for tag in (await session.scalars(stmt)).all()]
 
 
-@open_api.get('/about', response_class=HTMLResponse)
-async def about() -> str | None:
+@open_api.get('/about', response_model=AboutPageVO)
+async def about() -> AboutPageVO:
     stmt = select(SysConfig.value).where(SysConfig.key == ConfigKeyEnum.ABOUT_CONTENT).where(SysConfig.deleted == False)
-    return await session.scalar(stmt)
+    content, post, category, tag = await asyncio.gather(
+        session.scalar(stmt),
+        cache.get(CacheKeyEnum.POST_COUNT),
+        cache.get(CacheKeyEnum.CATEGORY_COUNT),
+        cache.get(CacheKeyEnum.TAG_COUNT)
+    )
+    return AboutPageVO(content=content, post_count=post, category_count=category, tag_count=tag)

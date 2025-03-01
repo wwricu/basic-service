@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import hashlib
 import hmac
@@ -8,12 +9,15 @@ import bcrypt
 from alembic.config import Config
 from fastapi import FastAPI, HTTPException, Request, status
 from loguru import logger as log
+from sqlalchemy import select, func
 
+from wwricu.domain.entity import BlogPost, PostTag
+from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum
 from wwricu.domain.common import HttpErrorDetail, CommonConstant
 from wwricu.config import AdminConfig, Config
 from wwricu.service.cache import cache
 from wwricu.service.category import reset_category_count
-from wwricu.service.database import engine
+from wwricu.service.database import engine, new_session, get_session
 from wwricu.service.tag import reset_tag_count
 
 
@@ -22,12 +26,44 @@ async def lifespan(_: FastAPI):
     try:
         await reset_tag_count()
         await reset_category_count()
+        await reset_system_count()
         log.info(f'listening on {Config.host}:{Config.port}')
         yield
     finally:
         await engine.dispose()
         log.info('THE END')
         await log.complete()
+
+
+async def reset_system_count():
+    post_stmt = select(func.count(BlogPost.id)).where(
+        BlogPost.deleted == False).where(
+        BlogPost.status == PostStatusEnum.PUBLISHED
+    )
+    category_stmt = select(func.count(PostTag.id)).where(
+        PostTag.deleted == False).where(
+        PostTag.type == TagTypeEnum.POST_CAT
+    )
+    tag_stmt = select(func.count(PostTag.id)).where(
+        PostTag.deleted == False).where(
+        PostTag.type == TagTypeEnum.POST_TAG
+    )
+    async with new_session() as s:
+        # single session with transaction cannot be used by gather
+        post_count = await s.scalar(post_stmt)
+        category_count = await s.scalar(category_stmt)
+        tag_count = await s.scalar(tag_stmt)
+        await asyncio.gather(
+            cache.set(CacheKeyEnum.POST_COUNT, post_count, 0),
+            cache.set(CacheKeyEnum.CATEGORY_COUNT, category_count, 0),
+            cache.set(CacheKeyEnum.TAG_COUNT, tag_count, 0)
+        )
+
+
+async def update_system_count():
+    async with get_session() as s:
+        s.flush()
+        await reset_tag_count()
 
 
 async def admin_login(username: str, password: str) -> bool:

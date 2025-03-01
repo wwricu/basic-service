@@ -55,7 +55,7 @@ class LocalCache:
         return self.cache_data.get(key)
 
     async def set(self, key: str, value: any, second: int):
-        if second is None or second <= 0:
+        if second is None or second < 0:
             second = 600
         if task := self.timeout_callback.pop(key, None):
             task.cancel()
@@ -88,7 +88,7 @@ class RedisCache:
             return pickle.loads(value)
 
     async def set(self, key: str, value: any, second: int):
-        if second is None or second <= 0:
+        if second is None or second < 0:
             second = 600
         if value is not None:
             value = pickle.dumps(value)

@@ -22,6 +22,16 @@ async def new_session() -> AsyncGenerator[AsyncSession, None]:
         yield s
 
 
+@contextlib.asynccontextmanager
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    scoped_session: AsyncSession = session.registry.registry.get(current_task())
+    if scoped_session is not None and scoped_session.is_active and scoped_session.in_transaction():
+        yield scoped_session
+    else:
+        async with new_session() as s:
+            yield s
+
+
 def database_init():
     if os.path.exists(DatabaseConfig.database):
         return

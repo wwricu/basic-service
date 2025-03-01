@@ -6,11 +6,15 @@ from wwricu.domain.entity import PostTag, EntityRelation, BlogPost
 from wwricu.domain.enum import TagTypeEnum, RelationTypeEnum
 from wwricu.domain.input import TagRO
 from wwricu.domain.output import TagVO
-from wwricu.service.common import admin_only
+from wwricu.service.common import admin_only, update_system_count
 from wwricu.service.database import session
 
 
-tag_api = APIRouter(prefix='/tag', tags=['Tag Management'], dependencies=[Depends(admin_only)])
+tag_api = APIRouter(
+    prefix='/tag',
+    tags=['Tag Management'],
+    dependencies=[Depends(admin_only), Depends(update_system_count)]
+)
 
 
 @tag_api.post('/create', response_model=TagVO)

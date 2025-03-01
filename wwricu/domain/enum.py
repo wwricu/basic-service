@@ -39,3 +39,9 @@ class ConfigKeyEnum(StrEnum):
     TOTP_SECRET: str = 'totp_secret'
     USERNAME: str = 'username'
     PASSWORD: str = 'password'
+
+
+class CacheKeyEnum(StrEnum):
+    POST_COUNT: str = 'post_count'
+    CATEGORY_COUNT: str = 'category_count'
+    TAG_COUNT: str = 'tag_count'
