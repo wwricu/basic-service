@@ -1,13 +1,10 @@
-import asyncio
 import base64
 import hashlib
 import hmac
 import time
 from contextlib import asynccontextmanager
 
-import alembic
 import bcrypt
-from alembic import command
 from alembic.config import Config
 from fastapi import FastAPI, HTTPException, Request, status
 from loguru import logger as log
@@ -23,11 +20,6 @@ from wwricu.service.tag import reset_tag_count
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     try:
-        await asyncio.to_thread(
-            command.upgrade,
-            alembic.config.Config(CommonConstant.ALEMBIC_CONFIG_PATH),
-            CommonConstant.ALEMBIC_TARGET_REVISION, False, None
-        )
         await reset_tag_count()
         await reset_category_count()
         log.info(f'listening on {Config.host}:{Config.port}')
