@@ -61,10 +61,23 @@ async def get_post_detail(blog_post: BlogPost) -> PostDetailVO:
     return post_detail
 
 
+async def get_posts_cover(post_list: list[BlogPost]) -> dict[int, PostResource]:
+    stmt = select(PostResource, BlogPost.id).join(
+        BlogPost, PostResource.id == BlogPost.cover_id).where(
+        PostResource.deleted == False).where(
+        PostResource.type == PostResourceTypeEnum.COVER_IMAGE).where(
+        BlogPost.deleted == False).where(
+        BlogPost.id.in_(post.id for post in post_list)
+    )
+    result = await session.execute(stmt)
+    return {post_id: cover for cover, post_id in result.all()}
+
+
 async def get_posts_preview(post_list: list[BlogPost]) -> list[PostDetailVO]:
-    categories, tags = await asyncio.gather(
+    categories, tags, covers = await asyncio.gather(
         get_posts_category(post_list),
-        get_posts_tag_lists(post_list)
+        get_posts_tag_lists(post_list),
+        get_posts_cover(post_list)
     )
     result = []
     for post in post_list:
@@ -72,5 +85,7 @@ async def get_posts_preview(post_list: list[BlogPost]) -> list[PostDetailVO]:
         if category := categories.get(post.id):
             detail.category = TagVO.model_validate(category)
         detail.tag_list = [TagVO.model_validate(tag) for tag in tags.get(post.id, [])]
+        if cover := covers.get(post.id):
+            detail.cover = PostResourceVO.model_validate(cover)
         result.append(detail)
     return result
