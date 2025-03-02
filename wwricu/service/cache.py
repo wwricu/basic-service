@@ -1,5 +1,4 @@
 import asyncio
-import atexit
 import os.path
 import pickle
 import time
@@ -19,7 +18,6 @@ class LocalCache:
     cache_name: str = 'cache.pkl'
 
     def __init__(self):
-        atexit.register(self.cache_dump)
         self.cache_data = dict()
         self.cache_timeout = dict()
         self.timeout_callback = dict()
@@ -38,10 +36,6 @@ class LocalCache:
                 self.cache_data[key] = value
                 self.cache_timeout[key] = now + second
 
-    def cache_dump(self):
-        log.info('Dump cache to pickle')
-        with open(self.cache_name, 'wb+') as f:
-            f.write(pickle.dumps((self.cache_data, self.cache_timeout)))
 
     async def timeout(self, key: str, second: int):
         await asyncio.sleep(second)
@@ -70,6 +64,11 @@ class LocalCache:
         if task := self.timeout_callback.pop(key, None):
             task.cancel()
 
+    async def close(self):
+        log.info('Dump cache to pickle')
+        with open(self.cache_name, 'wb+') as f:
+            f.write(pickle.dumps((self.cache_data, self.cache_timeout)))
+
 
 class RedisCache:
     redis: redis.Redis
@@ -97,6 +96,9 @@ class RedisCache:
     async def delete(self, key: str):
         await self.redis.delete(key)
 
+    async def close(self):
+        await self.redis.close()
+
 
 class Cache(Protocol):
     async def get(self, key: str) -> any:...
@@ -104,6 +106,8 @@ class Cache(Protocol):
     async def set(self, key: str, value: any, second: int):...
 
     async def delete(self, key: str):...
+
+    async def close(self):...
 
 
 cache: Cache = LocalCache()

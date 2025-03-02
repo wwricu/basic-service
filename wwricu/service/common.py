@@ -30,6 +30,7 @@ async def lifespan(_: FastAPI):
         log.info(f'listening on {Config.host}:{Config.port}')
         yield
     finally:
+        await cache.close()
         await engine.dispose()
         log.info('THE END')
         await log.complete()
