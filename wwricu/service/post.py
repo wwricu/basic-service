@@ -60,7 +60,7 @@ async def get_post_detail(blog_post: BlogPost) -> PostDetailVO:
         get_post_cover(blog_post)
     )
     post_detail = PostDetailVO.model_validate(blog_post)
-    post_detail.tag_list = [TagVO.model_validate(tag) for tag in tags]
+    post_detail.tag_list = list(map(TagVO.model_validate, tags))
     if category is not None:
         post_detail.category = TagVO.model_validate(category)
     if cover is not None:
@@ -86,13 +86,12 @@ async def get_posts_preview(post_list: list[BlogPost]) -> list[PostDetailVO]:
         get_posts_tag_lists(post_list),
         get_posts_cover(post_list)
     )
-    result = []
-    for post in post_list:
+    def generator(post: BlogPost) -> PostDetailVO:
         detail = PostDetailVO.model_validate(post)
         if category := categories.get(post.id):
             detail.category = TagVO.model_validate(category)
         detail.tag_list = [TagVO.model_validate(tag) for tag in tags.get(post.id, [])]
         if cover := covers.get(post.id):
             detail.cover = PostResourceVO.model_validate(cover)
-        result.append(detail)
-    return result
+        return detail
+    return list(map(generator, post_list))
