@@ -1,13 +1,14 @@
 import asyncio
 
+from loguru import logger as log
 from sqlalchemy import delete, select
 
 from wwricu.domain.output import PostDetailVO, TagVO, PostResourceVO
-from wwricu.service.storage import delete_object
+from wwricu.service.storage import delete_object, list_all_objects, delete_objects
 from wwricu.domain.entity import BlogPost, PostResource
 from wwricu.domain.enum import PostResourceTypeEnum
 from wwricu.service.category import get_post_category, get_posts_category
-from wwricu.service.database import session
+from wwricu.service.database import get_session, session
 from wwricu.service.tag import get_post_tags, get_posts_tag_lists
 
 
@@ -42,7 +43,13 @@ async def delete_post_cover(post: BlogPost) -> int:
 
 async def clean_post_resource():
     """delete all unused files from oss"""
-    pass
+    async with get_session() as s:
+        resource_keys = await s.scalars(select(PostResource.key))
+        resource_keys = set(resource_keys.all())
+        all_s3_objects = list_all_objects()
+        keys_to_del = list(filter(lambda key: key not in resource_keys, map(lambda r: r.Key, all_s3_objects)))
+        log.warning(f'{len(keys_to_del)} objects to be deleted')
+        delete_objects(keys_to_del)
 
 
 async def get_post_detail(blog_post: BlogPost) -> PostDetailVO:

@@ -47,3 +47,22 @@ class AWSSSMParameter(BaseModel):
 class AWSSSMResponse(BaseModel):
     ResponseMetadata: AWSS3ResponseMetaData
     Parameter: AWSSSMParameter
+
+
+class AWSS3Object(BaseModel):
+    Key: str
+    LastModified: datetime
+    ETag: str
+    Size: int
+    StorageClass: str
+
+
+class AWSS3ListResponse(BaseModel):
+    ResponseMetadata: AWSS3ResponseMetaData
+    IsTruncated: bool
+    Contents: list[AWSS3Object]
+    Name: str
+    Prefix: str
+    MaxKeys: int
+    EncodingType: str
+    KeyCount: int

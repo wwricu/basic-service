@@ -1,7 +1,7 @@
 import boto3
 
 from wwricu.config import StorageConfig
-from wwricu.domain.third import AWSS3Response, AWSConst
+from wwricu.domain.third import AWSS3Response, AWSConst, AWSS3ListResponse, AWSS3Object
 
 
 def get_object(key: str, bucket: str = StorageConfig.bucket) -> bytes | None:
@@ -18,6 +18,17 @@ def put_object(key: str, data: bytes, bucket: str = StorageConfig.bucket) -> str
 
 def delete_object(key: str, bucket: str = StorageConfig.bucket):
     s3_client.delete_object(Bucket=bucket, Key=key)
+
+
+def delete_objects(keys: list[str], bucket: str = StorageConfig.bucket):
+    response = s3_client.delete_objects(Bucket=bucket, Delete=dict(Objects=[dict(Key=key) for key in keys]))
+    print(response)
+
+
+def list_all_objects(bucket: str = StorageConfig.bucket) -> list[AWSS3Object]:
+    response = s3_client.list_objects_v2(Bucket=bucket)
+    response = AWSS3ListResponse.model_validate(response)
+    return response.Contents
 
 
 s3_client = boto3.client(AWSConst.s3, region_name=StorageConfig.region)
