@@ -4,7 +4,7 @@ from dataclasses import field
 from datetime import datetime
 
 from wwricu.domain.common import BaseModel
-from wwricu.domain.enum import TagTypeEnum, PostResourceTypeEnum, PostStatusEnum
+from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum, TagTypeEnum
 
 
 class TagVO(BaseModel):

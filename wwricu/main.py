@@ -6,8 +6,8 @@ from fastapi import FastAPI
 from wwricu.api import api_router
 from wwricu.config import Config
 from wwricu.domain.common import CommonConstant
-from wwricu.service.common import lifespan
 from wwricu.middleware import middlewares
+from wwricu.service.common import lifespan
 
 
 app = FastAPI(

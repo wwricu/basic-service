@@ -1,10 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy import String, Integer, Boolean, TEXT, DateTime, func, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Integer, String, TEXT, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from wwricu.domain.common import EntityConstant
-from wwricu.domain.enum import RelationTypeEnum, PostStatusEnum
+from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum
 
 
 class Base(DeclarativeBase):

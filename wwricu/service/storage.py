@@ -1,7 +1,7 @@
 import boto3
 
 from wwricu.config import StorageConfig
-from wwricu.domain.third import AWSS3Response, AWSConst, AWSS3ListResponse, AWSS3Object
+from wwricu.domain.third import AWSConst, AWSS3ListResponse,  AWSS3Object, AWSS3Response
 
 
 def get_object(key: str, bucket: str = StorageConfig.bucket) -> bytes | None:

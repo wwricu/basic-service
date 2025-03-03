@@ -1,9 +1,9 @@
-from sqlalchemy import select, update, func, case
+from sqlalchemy import case, func, select, update
 from wwricu.domain.input import PostUpdateRO
 
 from wwricu.domain.entity import BlogPost, PostTag
-from wwricu.domain.enum import TagTypeEnum, PostStatusEnum
-from wwricu.service.database import session, new_session
+from wwricu.domain.enum import PostStatusEnum, TagTypeEnum
+from wwricu.service.database import new_session, session
 
 
 async def get_category_by_id(category_id: int) -> PostTag:

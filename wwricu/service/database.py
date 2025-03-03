@@ -5,10 +5,10 @@ from asyncio import current_task
 from typing import AsyncGenerator
 
 from loguru import logger as log
-from sqlalchemy.ext.asyncio import async_sessionmaker, async_scoped_session, create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session, async_sessionmaker, create_async_engine
 
-from wwricu.service.storage import get_object, put_object
 from wwricu.config import DatabaseConfig, StorageConfig
+from wwricu.service.storage import get_object, put_object
 
 
 async def open_session():
