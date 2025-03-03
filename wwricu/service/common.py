@@ -36,6 +36,25 @@ async def lifespan(_: FastAPI):
         await log.complete()
 
 
+@asynccontextmanager
+async def try_login_lock():
+    lock = await cache.get(CacheKeyEnum.LOGIN_LOCK)
+    if lock is not None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f'LOGIN FORBIDDEN')
+    try:
+        yield
+        await cache.delete(CacheKeyEnum.LOGIN_LOCK)
+        await cache.delete(CacheKeyEnum.LOGIN_RETRIES)
+    except Exception as e:
+        retries = await cache.get(CacheKeyEnum.LOGIN_RETRIES)
+        if retries >= 3:
+            await cache.set(CacheKeyEnum.LOGIN_LOCK, True, 1800)
+            await cache.delete(CacheKeyEnum.LOGIN_RETRIES)
+        else:
+            await cache.set(CacheKeyEnum.LOGIN_RETRIES, retries + 1, 300)
+        raise e
+
+
 async def reset_system_count():
     post_stmt = select(func.count(BlogPost.id)).where(
         BlogPost.deleted == False).where(

@@ -45,3 +45,5 @@ class CacheKeyEnum(StrEnum):
     POST_COUNT: str = 'post_count'
     CATEGORY_COUNT: str = 'category_count'
     TAG_COUNT: str = 'tag_count'
+    LOGIN_LOCK: str = 'login_lock'
+    LOGIN_RETRIES: str = 'login_retries'
