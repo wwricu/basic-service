@@ -1,5 +1,3 @@
-import asyncio
-
 from loguru import logger as log
 from sqlalchemy import delete, select
 
@@ -54,11 +52,9 @@ async def clean_post_resource():
 
 async def get_post_detail(blog_post: BlogPost) -> PostDetailVO:
     # TODO: optimize with join
-    category, tags, cover = await asyncio.gather(
-        get_post_category(blog_post),
-        get_post_tags(blog_post),
-        get_post_cover(blog_post)
-    )
+    category = await get_post_category(blog_post)
+    tags = await get_post_tags(blog_post)
+    cover = await get_post_cover(blog_post)
     post_detail = PostDetailVO.model_validate(blog_post)
     post_detail.tag_list = list(map(TagVO.model_validate, tags))
     if category is not None:
@@ -81,11 +77,9 @@ async def get_posts_cover(post_list: list[BlogPost]) -> dict[int, PostResource]:
 
 
 async def get_posts_preview(post_list: list[BlogPost]) -> list[PostDetailVO]:
-    categories, tags, covers = await asyncio.gather(
-        get_posts_category(post_list),
-        get_posts_tag_lists(post_list),
-        get_posts_cover(post_list)
-    )
+    categories = await get_posts_category(post_list)
+    tags = await get_posts_tag_lists(post_list)
+    covers = await get_posts_cover(post_list)
     def generator(post: BlogPost) -> PostDetailVO:
         detail = PostDetailVO.model_validate(post)
         if category := categories.get(post.id):

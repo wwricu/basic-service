@@ -1,4 +1,3 @@
-import asyncio
 import uuid
 
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status as http_status
@@ -49,7 +48,8 @@ async def select_post(post: PostRequestRO) -> PageVO[PostDetailVO]:
         (post.page_index - 1) * post.page_size
     )
 
-    posts_result, count = await asyncio.gather(session.scalars(post_stmt), session.scalar(count_stmt))
+    posts_result = await session.scalars(post_stmt)
+    count = await session.scalar(count_stmt)
     all_posts = await get_posts_preview(posts_result.all())
     return PageVO(page_index=post.page_index, page_size=post.page_size, count=count, post_details=all_posts)
 

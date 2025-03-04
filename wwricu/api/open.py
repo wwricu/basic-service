@@ -41,7 +41,8 @@ async def get_all_posts(post: PostRequestRO) -> PageVO[PostDetailVO]:
         post.page_size).offset(
         (post.page_index - 1) * post.page_size
     )
-    posts_result, count = await asyncio.gather(session.execute(post_stmt), session.scalar(count_stmt))
+    posts_result = await session.execute(post_stmt)
+    count = await session.scalar(count_stmt)
     all_posts = await get_posts_preview(posts_result.all())
     return PageVO(page_index=post.page_index, page_size=post.page_size, count=count, post_details=all_posts)
 
@@ -79,11 +80,11 @@ async def get_all_tags(get_tag: TagRequestRO) -> list[TagVO]:
 
 @open_api.get('/about', response_model=AboutPageVO)
 async def about() -> AboutPageVO:
-    stmt = select(SysConfig.value).where(SysConfig.key == ConfigKeyEnum.ABOUT_CONTENT).where(SysConfig.deleted == False)
-    content, post, category, tag = await asyncio.gather(
-        session.scalar(stmt),
+    stmt = select(SysConfig).where(SysConfig.key == ConfigKeyEnum.ABOUT_CONTENT).where(SysConfig.deleted == False)
+    conf = await session.scalar(stmt)
+    post, category, tag = await asyncio.gather(
         cache.get(CacheKeyEnum.POST_COUNT),
         cache.get(CacheKeyEnum.CATEGORY_COUNT),
         cache.get(CacheKeyEnum.TAG_COUNT)
     )
-    return AboutPageVO(content=content, post_count=post, category_count=category, tag_count=tag)
+    return AboutPageVO(content=conf.value if conf else None, post_count=post, category_count=category, tag_count=tag)
