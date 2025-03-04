@@ -6,7 +6,7 @@ import sys
 import boto3
 from loguru import logger as log
 
-from wwricu.domain.common import CommonConstant
+from wwricu.domain.constant import CommonConstant
 from wwricu.domain.enum import EnvironmentEnum
 from wwricu.domain.third import AWSAppConfigResponse, AWSConst
 
@@ -76,7 +76,7 @@ def get_config(env: EnvironmentEnum) -> dict:
     if env == EnvironmentEnum.LOCAL:
         with open(CommonConstant.CONFIG_FILE) as f:
             return json.loads(f.read())
-    response = boto3.client('appconfig', region_name=AWSConst.region).get_configuration(
+    response = boto3.client(AWSConst.APP_CONFIG, region_name=AWSConst.REGION).get_configuration(
         Application=CommonConstant.APP_NAME,
         Environment=env,
         Configuration=CommonConstant.CONFIG_FILE,

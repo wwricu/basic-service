@@ -1,7 +1,8 @@
 from loguru import logger as log
 from sqlalchemy import delete, select
 
-from wwricu.domain.output import PostDetailVO, PostResourceVO, TagVO
+from wwricu.domain.post import PostDetailVO, PostResourceVO
+from wwricu.domain.tag import TagVO
 from wwricu.domain.entity import BlogPost, PostResource
 from wwricu.domain.enum import PostResourceTypeEnum
 from wwricu.service.category import get_post_category, get_posts_category

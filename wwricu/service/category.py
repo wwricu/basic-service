@@ -1,8 +1,8 @@
 from sqlalchemy import case, func, select, update
-from wwricu.domain.input import PostUpdateRO
 
 from wwricu.domain.entity import BlogPost, PostTag
 from wwricu.domain.enum import PostStatusEnum, TagTypeEnum
+from wwricu.domain.post import PostUpdateRO
 from wwricu.service.database import new_session, session
 
 

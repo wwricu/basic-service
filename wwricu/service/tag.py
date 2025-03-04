@@ -2,7 +2,7 @@ from sqlalchemy import select, update, func, case
 
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
-from wwricu.domain.input import PostUpdateRO
+from wwricu.domain.post import PostUpdateRO
 from wwricu.service.database import new_session, session
 
 

@@ -29,8 +29,8 @@ class DatabaseActionEnum(StrEnum):
 
 class EnvironmentEnum(StrEnum):
     LOCAL: str = 'local'
-    DEVELOPMENT: str = 'development'
-    PRODUCTION: str = 'production'
+    DEVELOPMENT: str = 'dev'
+    PRODUCTION: str = 'prod'
 
 
 class ConfigKeyEnum(StrEnum):

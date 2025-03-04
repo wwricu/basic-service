@@ -6,10 +6,10 @@ from loguru import logger as log
 from sqlalchemy import select, update
 
 from wwricu.config import AdminConfig
-from wwricu.domain.common import CommonConstant, HttpErrorDetail
+from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.entity import SysConfig
 from wwricu.domain.enum import CacheKeyEnum, DatabaseActionEnum
-from wwricu.domain.input import LoginRO, ConfigRO
+from wwricu.domain.common import LoginRO, ConfigRO
 from wwricu.service.cache import cache
 from wwricu.service.common import admin_only, hmac_sign, validate_cookie, admin_login, try_login_lock
 from wwricu.service.database import database_restore, database_backup, session

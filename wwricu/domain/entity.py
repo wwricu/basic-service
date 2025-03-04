@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import Boolean, DateTime, Integer, String, TEXT, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from wwricu.domain.common import EntityConstant
+from wwricu.domain.constant import EntityConstant
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum
 
 

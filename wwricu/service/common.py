@@ -11,7 +11,7 @@ from fastapi import FastAPI, HTTPException, Request, status
 from loguru import logger as log
 from sqlalchemy import select, func
 
-from wwricu.domain.common import CommonConstant, HttpErrorDetail
+from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.entity import BlogPost, PostTag
 from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum
 from wwricu.config import AdminConfig, Config

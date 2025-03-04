@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import update, select
 
-from wwricu.domain.common import HttpErrorDetail
+from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
 from wwricu.domain.enum import RelationTypeEnum, TagTypeEnum
-from wwricu.domain.input import TagRO
-from wwricu.domain.output import TagVO
+from wwricu.domain.tag import TagRO, TagVO
 from wwricu.service.common import admin_only, update_system_count
 from wwricu.service.database import session
 

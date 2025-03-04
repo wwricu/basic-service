@@ -13,7 +13,7 @@ def get_object(key: str, bucket: str = StorageConfig.bucket) -> bytes | None:
 
 def put_object(key: str, data: bytes, bucket: str = StorageConfig.bucket) -> str:
     s3_client.put_object(Bucket=bucket, Key=key, Body=data)
-    return f'https://{AWSConst.s3}.{StorageConfig.region}.{AWSConst.aws_domain}/{bucket}/{key}'
+    return f'https://{AWSConst.S3}.{StorageConfig.region}.{AWSConst.AWS_DOMAIN}/{bucket}/{key}'
 
 
 def delete_object(key: str, bucket: str = StorageConfig.bucket):
@@ -31,4 +31,4 @@ def list_all_objects(bucket: str = StorageConfig.bucket) -> list[AWSS3Object]:
     return response.Contents
 
 
-s3_client = boto3.client(AWSConst.s3, region_name=StorageConfig.region)
+s3_client = boto3.client(AWSConst.S3, region_name=AWSConst.REGION)
