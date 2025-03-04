@@ -66,3 +66,12 @@ class AWSS3ListResponse(BaseModel):
     MaxKeys: int
     EncodingType: str
     KeyCount: int
+
+
+class AWSAppConfigResponse(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    ResponseMetadata: AWSS3ResponseMetaData
+    ConfigurationVersion: str
+    ContentType: str
+    Content: StreamingBody

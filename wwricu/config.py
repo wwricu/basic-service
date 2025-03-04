@@ -8,7 +8,7 @@ from loguru import logger as log
 
 from wwricu.domain.common import CommonConstant
 from wwricu.domain.enum import EnvironmentEnum
-from wwricu.domain.third import AWSConst, AWSSSMResponse
+from wwricu.domain.third import AWSAppConfigResponse, AWSConst
 
 
 class ConfigClass(object):
@@ -72,22 +72,26 @@ def log_config():
 
 
 def get_config(env: EnvironmentEnum) -> dict:
-    log.info(f'{env=}')
+    log.info(f'env={env.value}')
     if env == EnvironmentEnum.LOCAL:
         with open(CommonConstant.CONFIG_FILE) as f:
             return json.loads(f.read())
-    ssm_client = boto3.client(AWSConst.ssm, region_name=AWSConst.region)
-    content = ssm_client.get_parameter(Name=AWSConst.CONFIG.format(env=env), WithDecryption=False)
-    response = AWSSSMResponse.model_validate(content)
-    with open(CommonConstant.CONFIG_FILE, 'wt+') as f:
-        f.write(response.Parameter.Value)
-    return json.loads(response.Parameter.Value)
+    response = boto3.client('appconfig', region_name=AWSConst.region).get_configuration(
+        Application=CommonConstant.APP_NAME,
+        Environment=env,
+        Configuration=CommonConstant.CONFIG_FILE,
+        ClientId=CommonConstant.APP_NAME
+    )
+    app_config = AWSAppConfigResponse.model_validate(response)
+    content = app_config.Content.read().decode()
+    app_config.Content.close()
+    return json.loads(content)
 
 
 def init():
     log_config()
     if __debug__:
         log.warning('APP RUNNING ON DEBUG MODE')
-    env = os.getenv(CommonConstant.ENV_KEY, EnvironmentEnum.LOCAL)
-    Config.load(**get_config(env))
+    env = os.getenv(CommonConstant.ENV_KEY, EnvironmentEnum.LOCAL.value)
+    Config.load(**get_config(EnvironmentEnum(env)))
     log.info('Config init')
