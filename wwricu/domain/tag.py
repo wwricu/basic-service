@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from pydantic import constr
+
 from wwricu.domain.common import BaseModel
 from wwricu.domain.enum import TagTypeEnum
 
 
 class TagRO(BaseModel):
     id: int | None = None
-    name: str
+    name: constr(max_length=32)
     type: TagTypeEnum | None = TagTypeEnum.POST_TAG
 
 
