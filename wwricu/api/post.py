@@ -71,7 +71,8 @@ async def update_post(post_update: PostUpdateRO) -> PostDetailVO:
     await update_category(blog_post, post_update)
     await update_tags(blog_post, post_update)
 
-    stmt = update(BlogPost).where(BlogPost.id == post_update.id).values(
+    stmt = update(BlogPost).where(
+        BlogPost.id == post_update.id).values(
         title=post_update.title,
         content=post_update.content,
         preview=post_update.preview,

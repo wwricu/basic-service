@@ -21,10 +21,7 @@ class LocalCache:
         self.cache_data = dict()
         self.cache_timeout = dict()
         self.timeout_callback = dict()
-        self.cache_load()
 
-
-    def cache_load(self):
         if not os.path.exists(self.cache_name):
             return
         log.info('Load cache from pickle')
@@ -35,7 +32,6 @@ class LocalCache:
             if (second := self.cache_timeout.get(key, 0) - now) > 0:
                 self.cache_data[key] = value
                 self.cache_timeout[key] = now + second
-
 
     async def timeout(self, key: str, second: int):
         await asyncio.sleep(second)

@@ -62,8 +62,9 @@ async def update_category(post: BlogPost, post_update: PostUpdateRO):
 
     stmt = update(BlogPost).where(
         BlogPost.id == post.id).where(
-        BlogPost.deleted == False
-    ).values(category_id=category.id)
+        BlogPost.deleted == False).values(
+        category_id=category.id
+    )
     await session.execute(stmt)
 
 

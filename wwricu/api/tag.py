@@ -8,20 +8,12 @@ from wwricu.domain.tag import TagRO, TagVO
 from wwricu.service.common import admin_only, update_system_count
 from wwricu.service.database import session
 
-
-tag_api = APIRouter(
-    prefix='/tag',
-    tags=['Tag Management'],
-    dependencies=[Depends(admin_only), Depends(update_system_count)]
-)
+tag_api = APIRouter(prefix='/tag', dependencies=[Depends(admin_only), Depends(update_system_count)])
 
 
 @tag_api.post('/create', response_model=TagVO)
 async def create_tag(tag_create: TagRO) -> TagVO:
-    tag = PostTag(
-        name=tag_create.name,
-        type=tag_create.type
-    )
+    tag = PostTag(name=tag_create.name, type=tag_create.type)
     session.add(tag)
     await session.flush()
     return TagVO.model_validate(tag)
