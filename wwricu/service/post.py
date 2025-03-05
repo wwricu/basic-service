@@ -7,7 +7,7 @@ from wwricu.domain.entity import BlogPost, PostResource
 from wwricu.domain.enum import PostResourceTypeEnum
 from wwricu.service.category import get_post_category, get_posts_category
 from wwricu.service.database import get_session, session
-from wwricu.service.storage import delete_object, delete_objects, list_all_objects
+from wwricu.service.storage import oss
 from wwricu.service.tag import get_post_tags, get_posts_tag_lists
 
 
@@ -34,7 +34,7 @@ async def delete_post_cover(post: BlogPost) -> int:
     )
     if (resource := await session.scalar(stmt)) is None:
         return 0
-    delete_object(resource.key)
+    oss.delete(resource.key)
     stmt = delete(PostResource).where(PostResource.id == resource.id)
     result = await session.execute(stmt)
     return result.rowcount
@@ -45,10 +45,10 @@ async def clean_post_resource():
     async with get_session() as s:
         resource_keys = await s.scalars(select(PostResource.key))
         resource_keys = set(resource_keys.all())
-        all_s3_objects = list_all_objects()
+        all_s3_objects = oss.list_all()
         keys_to_del = list(filter(lambda key: key not in resource_keys, map(lambda r: r.Key, all_s3_objects)))
         log.warning(f'{len(keys_to_del)} objects to be deleted')
-        delete_objects(keys_to_del)
+        oss.batch_delete(keys_to_del)
 
 
 async def get_post_detail(blog_post: BlogPost) -> PostDetailVO:
