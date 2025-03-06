@@ -22,4 +22,4 @@ app.include_router(api_router)
 
 
 def main():
-    uvicorn.run(app=app, host=Config.host, port=Config.port, log_level=Config.log_level)
+    uvicorn.run(app=app, host=Config.host, port=Config.port, log_level=Config.log_level, access_log=False)
