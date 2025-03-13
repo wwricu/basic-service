@@ -6,7 +6,6 @@ import time
 from contextlib import asynccontextmanager
 
 import bcrypt
-from alembic.config import Config
 from fastapi import FastAPI, HTTPException, Request, status
 from loguru import logger as log
 from sqlalchemy import select, func
