@@ -18,7 +18,7 @@ dependencies = [
     'python-multipart==0.0.19',
     'redis==5.2.1',
     'SQLAlchemy==2.0.39',
-    'uvicorn==0.34.0'
+    'uvicorn[standard]==0.34.0'
 ]
 
 [project.scripts]
