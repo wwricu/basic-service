@@ -7,12 +7,11 @@ from wwricu.domain.common import BaseModel
 
 
 class AWSConst(object):
-    s3: str = 's3'
-    ssm: str = 'ssm'
-    region = 'us-west-2'
-    aws_domain = 'amazonaws.com'
-    config_key: str = '/basic-service/config/config.json'
-    dynamo_url: str = 'amazondynamodb:///?Access Key={ak}&Secret Key={sk}&Domain=amazonaws.com&Region={region}'
+    S3: str = 's3'
+    SSM: str = 'ssm'
+    APP_CONFIG: str = 'appconfig'
+    REGION = 'us-west-2'
+    AWS_DOMAIN = 'amazonaws.com'
     AWS_ACCESS_KEY_ID: str = 'AWS_ACCESS_KEY_ID'
     AWS_SECRET_ACCESS_KEY: str = 'AWS_SECRET_ACCESS_KEY'
 
@@ -48,3 +47,31 @@ class AWSSSMParameter(BaseModel):
 class AWSSSMResponse(BaseModel):
     ResponseMetadata: AWSS3ResponseMetaData
     Parameter: AWSSSMParameter
+
+
+class AWSS3Object(BaseModel):
+    Key: str
+    LastModified: datetime
+    ETag: str
+    Size: int
+    StorageClass: str
+
+
+class AWSS3ListResponse(BaseModel):
+    ResponseMetadata: AWSS3ResponseMetaData
+    IsTruncated: bool
+    Contents: list[AWSS3Object]
+    Name: str
+    Prefix: str
+    MaxKeys: int
+    EncodingType: str
+    KeyCount: int
+
+
+class AWSAppConfigResponse(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    ResponseMetadata: AWSS3ResponseMetaData
+    ConfigurationVersion: str
+    ContentType: str
+    Content: StreamingBody

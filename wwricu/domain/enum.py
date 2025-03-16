@@ -25,3 +25,25 @@ class RelationTypeEnum(StrEnum):
 class DatabaseActionEnum(StrEnum):
     BACKUP: str = 'backup'
     RESTORE: str = 'restore'
+
+
+class EnvironmentEnum(StrEnum):
+    LOCAL: str = 'local'
+    DEVELOPMENT: str = 'dev'
+    PRODUCTION: str = 'prod'
+
+
+class ConfigKeyEnum(StrEnum):
+    ABOUT_CONTENT: str = 'about_content'
+    ABOUT_AVATAR: str = 'about_avatar'
+    TOTP_SECRET: str = 'totp_secret'
+    USERNAME: str = 'username'
+    PASSWORD: str = 'password'
+
+
+class CacheKeyEnum(StrEnum):
+    POST_COUNT: str = 'post_count'
+    CATEGORY_COUNT: str = 'category_count'
+    TAG_COUNT: str = 'tag_count'
+    LOGIN_LOCK: str = 'login_lock'
+    LOGIN_RETRIES: str = 'login_retries'
