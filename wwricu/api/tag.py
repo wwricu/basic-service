@@ -28,7 +28,7 @@ async def update_tag(tag_update: TagRO) -> TagVO:
 
 
 @tag_api.get('/delete/{tag_id}', response_model=int)
-async def delete_tags(tag_id: int) -> int:
+async def delete_tag(tag_id: int) -> int:
     stmt = select(PostTag).where(PostTag.deleted == False).where(PostTag.id == tag_id)
     tag = await session.scalar(stmt)
     post_stmt = update(PostTag).where(PostTag.id == tag_id).values(deleted=True)

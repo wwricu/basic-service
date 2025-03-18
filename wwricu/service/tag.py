@@ -99,7 +99,7 @@ async def get_posts_tag_lists(post_list: list[BlogPost]) -> dict[int, list[PostT
 
 async def reset_tag_count():
     async with new_session() as s:
-        subquery = select(PostTag.id, func.count(BlogPost.id).label('post_count')).join(
+        subquery = select(PostTag.id, func.count(BlogPost.id).label('tag_count')).join(
             EntityRelation, PostTag.id == EntityRelation.dst_id).join(
             BlogPost, EntityRelation.src_id == BlogPost.id).where(
             PostTag.deleted == False).where(
@@ -109,5 +109,5 @@ async def reset_tag_count():
             EntityRelation.type == RelationTypeEnum.POST_TAG).where(
             BlogPost.status == PostStatusEnum.PUBLISHED
         ).group_by(PostTag.id).subquery()
-        stmt = update(PostTag).where(PostTag.id == subquery.c.id).values(count=subquery.c.post_count)
+        stmt = update(PostTag).where(PostTag.id == subquery.c.id).values(count=subquery.c.tag_count)
         await s.execute(stmt)

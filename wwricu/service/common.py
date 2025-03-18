@@ -55,15 +55,18 @@ async def try_login_lock():
 
 
 async def reset_system_count():
-    post_stmt = select(func.count(BlogPost.id)).where(
+    post_stmt = select(
+        func.count(BlogPost.id)).where(
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED
     )
-    category_stmt = select(func.count(PostTag.id)).where(
+    category_stmt = select(
+        func.count(PostTag.id)).where(
         PostTag.deleted == False).where(
         PostTag.type == TagTypeEnum.POST_CAT
     )
-    tag_stmt = select(func.count(PostTag.id)).where(
+    tag_stmt = select(
+        func.count(PostTag.id)).where(
         PostTag.deleted == False).where(
         PostTag.type == TagTypeEnum.POST_TAG
     )
@@ -81,8 +84,9 @@ async def reset_system_count():
 
 async def update_system_count():
     async with get_session() as s:
-        s.flush()
-        await reset_tag_count()
+        yield
+        await s.flush()
+        await reset_system_count()
 
 
 async def admin_login(username: str, password: str) -> bool:

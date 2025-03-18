@@ -91,12 +91,12 @@ async def get_posts_category(post_list: list[BlogPost]) -> dict[int, PostTag]:
 
 async def reset_category_count():
     async with new_session() as s:
-        subquery = select(PostTag.id, func.count(BlogPost.id).label('post_count')).join(
+        subquery = select(PostTag.id, func.count(BlogPost.id).label('category_count')).join(
             BlogPost, PostTag.id == BlogPost.category_id).where(
             PostTag.deleted == False).where(
             BlogPost.deleted == False).where(
             PostTag.type == TagTypeEnum.POST_CAT).where(
             BlogPost.status == PostStatusEnum.PUBLISHED
         ).group_by(PostTag.id).subquery()
-        stmt = update(PostTag).where(PostTag.id == subquery.c.id).values(count=subquery.c.post_count)
+        stmt = update(PostTag).where(PostTag.id == subquery.c.id).values(count=subquery.c.category_count)
         await s.execute(stmt)
