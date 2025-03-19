@@ -54,8 +54,9 @@ async def update_tags(post: BlogPost, post_update: PostUpdateRO):
     stmt = update(EntityRelation).where(
         EntityRelation.type == RelationTypeEnum.POST_TAG).where(
         EntityRelation.deleted == False).where(
-        EntityRelation.src_id == post.id
-    ).values(deleted=True)
+        EntityRelation.src_id == post.id).values(
+        deleted=True
+    )
     await session.execute(stmt)
 
     relations = [EntityRelation(src_id=post.id, dst_id=t.id, type=RelationTypeEnum.POST_TAG) for t in tags]

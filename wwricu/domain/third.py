@@ -34,21 +34,6 @@ class AWSS3Response(BaseModel):
     Body: StreamingBody
 
 
-class AWSSSMParameter(BaseModel):
-    Name: str
-    Type: str
-    Value: str
-    Version: int
-    LastModifiedDate: datetime
-    ARN: str
-    DataType: str
-
-
-class AWSSSMResponse(BaseModel):
-    ResponseMetadata: AWSS3ResponseMetaData
-    Parameter: AWSSSMParameter
-
-
 class AWSS3Object(BaseModel):
     Key: str
     LastModified: datetime

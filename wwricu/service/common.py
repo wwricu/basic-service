@@ -108,18 +108,12 @@ def hmac_sign(plain: str):
     return hmac.new(secure_key, plain.encode(Config.encoding), hashlib.sha256).hexdigest()
 
 
-def hmac_verify(plain: str, sign: str) -> bool:
-    if not plain or not sign:
-        return False
-    return hmac_sign(plain) == sign
-
-
 async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
     if __debug__ is True:
         return True
     if session_id is None or cookie_sign is None or not isinstance(issue_time := await cache.get(session_id), int):
         return False
-    if 0 <= int(time.time()) - issue_time < CommonConstant.EXPIRE_TIME and hmac_verify(session_id, cookie_sign) is True:
+    if 0 <= int(time.time()) - issue_time < CommonConstant.EXPIRE_TIME and hmac_sign(session_id) == cookie_sign:
         return True
     log.warning(f'Invalid cookie session={session_id} issue_time={issue_time} sign={cookie_sign}')
     return False

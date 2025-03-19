@@ -35,8 +35,9 @@ async def delete_tag(tag_id: int) -> int:
     if tag.type == TagTypeEnum.POST_TAG:
         tag_stmt = update(EntityRelation).where(
             EntityRelation.type == RelationTypeEnum.POST_TAG).where(
-            EntityRelation.dst_id == tag_id
-        ).values(deleted=True)
+            EntityRelation.dst_id == tag_id).values(
+            deleted=True
+        )
     elif tag.type == TagTypeEnum.POST_CAT:
         tag_stmt = update(BlogPost).where(BlogPost.category_id == tag_id).values(category_id=None)
     else:

@@ -6,15 +6,6 @@ from wwricu.domain.post import PostUpdateRO
 from wwricu.service.database import new_session, session
 
 
-async def get_category_by_id(category_id: int) -> PostTag:
-    stmt = select(PostTag).where(
-        PostTag.type == TagTypeEnum.POST_CAT).where(
-        PostTag.deleted == False).where(
-        PostTag.id == category_id
-    )
-    return await session.scalar(stmt)
-
-
 async def get_category_by_name(category_name: str) -> PostTag | None:
     if category_name is None:
         return None
@@ -33,14 +24,19 @@ async def update_category_count(post: BlogPost, increment: int = 1) -> int:
         PostTag.type == TagTypeEnum.POST_CAT).values(
         count=PostTag.count + increment
     )
-    result = await session.execute(stmt)
-    return result.rowcount
+    return (await session.execute(stmt)).rowcount
 
 
 async def update_category(post: BlogPost, post_update: PostUpdateRO):
-    category = await get_category_by_id(post_update.category_id)
-    if category is None:
-        return None
+    if post is None or post.category_id is None:
+        return
+    stmt = select(PostTag).where(
+        PostTag.type == TagTypeEnum.POST_CAT).where(
+        PostTag.deleted == False).where(
+        PostTag.id == post.category_id
+    )
+    if (category := await session.scalar(stmt)) is None:
+        return
 
     prev_category_id, post_category_id = None, None
     if post.status == PostStatusEnum.PUBLISHED:
