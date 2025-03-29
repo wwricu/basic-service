@@ -45,8 +45,6 @@ class LocalCache:
         return self.cache_data.get(key)
 
     async def set(self, key: str, value: any, second: int = 600):
-        if second is None or second < 0:
-            second = 600
         if task := self.timeout_callback.pop(key, None):
             task.cancel()
         self.cache_data[key] = value
@@ -78,8 +76,7 @@ class RedisCache:
         )
 
     async def get(self, key: str) -> any:
-        value = await self.redis.get(key)
-        if value is not None:
+        if (value := await self.redis.get(key)) is not None:
             return pickle.loads(value)
 
     async def set(self, key: str, value: any, second: int = 600):

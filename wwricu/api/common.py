@@ -76,7 +76,7 @@ async def set_config(config: ConfigRO):
     await session.execute(stmt)
 
 
-@common_api.get('/get_config', dependencies=[Depends(admin_only)])
+@common_api.get('/get_config', dependencies=[Depends(admin_only)], response_model=str | None)
 async def get_config(key: str) -> str | None:
     stmt = select(SysConfig.value).where(SysConfig.key == key).where(SysConfig.deleted == False)
     return await session.scalar(stmt)

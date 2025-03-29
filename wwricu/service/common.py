@@ -55,15 +55,18 @@ async def try_login_lock():
 
 
 async def reset_system_count():
-    post_stmt = select(func.count(BlogPost.id)).where(
+    post_stmt = select(
+        func.count(BlogPost.id)).where(
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED
     )
-    category_stmt = select(func.count(PostTag.id)).where(
+    category_stmt = select(
+        func.count(PostTag.id)).where(
         PostTag.deleted == False).where(
         PostTag.type == TagTypeEnum.POST_CAT
     )
-    tag_stmt = select(func.count(PostTag.id)).where(
+    tag_stmt = select(
+        func.count(PostTag.id)).where(
         PostTag.deleted == False).where(
         PostTag.type == TagTypeEnum.POST_TAG
     )
@@ -81,8 +84,9 @@ async def reset_system_count():
 
 async def update_system_count():
     async with get_session() as s:
-        s.flush()
-        await reset_tag_count()
+        yield
+        await s.flush()
+        await reset_system_count()
 
 
 async def admin_login(username: str, password: str) -> bool:
@@ -104,18 +108,12 @@ def hmac_sign(plain: str):
     return hmac.new(secure_key, plain.encode(Config.encoding), hashlib.sha256).hexdigest()
 
 
-def hmac_verify(plain: str, sign: str) -> bool:
-    if not plain or not sign:
-        return False
-    return hmac_sign(plain) == sign
-
-
 async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
     if __debug__ is True:
         return True
     if session_id is None or cookie_sign is None or not isinstance(issue_time := await cache.get(session_id), int):
         return False
-    if 0 <= int(time.time()) - issue_time < CommonConstant.EXPIRE_TIME and hmac_verify(session_id, cookie_sign) is True:
+    if 0 <= int(time.time()) - issue_time < CommonConstant.EXPIRE_TIME and hmac_sign(session_id) == cookie_sign:
         return True
     log.warning(f'Invalid cookie session={session_id} issue_time={issue_time} sign={cookie_sign}')
     return False

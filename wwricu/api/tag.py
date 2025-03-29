@@ -28,15 +28,16 @@ async def update_tag(tag_update: TagRO) -> TagVO:
 
 
 @tag_api.get('/delete/{tag_id}', response_model=int)
-async def delete_tags(tag_id: int) -> int:
+async def delete_tag(tag_id: int) -> int:
     stmt = select(PostTag).where(PostTag.deleted == False).where(PostTag.id == tag_id)
     tag = await session.scalar(stmt)
     post_stmt = update(PostTag).where(PostTag.id == tag_id).values(deleted=True)
     if tag.type == TagTypeEnum.POST_TAG:
         tag_stmt = update(EntityRelation).where(
             EntityRelation.type == RelationTypeEnum.POST_TAG).where(
-            EntityRelation.dst_id == tag_id
-        ).values(deleted=True)
+            EntityRelation.dst_id == tag_id).values(
+            deleted=True
+        )
     elif tag.type == TagTypeEnum.POST_CAT:
         tag_stmt = update(BlogPost).where(BlogPost.category_id == tag_id).values(category_id=None)
     else:

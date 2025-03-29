@@ -49,12 +49,14 @@ def database_backup():
 
 
 async def database_restore():
-    # TODO: rollback on any failure
-    if os.path.exists(DatabaseConfig.database):
+    if not os.path.exists(DatabaseConfig.database):
+        return
+    try:
         await session.close_all()
         await engine.dispose()
         os.remove(DatabaseConfig.database)
-    importlib.reload(importlib.import_module(__name__))
+    finally:
+        importlib.reload(importlib.import_module(__name__))
 
 
 database_init()

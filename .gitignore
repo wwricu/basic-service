@@ -4,9 +4,9 @@ venv
 build
 dist
 wwricu.egg-info
+config.json
 **/conf
 **/__pycache__
-*.json
 *.pyc
 *.iml
 *.sqlite3
