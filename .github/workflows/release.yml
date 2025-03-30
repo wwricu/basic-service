@@ -3,6 +3,15 @@ on:
   push:
     branches:
       - 'release'
+    paths-ignore:
+      - '**.yml'
+      - '**.md'
+      - '**.sh'
+      - '**.json'
+      - '**.txt'
+      - '**.sql'
+      - '**.csv'
+      - '**.gitignore'
   workflow_dispatch:
 jobs:
   github:
