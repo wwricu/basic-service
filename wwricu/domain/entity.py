@@ -1,10 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy import String, Integer, Boolean, TEXT, DateTime, func, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Integer, String, TEXT, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from wwricu.domain.common import EntityConstant
-from wwricu.domain.enum import RelationTypeEnum, PostStatusEnum
+from wwricu.domain.constant import EntityConstant
+from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum
 
 
 class Base(DeclarativeBase):
@@ -45,7 +45,7 @@ class PostTag(Base):
 
 
 class EntityRelation(Base):
-    __tablename__ = 'wwr_entity_tag_relation'
+    __tablename__ = 'wwr_entity_relation'
     src_id: Mapped[int] = mapped_column(Integer, index=True)
     dst_id: Mapped[int] = mapped_column(Integer, index=True)
     type: Mapped[RelationTypeEnum] = mapped_column(
@@ -58,6 +58,12 @@ class PostResource(Base):
     __tablename__ = 'wwr_post_resource'
     post_id: Mapped[int] = mapped_column(Integer, index=True)
     name: Mapped[str] = mapped_column(String(EntityConstant.USER_STRING_LEN), nullable=True)
-    key: Mapped[str] = mapped_column(String(EntityConstant.LONG_STRING_LEN), comment='OSS Key')
+    key: Mapped[str] = mapped_column(String(EntityConstant.LONG_STRING_LEN))
     type: Mapped[str] = mapped_column(String(EntityConstant.ENUM_STRING_LEN), nullable=True)
-    url: Mapped[str] = mapped_column(TEXT, nullable=True, comment='Public url')
+    url: Mapped[str] = mapped_column(TEXT, nullable=True)
+
+
+class SysConfig(Base):
+    __tablename__ = 'wwr_sys_config'
+    key: Mapped[str] = mapped_column(String(EntityConstant.USER_STRING_LEN), nullable=False, unique=True)
+    value: Mapped[str] = mapped_column(TEXT, nullable=True)

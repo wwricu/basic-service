@@ -13,12 +13,12 @@ class AspectMiddleware(BaseHTTPMiddleware):
     @override
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
         b = time.time()
-        log.info(f'{request.method} {request.url.path}')
         try:
             response: Response = await call_next(request)
             log.info(f'{request.method} {request.url.path} {response.status_code} {int((time.time() - b) * 1000)} ms')
             return response
         except Exception as e:
+            log.error(f'{request.method} {request.url.path} {int((time.time() - b) * 1000)} ms')
             log.exception(e)
 
 

@@ -3,8 +3,15 @@ on:
   push:
     branches:
       - 'release'
-    paths:
-      - 'version.txt'
+    paths-ignore:
+      - '**.yml'
+      - '**.md'
+      - '**.sh'
+      - '**.json'
+      - '**.txt'
+      - '**.sql'
+      - '**.csv'
+      - '**.gitignore'
   workflow_dispatch:
 jobs:
   github:
@@ -46,4 +53,4 @@ jobs:
           push: true
           sbom: true
           provenance: mode=max
-          tags: wwricu/basic-service:${{ needs.github.outputs.version }}, wwricu/basic-service:latest
+          tags: wwricu/basic-service:${{ needs.github.outputs.version }}, wwricu/basic-service:snapshot, wwricu/basic-service:latest

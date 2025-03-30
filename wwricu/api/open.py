@@ -3,14 +3,16 @@ import asyncio
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select, desc, func
 
-from wwricu.domain.common import HttpErrorDetail
-from wwricu.domain.entity import BlogPost, PostTag
-from wwricu.domain.enum import PostStatusEnum
-from wwricu.domain.input import PostRequestRO, TagRequestRO
-from wwricu.domain.output import TagVO, PostDetailVO, PageVO
+from wwricu.domain.constant import HttpErrorDetail
+from wwricu.domain.entity import BlogPost, PostTag, SysConfig
+from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, PostStatusEnum
+from wwricu.domain.common import AboutPageVO, PageVO
+from wwricu.domain.post import PostDetailVO, PostRequestRO
+from wwricu.domain.tag import TagRequestRO, TagVO
+from wwricu.service.cache import cache
 from wwricu.service.category import get_category_by_name
 from wwricu.service.database import session
-from wwricu.service.post import get_posts_preview, get_post_detail
+from wwricu.service.post import get_post_detail, get_posts_preview
 from wwricu.service.tag import get_post_ids_by_tag_names
 
 open_api = APIRouter(prefix='/open', tags=['Open API'])
@@ -25,8 +27,7 @@ async def get_all_posts(post: PostRequestRO) -> PageVO[PostDetailVO]:
         BlogPost.cover_id,
         BlogPost.category_id,
         BlogPost.create_time,
-        BlogPost.update_time
-    ).where(
+        BlogPost.update_time).where(
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED
     )
@@ -41,7 +42,8 @@ async def get_all_posts(post: PostRequestRO) -> PageVO[PostDetailVO]:
         post.page_size).offset(
         (post.page_index - 1) * post.page_size
     )
-    posts_result, count = await asyncio.gather(session.execute(post_stmt), session.scalar(count_stmt))
+    posts_result = await session.execute(post_stmt)
+    count = await session.scalar(count_stmt)
     all_posts = await get_posts_preview(posts_result.all())
     return PageVO(page_index=post.page_index, page_size=post.page_size, count=count, post_details=all_posts)
 
@@ -55,8 +57,7 @@ async def get_open_post_detail(post_id: int) -> PostDetailVO:
         BlogPost.cover_id,
         BlogPost.category_id,
         BlogPost.create_time,
-        BlogPost.update_time
-    ).where(
+        BlogPost.update_time).where(
         BlogPost.id == post_id).where(
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED
@@ -66,7 +67,7 @@ async def get_open_post_detail(post_id: int) -> PostDetailVO:
     return await get_post_detail(post)
 
 
-@open_api.post('/tags')
+@open_api.post('/tags', response_model=list[TagVO])
 async def get_all_tags(get_tag: TagRequestRO) -> list[TagVO]:
     stmt = select(PostTag).where(
         PostTag.deleted == False).where(
@@ -76,3 +77,15 @@ async def get_all_tags(get_tag: TagRequestRO) -> list[TagVO]:
     if get_tag.page_index > 0 and get_tag.page_size > 0:
         stmt = stmt.limit(get_tag.page_size).offset((get_tag.page_index - 1) * get_tag.page_size)
     return [TagVO.model_validate(tag) for tag in (await session.scalars(stmt)).all()]
+
+
+@open_api.get('/about', response_model=AboutPageVO)
+async def about() -> AboutPageVO:
+    stmt = select(SysConfig).where(SysConfig.key == ConfigKeyEnum.ABOUT_CONTENT).where(SysConfig.deleted == False)
+    conf = await session.scalar(stmt)
+    post, category, tag = await asyncio.gather(
+        cache.get(CacheKeyEnum.POST_COUNT),
+        cache.get(CacheKeyEnum.CATEGORY_COUNT),
+        cache.get(CacheKeyEnum.TAG_COUNT)
+    )
+    return AboutPageVO(content=conf.value if conf else None, post_count=post, category_count=category, tag_count=tag)

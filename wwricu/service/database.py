@@ -5,10 +5,10 @@ from asyncio import current_task
 from typing import AsyncGenerator
 
 from loguru import logger as log
-from sqlalchemy.ext.asyncio import async_sessionmaker, async_scoped_session, create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session, async_sessionmaker, create_async_engine
 
-from wwricu.service.storage import get_object, put_object
 from wwricu.config import DatabaseConfig, StorageConfig
+from wwricu.service.storage import oss
 
 
 async def open_session():
@@ -22,10 +22,20 @@ async def new_session() -> AsyncGenerator[AsyncSession, None]:
         yield s
 
 
+@contextlib.asynccontextmanager
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    scoped_session: AsyncSession = session.registry.registry.get(current_task())
+    if scoped_session is not None and scoped_session.is_active and scoped_session.in_transaction():
+        yield scoped_session
+    else:
+        async with new_session() as s:
+            yield s
+
+
 def database_init():
     if os.path.exists(DatabaseConfig.database):
         return
-    if database := get_object(DatabaseConfig.database, bucket=StorageConfig.private_bucket):
+    if database := oss.get(DatabaseConfig.database, bucket=StorageConfig.private_bucket):
         log.info(f'Download database as {DatabaseConfig.database}')
         with open(DatabaseConfig.database, mode='wb+') as f:
             f.write(database)
@@ -35,16 +45,18 @@ def database_backup():
     if not os.path.exists(DatabaseConfig.database):
         return
     with open(DatabaseConfig.database, mode='rb') as f:
-        put_object(DatabaseConfig.database, f.read(), StorageConfig.private_bucket)
+        oss.put(DatabaseConfig.database, f.read(), StorageConfig.private_bucket)
 
 
 async def database_restore():
-    # TODO: rollback on any failure
-    if os.path.exists(DatabaseConfig.database):
+    if not os.path.exists(DatabaseConfig.database):
+        return
+    try:
         await session.close_all()
         await engine.dispose()
         os.remove(DatabaseConfig.database)
-    importlib.reload(importlib.import_module(__name__))
+    finally:
+        importlib.reload(importlib.import_module(__name__))
 
 
 database_init()

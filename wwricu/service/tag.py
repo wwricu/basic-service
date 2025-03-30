@@ -2,8 +2,8 @@ from sqlalchemy import select, update, func, case
 
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
+from wwricu.domain.post import PostUpdateRO
 from wwricu.service.database import new_session, session
-from wwricu.domain.input import PostUpdateRO
 
 
 async def get_tags_by_ids(tag_id_list: list[int] = ()) -> list[PostTag]:
@@ -54,8 +54,9 @@ async def update_tags(post: BlogPost, post_update: PostUpdateRO):
     stmt = update(EntityRelation).where(
         EntityRelation.type == RelationTypeEnum.POST_TAG).where(
         EntityRelation.deleted == False).where(
-        EntityRelation.src_id == post.id
-    ).values(deleted=True)
+        EntityRelation.src_id == post.id).values(
+        deleted=True
+    )
     await session.execute(stmt)
 
     relations = [EntityRelation(src_id=post.id, dst_id=t.id, type=RelationTypeEnum.POST_TAG) for t in tags]
@@ -99,7 +100,7 @@ async def get_posts_tag_lists(post_list: list[BlogPost]) -> dict[int, list[PostT
 
 async def reset_tag_count():
     async with new_session() as s:
-        subquery = select(PostTag.id, func.count(BlogPost.id).label('post_count')).join(
+        subquery = select(PostTag.id, func.count(BlogPost.id).label('tag_count')).join(
             EntityRelation, PostTag.id == EntityRelation.dst_id).join(
             BlogPost, EntityRelation.src_id == BlogPost.id).where(
             PostTag.deleted == False).where(
@@ -109,5 +110,5 @@ async def reset_tag_count():
             EntityRelation.type == RelationTypeEnum.POST_TAG).where(
             BlogPost.status == PostStatusEnum.PUBLISHED
         ).group_by(PostTag.id).subquery()
-        stmt = update(PostTag).where(PostTag.id == subquery.c.id).values(count=subquery.c.post_count)
+        stmt = update(PostTag).where(PostTag.id == subquery.c.id).values(count=subquery.c.tag_count)
         await s.execute(stmt)

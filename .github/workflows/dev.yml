@@ -48,20 +48,3 @@ jobs:
           push: true
           file: DockerfileDev
           tags: wwricu/basic-service:snapshot
-  deploy:
-    runs-on: ubuntu-latest
-    permissions: write-all
-    continue-on-error: true
-    needs: dockerhub
-    steps:
-      - uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.DEV_HOSTNAME }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.DEPLOY_KEY }}
-          script: |
-            docker stop basic-service
-            docker rm basic-service
-            docker rmi wwricu/basic-service:snapshot
-            cd /deploy
-            docker-compose -f docker-compose-dev.yml up -d
