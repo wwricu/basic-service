@@ -38,7 +38,8 @@ async def lifespan(_: FastAPI):
 @asynccontextmanager
 async def try_login_lock():
     if await cache.get(CacheKeyEnum.LOGIN_LOCK) is not None:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f'LOGIN FORBIDDEN')
+        log.warning('LOGIN FORBIDDEN')
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='LOGIN FORBIDDEN')
     try:
         yield
         await cache.delete(CacheKeyEnum.LOGIN_LOCK)
@@ -46,6 +47,7 @@ async def try_login_lock():
     except Exception as e:
         if (retries := await cache.get(CacheKeyEnum.LOGIN_RETRIES)) is None:
             retries = 0
+        log.warning(f'Login failed {retries=}')
         if retries >= 2:
             await cache.set(CacheKeyEnum.LOGIN_LOCK, True, 600)
             await cache.delete(CacheKeyEnum.LOGIN_RETRIES)
@@ -75,6 +77,7 @@ async def reset_system_count():
         post_count = await s.scalar(post_stmt)
         category_count = await s.scalar(category_stmt)
         tag_count = await s.scalar(tag_stmt)
+        log.info(f'{post_count=} {category_count=} {tag_count=}')
         await asyncio.gather(
             cache.set(CacheKeyEnum.POST_COUNT, post_count, 0),
             cache.set(CacheKeyEnum.CATEGORY_COUNT, category_count, 0),
@@ -101,6 +104,7 @@ async def admin_only(request: Request):
     session_id = request.cookies.get(CommonConstant.SESSION_ID)
     cookie_sign = request.cookies.get(CommonConstant.COOKIE_SIGN)
     if await validate_cookie(session_id, cookie_sign) is not True:
+        log.warning(f'Unauthorized access to {request.url.path}')
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.NOT_AUTHORIZED)
 
 
