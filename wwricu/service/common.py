@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import datetime
 import hashlib
 import hmac
 import time
@@ -8,11 +9,11 @@ from contextlib import asynccontextmanager
 import bcrypt
 from fastapi import FastAPI, HTTPException, Request, status
 from loguru import logger as log
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete
 
 from wwricu.domain.constant import CommonConstant, HttpErrorDetail
-from wwricu.domain.entity import BlogPost, PostTag
-from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum
+from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
+from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum, RelationTypeEnum
 from wwricu.config import AdminConfig, Config
 from wwricu.service.cache import cache
 from wwricu.service.category import reset_category_count
@@ -122,6 +123,50 @@ async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
         return True
     log.warning(f'Invalid cookie session={session_id} issue_time={issue_time} sign={cookie_sign}')
     return False
+
+
+async def hard_delete_expiration():
+    async with new_session() as s:
+        deadline = datetime.datetime.now() - datetime.timedelta(days=30)
+        stmt = select(BlogPost).where(BlogPost.deleted == True).where(BlogPost.update_time < deadline)
+        deleted_posts = await s.scalar(stmt)
+        stmt = delete(BlogPost).where(BlogPost.id.in_(post.id for post in deleted_posts))
+        # delete posts
+        result = await s.scalar(stmt)
+        log.info(f'{result.rowcount} post deleted')
+
+        stmt = delete(EntityRelation).where(
+            EntityRelation.type.in_((RelationTypeEnum.POST_TAG, RelationTypeEnum.POST_RES))).where(
+            EntityRelation.src_id.in_(post.id for post in deleted_posts)
+        )
+        # delete post relations
+        await s.execute(stmt)
+
+        stmt = select(PostTag).where(
+            PostTag.deleted == True).where(
+            PostTag.type == TagTypeEnum.POST_TAG).where(
+            PostTag.update_time < deadline
+        )
+        deleted_tags = await s.scalar(stmt)
+        # delete tags
+        result = await s.execute(stmt)
+        log.info(f'{result.rowcount} tags deleted')
+
+        stmt = delete(EntityRelation).where(
+            EntityRelation.type == RelationTypeEnum.POST_TAG).where(
+            EntityRelation.dst_id.in_(tag.id for tag in deleted_tags)
+        )
+        # delete tag relations
+        await s.execute(stmt)
+
+        stmt = delete(PostTag).where(
+            PostTag.deleted == True).where(
+            PostTag.type == TagTypeEnum.POST_CAT).where(
+            PostTag.update_time < deadline
+        )
+        # delete categories
+        result = await s.execute(stmt)
+        log.info(f'{result.rowcount} categories deleted')
 
 
 secure_key = base64.b64decode(AdminConfig.secure_key.encode(Config.encoding))
