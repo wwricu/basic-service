@@ -40,3 +40,4 @@ class AboutPageVO(BaseModel):
     post_count: int = 0
     category_count: int = 0
     tag_count: int = 0
+    startup_timestamp: int | None = None

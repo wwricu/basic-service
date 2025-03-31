@@ -26,6 +26,7 @@ async def lifespan(_: FastAPI):
         await reset_tag_count()
         await reset_category_count()
         await reset_system_count()
+        await cache.set(CacheKeyEnum.STARTUP_TIMESTAMP, int(time.time()), 0)
         log.info(f'listening on {Config.host}:{Config.port}')
         yield
     finally:

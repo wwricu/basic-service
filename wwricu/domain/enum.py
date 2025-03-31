@@ -47,3 +47,4 @@ class CacheKeyEnum(StrEnum):
     TAG_COUNT: str = 'tag_count'
     LOGIN_LOCK: str = 'login_lock'
     LOGIN_RETRIES: str = 'login_retries'
+    STARTUP_TIMESTAMP: str = 'startup_timestamp'
