@@ -127,7 +127,7 @@ async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
 
 async def hard_delete_expiration():
     async with new_session() as s:
-        deadline = datetime.datetime.now() - datetime.timedelta(days=30)
+        deadline = datetime.datetime.now() - datetime.timedelta(days=Config.trash_expire_day)
         stmt = select(BlogPost).where(BlogPost.deleted == True).where(BlogPost.update_time < deadline)
         deleted_posts = await s.scalar(stmt)
         stmt = delete(BlogPost).where(BlogPost.id.in_(post.id for post in deleted_posts))

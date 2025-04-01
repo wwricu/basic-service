@@ -1,8 +1,8 @@
-from __future__ import annotations
+from datetime import datetime
 
 from pydantic import BaseModel as PydanticBaseModel, ConfigDict, Field
 
-from wwricu.domain.enum import ConfigKeyEnum
+from wwricu.domain.enum import ConfigKeyEnum, PostStatusEnum, EntityTypeEnum
 
 
 class BaseModel(PydanticBaseModel):
@@ -41,3 +41,17 @@ class AboutPageVO(BaseModel):
     category_count: int = 0
     tag_count: int = 0
     startup_timestamp: int | None = None
+
+
+class TrashBinRO(BaseModel):
+    id: int
+    type: EntityTypeEnum
+    delete: bool | None = False
+
+
+class TrashBinVO(BaseModel):
+    id: int
+    name: str
+    type: EntityTypeEnum
+    status: PostStatusEnum | None = None
+    deleted_time: datetime
