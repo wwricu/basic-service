@@ -47,3 +47,10 @@ class CacheKeyEnum(StrEnum):
     TAG_COUNT: str = 'tag_count'
     LOGIN_LOCK: str = 'login_lock'
     LOGIN_RETRIES: str = 'login_retries'
+    STARTUP_TIMESTAMP: str = 'startup_timestamp'
+
+
+class EntityTypeEnum(StrEnum):
+    BLOG_POST: str = 'blog_post'
+    POST_TAG: str = 'post_tag'
+    POST_CAT: str = 'post_category'

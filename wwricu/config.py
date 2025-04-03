@@ -49,6 +49,7 @@ class Config(ConfigClass):
     log_level: int = logging.CRITICAL
     encoding: str = 'utf-8'
     version: str = 'NO VERSION'
+    trash_expire_day: int = 30
 
     @classmethod
     def load(cls, admin_config: dict, database_config: dict, storage_config: dict, redis_config: dict, **kwargs):
