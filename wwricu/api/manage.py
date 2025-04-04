@@ -1,9 +1,10 @@
 import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
+from fastapi.responses import FileResponse
 from sqlalchemy import select, update
 
-from wwricu.config import Config
+from wwricu.config import DatabaseConfig, Config
 from wwricu.domain.common import ConfigRO, TrashBinRO, TrashBinVO
 from wwricu.domain.enum import DatabaseActionEnum, EntityTypeEnum, TagTypeEnum
 from wwricu.domain.entity import BlogPost, PostTag, SysConfig
@@ -51,11 +52,14 @@ async def trash_edit(trash_bin: TrashBinRO):
 
 
 @manage_api.get('/database')
-async def database(action: DatabaseActionEnum | None = DatabaseActionEnum.RESTORE):
-    if action == DatabaseActionEnum.RESTORE:
-        await database_restore()
-    elif action == DatabaseActionEnum.BACKUP:
-        database_backup()
+async def database(action: DatabaseActionEnum, background_task: BackgroundTasks):
+    match action:
+        case DatabaseActionEnum.RESTORE:
+            background_task.add_task(database_restore)
+        case DatabaseActionEnum.BACKUP:
+            background_task.add_task(database_backup)
+        case DatabaseActionEnum.DOWNLOAD:
+            return FileResponse(DatabaseConfig.database, filename=DatabaseConfig.database)
 
 
 @manage_api.post('/config/set')
