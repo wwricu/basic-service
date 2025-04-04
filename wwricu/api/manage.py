@@ -14,7 +14,7 @@ manage_api = APIRouter(prefix='/manage', tags=['Manage API'], dependencies=[Depe
 
 
 @manage_api.get('/trash/all', response_model=list[TrashBinVO])
-async def get_all() -> list[TrashBinVO]:
+async def trash_get_all() -> list[TrashBinVO]:
     result = []
     deadline = datetime.datetime.now() - datetime.timedelta(days=Config.trash_expire_day)
     stmt = select(BlogPost).where(BlogPost.deleted == True).where(BlogPost.update_time < deadline)
@@ -43,7 +43,7 @@ async def get_all() -> list[TrashBinVO]:
 
 
 @manage_api.get('/trash/edit', response_model=list[TrashBinVO])
-async def edit(trash_bin: TrashBinRO):
+async def trash_edit(trash_bin: TrashBinRO):
     if trash_bin.deleted:
         pass
     else:
@@ -58,8 +58,8 @@ async def database(action: DatabaseActionEnum | None = DatabaseActionEnum.RESTOR
         database_backup()
 
 
-@manage_api.post('/set_config')
-async def set_config(config: ConfigRO):
+@manage_api.post('/config/set')
+async def config_set(config: ConfigRO):
     stmt = select(SysConfig).where(SysConfig.key == config.key).where(SysConfig.deleted == False)
     if await session.scalar(stmt) is None:
         session.add(SysConfig(key=config.key, value=config.value))
@@ -68,7 +68,7 @@ async def set_config(config: ConfigRO):
     await session.execute(stmt)
 
 
-@manage_api.get('/get_config', response_model=str | None)
-async def get_config(key: str) -> str | None:
+@manage_api.get('/config/get', response_model=str | None)
+async def config_get(key: str) -> str | None:
     stmt = select(SysConfig.value).where(SysConfig.key == key).where(SysConfig.deleted == False)
     return await session.scalar(stmt)
