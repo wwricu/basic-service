@@ -4,8 +4,9 @@ from sqlalchemy import update, select
 from wwricu.domain.entity import BlogPost, PostTag
 from wwricu.domain.enum import TagTypeEnum
 from wwricu.domain.tag import TagRO, TagVO
-from wwricu.service.common import admin_only, update_system_count
+from wwricu.service.common import update_system_count
 from wwricu.service.database import session
+from wwricu.service.security import admin_only
 
 tag_api = APIRouter(prefix='/tag', tags=['Tag api'], dependencies=[Depends(admin_only), Depends(update_system_count)])
 

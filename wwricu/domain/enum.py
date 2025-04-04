@@ -25,6 +25,7 @@ class RelationTypeEnum(StrEnum):
 class DatabaseActionEnum(StrEnum):
     BACKUP: str = 'backup'
     RESTORE: str = 'restore'
+    DOWNLOAD: str = 'download'
 
 
 class EnvironmentEnum(StrEnum):

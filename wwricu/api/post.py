@@ -9,10 +9,11 @@ from wwricu.domain.entity import BlogPost, PostResource
 from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum
 from wwricu.domain.post import PostDetailVO, PostRequestRO, PostUpdateRO
 from wwricu.domain.common import FileUploadVO, PageVO
-from wwricu.service.common import admin_only, update_system_count
+from wwricu.service.common import update_system_count
 from wwricu.service.category import get_category_by_name, update_category, update_category_count
 from wwricu.service.database import session
 from wwricu.service.post import get_post_by_id, delete_post_cover, get_posts_preview, get_post_detail
+from wwricu.service.security import admin_only
 from wwricu.service.storage import oss
 from wwricu.service.tag import update_tags, get_post_ids_by_tag_names, update_tag_count
 
