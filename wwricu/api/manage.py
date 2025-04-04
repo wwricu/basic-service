@@ -1,13 +1,13 @@
 import datetime
 
 import bcrypt
-from fastapi import APIRouter, BackgroundTasks, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.responses import FileResponse, Response
 from sqlalchemy import select, update, delete
 
-from domain.constant import CommonConstant
 from wwricu.config import DatabaseConfig, Config
 from wwricu.domain.common import ConfigRO, TrashBinRO, TrashBinVO, UserRO
+from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.enum import DatabaseActionEnum, EntityTypeEnum, TagTypeEnum, ConfigKeyEnum
 from wwricu.domain.entity import BlogPost, PostTag, SysConfig
 from wwricu.service.database import database_restore, database_backup, session
@@ -47,10 +47,17 @@ async def trash_get_all() -> list[TrashBinVO]:
 
 @manage_api.get('/trash/edit', response_model=list[TrashBinVO])
 async def trash_edit(trash_bin: TrashBinRO):
-    if trash_bin.deleted:
-        pass
-    else:
-        pass
+    match trash_bin.type:
+        case EntityTypeEnum.BLOG_POST:
+            entity = BlogPost
+        case EntityTypeEnum.POST_CAT:
+            entity = PostTag
+        case EntityTypeEnum.POST_TAG:
+            entity = PostTag
+        case _:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, HttpErrorDetail.UNKNOWN_ENTITY_TYPE)
+    stmt = delete(entity).where(entity.deleted == True) if trash_bin.deleted else update(entity).values(deleted=False)
+    await session.execute(stmt.where(entity.id == trash_bin.id))
 
 
 @manage_api.get('/database')
