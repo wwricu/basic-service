@@ -7,7 +7,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from fastapi import FastAPI
 from loguru import logger as log
-from sqlalchemy import select, func, delete, update
+from sqlalchemy import select, func, delete
 
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag, PostResource
 from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum, RelationTypeEnum
@@ -97,11 +97,6 @@ async def hard_delete_expiration():
         result = await s.execute(stmt)
         log.info(f'{result.rowcount} post deleted')
 
-        # delete resources
-        stmt = delete(PostResource).where(PostResource.deleted == True).where(PostResource.update_time < deadline)
-        result = await s.execute(stmt)
-        log.info(f'{result.rowcount} post resources deleted')
-
         # delete post relations
         stmt = delete(EntityRelation).where(
             EntityRelation.type.in_((RelationTypeEnum.POST_TAG, RelationTypeEnum.POST_RES))).where(
@@ -127,7 +122,12 @@ async def hard_delete_expiration():
 
 
 async def clean_post_resource():
-    """delete all unused files from oss"""
+    """
+    Mark post resources deleted when all related posts are hard deleted.
+    Post soft deleted ->
+    Post expired, post hard deleted, relation hard deleted ->
+    All relations hard deleted, resource hard deleted, oss file deleted;
+    """
     log.info('start cleaning post resources')
     query = select(PostResource.id).join(
         EntityRelation, PostResource.id == EntityRelation.dst_id).where(
@@ -136,14 +136,12 @@ async def clean_post_resource():
         EntityRelation.type == RelationTypeEnum.POST_RES).having(
         func.count(EntityRelation.id) <= 0
     ).subquery()
-    stmt = update(PostResource).where(PostResource.id.in_(query.c.id)).values(deleted=True)
+
     async with new_session() as s:
+        stmt = select(PostResource).where(PostResource.id.in_(query.c.id))
+        deleted_resources = await s.scalars(stmt)
+        oss.batch_delete([resource.key for resource in deleted_resources.all()])
+
+        stmt = delete(PostResource).where(PostResource.id.in_(query.c.id))
         result = await s.execute(stmt)
         log.info(f'Delete {result.rowcount} unreferenced resources')
-        resource_keys = await s.scalars(select(PostResource.key))
-        resource_keys = set(resource_keys.all())
-        all_s3_objects = oss.list_all()
-        # TODO: 1. use sql to select oss keys to delete, 2. pagination oss keys
-        keys_to_del = list(filter(lambda key: key not in resource_keys, map(lambda r: r.Key, all_s3_objects)))
-        log.warning(f'{len(keys_to_del)} objects to be deleted')
-        oss.batch_delete(keys_to_del)
