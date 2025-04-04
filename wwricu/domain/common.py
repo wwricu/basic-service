@@ -12,8 +12,13 @@ class BaseModel(PydanticBaseModel):
 class LoginRO(BaseModel):
     username: str
     password: str
-    captcha: str | None = None
     otp: str | None = None
+
+
+class UserRO(BaseModel):
+    username: str | None
+    password: str | None
+    reset: bool | None = None
 
 
 class ConfigRO(BaseModel):

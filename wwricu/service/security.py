@@ -7,11 +7,14 @@ from contextlib import asynccontextmanager
 import bcrypt
 from fastapi import HTTPException, Request, status
 from loguru import logger as log
+from sqlalchemy import select
 
+from domain.entity import SysConfig
 from wwricu.domain.constant import CommonConstant, HttpErrorDetail
-from wwricu.domain.enum import CacheKeyEnum
+from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum
 from wwricu.config import AdminConfig, Config
 from wwricu.service.cache import cache
+from wwricu.service.database import session
 
 
 @asynccontextmanager
@@ -38,9 +41,15 @@ async def try_login_lock():
 async def admin_login(username: str, password: str) -> bool:
     if __debug__:
         return True
-    if username != AdminConfig.username:
+    sys_username = AdminConfig.username
+    sys_password = AdminConfig.password
+    if username_config := await session.scalar(select(SysConfig).where(SysConfig.key == ConfigKeyEnum.USERNAME)):
+        sys_username = username_config.value
+    if password_config := await session.scalar(select(SysConfig).where(SysConfig.key == ConfigKeyEnum.PASSWORD)):
+        sys_password = password_config.value
+    if username != sys_username:
         return False
-    return bcrypt.checkpw(password.encode(), base64.b64decode(AdminConfig.password))
+    return bcrypt.checkpw(password.encode(), base64.b64decode(sys_password))
 
 
 async def admin_only(request: Request):
