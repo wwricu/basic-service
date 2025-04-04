@@ -3,22 +3,30 @@ import datetime
 import time
 from contextlib import asynccontextmanager
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from fastapi import FastAPI
 from loguru import logger as log
 from sqlalchemy import select, func, delete
 
-from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
+from wwricu.domain.entity import BlogPost, EntityRelation, PostTag, PostResource
 from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum, RelationTypeEnum
 from wwricu.config import Config
 from wwricu.service.cache import cache
 from wwricu.service.category import reset_category_count
 from wwricu.service.database import engine, get_session, new_session
+from wwricu.service.storage import oss
 from wwricu.service.tag import reset_tag_count
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    scheduler = AsyncIOScheduler()
     try:
+        if not __debug__:
+            scheduler.add_job(hard_delete_expiration, trigger=CronTrigger(hour=3, minute=0, second=0))
+            scheduler.add_job(clean_post_resource, trigger=CronTrigger(hour=3, minute=0, second=0))
+        scheduler.start()
         await reset_tag_count()
         await reset_category_count()
         await reset_system_count()
@@ -26,6 +34,7 @@ async def lifespan(_: FastAPI):
         log.info(f'listening on {Config.host}:{Config.port}')
         yield
     finally:
+        scheduler.shutdown()
         await cache.close()
         await engine.dispose()
         log.info('Exit')
@@ -69,44 +78,70 @@ async def update_system_count():
 
 
 async def hard_delete_expiration():
+    log.info('hard deleting expired entities')
+    deadline = datetime.datetime.now() - datetime.timedelta(days=Config.trash_expire_day)
+
+    deleted_posts = select(BlogPost.id).where(
+        BlogPost.deleted == True).where(
+        BlogPost.update_time < deadline
+    ).subquery()
+    deleted_tags = select(PostTag.id).where(
+        PostTag.deleted == True).where(
+        PostTag.type == TagTypeEnum.POST_TAG).where(
+        PostTag.update_time < deadline
+    ).subquery()
+
     async with new_session() as s:
-        deadline = datetime.datetime.now() - datetime.timedelta(days=Config.trash_expire_day)
-        stmt = select(BlogPost).where(BlogPost.deleted == True).where(BlogPost.update_time < deadline)
-        deleted_posts = await s.scalar(stmt)
-        stmt = delete(BlogPost).where(BlogPost.id.in_(post.id for post in deleted_posts))
         # delete posts
-        result = await s.scalar(stmt)
+        stmt = delete(BlogPost).where(BlogPost.id.in_(deleted_posts.c.id))
+        result = await s.execute(stmt)
         log.info(f'{result.rowcount} post deleted')
 
+        # delete post relations
         stmt = delete(EntityRelation).where(
             EntityRelation.type.in_((RelationTypeEnum.POST_TAG, RelationTypeEnum.POST_RES))).where(
-            EntityRelation.src_id.in_(post.id for post in deleted_posts)
+            EntityRelation.src_id.in_(deleted_posts.c.id)
         )
-        # delete post relations
         await s.execute(stmt)
 
-        stmt = select(PostTag).where(
-            PostTag.deleted == True).where(
-            PostTag.type == TagTypeEnum.POST_TAG).where(
-            PostTag.update_time < deadline
-        )
-        deleted_tags = await s.scalar(stmt)
-        # delete tags
-        result = await s.execute(stmt)
-        log.info(f'{result.rowcount} tags deleted')
-
+        # delete tag relations
         stmt = delete(EntityRelation).where(
             EntityRelation.type == RelationTypeEnum.POST_TAG).where(
-            EntityRelation.dst_id.in_(tag.id for tag in deleted_tags)
+            EntityRelation.dst_id.in_(deleted_tags.c.id)
         )
-        # delete tag relations
         await s.execute(stmt)
 
+        # delete categories
         stmt = delete(PostTag).where(
             PostTag.deleted == True).where(
-            PostTag.type == TagTypeEnum.POST_CAT).where(
+            PostTag.type.in_((TagTypeEnum.POST_CAT, TagTypeEnum.POST_TAG))).where(
             PostTag.update_time < deadline
         )
-        # delete categories
         result = await s.execute(stmt)
-        log.info(f'{result.rowcount} categories deleted')
+        log.info(f'{result.rowcount} tags and categories deleted')
+
+
+async def clean_post_resource():
+    """
+    Mark post resources deleted when all related posts are hard deleted.
+    Post soft deleted ->
+    Post expired, post hard deleted, relation hard deleted ->
+    All relations hard deleted, resource hard deleted, oss file deleted;
+    """
+    log.info('start cleaning post resources')
+    query = select(PostResource.id).join(
+        EntityRelation, PostResource.id == EntityRelation.dst_id).where(
+        PostResource.deleted == False).where(
+        EntityRelation.deleted == False).where(
+        EntityRelation.type == RelationTypeEnum.POST_RES).having(
+        func.count(EntityRelation.id) <= 0
+    ).subquery()
+
+    async with new_session() as s:
+        stmt = select(PostResource).where(PostResource.id.in_(query.c.id))
+        deleted_resources = await s.scalars(stmt)
+        oss.batch_delete([resource.key for resource in deleted_resources.all()])
+
+        stmt = delete(PostResource).where(PostResource.id.in_(query.c.id))
+        result = await s.execute(stmt)
+        log.info(f'Delete {result.rowcount} unreferenced resources')
