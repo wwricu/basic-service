@@ -7,9 +7,8 @@ from wwricu.config import Config
 from wwricu.domain.common import ConfigRO, TrashBinRO, TrashBinVO
 from wwricu.domain.enum import DatabaseActionEnum, EntityTypeEnum, TagTypeEnum
 from wwricu.domain.entity import BlogPost, PostTag, SysConfig
-from wwricu.service.common import admin_only
 from wwricu.service.database import database_restore, database_backup, session
-
+from wwricu.service.security import admin_only
 
 manage_api = APIRouter(prefix='/manage', tags=['Manage API'], dependencies=[Depends(admin_only)])
 

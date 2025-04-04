@@ -9,7 +9,7 @@ from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum
 from wwricu.domain.common import LoginRO
 from wwricu.service.cache import cache
-from wwricu.service.common import admin_only, hmac_sign, validate_cookie, admin_login, try_login_lock
+from wwricu.service.security import admin_only, hmac_sign, validate_cookie, admin_login, try_login_lock
 
 common_api = APIRouter(tags=['Common API'])
 
