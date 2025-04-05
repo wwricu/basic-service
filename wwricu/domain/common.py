@@ -16,8 +16,8 @@ class LoginRO(BaseModel):
 
 
 class UserRO(BaseModel):
-    username: str | None
-    password: str | None
+    username: str | None = None
+    password: str | None = None
     reset: bool | None = None
 
 

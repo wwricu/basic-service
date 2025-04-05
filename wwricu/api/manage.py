@@ -87,8 +87,8 @@ async def config_get(key: str) -> str | None:
     return await session.scalar(stmt)
 
 
-@manage_api.post('/admin')
-async def admin(user: UserRO, response: Response):
+@manage_api.post('/user')
+async def user_config(user: UserRO, response: Response):
     if user.username is not None:
         stmt = delete(SysConfig).where(SysConfig.key == ConfigKeyEnum.USERNAME)
         await session.execute(stmt)
