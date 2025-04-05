@@ -1,8 +1,9 @@
 import datetime
+import re
 
 import bcrypt
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from fastapi.responses import FileResponse, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from fastapi.responses import FileResponse
 from sqlalchemy import select, update, delete
 
 from wwricu.config import DatabaseConfig, Config
@@ -10,6 +11,7 @@ from wwricu.domain.common import ConfigRO, TrashBinRO, TrashBinVO, UserRO
 from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.enum import DatabaseActionEnum, EntityTypeEnum, TagTypeEnum, ConfigKeyEnum
 from wwricu.domain.entity import BlogPost, PostTag, SysConfig
+from wwricu.service.cache import cache
 from wwricu.service.database import database_restore, database_backup, session
 from wwricu.service.security import admin_only
 
@@ -88,12 +90,16 @@ async def config_get(key: str) -> str | None:
 
 
 @manage_api.post('/user')
-async def user_config(user: UserRO, response: Response):
+async def user_config(user: UserRO, request: Request):
     if user.username is not None:
+        if len(user.username) < 3 or not bool(re.match('^[a-zA-Z][a-zA-Z0-9_-]*$', user.username)):
+            raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, 'Invalid username')
         stmt = delete(SysConfig).where(SysConfig.key == ConfigKeyEnum.USERNAME)
         await session.execute(stmt)
         session.add(SysConfig(key=ConfigKeyEnum.USERNAME, value=user.username))
     if user.password is not None:
+        if len(user.password) < 8 or user.password.isalnum():
+            raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, 'Invalid password')
         stmt = delete(SysConfig).where(SysConfig.key == ConfigKeyEnum.PASSWORD)
         await session.execute(stmt)
         password = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt()).decode()
@@ -102,5 +108,5 @@ async def user_config(user: UserRO, response: Response):
         stmt = delete(SysConfig).where(SysConfig.key.in_((ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD)))
         await session.execute(stmt)
     if user.username is not None or user.password is not None or user.reset is True:
-        response.delete_cookie(CommonConstant.SESSION_ID, secure=True, httponly=True, samesite='lax')
-        response.delete_cookie(CommonConstant.COOKIE_SIGN, secure=True, httponly=True, samesite='lax')
+        session_id = request.cookies.get(CommonConstant.SESSION_ID)
+        await cache.delete(session_id)

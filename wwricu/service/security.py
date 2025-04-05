@@ -41,8 +41,7 @@ async def try_login_lock():
 async def admin_login(username: str, password: str) -> bool:
     if __debug__:
         return True
-    sys_username = AdminConfig.username
-    sys_password = AdminConfig.password
+    sys_username, sys_password = AdminConfig.username, AdminConfig.password
     if username_config := await session.scalar(select(SysConfig).where(SysConfig.key == ConfigKeyEnum.USERNAME)):
         sys_username = username_config.value
     if password_config := await session.scalar(select(SysConfig).where(SysConfig.key == ConfigKeyEnum.PASSWORD)):
@@ -73,5 +72,6 @@ async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
         return True
     log.warning(f'Invalid cookie session={session_id} issue_time={issue_time} sign={cookie_sign}')
     return False
+
 
 secure_key = base64.b64decode(AdminConfig.secure_key.encode(Config.encoding))
