@@ -48,10 +48,17 @@ class Config(ConfigClass):
     port: int = 8000
     log_level: int = logging.CRITICAL
     encoding: str = 'utf-8'
-    version: str = 'NO VERSION'
+    trash_expire_day: int = 30
 
     @classmethod
-    def load(cls, admin_config: dict, database_config: dict, storage_config: dict, redis_config: dict, **kwargs):
+    def load(
+        cls,
+        admin_config: dict,
+        database_config: dict,
+        storage_config: dict,
+        redis_config: dict | None = None,
+        **kwargs
+    ):
         cls.init(**kwargs)
         if os.path.exists(CommonConstant.VERSION_FILE):
             with open(CommonConstant.VERSION_FILE) as f:
@@ -59,7 +66,8 @@ class Config(ConfigClass):
         AdminConfig.init(**admin_config)
         DatabaseConfig.init(**database_config)
         StorageConfig.init(**storage_config)
-        RedisConfig.init(**redis_config)
+        if redis_config:
+            RedisConfig.init(**redis_config)
 
 
 def log_config():

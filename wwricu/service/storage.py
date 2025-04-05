@@ -1,3 +1,5 @@
+from typing import Generator
+
 import boto3
 
 from wwricu.config import StorageConfig
@@ -22,12 +24,27 @@ class AWSS3Storage:
         self.s3_client.delete_object(Bucket=bucket, Key=key)
 
     def batch_delete(self, keys: list[str], bucket: str = StorageConfig.bucket):
+        if keys is None or len(keys) == 0:
+            return
         self.s3_client.delete_objects(Bucket=bucket, Delete=dict(Objects=[dict(Key=key) for key in keys]))
 
     def list_all(self, bucket: str = StorageConfig.bucket) -> list[AWSS3Object]:
         response = self.s3_client.list_objects_v2(Bucket=bucket)
         response = AWSS3ListResponse.model_validate(response)
         return response.Contents
+
+    def list_page(self, page_size: int = 100, bucket: str = StorageConfig.bucket) -> Generator[AWSS3Object, None, None]:
+        continuation_token = None
+        while True:
+            kwargs = dict(Bucket=bucket, MaxKeys=page_size)
+            if continuation_token:
+                kwargs.update(ContinuationToken=continuation_token)
+            response = self.s3_client.list_objects_v2(**kwargs)
+            response = AWSS3ListResponse.model_validate(response)
+            yield from response.Contents
+            if not response.IsTruncated:
+                break
+            continuation_token = response.NextContinuationToken
 
 
 oss = AWSS3Storage()

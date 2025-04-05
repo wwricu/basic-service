@@ -5,6 +5,7 @@ class HttpErrorDetail(object):
     NOT_AUTHORIZED: str = 'Not authorized'
     UPLOAD_FAILURE: str = 'Failed to upload'
     INVALID_TAG_TYPE: str = 'Invalid tag type'
+    UNKNOWN_ENTITY_TYPE: str = 'Unknown entity type'
 
 
 class CommonConstant(object):

@@ -3,16 +3,13 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from loguru import logger as log
-from sqlalchemy import select, update
 
 from wwricu.config import AdminConfig
 from wwricu.domain.constant import CommonConstant, HttpErrorDetail
-from wwricu.domain.entity import SysConfig
-from wwricu.domain.enum import CacheKeyEnum, DatabaseActionEnum
-from wwricu.domain.common import LoginRO, ConfigRO
+from wwricu.domain.enum import CacheKeyEnum
+from wwricu.domain.common import LoginRO
 from wwricu.service.cache import cache
-from wwricu.service.common import admin_only, hmac_sign, validate_cookie, admin_login, try_login_lock
-from wwricu.service.database import database_restore, database_backup, session
+from wwricu.service.security import admin_only, hmac_sign, validate_cookie, admin_login, try_login_lock
 
 common_api = APIRouter(tags=['Common API'])
 
@@ -56,27 +53,3 @@ async def info(request: Request) -> bool:
     if valid := await validate_cookie(session_id, cookie_sign):
         await cache.set(session_id, int(time.time()), CommonConstant.COOKIE_TIMEOUT_SECOND)
     return valid
-
-
-@common_api.get('/database', dependencies=[Depends(admin_only)])
-async def database(action: DatabaseActionEnum | None = DatabaseActionEnum.RESTORE):
-    if action == DatabaseActionEnum.RESTORE:
-        await database_restore()
-    elif action == DatabaseActionEnum.BACKUP:
-        database_backup()
-
-
-@common_api.post('/set_config', dependencies=[Depends(admin_only)])
-async def set_config(config: ConfigRO):
-    stmt = select(SysConfig).where(SysConfig.key == config.key).where(SysConfig.deleted == False)
-    if await session.scalar(stmt) is None:
-        session.add(SysConfig(key=config.key, value=config.value))
-        return
-    stmt = update(SysConfig).where(SysConfig.key == config.key).values(value=config.value)
-    await session.execute(stmt)
-
-
-@common_api.get('/get_config', dependencies=[Depends(admin_only)], response_model=str | None)
-async def get_config(key: str) -> str | None:
-    stmt = select(SysConfig.value).where(SysConfig.key == key).where(SysConfig.deleted == False)
-    return await session.scalar(stmt)
