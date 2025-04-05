@@ -12,7 +12,6 @@ from wwricu.service.common import lifespan
 
 app = FastAPI(
     title=CommonConstant.APP_NAME,
-    version=Config.version,
     lifespan=lifespan,
     middleware=middlewares,
     debug=__debug__,
