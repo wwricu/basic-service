@@ -1,14 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy import update, select
 
-from wwricu.domain.constant import HttpErrorDetail
-from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
-from wwricu.domain.enum import RelationTypeEnum, TagTypeEnum
+from wwricu.domain.entity import BlogPost, PostTag
+from wwricu.domain.enum import TagTypeEnum
 from wwricu.domain.tag import TagRO, TagVO
-from wwricu.service.common import admin_only, update_system_count
+from wwricu.service.common import update_system_count
 from wwricu.service.database import session
+from wwricu.service.security import admin_only
 
-tag_api = APIRouter(prefix='/tag', dependencies=[Depends(admin_only), Depends(update_system_count)])
+tag_api = APIRouter(prefix='/tag', tags=['Tag api'], dependencies=[Depends(admin_only), Depends(update_system_count)])
 
 
 @tag_api.post('/create', response_model=TagVO)
@@ -31,17 +31,9 @@ async def update_tag(tag_update: TagRO) -> TagVO:
 async def delete_tag(tag_id: int) -> int:
     stmt = select(PostTag).where(PostTag.deleted == False).where(PostTag.id == tag_id)
     tag = await session.scalar(stmt)
-    post_stmt = update(PostTag).where(PostTag.id == tag_id).values(deleted=True)
-    if tag.type == TagTypeEnum.POST_TAG:
-        tag_stmt = update(EntityRelation).where(
-            EntityRelation.type == RelationTypeEnum.POST_TAG).where(
-            EntityRelation.dst_id == tag_id).values(
-            deleted=True
-        )
-    elif tag.type == TagTypeEnum.POST_CAT:
-        tag_stmt = update(BlogPost).where(BlogPost.category_id == tag_id).values(category_id=None)
-    else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.INVALID_TAG_TYPE)
-    result = await session.execute(post_stmt)
-    await session.execute(tag_stmt)
+    if tag.type == TagTypeEnum.POST_CAT:
+        stmt = update(BlogPost).where(BlogPost.category_id == tag_id).values(category_id=None)
+        await session.execute(stmt)
+    stmt = update(PostTag).where(PostTag.id == tag_id).values(deleted=True)
+    result = await session.execute(stmt)
     return result.rowcount

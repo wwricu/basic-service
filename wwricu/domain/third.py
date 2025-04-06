@@ -51,6 +51,7 @@ class AWSS3ListResponse(BaseModel):
     MaxKeys: int
     EncodingType: str
     KeyCount: int
+    NextContinuationToken: str | None = None
 
 
 class AWSAppConfigResponse(BaseModel):

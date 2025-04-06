@@ -88,4 +88,10 @@ async def about() -> AboutPageVO:
         cache.get(CacheKeyEnum.CATEGORY_COUNT),
         cache.get(CacheKeyEnum.TAG_COUNT)
     )
-    return AboutPageVO(content=conf.value if conf else None, post_count=post, category_count=category, tag_count=tag)
+    return AboutPageVO(
+        content=conf.value if conf else None,
+        post_count=post,
+        category_count=category,
+        tag_count=tag,
+        startup_timestamp=await cache.get(CacheKeyEnum.STARTUP_TIMESTAMP)
+    )
