@@ -44,8 +44,10 @@ def database_init():
 def database_backup():
     if not os.path.exists(DatabaseConfig.database):
         return
+    log.info(f'Backup database {DatabaseConfig.database}')
     with open(DatabaseConfig.database, mode='rb') as f:
         oss.put(DatabaseConfig.database, f.read(), StorageConfig.private_bucket)
+    log.info(f'Backup database success')
 
 
 async def database_restore():
