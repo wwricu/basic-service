@@ -40,7 +40,6 @@ async def delete_post_cover(post: BlogPost) -> int:
 
 
 async def get_post_detail(blog_post: BlogPost) -> PostDetailVO:
-    # TODO: optimize with join
     category = await get_post_category(blog_post)
     tags = await get_post_tags(blog_post)
     cover = await get_post_cover(blog_post)

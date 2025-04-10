@@ -13,6 +13,7 @@ from wwricu.service.common import lifespan
 app = FastAPI(
     title=CommonConstant.APP_NAME,
     lifespan=lifespan,
+    version=Config.version,
     middleware=middlewares,
     debug=__debug__,
     root_path=os.getenv(CommonConstant.ROOT_PATH, '/')
