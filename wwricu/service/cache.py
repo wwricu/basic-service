@@ -38,6 +38,10 @@ class LocalCache:
         await self.delete(key)
 
     async def get(self, key: str) -> any:
+        if key is None:
+            return
+        if not isinstance(key, str):
+            raise ValueError(key)
         if 0 < self.cache_timeout.get(key, 0) < int(time.time()):
             self.cache_data.pop(key, None)
             self.cache_timeout.pop(key, None)
@@ -45,6 +49,10 @@ class LocalCache:
         return self.cache_data.get(key)
 
     async def set(self, key: str, value: any, second: int = 600):
+        if key is None:
+            return
+        if not isinstance(key, str):
+            raise ValueError(key)
         if task := self.timeout_callback.pop(key, None):
             task.cancel()
         self.cache_data[key] = value

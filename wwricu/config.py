@@ -103,6 +103,7 @@ def init():
         log.warning('APP RUNNING ON DEBUG MODE')
     env = os.getenv(CommonConstant.ENV_KEY, EnvironmentEnum.LOCAL.value)
     Config.load(**get_config(EnvironmentEnum(env)))
-    with open(CommonConstant.VERSION_FILE) as f:
-        Config.version = f.read().strip()
+    if os.path.exists(CommonConstant.VERSION_FILE):
+        with open(CommonConstant.VERSION_FILE) as f:
+            Config.version = f.read().strip()
     log.info('Config init')
