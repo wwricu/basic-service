@@ -46,6 +46,7 @@ class AdminConfig(ConfigClass):
 class Config(ConfigClass):
     host: str = '0.0.0.0'
     port: int = 8000
+    version: str = '0.0.0'
     log_level: int = logging.CRITICAL
     encoding: str = 'utf-8'
     trash_expire_day: int = 30
@@ -76,7 +77,7 @@ def log_config():
     if __debug__:
         log.add(sys.stdout, level=logging.DEBUG)
     os.makedirs(CommonConstant.LOG_PATH, exist_ok=True)
-    log.add(f'{CommonConstant.LOG_PATH}/{{time:YYYY-MM-DD}}.log', level=logging.INFO, rotation='00:00')
+    log.add(f'{CommonConstant.LOG_PATH}/server.log', level=logging.DEBUG, rotation='10 MB')
 
 
 def get_config(env: EnvironmentEnum) -> dict:
@@ -102,4 +103,7 @@ def init():
         log.warning('APP RUNNING ON DEBUG MODE')
     env = os.getenv(CommonConstant.ENV_KEY, EnvironmentEnum.LOCAL.value)
     Config.load(**get_config(EnvironmentEnum(env)))
+    if os.path.exists(CommonConstant.VERSION_FILE):
+        with open(CommonConstant.VERSION_FILE) as f:
+            Config.version = f.read().strip()
     log.info('Config init')
