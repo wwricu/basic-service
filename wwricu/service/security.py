@@ -10,7 +10,7 @@ from fastapi import HTTPException, Request, status
 from loguru import logger as log
 from sqlalchemy import select
 
-from wwricu.domain.common import LoginRO
+from wwricu.domain.common import LoginRO, ConfigRO
 from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.entity import SysConfig
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum
@@ -50,6 +50,7 @@ async def admin_login(login_request: LoginRO) -> bool:
     secret = await session.scalar(stmt)
     if enforce is not None and secret is not None and secret.value is not None:
         totp = pyotp.TOTP(secret.value)
+        pyotp.random_base32()
         if not totp.verify(login_request.totp, valid_window=1):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
 
