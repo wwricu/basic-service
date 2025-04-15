@@ -12,7 +12,7 @@ class BaseModel(PydanticBaseModel):
 class LoginRO(BaseModel):
     username: str
     password: str
-    otp: str | None = None
+    totp: str | None = None
 
 
 class UserRO(BaseModel):
