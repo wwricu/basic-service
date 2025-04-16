@@ -17,6 +17,7 @@ dependencies = [
     'fastapi==0.115.12',
     'loguru==0.7.3',
     'python-multipart==0.0.20',
+    'pyotp==2.9.0',
     'redis==5.2.1',
     'SQLAlchemy==2.0.40',
     'uvicorn[standard]==0.34.0'

@@ -2,10 +2,12 @@ class HttpErrorDetail(object):
     POST_NOT_FOUND: str = 'Post Not Found'
     NO_SUCH_USER: str = 'NO SUCH USER'
     WRONG_PASSWORD: str = 'WRONG PASSWORD'
+    WRONG_TOTP: str = 'WRONG TOTP'
     NOT_AUTHORIZED: str = 'Not authorized'
     UPLOAD_FAILURE: str = 'Failed to upload'
     INVALID_TAG_TYPE: str = 'Invalid tag type'
     UNKNOWN_ENTITY_TYPE: str = 'Unknown entity type'
+    LENGTH_EXCEEDED: str = 'Length exceeded'
 
 
 class CommonConstant(object):

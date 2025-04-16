@@ -37,6 +37,7 @@ class EnvironmentEnum(StrEnum):
 class ConfigKeyEnum(StrEnum):
     ABOUT_CONTENT: str = 'about_content'
     ABOUT_AVATAR: str = 'about_avatar'
+    TOTP_ENFORCE: str = 'totp_enforce'
     TOTP_SECRET: str = 'totp_secret'
     USERNAME: str = 'username'
     PASSWORD: str = 'password'
