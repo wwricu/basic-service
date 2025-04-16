@@ -105,6 +105,8 @@ async def config_set(config: ConfigRO):
 
 @manage_api.get('/config/get', response_model=str | None)
 async def config_get(key: str) -> str | None:
+    if key == ConfigKeyEnum.TOTP_SECRET or key == ConfigKeyEnum.TOTP_ENFORCE:
+        raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.CONFIG_NOT_ALLOWED)
     stmt = select(SysConfig.value).where(SysConfig.key == key).where(SysConfig.deleted == False)
     return await session.scalar(stmt)
 

@@ -108,7 +108,8 @@ async def reset_tag_count():
             BlogPost.deleted == False).where(
             PostTag.type == TagTypeEnum.POST_TAG).where(
             EntityRelation.type == RelationTypeEnum.POST_TAG).where(
-            BlogPost.status == PostStatusEnum.PUBLISHED
-        ).group_by(PostTag.id).subquery()
+            BlogPost.status == PostStatusEnum.PUBLISHED).group_by(
+            PostTag.id
+        ).subquery()
         stmt = update(PostTag).where(PostTag.id == subquery.c.id).values(count=subquery.c.tag_count)
         await s.execute(stmt)
