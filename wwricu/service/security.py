@@ -10,7 +10,7 @@ from fastapi import HTTPException, Request, status
 from loguru import logger as log
 from sqlalchemy import select
 
-from wwricu.domain.common import LoginRO, ConfigRO
+from wwricu.domain.common import LoginRO
 from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.entity import SysConfig
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum

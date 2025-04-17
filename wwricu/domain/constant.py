@@ -8,6 +8,7 @@ class HttpErrorDetail(object):
     INVALID_TAG_TYPE: str = 'Invalid tag type'
     UNKNOWN_ENTITY_TYPE: str = 'Unknown entity type'
     LENGTH_EXCEEDED: str = 'Length exceeded'
+    CONFIG_NOT_ALLOWED: str = 'Cannot get this config'
 
 
 class CommonConstant(object):
