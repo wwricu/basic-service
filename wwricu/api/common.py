@@ -17,7 +17,7 @@ common_api = APIRouter(tags=['Common API'])
 @common_api.post('/login')
 async def login(login_request: LoginRO, response: Response):
     async with try_login_lock():
-        if await admin_login(login_request.username, login_request.password) is not True:
+        if await admin_login(login_request) is not True:
             log.warning(f'{login_request.username} login failure')
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_PASSWORD)
     if (session_id := await cache.get(login_request.username)) is None:

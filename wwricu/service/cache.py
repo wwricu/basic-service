@@ -2,7 +2,7 @@ import asyncio
 import os.path
 import pickle
 import time
-from typing import Protocol
+from typing import Any, Protocol
 
 import redis.asyncio as redis
 from loguru import logger as log
@@ -12,7 +12,7 @@ from wwricu.config import RedisConfig
 
 class LocalCache:
     # DO NOT init class variables so that they will not be inited when the class is not instantiated
-    cache_data: dict[str, any]
+    cache_data: dict[str, Any]
     cache_timeout: dict[str, int]
     timeout_callback: dict[str, asyncio.Task]
     cache_name: str = 'cache.pkl'
@@ -26,7 +26,7 @@ class LocalCache:
             return
         log.info('Load cache from pickle')
         with open(self.cache_name, 'rb') as f:
-            self.cache_data, self.cache_timeout = pickle.loads(f.read())
+            self.cache_data, self.cache_timeout = pickle.load(f)
         now = int(time.time())
         for key, value in self.cache_data.items():
             if (second := self.cache_timeout.get(key, 0) - now) > 0:
@@ -39,7 +39,7 @@ class LocalCache:
 
     async def get(self, key: str) -> any:
         if key is None:
-            return
+            return None
         if not isinstance(key, str):
             raise ValueError(key)
         if 0 < self.cache_timeout.get(key, 0) < int(time.time()):
@@ -84,8 +84,8 @@ class RedisCache:
         )
 
     async def get(self, key: str) -> any:
-        if (value := await self.redis.get(key)) is not None:
-            return pickle.loads(value)
+        value = await self.redis.get(key)
+        return None if value is None else pickle.loads(value)
 
     async def set(self, key: str, value: any, second: int = 600):
         if value is not None:

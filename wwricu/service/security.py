@@ -61,7 +61,7 @@ async def admin_login(login_request: LoginRO) -> bool:
         password = password_config.value
     if login_request.username != username:
         return False
-    return bcrypt.checkpw(login_request.password.encode(), base64.b64decode(password.encode()))
+    return bcrypt.checkpw(login_request.password.encode(), base64.b64decode(password))
 
 
 async def admin_only(request: Request):
@@ -87,4 +87,4 @@ async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
     return False
 
 
-secure_key = base64.b64decode(AdminConfig.secure_key.encode(Config.encoding))
+secure_key = base64.b64decode(AdminConfig.secure_key)

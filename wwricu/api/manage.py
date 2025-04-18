@@ -71,6 +71,7 @@ async def database(action: DatabaseActionEnum, background_task: BackgroundTasks)
             background_task.add_task(database_backup)
         case DatabaseActionEnum.DOWNLOAD:
             return FileResponse(DatabaseConfig.database, filename=DatabaseConfig.database)
+    return None
 
 
 @manage_api.post('/config/set')
