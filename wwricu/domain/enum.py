@@ -2,8 +2,8 @@ from enum import StrEnum
 
 
 class TagTypeEnum(StrEnum):
-    POST_TAG: str = 'post_tag'
-    POST_CAT: str = 'post_category'
+    POST_TAG = 'post_tag'
+    POST_CAT = 'post_category'
 
 
 class PostStatusEnum(StrEnum):
@@ -12,47 +12,47 @@ class PostStatusEnum(StrEnum):
 
 
 class PostResourceTypeEnum(StrEnum):
-    IMAGE: str = 'image'
-    COVER_IMAGE: str = 'cover'
-    COMMON: str = 'common'
+    IMAGE = 'image'
+    COVER_IMAGE = 'cover'
+    COMMON = 'common'
 
 
 class RelationTypeEnum(StrEnum):
-    POST_TAG: str = 'post_tag'
-    POST_RES: str = 'post_resource'
+    POST_TAG = 'post_tag'
+    POST_RES = 'post_resource'
 
 
 class DatabaseActionEnum(StrEnum):
-    BACKUP: str = 'backup'
-    RESTORE: str = 'restore'
-    DOWNLOAD: str = 'download'
+    BACKUP = 'backup'
+    RESTORE = 'restore'
+    DOWNLOAD = 'download'
 
 
 class EnvironmentEnum(StrEnum):
-    LOCAL: str = 'local'
-    DEVELOPMENT: str = 'dev'
-    PRODUCTION: str = 'prod'
+    LOCAL = 'local'
+    DEVELOPMENT = 'dev'
+    PRODUCTION = 'prod'
 
 
 class ConfigKeyEnum(StrEnum):
-    ABOUT_CONTENT: str = 'about_content'
-    ABOUT_AVATAR: str = 'about_avatar'
-    TOTP_ENFORCE: str = 'totp_enforce'
-    TOTP_SECRET: str = 'totp_secret'
-    USERNAME: str = 'username'
-    PASSWORD: str = 'password'
+    ABOUT_CONTENT = 'about_content'
+    ABOUT_AVATAR = 'about_avatar'
+    TOTP_ENFORCE = 'totp_enforce'
+    TOTP_SECRET = 'totp_secret'
+    USERNAME = 'username'
+    PASSWORD = 'password'
 
 
 class CacheKeyEnum(StrEnum):
-    POST_COUNT: str = 'post_count'
-    CATEGORY_COUNT: str = 'category_count'
-    TAG_COUNT: str = 'tag_count'
-    LOGIN_LOCK: str = 'login_lock'
-    LOGIN_RETRIES: str = 'login_retries'
-    STARTUP_TIMESTAMP: str = 'startup_timestamp'
+    POST_COUNT = 'post_count'
+    CATEGORY_COUNT = 'category_count'
+    TAG_COUNT = 'tag_count'
+    LOGIN_LOCK = 'login_lock'
+    LOGIN_RETRIES = 'login_retries'
+    STARTUP_TIMESTAMP = 'startup_timestamp'
 
 
 class EntityTypeEnum(StrEnum):
-    BLOG_POST: str = 'blog_post'
-    POST_TAG: str = 'post_tag'
-    POST_CAT: str = 'post_category'
+    BLOG_POST = 'blog_post'
+    POST_TAG = 'post_tag'
+    POST_CAT = 'post_category'
