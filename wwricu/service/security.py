@@ -3,12 +3,14 @@ import hashlib
 import hmac
 import time
 from contextlib import asynccontextmanager
+from typing import cast
 
 import bcrypt
 import pyotp
 from fastapi import HTTPException, Request, status
 from loguru import logger as log
 from sqlalchemy import select
+from typing_extensions import Buffer
 
 from wwricu.domain.common import LoginRO
 from wwricu.domain.constant import CommonConstant, HttpErrorDetail
@@ -72,8 +74,8 @@ async def admin_only(request: Request):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.NOT_AUTHORIZED)
 
 
-def hmac_sign(plain: str):
-    return hmac.new(secure_key, plain.encode(Config.encoding), hashlib.sha256).hexdigest()
+def hmac_sign(plain: str) -> str:
+    return hmac.new(secure_key, cast(Buffer, plain.encode(Config.encoding)), hashlib.sha256).hexdigest()
 
 
 async def validate_cookie(session_id: str, cookie_sign: str) -> bool:

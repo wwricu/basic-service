@@ -2,10 +2,11 @@ import asyncio
 import os.path
 import pickle
 import time
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 import redis.asyncio as redis
 from loguru import logger as log
+from python_multipart.decoders import SupportsWrite
 
 from wwricu.config import RedisConfig
 
@@ -69,7 +70,7 @@ class LocalCache:
     async def close(self):
         log.info('Dump cache to pickle')
         with open(self.cache_name, 'wb+') as f:
-            f.write(pickle.dumps((self.cache_data, self.cache_timeout)))
+            pickle.dump((self.cache_data, self.cache_timeout), cast(SupportsWrite[bytes], f))
 
 
 class RedisCache:
