@@ -17,6 +17,7 @@ class ConfigClass(object):
         for k, v in kwargs.items():
             if k in cls.__annotations__:
                 setattr(cls, k, v)
+        cls.__new__(cls)
 
 
 class StorageConfig(ConfigClass):
@@ -26,8 +27,24 @@ class StorageConfig(ConfigClass):
 
 
 class DatabaseConfig(ConfigClass):
-    url: str
-    database: str
+    async_driver: str = ''
+    sync_driver: str = ''
+    username: str = ''
+    password: str = ''
+    host: str = ''
+    port: int = 0
+    database: str = ''
+    url: str | None = None
+    sync_url: str | None = None
+
+    def __new__(cls):
+        connect_string = f'{{driver}}://{cls.username}:{cls.password}@{cls.host}:{cls.port}/{cls.database}'
+        if cls.url is None:
+            cls.url = connect_string.format(driver=cls.async_driver)
+        if cls.sync_url is None:
+            cls.sync_url = connect_string.format(driver=cls.sync_driver)
+        log.info(f'async connect string = {cls.url}')
+        log.info(f'sync connect string = {cls.sync_url}')
 
 
 class RedisConfig(ConfigClass):
@@ -85,6 +102,7 @@ def get_config(env: EnvironmentEnum) -> dict:
     if env == EnvironmentEnum.LOCAL:
         with open(CommonConstant.CONFIG_FILE) as f:
             return json.loads(f.read())
+    log.warning(f'Getting config from {AWSConst.APP_CONFIG}')
     response = boto3.client(AWSConst.APP_CONFIG, region_name=AWSConst.REGION).get_configuration(
         Application=CommonConstant.APP_NAME,
         Environment=env,

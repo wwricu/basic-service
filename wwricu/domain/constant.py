@@ -22,9 +22,3 @@ class CommonConstant(object):
     LOG_PATH: str = 'logs'
     ROOT_PATH: str = 'ROOT_PATH'
     ENV_KEY: str = 'ENV'
-
-
-class EntityConstant(object):
-    ENUM_STRING_LEN: int = 32
-    USER_STRING_LEN: int = 64
-    LONG_STRING_LEN: int = 128

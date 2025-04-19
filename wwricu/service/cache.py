@@ -1,32 +1,47 @@
 import asyncio
-import os.path
+import base64
 import pickle
 import time
-from typing import Protocol
+from typing import Any, Protocol
 
 import redis.asyncio as redis
 from loguru import logger as log
+from sqlalchemy import select, delete
+from sqlalchemy.orm import Session
+from wwricu.domain.enum import ConfigKeyEnum
 
+from wwricu.domain.entity import SysConfig
+
+from service.database import sync_engine
 from wwricu.config import RedisConfig
 
 
 class LocalCache:
     # DO NOT init class variables so that they will not be inited when the class is not instantiated
-    cache_data: dict[str, any]
+    cache_data: dict[str, Any]
     cache_timeout: dict[str, int]
     timeout_callback: dict[str, asyncio.Task]
-    cache_name: str = 'cache.pkl'
 
     def __init__(self):
         self.cache_data = dict()
         self.cache_timeout = dict()
         self.timeout_callback = dict()
+        try:
+            self.load()
+        finally:
+            # delete persist cache after loaded
+            stmt = delete(SysConfig).where(SysConfig.key == ConfigKeyEnum.CACHE_DATA)
+            with Session(sync_engine) as sync_session:
+                sync_session.execute(stmt)
 
-        if not os.path.exists(self.cache_name):
-            return
-        log.info('Load cache from pickle')
-        with open(self.cache_name, 'rb') as f:
-            self.cache_data, self.cache_timeout = pickle.loads(f.read())
+    def load(self):
+        log.info('Load cache data')
+        stmt = select(SysConfig).where(SysConfig.key == ConfigKeyEnum.CACHE_DATA).where(SysConfig.deleted == False)
+        with Session(sync_engine) as sync_session:
+            cache_data_config = sync_session.scalar(stmt)
+            if cache_data_config is None or cache_data_config.value is None:
+                return
+            self.cache_data, self.cache_timeout = pickle.loads(base64.b64decode(cache_data_config.value))
         now = int(time.time())
         for key, value in self.cache_data.items():
             if (second := self.cache_timeout.get(key, 0) - now) > 0:
@@ -39,7 +54,7 @@ class LocalCache:
 
     async def get(self, key: str) -> any:
         if key is None:
-            return
+            return None
         if not isinstance(key, str):
             raise ValueError(key)
         if 0 < self.cache_timeout.get(key, 0) < int(time.time()):
@@ -67,9 +82,14 @@ class LocalCache:
             task.cancel()
 
     async def close(self):
-        log.info('Dump cache to pickle')
-        with open(self.cache_name, 'wb+') as f:
-            f.write(pickle.dumps((self.cache_data, self.cache_timeout)))
+        log.info('Dump cache data')
+        stmt = delete(SysConfig).where(SysConfig.key == ConfigKeyEnum.CACHE_DATA)
+        with Session(sync_engine) as sync_session, sync_session.begin():
+            sync_session.execute(stmt)
+            sync_session.add(SysConfig(
+                key=ConfigKeyEnum.CACHE_DATA,
+                value=base64.b64encode(pickle.dumps((self.cache_data, self.cache_timeout))).decode(),
+            ))
 
 
 class RedisCache:
@@ -84,8 +104,8 @@ class RedisCache:
         )
 
     async def get(self, key: str) -> any:
-        if (value := await self.redis.get(key)) is not None:
-            return pickle.loads(value)
+        value = await self.redis.get(key)
+        return None if value is None else pickle.loads(value)
 
     async def set(self, key: str, value: any, second: int = 600):
         if value is not None:
