@@ -8,12 +8,11 @@ import redis.asyncio as redis
 from loguru import logger as log
 from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
-from wwricu.domain.enum import ConfigKeyEnum
 
-from wwricu.domain.entity import SysConfig
-
-from service.database import sync_engine
 from wwricu.config import RedisConfig
+from wwricu.domain.enum import ConfigKeyEnum
+from wwricu.domain.entity import SysConfig
+from wwricu.service.database import sync_engine
 
 
 class LocalCache:
