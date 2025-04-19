@@ -41,6 +41,7 @@ class ConfigKeyEnum(StrEnum):
     TOTP_SECRET = 'totp_secret'
     USERNAME = 'username'
     PASSWORD = 'password'
+    CACHE_DATA = 'cache_data'
 
 
 class CacheKeyEnum(StrEnum):
