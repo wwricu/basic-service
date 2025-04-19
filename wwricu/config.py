@@ -8,7 +8,7 @@ from loguru import logger as log
 
 from wwricu.domain.constant import CommonConstant
 from wwricu.domain.enum import EnvironmentEnum
-from wwricu.domain.third import AWSAppConfigResponse, AWSConst
+from wwricu.domain.third import AWSConst, AWSAppConfigSessionResponse, AWSAppConfigConfigResponse
 
 
 class ConfigClass(object):
@@ -102,16 +102,18 @@ def get_config(env: EnvironmentEnum) -> dict:
     if env == EnvironmentEnum.LOCAL:
         with open(CommonConstant.CONFIG_FILE) as f:
             return json.loads(f.read())
-    log.warning(f'Getting config from {AWSConst.APP_CONFIG}')
-    response = boto3.client(AWSConst.APP_CONFIG, region_name=AWSConst.REGION).get_configuration(
-        Application=CommonConstant.APP_NAME,
-        Environment=env,
-        Configuration=CommonConstant.CONFIG_FILE,
-        ClientId=CommonConstant.APP_NAME
+    log.warning(f'Getting config from {AWSConst.APP_CONFIG_DATA}')
+    app_config_data_client = boto3.client(AWSConst.APP_CONFIG_DATA, region_name=AWSConst.REGION)
+    response = app_config_data_client.start_configuration_session(
+        ApplicationIdentifier=CommonConstant.APP_NAME,
+        EnvironmentIdentifier=env,
+        ConfigurationProfileIdentifier=CommonConstant.CONFIG_FILE
     )
-    app_config = AWSAppConfigResponse.model_validate(response)
-    content = app_config.Content.read().decode()
-    app_config.Content.close()
+    aws_session = AWSAppConfigSessionResponse.model_validate(response)
+    response = app_config_data_client.get_latest_configuration(ConfigurationToken=aws_session.InitialConfigurationToken)
+    app_config = AWSAppConfigConfigResponse.model_validate(response)
+    content = app_config.Configuration.read().decode()
+    app_config.Configuration.close()
     return json.loads(content)
 
 
