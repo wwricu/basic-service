@@ -10,17 +10,17 @@ requires-python = '>=3.12'
 dynamic = ['version']
 
 dependencies = [
-    'APScheduler==3.11.0',
-    'aiosqlite==0.21.0',
-    'bcrypt==4.3.0',
-    'boto3==1.37.30',
-    'fastapi==0.115.12',
-    'loguru==0.7.3',
-    'python-multipart==0.0.20',
-    'pyotp==2.9.0',
-    'redis==5.2.1',
-    'SQLAlchemy==2.0.40',
-    'uvicorn[standard]==0.34.0'
+    "aiosqlite==0.21.0",
+    "apscheduler==3.11.0",
+    "bcrypt==4.3.0",
+    "boto3==1.37.37",
+    "fastapi==0.115.12",
+    "loguru==0.7.3",
+    "pyotp==2.9.0",
+    "python-multipart==0.0.20",
+    "redis==5.2.1",
+    "sqlalchemy==2.0.40",
+    "uvicorn[standard]==0.34.2",
 ]
 
 [project.scripts]
