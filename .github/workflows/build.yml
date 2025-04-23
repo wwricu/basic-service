@@ -30,3 +30,7 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           tags: wwricu/basic-service:build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wwricu.tar.gz
+          path: dist/wwricu.tar.gz
