@@ -5,10 +5,12 @@ import time
 from contextlib import asynccontextmanager
 
 import bcrypt
+import pyotp
 from fastapi import HTTPException, Request, status
 from loguru import logger as log
 from sqlalchemy import select
 
+from wwricu.domain.common import LoginRO
 from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.entity import SysConfig
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum
@@ -38,17 +40,28 @@ async def try_login_lock():
         raise e
 
 
-async def admin_login(username: str, password: str) -> bool:
+async def admin_login(login_request: LoginRO) -> bool:
     if __debug__:
         return True
-    sys_username, sys_password = AdminConfig.username, AdminConfig.password
+
+    stmt = select(SysConfig).where(SysConfig.key == ConfigKeyEnum.TOTP_ENFORCE).where(SysConfig.deleted == False)
+    enforce = await session.scalar(stmt)
+    stmt = select(SysConfig).where(SysConfig.key == ConfigKeyEnum.TOTP_SECRET).where(SysConfig.deleted == False)
+    secret = await session.scalar(stmt)
+    if enforce is not None and secret is not None and secret.value is not None:
+        totp = pyotp.TOTP(secret.value)
+        pyotp.random_base32()
+        if not totp.verify(login_request.totp, valid_window=1):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
+
+    username, password = AdminConfig.username, AdminConfig.password
     if username_config := await session.scalar(select(SysConfig).where(SysConfig.key == ConfigKeyEnum.USERNAME)):
-        sys_username = username_config.value
+        username = username_config.value
     if password_config := await session.scalar(select(SysConfig).where(SysConfig.key == ConfigKeyEnum.PASSWORD)):
-        sys_password = password_config.value
-    if username != sys_username:
+        password = password_config.value
+    if login_request.username != username:
         return False
-    return bcrypt.checkpw(password.encode(), base64.b64decode(sys_password))
+    return bcrypt.checkpw(login_request.password.encode(), base64.b64decode(password))
 
 
 async def admin_only(request: Request):
@@ -59,7 +72,7 @@ async def admin_only(request: Request):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.NOT_AUTHORIZED)
 
 
-def hmac_sign(plain: str):
+def hmac_sign(plain: str) -> str:
     return hmac.new(secure_key, plain.encode(Config.encoding), hashlib.sha256).hexdigest()
 
 
@@ -74,4 +87,4 @@ async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
     return False
 
 
-secure_key = base64.b64decode(AdminConfig.secure_key.encode(Config.encoding))
+secure_key = base64.b64decode(AdminConfig.secure_key)

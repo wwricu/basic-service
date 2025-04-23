@@ -6,20 +6,31 @@ from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
-from starlette.responses import Response
+from starlette.responses import Response, JSONResponse
 
 
 class AspectMiddleware(BaseHTTPMiddleware):
     @override
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         b = time.time()
         try:
-            response: Response = await call_next(request)
-            log.info(f'{request.method} {request.url.path} {response.status_code} {int((time.time() - b) * 1000)} ms')
+            log.info('{method} {path} {params}'.format(
+                method=request.method,
+                path=request.url.path,
+                params='' if 'multipart/form-data' in request.headers.get('Content-Type', '') else await request.body(),
+            ))
+            response = await call_next(request)
+            log.info('{method} {path} {status_code} {time} ms'.format(
+                method=request.method,
+                path=request.url.path,
+                status_code=response.status_code,
+                time=int((time.time() - b) * 1000),
+            ))
             return response
         except Exception as e:
             log.error(f'{request.method} {request.url.path} {int((time.time() - b) * 1000)} ms')
             log.exception(e)
+            return JSONResponse(str(e), status_code=500)
 
 
 # noinspection PyTypeChecker

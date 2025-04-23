@@ -8,17 +8,13 @@ from wwricu.domain.common import BaseModel
 
 class AWSConst(object):
     S3: str = 's3'
-    SSM: str = 'ssm'
-    APP_CONFIG: str = 'appconfig'
+    APP_CONFIG_DATA: str = 'appconfigdata'
     REGION = 'us-west-2'
     AWS_DOMAIN = 'amazonaws.com'
-    AWS_ACCESS_KEY_ID: str = 'AWS_ACCESS_KEY_ID'
-    AWS_SECRET_ACCESS_KEY: str = 'AWS_SECRET_ACCESS_KEY'
 
 
 class AWSS3ResponseMetaData(BaseModel):
     RequestId: str
-    HostId: str
     HTTPStatusCode: int
     HTTPHeaders: dict
     HostId: str | None = None  # S3
@@ -54,10 +50,17 @@ class AWSS3ListResponse(BaseModel):
     NextContinuationToken: str | None = None
 
 
-class AWSAppConfigResponse(BaseModel):
+class AWSAppConfigSessionResponse(BaseModel):
+    ResponseMetadata: AWSS3ResponseMetaData
+    InitialConfigurationToken: str
+
+
+class AWSAppConfigConfigResponse(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     ResponseMetadata: AWSS3ResponseMetaData
-    ConfigurationVersion: str
+    NextPollConfigurationToken: str
+    NextPollIntervalInSeconds: int
     ContentType: str
-    Content: StreamingBody
+    VersionLabel: str | None = None
+    Configuration: StreamingBody

@@ -2,10 +2,13 @@ class HttpErrorDetail(object):
     POST_NOT_FOUND: str = 'Post Not Found'
     NO_SUCH_USER: str = 'NO SUCH USER'
     WRONG_PASSWORD: str = 'WRONG PASSWORD'
+    WRONG_TOTP: str = 'WRONG TOTP'
     NOT_AUTHORIZED: str = 'Not authorized'
     UPLOAD_FAILURE: str = 'Failed to upload'
     INVALID_TAG_TYPE: str = 'Invalid tag type'
     UNKNOWN_ENTITY_TYPE: str = 'Unknown entity type'
+    LENGTH_EXCEEDED: str = 'Length exceeded'
+    CONFIG_NOT_ALLOWED: str = 'Cannot get this config'
 
 
 class CommonConstant(object):
@@ -19,9 +22,3 @@ class CommonConstant(object):
     LOG_PATH: str = 'logs'
     ROOT_PATH: str = 'ROOT_PATH'
     ENV_KEY: str = 'ENV'
-
-
-class EntityConstant(object):
-    ENUM_STRING_LEN: int = 32
-    USER_STRING_LEN: int = 64
-    LONG_STRING_LEN: int = 128

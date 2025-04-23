@@ -71,20 +71,43 @@ async def database(action: DatabaseActionEnum, background_task: BackgroundTasks)
             background_task.add_task(database_backup)
         case DatabaseActionEnum.DOWNLOAD:
             return FileResponse(DatabaseConfig.database, filename=DatabaseConfig.database)
+    return None
 
 
 @manage_api.post('/config/set')
 async def config_set(config: ConfigRO):
+    # Set None to delete config
+    value = config.value
+    if value is None:
+        await session.execute(delete(SysConfig).where(SysConfig.key == config.key))
+        return
+    match config.key:
+        case ConfigKeyEnum.USERNAME:
+            if len(value) < 4 or len(value) > 16:
+                raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.LENGTH_EXCEEDED)
+        case ConfigKeyEnum.PASSWORD:
+            if len(value) < 8 or len(value) > 32:
+                raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.LENGTH_EXCEEDED)
+        case ConfigKeyEnum.TOTP_SECRET:
+            if len(value) < 32:
+                raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.LENGTH_EXCEEDED)
+        case ConfigKeyEnum.ABOUT_CONTENT:
+            if len(value) > 500:
+                raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.LENGTH_EXCEEDED)
+        case _:
+            pass
     stmt = select(SysConfig).where(SysConfig.key == config.key).where(SysConfig.deleted == False)
     if await session.scalar(stmt) is None:
-        session.add(SysConfig(key=config.key, value=config.value))
+        session.add(SysConfig(key=config.key, value=value))
         return
-    stmt = update(SysConfig).where(SysConfig.key == config.key).values(value=config.value)
+    stmt = update(SysConfig).where(SysConfig.key == config.key).values(value=value)
     await session.execute(stmt)
 
 
 @manage_api.get('/config/get', response_model=str | None)
 async def config_get(key: str) -> str | None:
+    if key == ConfigKeyEnum.TOTP_SECRET or key == ConfigKeyEnum.TOTP_ENFORCE:
+        raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.CONFIG_NOT_ALLOWED)
     stmt = select(SysConfig.value).where(SysConfig.key == key).where(SysConfig.deleted == False)
     return await session.scalar(stmt)
 
