@@ -1,13 +1,14 @@
-venv
 .idea
+.venv
 .vscode
+config.json
 build
 dist
+wheels
 wwricu.egg-info
-config.json
 **/conf
 **/__pycache__
-*.pyc
+*.py[oc]
 *.iml
 *.sqlite3
 *.pkl
