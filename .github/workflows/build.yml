@@ -13,6 +13,7 @@ on:
       - '**.sql'
       - '**.csv'
       - '**.gitignore'
+  workflow_dispatch:
 jobs:
   build:
     name: Build
@@ -24,13 +25,9 @@ jobs:
           python-version: '3.12'
           cache: 'pip'
       - run: |
-          python -m pip install uv
-          python -m uv build
+          pip install uv
+          uv build
           cp dist/wwricu-$(cat version.txt).tar.gz dist/wwricu.tar.gz
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v6
-        with:
-          tags: wwricu/basic-service:build
       - uses: actions/upload-artifact@v4
         with:
           name: wwricu.tar.gz
