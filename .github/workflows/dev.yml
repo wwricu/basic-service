@@ -24,8 +24,8 @@ jobs:
           python-version: '3.12'
       - id: build
         run: |
-          python -m pip install build
-          python -m build
+          pip install uv
+          uv build
           cp dist/wwricu-$(cat version.txt).tar.gz dist/wwricu.tar.gz
       - uses: softprops/action-gh-release@v2
         with:
