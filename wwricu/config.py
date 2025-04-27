@@ -61,10 +61,7 @@ class AdminConfig(ConfigClass):
 
 
 class Config(ConfigClass):
-    host: str = '0.0.0.0'
-    port: int = 8000
     version: str = '0.0.0'
-    log_level: int = logging.CRITICAL
     encoding: str = 'utf-8'
     trash_expire_day: int = 30
 

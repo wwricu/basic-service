@@ -34,6 +34,7 @@ class PostTag(Base):
     """
     __tablename__ = 'wwr_post_tag'
     __table_args__ = (UniqueConstraint('name', 'type', name='uix_name_type'),)
+
     name: Mapped[str] = mapped_column(String)
     type: Mapped[str] = mapped_column(String)
     count: Mapped[int] = mapped_column(Integer, default=0)
@@ -41,10 +42,11 @@ class PostTag(Base):
 
 class EntityRelation(Base):
     __tablename__ = 'wwr_entity_relation'
-    # TODO: review index
+    __table_args__ = (UniqueConstraint('src_id', 'dst_id', 'type', name='uix_src_id_dst_id_type'),)
+
     src_id: Mapped[int] = mapped_column(Integer, index=True)
     dst_id: Mapped[int] = mapped_column(Integer, index=True)
-    type: Mapped[RelationTypeEnum] = mapped_column(String, default=RelationTypeEnum.POST_TAG)
+    type: Mapped[RelationTypeEnum] = mapped_column(String)
 
 
 class PostResource(Base):
