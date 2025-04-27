@@ -1,6 +1,5 @@
 import os
 
-import uvicorn
 from fastapi import FastAPI
 
 from wwricu.api import api_router
@@ -19,7 +18,3 @@ app = FastAPI(
     root_path=os.getenv(CommonConstant.ROOT_PATH, '/')
 )
 app.include_router(api_router)
-
-
-def main():
-    uvicorn.run(app=app, host=Config.host, port=Config.port, log_level=Config.log_level, access_log=False)

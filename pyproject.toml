@@ -23,9 +23,6 @@ dependencies = [
     "uvicorn[standard]==0.34.2",
 ]
 
-[project.scripts]
-wwricu = 'wwricu.main:main'
-
 [tool.setuptools.dynamic]
 version = { file = 'version.txt' }
 
