@@ -91,7 +91,7 @@ def log_config():
     if __debug__:
         log.add(sys.stdout, level=logging.DEBUG)
     os.makedirs(CommonConstant.LOG_PATH, exist_ok=True)
-    log.add(f'{CommonConstant.LOG_PATH}/server.log', level=logging.DEBUG, rotation='10 MB')
+    log.add(f'{CommonConstant.LOG_PATH}/server.log', level=logging.DEBUG, rotation='monday at 00:00')
 
 
 def get_config(env: EnvironmentEnum) -> dict:
