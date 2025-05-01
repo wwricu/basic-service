@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import os
 import time
 from contextlib import asynccontextmanager
 
@@ -9,9 +10,10 @@ from fastapi import FastAPI
 from loguru import logger as log
 from sqlalchemy import select, func, delete
 
-from wwricu.domain.entity import BlogPost, EntityRelation, PostTag, PostResource
-from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum, RelationTypeEnum
 from wwricu.config import Config
+from wwricu.domain.constant import CommonConstant
+from wwricu.domain.entity import BlogPost, EntityRelation, PostTag, PostResource
+from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum, RelationTypeEnum, EnvironmentEnum
 from wwricu.service.cache import cache
 from wwricu.service.category import reset_category_count
 from wwricu.service.database import database_backup, engine, get_session, new_session
@@ -38,6 +40,9 @@ async def lifespan(_: FastAPI):
         scheduler.shutdown()
         await cache.close()
         await engine.dispose()
+        if Config.env != EnvironmentEnum.LOCAL and os.path.exists(CommonConstant.CONFIG_FILE):
+            log.warning('Remove config cache')
+            os.remove(CommonConstant.CONFIG_FILE)
         log.info('Exit')
         await log.complete()
 
