@@ -116,7 +116,7 @@ def get_config() -> dict:
         ConfigurationProfileIdentifier=CommonConstant.CONFIG_FILE
     )
     aws_session = AWSAppConfigSessionResponse.model_validate(response)
-    # This is a PRICED call, called on each deployment
+    # PRICED call on each deployment
     response = app_config_data_client.get_latest_configuration(ConfigurationToken=aws_session.InitialConfigurationToken)
     app_config = AWSAppConfigConfigResponse.model_validate(response)
     content = app_config.Configuration.read().decode()
