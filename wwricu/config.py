@@ -7,7 +7,7 @@ import boto3
 from loguru import logger as log
 
 from wwricu.domain.constant import CommonConstant
-from wwricu.domain.enum import EnvironmentEnum
+from wwricu.domain.enum import EnvironmentEnum, EnvVarEnum
 from wwricu.domain.third import AWSConst, AWSAppConfigSessionResponse, AWSAppConfigConfigResponse
 
 
@@ -64,7 +64,15 @@ class Config(ConfigClass):
     version: str = '0.0.0'
     encoding: str = 'utf-8'
     trash_expire_day: int = 30
-    env: EnvironmentEnum = EnvironmentEnum(os.getenv(CommonConstant.ENV_KEY, EnvironmentEnum.LOCAL.value))
+    env: EnvironmentEnum = EnvironmentEnum(EnvVarEnum.ENV.get())
+
+    @classmethod
+    def is_local(cls) -> bool:
+        return cls.env == EnvironmentEnum.LOCAL
+
+    @classmethod
+    def not_local(cls) -> bool:
+        return not cls.is_local()
 
     @classmethod
     def load(
@@ -91,8 +99,8 @@ def log_config():
     log.remove()
     if __debug__:
         log.add(sys.stdout, level=logging.DEBUG)
-    os.makedirs(CommonConstant.LOG_PATH, exist_ok=True)
-    log.add(f'{CommonConstant.LOG_PATH}/server.log', level=logging.DEBUG, rotation='monday at 00:00')
+    os.makedirs(EnvVarEnum.LOG_PATH.get(), exist_ok=True)
+    log.add(f'{EnvVarEnum.LOG_PATH.get()}/server.log', level=logging.DEBUG, rotation='monday at 00:00')
 
 
 def get_config() -> dict:

@@ -25,7 +25,7 @@ from wwricu.service.tag import reset_tag_count
 async def lifespan(_: FastAPI):
     scheduler = AsyncIOScheduler()
     try:
-        if not __debug__:
+        if Config.not_local():
             scheduler.add_job(hard_delete_expiration, trigger=CronTrigger(hour=5))
             scheduler.add_job(clean_post_resource, trigger=CronTrigger(day_of_week=0, hour=4))
             scheduler.add_job(database_backup, trigger=CronTrigger(day_of_week=0, hour=3))
@@ -40,9 +40,8 @@ async def lifespan(_: FastAPI):
         scheduler.shutdown()
         await cache.close()
         await engine.dispose()
-        if Config.env != EnvironmentEnum.LOCAL and os.path.exists(CommonConstant.CONFIG_FILE):
-            log.warning('Remove config cache')
-            os.remove(CommonConstant.CONFIG_FILE)
+        if Config.not_local():
+            database_backup()
         log.info('Exit')
         await log.complete()
 
