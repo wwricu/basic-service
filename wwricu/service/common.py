@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import os
 import time
 from contextlib import asynccontextmanager
 
@@ -9,9 +10,10 @@ from fastapi import FastAPI
 from loguru import logger as log
 from sqlalchemy import select, func, delete
 
-from wwricu.domain.entity import BlogPost, EntityRelation, PostTag, PostResource
-from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum, RelationTypeEnum
 from wwricu.config import Config
+from wwricu.domain.constant import CommonConstant
+from wwricu.domain.entity import BlogPost, EntityRelation, PostTag, PostResource
+from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum, RelationTypeEnum, EnvironmentEnum
 from wwricu.service.cache import cache
 from wwricu.service.category import reset_category_count
 from wwricu.service.database import database_backup, engine, get_session, new_session
@@ -23,7 +25,7 @@ from wwricu.service.tag import reset_tag_count
 async def lifespan(_: FastAPI):
     scheduler = AsyncIOScheduler()
     try:
-        if not __debug__:
+        if Config.not_local():
             scheduler.add_job(hard_delete_expiration, trigger=CronTrigger(hour=5))
             scheduler.add_job(clean_post_resource, trigger=CronTrigger(day_of_week=0, hour=4))
             scheduler.add_job(database_backup, trigger=CronTrigger(day_of_week=0, hour=3))
@@ -38,6 +40,8 @@ async def lifespan(_: FastAPI):
         scheduler.shutdown()
         await cache.close()
         await engine.dispose()
+        if Config.not_local():
+            database_backup()
         log.info('Exit')
         await log.complete()
 

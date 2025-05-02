@@ -7,7 +7,7 @@ import boto3
 from loguru import logger as log
 
 from wwricu.domain.constant import CommonConstant
-from wwricu.domain.enum import EnvironmentEnum
+from wwricu.domain.enum import EnvironmentEnum, EnvVarEnum
 from wwricu.domain.third import AWSConst, AWSAppConfigSessionResponse, AWSAppConfigConfigResponse
 
 
@@ -64,6 +64,15 @@ class Config(ConfigClass):
     version: str = '0.0.0'
     encoding: str = 'utf-8'
     trash_expire_day: int = 30
+    env: EnvironmentEnum = EnvironmentEnum(EnvVarEnum.ENV.get())
+
+    @classmethod
+    def is_local(cls) -> bool:
+        return cls.env == EnvironmentEnum.LOCAL
+
+    @classmethod
+    def not_local(cls) -> bool:
+        return not cls.is_local()
 
     @classmethod
     def load(
@@ -90,27 +99,30 @@ def log_config():
     log.remove()
     if __debug__:
         log.add(sys.stdout, level=logging.DEBUG)
-    os.makedirs(CommonConstant.LOG_PATH, exist_ok=True)
-    log.add(f'{CommonConstant.LOG_PATH}/server.log', level=logging.DEBUG, rotation='10 MB')
+    os.makedirs(EnvVarEnum.LOG_PATH.get(), exist_ok=True)
+    log.add(f'{EnvVarEnum.LOG_PATH.get()}/server.log', level=logging.DEBUG, rotation='monday at 00:00')
 
 
-def get_config(env: EnvironmentEnum) -> dict:
-    log.info(f'env={env.value}')
-    if env == EnvironmentEnum.LOCAL:
+def get_config() -> dict:
+    log.info(f'env={Config.env.value}')
+    if os.path.exists(CommonConstant.CONFIG_FILE):
         with open(CommonConstant.CONFIG_FILE) as f:
             return json.loads(f.read())
     log.warning(f'Getting config from {AWSConst.APP_CONFIG_DATA}')
     app_config_data_client = boto3.client(AWSConst.APP_CONFIG_DATA, region_name=AWSConst.REGION)
     response = app_config_data_client.start_configuration_session(
         ApplicationIdentifier=CommonConstant.APP_NAME,
-        EnvironmentIdentifier=env,
+        EnvironmentIdentifier=Config.env,
         ConfigurationProfileIdentifier=CommonConstant.CONFIG_FILE
     )
     aws_session = AWSAppConfigSessionResponse.model_validate(response)
+    # This is a PRICED call, called on each deployment
     response = app_config_data_client.get_latest_configuration(ConfigurationToken=aws_session.InitialConfigurationToken)
     app_config = AWSAppConfigConfigResponse.model_validate(response)
     content = app_config.Configuration.read().decode()
     app_config.Configuration.close()
+    with open(CommonConstant.CONFIG_FILE, 'wt+') as f:
+        f.write(content)
     return json.loads(content)
 
 
@@ -118,8 +130,7 @@ def init():
     log_config()
     if __debug__:
         log.warning('APP RUNNING ON DEBUG MODE')
-    env = os.getenv(CommonConstant.ENV_KEY, EnvironmentEnum.LOCAL.value)
-    Config.load(**get_config(EnvironmentEnum(env)))
+    Config.load(**get_config())
     if os.path.exists(CommonConstant.VERSION_FILE):
         with open(CommonConstant.VERSION_FILE) as f:
             Config.version = f.read().strip()

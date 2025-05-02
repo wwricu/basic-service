@@ -1,4 +1,5 @@
-from enum import StrEnum
+import os
+from enum import StrEnum, Enum
 
 
 class TagTypeEnum(StrEnum):
@@ -57,3 +58,16 @@ class EntityTypeEnum(StrEnum):
     BLOG_POST = 'blog_post'
     POST_TAG = 'post_tag'
     POST_CAT = 'post_category'
+
+
+class EnvVarEnum(Enum):
+    ENV = ('ENV', EnvironmentEnum.LOCAL.value)
+    ROOT_PATH = ('ROOT_PATH', '/')
+    LOG_PATH = ('LOG_PATH', 'logs')
+
+    def __init__(self, key: str, value: str):
+        self.k = key
+        self.v = value
+
+    def get(self) -> str:
+        return os.getenv(self.k, self.v)

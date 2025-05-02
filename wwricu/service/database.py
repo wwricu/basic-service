@@ -36,8 +36,9 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
 def database_init():
     if os.path.exists(DatabaseConfig.database):
         return
+    # This is a PRICED call, called on each deploy
     if database := oss.get(DatabaseConfig.database, bucket=StorageConfig.private_bucket):
-        log.info(f'Download database as {DatabaseConfig.database}')
+        log.warning(f'Download database as {DatabaseConfig.database}')
         with open(DatabaseConfig.database, mode='wb+') as f:
             f.write(database)
 
@@ -45,8 +46,9 @@ def database_init():
 def database_backup():
     if not os.path.exists(DatabaseConfig.database):
         return
-    log.info(f'Backup database {DatabaseConfig.database}')
+    log.warning(f'Backup database {DatabaseConfig.database}')
     with open(DatabaseConfig.database, mode='rb') as f:
+        # This is a PRICED call, called every week or on each restart
         oss.put(DatabaseConfig.database, f.read(), StorageConfig.private_bucket)
     log.info(f'Backup database success')
 
