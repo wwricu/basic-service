@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import sys
+from pathlib import Path
 
 import boto3
 from loguru import logger as log
@@ -61,7 +62,6 @@ class AdminConfig(ConfigClass):
 
 
 class Config(ConfigClass):
-    version: str = '0.0.0'
     encoding: str = 'utf-8'
     trash_expire_day: int = 30
     env: EnvironmentEnum = EnvironmentEnum(EnvVarEnum.ENV.get())
@@ -84,9 +84,6 @@ class Config(ConfigClass):
         **kwargs
     ):
         cls.init(**kwargs)
-        if os.path.exists(CommonConstant.VERSION_FILE):
-            with open(CommonConstant.VERSION_FILE) as f:
-                cls.version = f.read().strip()
         AdminConfig.init(**admin_config)
         DatabaseConfig.init(**database_config)
         StorageConfig.init(**storage_config)
@@ -105,23 +102,28 @@ def log_config():
 
 def get_config() -> dict:
     log.info(f'env={Config.env.value}')
-    if os.path.exists(CommonConstant.CONFIG_FILE):
-        with open(CommonConstant.CONFIG_FILE) as f:
+    config_file = Path(EnvVarEnum.CONFIG_FILE.get())
+    if config_file.exists() and config_file.is_file():
+        log.info(f'Getting config from {config_file.absolute()}')
+        with config_file.open() as f:
             return json.loads(f.read())
+
     log.warning(f'Getting config from {AWSConst.APP_CONFIG_DATA}')
     app_config_data_client = boto3.client(AWSConst.APP_CONFIG_DATA, region_name=AWSConst.REGION)
     response = app_config_data_client.start_configuration_session(
         ApplicationIdentifier=CommonConstant.APP_NAME,
         EnvironmentIdentifier=Config.env,
-        ConfigurationProfileIdentifier=CommonConstant.CONFIG_FILE
+        ConfigurationProfileIdentifier=config_file.name
     )
     aws_session = AWSAppConfigSessionResponse.model_validate(response)
-    # This is a PRICED call, called on each deployment
+    # PRICED call on each deployment
     response = app_config_data_client.get_latest_configuration(ConfigurationToken=aws_session.InitialConfigurationToken)
     app_config = AWSAppConfigConfigResponse.model_validate(response)
     content = app_config.Configuration.read().decode()
     app_config.Configuration.close()
-    with open(CommonConstant.CONFIG_FILE, 'wt+') as f:
+
+    config_file.parent.mkdir(parents=True, exist_ok=True)
+    with config_file.open('wt+') as f:
         f.write(content)
     return json.loads(content)
 
@@ -131,7 +133,4 @@ def init():
     if __debug__:
         log.warning('APP RUNNING ON DEBUG MODE')
     Config.load(**get_config())
-    if os.path.exists(CommonConstant.VERSION_FILE):
-        with open(CommonConstant.VERSION_FILE) as f:
-            Config.version = f.read().strip()
     log.info('Config init')
