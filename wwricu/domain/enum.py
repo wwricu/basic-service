@@ -64,6 +64,7 @@ class EnvVarEnum(Enum):
     ENV = ('ENV', EnvironmentEnum.LOCAL.value)
     ROOT_PATH = ('ROOT_PATH', '/')
     LOG_PATH = ('LOG_PATH', 'logs')
+    CONFIG_FILE = ('CONFIG_FILE', 'config.json')
 
     def __init__(self, key: str, value: str):
         self.k = key

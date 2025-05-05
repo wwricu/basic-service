@@ -48,7 +48,7 @@ def database_backup():
         return
     log.warning(f'Backup database {DatabaseConfig.database}')
     with open(DatabaseConfig.database, mode='rb') as f:
-        # PRICED call every week and on each restart
+        # PRICED call on each restart and every week
         oss.put(DatabaseConfig.database, f.read(), StorageConfig.private_bucket)
     log.info(f'Backup database success')
 
