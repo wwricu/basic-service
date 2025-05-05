@@ -1,6 +1,6 @@
 FROM python:3.12-slim
 
-ENV PYTHONOPTIMIZE=1 ROOT_PATH=/api ENV=prod CONFIG_FILE=/etc/basic/config.json
+ENV PYTHONOPTIMIZE=1 ROOT_PATH=/api ENV=prod CONFIG_FILE=/etc/basic-service/config.json
 WORKDIR /data
 
 ADD https://github.com/wwricu/basic-service/releases/latest/download/wwricu.tar.gz .
