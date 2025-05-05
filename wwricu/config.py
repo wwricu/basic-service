@@ -96,8 +96,15 @@ def log_config():
     log.remove()
     if __debug__:
         log.add(sys.stdout, level=logging.DEBUG)
-    os.makedirs(EnvVarEnum.LOG_PATH.get(), exist_ok=True)
-    log.add(f'{EnvVarEnum.LOG_PATH.get()}/server.log', level=logging.DEBUG, rotation='monday at 00:00')
+    log_path = EnvVarEnum.LOG_PATH.get()
+    os.makedirs(log_path, exist_ok=True)
+    log.add(f'{log_path}/server.log', level=logging.DEBUG, rotation='monday at 00:00')
+    log.add(
+        f'{log_path}/access.log',
+        level=logging.NOTSET,
+        filter=lambda record: record.get('level').no < logging.DEBUG,
+        rotation='monday at 00:00'
+    )
 
 
 def get_config() -> dict:
