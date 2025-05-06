@@ -1,3 +1,6 @@
+from enum import IntEnum
+
+
 class HttpErrorDetail(object):
     POST_NOT_FOUND: str = 'Post Not Found'
     NO_SUCH_USER: str = 'NO SUCH USER'
@@ -18,3 +21,10 @@ class CommonConstant(object):
     APP_NAME: str = 'wwr.icu'
     VERSION_FILE: str = 'version.txt'
     COOKIE_TIMEOUT_SECOND: int = 30 * 24 * 60 * 60
+
+
+class Length(IntEnum):
+    INTERNAL = 16
+    SHORT = 32
+    MEDIUM = 128
+    LONG = 512
