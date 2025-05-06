@@ -10,7 +10,7 @@ requires-python = '>=3.12'
 dynamic = ['version']
 
 dependencies = [
-    'aiosqlite==0.21.0',
+    "aiomysql==0.2.0",
     'apscheduler==3.11.0',
     'bcrypt==4.3.0',
     'boto3==1.38.6',
@@ -18,7 +18,7 @@ dependencies = [
     'loguru==0.7.3',
     'pyotp==2.9.0',
     'redis==6.0.0',
-    'sqlalchemy==2.0.40'
+    'sqlalchemy==2.0.40',
 ]
 
 [tool.setuptools.dynamic]
