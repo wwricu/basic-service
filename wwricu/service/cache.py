@@ -81,6 +81,7 @@ class LocalCache:
             task.cancel()
 
     async def close(self):
+        # TODO: lengthy cache
         log.info('Dump cache data')
         stmt = delete(SysConfig).where(SysConfig.key == ConfigKeyEnum.CACHE_DATA)
         with Session(sync_engine) as sync_session, sync_session.begin():
