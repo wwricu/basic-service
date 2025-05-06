@@ -14,7 +14,7 @@ from wwricu.domain.entity import BlogPost, EntityRelation, PostTag, PostResource
 from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum, RelationTypeEnum
 from wwricu.service.cache import cache
 from wwricu.service.category import reset_category_count
-from wwricu.service.database import database_backup, engine, get_session, new_session
+from wwricu.service.database import engine, get_session, new_session
 from wwricu.service.storage import oss
 from wwricu.service.tag import reset_tag_count
 
@@ -26,7 +26,6 @@ async def lifespan(_: FastAPI):
         if Config.not_local():
             scheduler.add_job(hard_delete_expiration, trigger=CronTrigger(hour=5))
             scheduler.add_job(clean_post_resource, trigger=CronTrigger(day_of_week=0, hour=4))
-            scheduler.add_job(database_backup, trigger=CronTrigger(day_of_week=0, hour=3))
         scheduler.start()
         await reset_tag_count()
         await reset_category_count()
@@ -38,8 +37,6 @@ async def lifespan(_: FastAPI):
         scheduler.shutdown()
         await cache.close()
         await engine.dispose()
-        if Config.not_local():
-            database_backup()
         log.info('Exit')
         await log.complete()
 

@@ -2,17 +2,17 @@ import datetime
 import re
 
 import bcrypt
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from loguru import logger as log
 from sqlalchemy import select, update, delete
 
-from wwricu.config import DatabaseConfig, Config
+from wwricu.config import Config
 from wwricu.domain.common import ConfigRO, TrashBinRO, TrashBinVO, UserRO
 from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.enum import DatabaseActionEnum, EntityTypeEnum, TagTypeEnum, ConfigKeyEnum
 from wwricu.domain.entity import BlogPost, PostTag, SysConfig
 from wwricu.service.cache import cache
-from wwricu.service.database import database_restore, database_backup, session
+from wwricu.service.database import session
 from wwricu.service.security import admin_only
 
 manage_api = APIRouter(prefix='/manage', tags=['Manage API'], dependencies=[Depends(admin_only)])
@@ -63,15 +63,9 @@ async def trash_edit(trash_bin: TrashBinRO):
 
 
 @manage_api.get('/database')
-async def database(action: DatabaseActionEnum, background_task: BackgroundTasks):
-    match action:
-        case DatabaseActionEnum.RESTORE:
-            background_task.add_task(database_restore)
-        case DatabaseActionEnum.BACKUP:
-            background_task.add_task(database_backup)
-        case DatabaseActionEnum.DOWNLOAD:
-            return FileResponse(DatabaseConfig.database, filename=DatabaseConfig.database)
-    return None
+async def database(action: DatabaseActionEnum):
+    log.info(f'{action=}')
+    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED, detail='Service is using mysql, not supported')
 
 
 @manage_api.post('/config/set')
