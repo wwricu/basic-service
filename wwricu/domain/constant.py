@@ -19,7 +19,6 @@ class CommonConstant(object):
     COOKIE_SIGN: str = 'sign'
     EXPIRE_TIME: int = 60 * 60 * 24 * 7
     APP_NAME: str = 'wwr.icu'
-    VERSION_FILE: str = 'version.txt'
     COOKIE_TIMEOUT_SECOND: int = 30 * 24 * 60 * 60
 
 

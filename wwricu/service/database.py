@@ -1,6 +1,5 @@
 import contextlib
-import importlib
-import os
+import ssl
 from asyncio import current_task
 from typing import AsyncGenerator
 
@@ -8,7 +7,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session, async_sessionmaker, create_async_engine
 
 from wwricu.config import DatabaseConfig
-from wwricu.domain.entity import Base
 
 
 async def open_session():
@@ -32,23 +30,15 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
             yield s
 
 
-def database_init():
-    Base.metadata.create_all(sync_engine)
-
-
-async def database_restore():
-    if not os.path.exists(DatabaseConfig.database):
-        return
-    try:
-        await session.close_all()
-        await engine.dispose()
-        os.remove(DatabaseConfig.database)
-    finally:
-        importlib.reload(importlib.import_module(__name__))
-
-
-database_init()
-engine = create_async_engine(DatabaseConfig.url, echo=__debug__)
-sync_engine = create_engine(DatabaseConfig.sync_url, echo=__debug__)
+engine = create_async_engine(
+    DatabaseConfig.url,
+    connect_args=dict(ssl=ssl.create_default_context()),
+    echo=__debug__
+)
+sync_engine = create_engine(
+    DatabaseConfig.sync_url,
+    connect_args=dict(ssl=ssl.create_default_context()),
+    echo=__debug__
+)
 session_maker = async_sessionmaker(bind=engine)
 session = async_scoped_session(session_maker, scopefunc=current_task)
