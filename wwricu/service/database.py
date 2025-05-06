@@ -42,3 +42,7 @@ sync_engine = create_engine(
 )
 session_maker = async_sessionmaker(bind=engine)
 session = async_scoped_session(session_maker, scopefunc=current_task)
+
+# from wwricu.domain.entity import Base
+# Base.metadata.create_all(sync_engine)
+
