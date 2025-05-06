@@ -44,8 +44,6 @@ class DatabaseConfig(ConfigClass):
             cls.url = connect_string.format(driver=cls.async_driver)
         if cls.sync_url is None:
             cls.sync_url = connect_string.format(driver=cls.sync_driver)
-        log.info(f'async connect string = {cls.url}')
-        log.info(f'sync connect string = {cls.sync_url}')
 
 
 class RedisConfig(ConfigClass):

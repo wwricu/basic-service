@@ -9,6 +9,8 @@ from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum
 
 
 class Base(DeclarativeBase):
+    __abstract__ = True
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     create_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
@@ -55,7 +57,7 @@ class PostResource(Base):
     __tablename__ = 'wwr_post_resource'
     post_id: Mapped[int] = mapped_column(Integer, index=True)
     name: Mapped[str] = mapped_column(String(Length.LONG), nullable=True)
-    key: Mapped[str] = mapped_column(String(Length.LONG))
+    key: Mapped[str] = mapped_column(String(Length.LONG), index=True)
     type: Mapped[str] = mapped_column(String(Length.INTERNAL), nullable=True)
     url: Mapped[str] = mapped_column(TEXT, nullable=True)
 
