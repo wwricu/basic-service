@@ -2,6 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Integer, String, TEXT, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.dialects.mysql.types import LONGTEXT
 
 from domain.constant import Length
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum
@@ -21,7 +22,7 @@ class BlogPost(Base):
     __tablename__ = 'wwr_blog_post'
     title: Mapped[str] = mapped_column(String(Length.MEDIUM), default='', index=True)
     cover_id: Mapped[int] = mapped_column(Integer, nullable=True)
-    content: Mapped[str] = mapped_column(TEXT, default='')
+    content: Mapped[str] = mapped_column(LONGTEXT, default='')
     preview: Mapped[str] = mapped_column(TEXT, default='')
     status: Mapped[str] = mapped_column(String(Length.INTERNAL), default=PostStatusEnum.DRAFT.value, index=True)
     category_id: Mapped[int] = mapped_column(Integer, nullable=True)
