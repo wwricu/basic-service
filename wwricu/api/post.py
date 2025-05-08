@@ -14,7 +14,7 @@ from wwricu.service.category import get_category_by_name, update_category, updat
 from wwricu.service.database import session
 from wwricu.service.post import get_post_by_id, delete_post_cover, get_posts_preview, get_post_detail
 from wwricu.service.security import admin_only
-from wwricu.service.storage import oss
+from wwricu.service.storage import oss_public
 from wwricu.service.tag import update_tags, get_post_ids_by_tag_names, update_tag_count
 
 post_api = APIRouter(prefix='/post', tags=['Post Management'], dependencies=[Depends(admin_only)])
@@ -113,7 +113,7 @@ async def upload(file: UploadFile, post_id: int = Form(), file_type: str = Form(
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     type_enum = PostResourceTypeEnum(file_type)
     key = f'post/{post_id}/{type_enum}_{uuid.uuid4().hex}'
-    url = oss.put(key, await file.read())
+    url = oss_public.put(key, await file.read())
     resource = PostResource(name=file.filename, key=key, type=type_enum, post_id=post.id, url=url)
     session.add(resource)
     await session.flush()

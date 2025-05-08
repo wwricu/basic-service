@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from botocore.response import StreamingBody
+from fastapi import HTTPException, status as http_status
 from pydantic import ConfigDict
 
 from wwricu.domain.common import BaseModel
@@ -13,7 +14,7 @@ class AWSConst(object):
     AWS_DOMAIN = 'amazonaws.com'
 
 
-class AWSS3ResponseMetaData(BaseModel):
+class AWSResponseMetaData(BaseModel):
     RequestId: str
     HTTPStatusCode: int
     HTTPHeaders: dict
@@ -21,16 +22,23 @@ class AWSS3ResponseMetaData(BaseModel):
     RetryAttempts: int | None = None # SSM
 
 
-class AWSS3Response(BaseModel):
+class AWSResponseBase(BaseModel):
+    ResponseMetadata: AWSResponseMetaData
+
+    def check(self):
+        if self.ResponseMetadata.HTTPStatusCode != http_status.HTTP_200_OK:
+            raise HTTPException(status_code=self.ResponseMetadata.HTTPStatusCode)
+
+
+class AWSS3Response(AWSResponseBase):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    ResponseMetadata: dict
     AcceptRanges: str
     LastModified: datetime
     Body: StreamingBody
 
 
-class AWSS3Object(BaseModel):
+class AWSS3Object(AWSResponseBase):
     Key: str
     LastModified: datetime
     ETag: str
@@ -38,8 +46,7 @@ class AWSS3Object(BaseModel):
     StorageClass: str
 
 
-class AWSS3ListResponse(BaseModel):
-    ResponseMetadata: AWSS3ResponseMetaData
+class AWSS3ListResponse(AWSResponseBase):
     IsTruncated: bool
     Contents: list[AWSS3Object]
     Name: str
@@ -50,15 +57,13 @@ class AWSS3ListResponse(BaseModel):
     NextContinuationToken: str | None = None
 
 
-class AWSAppConfigSessionResponse(BaseModel):
-    ResponseMetadata: AWSS3ResponseMetaData
+class AWSAppConfigSessionResponse(AWSResponseBase):
     InitialConfigurationToken: str
 
 
-class AWSAppConfigConfigResponse(BaseModel):
+class AWSAppConfigConfigResponse(AWSResponseBase):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    ResponseMetadata: AWSS3ResponseMetaData
     NextPollConfigurationToken: str
     NextPollIntervalInSeconds: int
     ContentType: str

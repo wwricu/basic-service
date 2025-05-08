@@ -15,7 +15,7 @@ from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum, Relati
 from wwricu.service.cache import cache
 from wwricu.service.category import reset_category_count
 from wwricu.service.database import database_backup, engine, get_session, new_session
-from wwricu.service.storage import oss
+from wwricu.service.storage import oss_public
 from wwricu.service.tag import reset_tag_count
 
 
@@ -143,7 +143,7 @@ async def clean_post_resource():
     async with new_session() as s:
         stmt = select(PostResource).where(PostResource.id.in_(query.c.id))
         deleted_resources = await s.scalars(stmt)
-        oss.batch_delete([resource.key for resource in deleted_resources.all()])
+        oss_public.batch_delete([resource.key for resource in deleted_resources.all()])
 
         stmt = delete(PostResource).where(PostResource.id.in_(query.c.id))
         result = await s.execute(stmt)
