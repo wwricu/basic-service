@@ -62,7 +62,7 @@ async def trash_edit(trash_bin: TrashBinRO):
     await session.execute(stmt.where(entity.id == trash_bin.id))
 
 
-@manage_api.get('/database')
+@manage_api.get('/database', response_model=None)
 async def database(action: DatabaseActionEnum, background_task: BackgroundTasks):
     match action:
         case DatabaseActionEnum.RESTORE:
@@ -74,7 +74,7 @@ async def database(action: DatabaseActionEnum, background_task: BackgroundTasks)
     return None
 
 
-@manage_api.post('/config/set')
+@manage_api.post('/config/set', response_model=None)
 async def config_set(config: ConfigRO):
     # Set None to delete config
     value = config.value
@@ -112,7 +112,7 @@ async def config_get(key: str) -> str | None:
     return await session.scalar(stmt)
 
 
-@manage_api.post('/user')
+@manage_api.post('/user', response_model=None)
 async def user_config(user: UserRO, request: Request):
     if user.username is not None:
         if len(user.username) < 3 or not bool(re.match('^[a-zA-Z][a-zA-Z0-9_-]*$', user.username)):
