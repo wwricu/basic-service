@@ -22,7 +22,7 @@ manage_api = APIRouter(prefix='/manage', tags=['Manage API'], dependencies=[Depe
 async def trash_get_all() -> list[TrashBinVO]:
     result = []
     deadline = datetime.datetime.now() - datetime.timedelta(days=Config.trash_expire_day)
-    stmt = select(BlogPost).where(BlogPost.deleted == True).where(BlogPost.update_time < deadline)
+    stmt = select(BlogPost).where(BlogPost.deleted == True).where(BlogPost.update_time > deadline)
     deleted_post = (await session.scalars(stmt)).all()
     result.extend(TrashBinVO(
         id=post.id,
@@ -34,7 +34,7 @@ async def trash_get_all() -> list[TrashBinVO]:
     stmt = select(PostTag).where(
         PostTag.deleted == True).where(
         PostTag.type.in_((TagTypeEnum.POST_CAT, EntityTypeEnum.POST_TAG))).where(
-        PostTag.update_time < deadline
+        PostTag.update_time > deadline
     )
     deleted_tag = (await session.scalars(stmt)).all()
     result.extend(TrashBinVO(
@@ -47,7 +47,7 @@ async def trash_get_all() -> list[TrashBinVO]:
     return result
 
 
-@manage_api.get('/trash/edit', response_model=list[TrashBinVO])
+@manage_api.post('/trash/edit', response_model=list[TrashBinVO])
 async def trash_edit(trash_bin: TrashBinRO):
     match trash_bin.type:
         case EntityTypeEnum.BLOG_POST:

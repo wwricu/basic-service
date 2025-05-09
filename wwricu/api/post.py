@@ -35,8 +35,7 @@ async def select_post(post: PostRequestRO) -> PageVO[PostDetailVO]:
     stmt = select(BlogPost)
     if post.status is not None:
         stmt = stmt.where(BlogPost.status == post.status.value)
-    if post.deleted is not None:
-        stmt = stmt.where(BlogPost.deleted == post.deleted)
+    stmt = stmt.where(BlogPost.deleted == post.deleted)
     if category := await get_category_by_name(post.category):
         stmt = stmt.where(BlogPost.category_id == category.id)
     if post.tag_list is not None:
