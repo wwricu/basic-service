@@ -47,7 +47,7 @@ async def trash_get_all() -> list[TrashBinVO]:
     return result
 
 
-@manage_api.post('/trash/edit', response_model=list[TrashBinVO])
+@manage_api.post('/trash/edit', response_model=None)
 async def trash_edit(trash_bin: TrashBinRO):
     match trash_bin.type:
         case EntityTypeEnum.BLOG_POST:
@@ -58,7 +58,7 @@ async def trash_edit(trash_bin: TrashBinRO):
             entity = PostTag
         case _:
             raise HTTPException(status.HTTP_404_NOT_FOUND, HttpErrorDetail.UNKNOWN_ENTITY_TYPE)
-    stmt = delete(entity).where(entity.deleted == True) if trash_bin.deleted else update(entity).values(deleted=False)
+    stmt = delete(entity).where(entity.deleted == True) if trash_bin.delete else update(entity).values(deleted=False)
     await session.execute(stmt.where(entity.id == trash_bin.id))
 
 
