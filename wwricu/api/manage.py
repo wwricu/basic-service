@@ -103,7 +103,8 @@ async def config_set(config: ConfigRO):
 
 @manage_api.get('/config/get', response_model=str | None)
 async def config_get(key: str) -> str | None:
-    if key == ConfigKeyEnum.TOTP_SECRET or key == ConfigKeyEnum.TOTP_ENFORCE:
+    # TODO: remove this
+    if key == ConfigKeyEnum.TOTP_SECRET:
         raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.CONFIG_NOT_ALLOWED)
     return await get_config(ConfigKeyEnum(key))
 
@@ -126,20 +127,21 @@ async def user_config(user: UserRO, request: Request):
         await cache.delete(session_id)
 
 
-@manage_api.post('/totp/enforce', response_model=str | None)
+@manage_api.get('/totp/enforce', response_model=str | None)
 async def enforce_totp_secret(enforce: bool) -> str | None:
     if not enforce:
         await delete_config([ConfigKeyEnum.TOTP_ENFORCE, ConfigKeyEnum.TOTP_SECRET])
         return None
     secret = pyotp.random_base32()
+    await set_config(ConfigKeyEnum.TOTP_SECRET, secret)
     return secret
 
 
-@manage_api.post('/totp/confirm')
+@manage_api.get('/totp/confirm')
 async def totp_enforce_confirm(otp: str):
     secret = await get_config(ConfigKeyEnum.TOTP_SECRET)
     if secret is None:
-        raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE)
+        raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.NO_TOTP_SECRET)
     totp_client = pyotp.TOTP(secret)
     if not totp_client.verify(otp, valid_window=1):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)

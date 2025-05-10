@@ -4,12 +4,12 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from loguru import logger as log
 
-from service.manage import get_config
 from wwricu.config import AdminConfig
 from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum
 from wwricu.domain.common import LoginRO
 from wwricu.service.cache import cache
+from wwricu.service.manage import get_config
 from wwricu.service.security import admin_only, hmac_sign, validate_cookie, admin_login, try_login_lock
 
 common_api = APIRouter(tags=['Common API'])
