@@ -17,8 +17,4 @@ class CommonConstant(object):
     EXPIRE_TIME: int = 60 * 60 * 24 * 7
     APP_NAME: str = 'wwr.icu'
     VERSION_FILE: str = 'version.txt'
-    CONFIG_FILE: str = 'config.json'
     COOKIE_TIMEOUT_SECOND: int = 30 * 24 * 60 * 60
-    LOG_PATH: str = 'logs'
-    ROOT_PATH: str = 'ROOT_PATH'
-    ENV_KEY: str = 'ENV'
