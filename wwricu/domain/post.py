@@ -13,7 +13,7 @@ class PostRequestRO(BaseModel):
     tag_list: list[str] | None = None
     category: str | None = None
     status: PostStatusEnum | None = None
-    deleted: bool = None
+    deleted: bool = False
 
 
 class PostUpdateRO(BaseModel):

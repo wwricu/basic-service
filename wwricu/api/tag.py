@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy import update, select
 
-from wwricu.domain.entity import BlogPost, PostTag
-from wwricu.domain.enum import TagTypeEnum
+from wwricu.domain.entity import PostTag
 from wwricu.domain.tag import TagRO, TagVO
 from wwricu.service.common import update_system_count
 from wwricu.service.database import session
@@ -27,13 +26,7 @@ async def update_tag(tag_update: TagRO) -> TagVO:
     return TagVO.model_validate(await session.scalar(stmt))
 
 
-@tag_api.get('/delete/{tag_id}', response_model=int)
-async def delete_tag(tag_id: int) -> int:
-    stmt = select(PostTag).where(PostTag.deleted == False).where(PostTag.id == tag_id)
-    tag = await session.scalar(stmt)
-    if tag.type == TagTypeEnum.POST_CAT:
-        stmt = update(BlogPost).where(BlogPost.category_id == tag_id).values(category_id=None)
-        await session.execute(stmt)
+@tag_api.get('/delete/{tag_id}', response_model=None)
+async def delete_tag(tag_id: int):
     stmt = update(PostTag).where(PostTag.id == tag_id).values(deleted=True)
-    result = await session.execute(stmt)
-    return result.rowcount
+    await session.execute(stmt)

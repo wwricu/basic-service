@@ -8,8 +8,8 @@ from loguru import logger as log
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session, async_sessionmaker, create_async_engine
 
-from wwricu.config import DatabaseConfig, StorageConfig
-from wwricu.service.storage import oss
+from wwricu.config import DatabaseConfig
+from wwricu.service.storage import oss_private
 
 
 async def open_session():
@@ -37,7 +37,7 @@ def database_init():
     if os.path.exists(DatabaseConfig.database):
         return
     # PRICED call on each deploy
-    if database := oss.get(DatabaseConfig.database, bucket=StorageConfig.private_bucket):
+    if database := oss_private.get(DatabaseConfig.database):
         log.warning(f'Download database as {DatabaseConfig.database}')
         with open(DatabaseConfig.database, mode='wb+') as f:
             f.write(database)
@@ -49,7 +49,7 @@ def database_backup():
     log.warning(f'Backup database {DatabaseConfig.database}')
     with open(DatabaseConfig.database, mode='rb') as f:
         # PRICED call on each restart and every week
-        oss.put(DatabaseConfig.database, f.read(), StorageConfig.private_bucket)
+        oss_private.put(DatabaseConfig.database, f.read())
     log.info(f'Backup database success')
 
 

@@ -59,4 +59,4 @@ class TrashBinVO(BaseModel):
     name: str
     type: EntityTypeEnum
     status: PostStatusEnum | None = None
-    deleted_time: datetime
+    delete_time: datetime
