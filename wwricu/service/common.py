@@ -23,6 +23,7 @@ from wwricu.service.tag import reset_tag_count
 async def lifespan(_: FastAPI):
     scheduler = AsyncIOScheduler()
     try:
+        await cache.init()
         scheduler.add_job(hard_delete_expiration, trigger=CronTrigger(hour=5))
         scheduler.add_job(clean_post_resource, trigger=CronTrigger(day_of_week=0, hour=4))
         scheduler.add_job(database_backup, trigger=CronTrigger(day_of_week=0, hour=3))

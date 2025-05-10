@@ -35,17 +35,16 @@ class DatabaseConfig(ConfigClass):
     host: str = ''
     port: int = 0
     database: str = ''
+    cache: str = 'cache.sqlite3'
     url: str | None = None
-    sync_url: str | None = None
+    cache_url: str | None = None
 
     def __new__(cls):
         connect_string = f'{{driver}}://{cls.username}:{cls.password}@{cls.host}:{cls.port}/{cls.database}'
         if cls.url is None:
             cls.url = connect_string.format(driver=cls.async_driver)
-        if cls.sync_url is None:
-            cls.sync_url = connect_string.format(driver=cls.sync_driver)
-        log.info(f'async connect string = {cls.url}')
-        log.info(f'sync connect string = {cls.sync_url}')
+        if cls.cache_url is None:
+            cls.cache_url = f'{cls.async_driver}://{cls.username}:{cls.password}@{cls.host}:{cls.port}/{cls.cache}'
 
 
 class RedisConfig(ConfigClass):

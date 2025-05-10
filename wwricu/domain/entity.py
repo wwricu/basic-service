@@ -1,12 +1,17 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Integer, String, TEXT, UniqueConstraint, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import Boolean, DateTime, Integer, String, TEXT, UniqueConstraint, func, BLOB
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, declarative_base
 
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum
 
 
+sys_cache_base = declarative_base()
+
+
 class Base(DeclarativeBase):
+    __abstract__ = True
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     create_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
@@ -62,3 +67,14 @@ class SysConfig(Base):
     __tablename__ = 'wwr_sys_config'
     key: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     value: Mapped[str] = mapped_column(TEXT, nullable=True)
+
+
+class SysCache(sys_cache_base):
+    __tablename__ = 'wwr_sys_cache'
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    key: Mapped[str] = mapped_column(String)
+    value: Mapped[bytes] = mapped_column(BLOB, nullable=True)
+    expire: Mapped[int] = mapped_column(Integer, nullable=True)
+    create_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+

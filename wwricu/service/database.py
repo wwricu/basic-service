@@ -5,7 +5,6 @@ from asyncio import current_task
 from typing import AsyncGenerator
 
 from loguru import logger as log
-from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session, async_sessionmaker, create_async_engine
 
 from wwricu.config import DatabaseConfig
@@ -66,6 +65,5 @@ async def database_restore():
 
 database_init()
 engine = create_async_engine(DatabaseConfig.url, echo=__debug__)
-sync_engine = create_engine(DatabaseConfig.sync_url, echo=__debug__)
 session_maker = async_sessionmaker(bind=engine)
 session = async_scoped_session(session_maker, scopefunc=current_task)
