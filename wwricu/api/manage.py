@@ -2,6 +2,7 @@ import datetime
 import re
 
 import bcrypt
+import pyotp
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from fastapi.responses import FileResponse
 from sqlalchemy import select, update, delete
@@ -123,3 +124,23 @@ async def user_config(user: UserRO, request: Request):
     if user.username is not None or user.password is not None or user.reset is True:
         session_id = request.cookies.get(CommonConstant.SESSION_ID)
         await cache.delete(session_id)
+
+
+@manage_api.post('/totp/enforce', response_model=str | None)
+async def enforce_totp_secret(enforce: bool) -> str | None:
+    if not enforce:
+        await delete_config([ConfigKeyEnum.TOTP_ENFORCE, ConfigKeyEnum.TOTP_SECRET])
+        return None
+    secret = pyotp.random_base32()
+    return secret
+
+
+@manage_api.post('/totp/confirm')
+async def totp_enforce_confirm(otp: str):
+    secret = await get_config(ConfigKeyEnum.TOTP_SECRET)
+    if secret is None:
+        raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE)
+    totp_client = pyotp.TOTP(secret)
+    if not totp_client.verify(otp, valid_window=1):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
+    await set_config(ConfigKeyEnum.TOTP_ENFORCE, str(True))
