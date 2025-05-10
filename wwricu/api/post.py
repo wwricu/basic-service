@@ -94,16 +94,15 @@ async def update_post_status(post_id: int, status: str) -> PostDetailVO:
     return await get_post_detail(blog_post)
 
 
-@post_api.get('/delete/{post_id}', dependencies=[Depends(update_system_count)], response_model=int)
-async def delete_post(post_id: int) -> int:
+@post_api.get('/delete/{post_id}', dependencies=[Depends(update_system_count)], response_model=None)
+async def delete_post(post_id: int):
     if (post := await get_post_by_id(post_id)) is None:
-        return 0
+        return
     await update_category_count(post, -1)
     await update_tag_count(post, -1)
     # Retain relations on soft deletion, delete relation on hard deletion
     stmt = update(BlogPost).where(BlogPost.id == post_id).values(deleted=True)
-    result = await session.execute(stmt)
-    return result.rowcount
+    await session.execute(stmt)
 
 
 @post_api.post('/upload', response_model=FileUploadVO)

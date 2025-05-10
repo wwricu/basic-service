@@ -14,7 +14,7 @@ from wwricu.service.security import admin_only, hmac_sign, validate_cookie, admi
 common_api = APIRouter(tags=['Common API'])
 
 
-@common_api.post('/login')
+@common_api.post('/login', response_model=None)
 async def login(login_request: LoginRO, response: Response):
     async with try_login_lock():
         if await admin_login(login_request) is not True:
@@ -30,7 +30,7 @@ async def login(login_request: LoginRO, response: Response):
     response.set_cookie(CommonConstant.COOKIE_SIGN, cookie_sign, secure=True, httponly=True, samesite='lax')
 
 
-@common_api.get('/logout', dependencies=[Depends(admin_only)])
+@common_api.get('/logout', dependencies=[Depends(admin_only)], response_model=None)
 async def logout(request: Request, response: Response):
     if (session_id := request.cookies.get(CommonConstant.SESSION_ID)) is None:
         return
