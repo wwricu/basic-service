@@ -1,12 +1,14 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Integer, String, TEXT, UniqueConstraint, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import Boolean, DateTime, Integer, String, TEXT, UniqueConstraint, func, BLOB
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, declarative_base
 
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum
 
 
 class Base(DeclarativeBase):
+    __abstract__ = True
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     create_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
