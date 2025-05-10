@@ -10,9 +10,10 @@ from wwricu.config import DatabaseConfig, Config
 from wwricu.domain.common import ConfigRO, TrashBinRO, TrashBinVO, UserRO
 from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.enum import DatabaseActionEnum, EntityTypeEnum, TagTypeEnum, ConfigKeyEnum
-from wwricu.domain.entity import BlogPost, PostTag, SysConfig
+from wwricu.domain.entity import BlogPost, PostTag
 from wwricu.service.cache import cache
 from wwricu.service.database import database_restore, database_backup, session
+from wwricu.service.manage import set_config, get_config, delete_config
 from wwricu.service.security import admin_only
 
 manage_api = APIRouter(prefix='/manage', tags=['Manage API'], dependencies=[Depends(admin_only)])
@@ -79,7 +80,7 @@ async def config_set(config: ConfigRO):
     # Set None to delete config
     value = config.value
     if value is None:
-        await session.execute(delete(SysConfig).where(SysConfig.key == config.key))
+        await delete_config([config.key])
         return
     match config.key:
         case ConfigKeyEnum.USERNAME:
@@ -96,20 +97,14 @@ async def config_set(config: ConfigRO):
                 raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.LENGTH_EXCEEDED)
         case _:
             pass
-    stmt = select(SysConfig).where(SysConfig.key == config.key).where(SysConfig.deleted == False)
-    if await session.scalar(stmt) is None:
-        session.add(SysConfig(key=config.key, value=value))
-        return
-    stmt = update(SysConfig).where(SysConfig.key == config.key).values(value=value)
-    await session.execute(stmt)
+    await set_config(config.key, config.value)
 
 
 @manage_api.get('/config/get', response_model=str | None)
 async def config_get(key: str) -> str | None:
     if key == ConfigKeyEnum.TOTP_SECRET or key == ConfigKeyEnum.TOTP_ENFORCE:
         raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.CONFIG_NOT_ALLOWED)
-    stmt = select(SysConfig.value).where(SysConfig.key == key).where(SysConfig.deleted == False)
-    return await session.scalar(stmt)
+    return await get_config(ConfigKeyEnum(key))
 
 
 @manage_api.post('/user', response_model=None)
@@ -117,19 +112,14 @@ async def user_config(user: UserRO, request: Request):
     if user.username is not None:
         if len(user.username) < 3 or not bool(re.match('^[a-zA-Z][a-zA-Z0-9_-]*$', user.username)):
             raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, 'Invalid username')
-        stmt = delete(SysConfig).where(SysConfig.key == ConfigKeyEnum.USERNAME)
-        await session.execute(stmt)
-        session.add(SysConfig(key=ConfigKeyEnum.USERNAME, value=user.username))
+        await set_config(ConfigKeyEnum.USERNAME, user.username)
     if user.password is not None:
         if len(user.password) < 8 or user.password.isalnum():
             raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, 'Invalid password')
-        stmt = delete(SysConfig).where(SysConfig.key == ConfigKeyEnum.PASSWORD)
-        await session.execute(stmt)
         password = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt()).decode()
-        session.add(SysConfig(key=ConfigKeyEnum.PASSWORD, value=password))
+        await set_config(ConfigKeyEnum.PASSWORD, password)
     if user.reset is True:
-        stmt = delete(SysConfig).where(SysConfig.key.in_((ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD)))
-        await session.execute(stmt)
+        await delete_config([ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD])
     if user.username is not None or user.password is not None or user.reset is True:
         session_id = request.cookies.get(CommonConstant.SESSION_ID)
         await cache.delete(session_id)

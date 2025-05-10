@@ -50,7 +50,6 @@ async def admin_login(login_request: LoginRO) -> bool:
     secret = await session.scalar(stmt)
     if enforce is not None and secret is not None and secret.value is not None:
         totp = pyotp.TOTP(secret.value)
-        pyotp.random_base32()
         if not totp.verify(login_request.totp, valid_window=1):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
 
