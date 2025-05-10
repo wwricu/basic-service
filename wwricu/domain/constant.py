@@ -9,6 +9,8 @@ class HttpErrorDetail(object):
     UNKNOWN_ENTITY_TYPE: str = 'Unknown entity type'
     LENGTH_EXCEEDED: str = 'Length exceeded'
     CONFIG_NOT_ALLOWED: str = 'Cannot get this config'
+    NO_TOTP_SECRET: str = 'No totp secret'
+    INVALID_VALUE: str = 'Invalid value'
 
 
 class CommonConstant(object):
@@ -16,5 +18,4 @@ class CommonConstant(object):
     COOKIE_SIGN: str = 'sign'
     EXPIRE_TIME: int = 60 * 60 * 24 * 7
     APP_NAME: str = 'wwr.icu'
-    VERSION_FILE: str = 'version.txt'
     COOKIE_TIMEOUT_SECOND: int = 30 * 24 * 60 * 60

@@ -6,7 +6,7 @@ from wwricu.domain.entity import BlogPost, PostResource
 from wwricu.domain.enum import PostResourceTypeEnum
 from wwricu.service.category import get_post_category, get_posts_category
 from wwricu.service.database import session
-from wwricu.service.storage import oss
+from wwricu.service.storage import oss_public
 from wwricu.service.tag import get_post_tags, get_posts_tag_lists
 
 
@@ -33,7 +33,7 @@ async def delete_post_cover(post: BlogPost) -> int:
     )
     if (resource := await session.scalar(stmt)) is None:
         return 0
-    oss.delete(resource.key)
+    oss_public.delete(resource.key)
     stmt = delete(PostResource).where(PostResource.id == resource.id)
     result = await session.execute(stmt)
     return result.rowcount
