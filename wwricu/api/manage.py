@@ -103,7 +103,6 @@ async def config_set(config: ConfigRO):
 
 @manage_api.get('/config/get', response_model=str | None)
 async def config_get(key: str) -> str | None:
-    # TODO: remove this
     if key == ConfigKeyEnum.TOTP_SECRET:
         raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.CONFIG_NOT_ALLOWED)
     return await get_config(ConfigKeyEnum(key))
@@ -138,11 +137,11 @@ async def enforce_totp_secret(enforce: bool) -> str | None:
 
 
 @manage_api.get('/totp/confirm')
-async def totp_enforce_confirm(otp: str):
+async def totp_enforce_confirm(totp: str):
     secret = await get_config(ConfigKeyEnum.TOTP_SECRET)
     if secret is None:
         raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.NO_TOTP_SECRET)
     totp_client = pyotp.TOTP(secret)
-    if not totp_client.verify(otp, valid_window=1):
+    if not totp_client.verify(totp, valid_window=1):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
     await set_config(ConfigKeyEnum.TOTP_ENFORCE, str(True))

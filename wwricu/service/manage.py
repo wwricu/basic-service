@@ -17,7 +17,7 @@ async def set_config(key: ConfigKeyEnum, value: str):
 
 
 async def delete_config(keys: list[ConfigKeyEnum]):
-    stmt = delete(SysConfig).where(SysConfig.key.in_(keys))
+    stmt = delete(SysConfig).where(SysConfig.key.in_(keys)).where(SysConfig.deleted == False)
     async with get_session() as s:
         await s.execute(stmt)
 
