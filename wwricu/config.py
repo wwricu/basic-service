@@ -28,24 +28,18 @@ class StorageConfig(ConfigClass):
 
 
 class DatabaseConfig(ConfigClass):
-    async_driver: str = ''
-    sync_driver: str = ''
+    driver: str
     username: str = ''
     password: str = ''
     host: str = ''
     port: int = 0
     database: str = ''
+    cache: str = 'cache.sqlite3'
     url: str | None = None
-    sync_url: str | None = None
 
     def __new__(cls):
-        connect_string = f'{{driver}}://{cls.username}:{cls.password}@{cls.host}:{cls.port}/{cls.database}'
         if cls.url is None:
-            cls.url = connect_string.format(driver=cls.async_driver)
-        if cls.sync_url is None:
-            cls.sync_url = connect_string.format(driver=cls.sync_driver)
-        log.info(f'async connect string = {cls.url}')
-        log.info(f'sync connect string = {cls.sync_url}')
+            cls.url = f'{cls.driver}://{cls.username}:{cls.password}@{cls.host}:{cls.port}/{cls.database}'
 
 
 class RedisConfig(ConfigClass):
@@ -65,14 +59,6 @@ class Config(ConfigClass):
     encoding: str = 'utf-8'
     trash_expire_day: int = 30
     env: EnvironmentEnum = EnvironmentEnum(EnvVarEnum.ENV.get())
-
-    @classmethod
-    def is_local(cls) -> bool:
-        return cls.env == EnvironmentEnum.LOCAL
-
-    @classmethod
-    def not_local(cls) -> bool:
-        return not cls.is_local()
 
     @classmethod
     def load(

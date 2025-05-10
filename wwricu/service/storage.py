@@ -23,7 +23,7 @@ class AWSS3Storage:
 
     def put(self, key: str, data: bytes) -> str:
         self.s3_client.put_object(Bucket=self.bucket, Key=key, Body=data)
-        return f'https://{AWSConst.S3}.{StorageConfig.region}.{AWSConst.AWS_DOMAIN}/{bucket}/{key}'
+        return f'https://{AWSConst.S3}.{StorageConfig.region}.{AWSConst.AWS_DOMAIN}/{self.bucket}/{key}'
 
     def delete(self, key: str):
         self.s3_client.delete_object(Bucket=self.bucket, Key=key)
