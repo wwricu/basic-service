@@ -37,7 +37,8 @@ async def lifespan(_: FastAPI):
         scheduler.shutdown()
         await cache.close()
         await engine.dispose()
-        database_backup()
+        if not __debug__:
+            database_backup()
         log.info('Exit')
         await log.complete()
 
