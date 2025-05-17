@@ -51,5 +51,5 @@ async def info(request: Request) -> bool:
 
 
 @common_api.get('/totp', response_model=bool)
-async def totp() -> bool:
+async def get_totp_status() -> bool:
     return await get_config(ConfigKeyEnum.TOTP_ENFORCE) == str(True)

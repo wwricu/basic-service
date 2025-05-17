@@ -19,7 +19,7 @@ open_api = APIRouter(prefix='/open', tags=['Open API'])
 
 
 @open_api.post('/post/all', response_model=PageVO[PostDetailVO])
-async def get_all_posts(post: PostRequestRO) -> PageVO[PostDetailVO]:
+async def open_get_posts(post: PostRequestRO) -> PageVO[PostDetailVO]:
     stmt = select(
         BlogPost.id,
         BlogPost.title,
@@ -49,7 +49,7 @@ async def get_all_posts(post: PostRequestRO) -> PageVO[PostDetailVO]:
 
 
 @open_api.get('/post/detail/{post_id}', response_model=PostDetailVO)
-async def get_open_post_detail(post_id: int) -> PostDetailVO:
+async def open_get_post(post_id: int) -> PostDetailVO:
     stmt = select(
         BlogPost.id,
         BlogPost.title,
@@ -68,7 +68,7 @@ async def get_open_post_detail(post_id: int) -> PostDetailVO:
 
 
 @open_api.post('/tags', response_model=list[TagVO])
-async def get_all_tags(get_tag: TagRequestRO) -> list[TagVO]:
+async def open_get_tags(get_tag: TagRequestRO) -> list[TagVO]:
     stmt = select(PostTag).where(
         PostTag.deleted == False).where(
         PostTag.type == get_tag.type).order_by(
@@ -80,7 +80,7 @@ async def get_all_tags(get_tag: TagRequestRO) -> list[TagVO]:
 
 
 @open_api.get('/about', response_model=AboutPageVO)
-async def about() -> AboutPageVO:
+async def open_get_about() -> AboutPageVO:
     stmt = select(SysConfig).where(SysConfig.key == ConfigKeyEnum.ABOUT_CONTENT).where(SysConfig.deleted == False)
     conf = await session.scalar(stmt)
     post, category, tag = await asyncio.gather(
