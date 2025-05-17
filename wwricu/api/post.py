@@ -31,7 +31,7 @@ async def create_post() -> PostDetailVO:
 
 
 @post_api.post('/all', response_model=PageVO[PostDetailVO])
-async def select_post(post: PostRequestRO) -> PageVO[PostDetailVO]:
+async def get_posts(post: PostRequestRO) -> PageVO[PostDetailVO]:
     stmt = select(BlogPost)
     if post.status is not None:
         stmt = stmt.where(BlogPost.status == post.status.value)
@@ -51,7 +51,7 @@ async def select_post(post: PostRequestRO) -> PageVO[PostDetailVO]:
     posts_result = await session.scalars(post_stmt)
     count = await session.scalar(count_stmt)
     all_posts = await get_posts_preview(posts_result.all())
-    return PageVO(page_index=post.page_index, page_size=post.page_size, count=count, post_details=all_posts)
+    return PageVO(page_index=post.page_index, page_size=post.page_size, count=count, data=all_posts)
 
 
 @post_api.get('/detail/{post_id}', response_model=PostDetailVO | None)
@@ -106,7 +106,7 @@ async def delete_post(post_id: int):
 
 
 @post_api.post('/upload', response_model=FileUploadVO)
-async def upload(file: UploadFile, post_id: int = Form(), file_type: str = Form()) -> FileUploadVO:
+async def upload_post_file(file: UploadFile, post_id: int = Form(), file_type: str = Form()) -> FileUploadVO:
     if (post := await get_post_by_id(post_id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     type_enum = PostResourceTypeEnum(file_type)
