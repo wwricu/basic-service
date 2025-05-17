@@ -13,7 +13,6 @@ from wwricu.service.post import get_posts_preview
 client = TestClient(app)
 
 
-
 def test_create_post():
     response = client.get('/post/create')
     assert response.status_code == status.HTTP_200_OK
