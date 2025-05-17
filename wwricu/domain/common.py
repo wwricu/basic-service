@@ -30,7 +30,7 @@ class PageVO[T](BaseModel):
     page_index: int
     page_size: int
     count: int
-    post_details: list[T] = Field(default_factory=list)
+    data: list[T] = Field(default_factory=list)
 
 
 class FileUploadVO(BaseModel):

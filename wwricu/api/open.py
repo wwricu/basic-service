@@ -45,7 +45,7 @@ async def open_get_posts(post: PostRequestRO) -> PageVO[PostDetailVO]:
     posts_result = await session.execute(post_stmt)
     count = await session.scalar(count_stmt)
     all_posts = await get_posts_preview(posts_result.all())
-    return PageVO(page_index=post.page_index, page_size=post.page_size, count=count, post_details=all_posts)
+    return PageVO(page_index=post.page_index, page_size=post.page_size, count=count, data=all_posts)
 
 
 @open_api.get('/post/detail/{post_id}', response_model=PostDetailVO)

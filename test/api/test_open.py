@@ -19,7 +19,7 @@ def test_open_get_post():
     log.info(response.json())
     assert response.status_code == status.HTTP_200_OK
     page = PageVO.model_validate(response.json())
-    for post in page.post_details:
+    for post in page.data:
         post_detail = PostDetailVO.model_validate(post)
         log.info(post_detail)
 
