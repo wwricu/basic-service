@@ -1,13 +1,9 @@
 import asyncio
-import pickle
 import shelve
 import time
 from typing import Protocol
 
-import redis.asyncio as redis
 from loguru import logger as log
-
-from wwricu.config import RedisConfig
 
 
 class LocalCache:
@@ -59,33 +55,6 @@ class LocalCache:
         self.cache_data.sync()
         log.info(f'{len(self.cache_data)} cache entries dumped')
         self.cache_data.close()
-
-
-class RedisCache:
-    redis: redis.Redis
-
-    def __init__(self):
-        self.redis = redis.Redis(
-            username=RedisConfig.username,
-            password=RedisConfig.password,
-            host=RedisConfig.host,
-            port=RedisConfig.port
-        )
-
-    async def get(self, key: str) -> any:
-        value = await self.redis.get(key)
-        return None if value is None else pickle.loads(value)
-
-    async def set(self, key: str, value: any, second: int = 600):
-        if value is not None:
-            value = pickle.dumps(value)
-        await self.redis.set(key, value, ex=second)
-
-    async def delete(self, key: str):
-        await self.redis.delete(key)
-
-    async def close(self):
-        await self.redis.close()
 
 
 class Cache(Protocol):
