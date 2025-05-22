@@ -83,21 +83,6 @@ async def config_set(config: ConfigRO):
     if value is None:
         await delete_config([config.key])
         return
-    match config.key:
-        case ConfigKeyEnum.USERNAME:
-            if len(value) < 4 or len(value) > 16:
-                raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.LENGTH_EXCEEDED)
-        case ConfigKeyEnum.PASSWORD:
-            if len(value) < 8 or len(value) > 32:
-                raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.LENGTH_EXCEEDED)
-        case ConfigKeyEnum.TOTP_SECRET:
-            if len(value) < 32:
-                raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.LENGTH_EXCEEDED)
-        case ConfigKeyEnum.ABOUT_CONTENT:
-            if len(value) > 500:
-                raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.LENGTH_EXCEEDED)
-        case _:
-            pass
     await set_config(config.key, config.value)
 
 
