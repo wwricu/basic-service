@@ -15,7 +15,7 @@ from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum, Relati
 from wwricu.service.cache import cache
 from wwricu.service.category import reset_category_count
 from wwricu.service.database import database_backup, engine, get_session, new_session
-from wwricu.service.storage import oss
+from wwricu.service.storage import oss_public
 from wwricu.service.tag import reset_tag_count
 
 
@@ -23,10 +23,9 @@ from wwricu.service.tag import reset_tag_count
 async def lifespan(_: FastAPI):
     scheduler = AsyncIOScheduler()
     try:
-        if Config.not_local():
-            scheduler.add_job(hard_delete_expiration, trigger=CronTrigger(hour=5))
-            scheduler.add_job(clean_post_resource, trigger=CronTrigger(day_of_week=0, hour=4))
-            scheduler.add_job(database_backup, trigger=CronTrigger(day_of_week=0, hour=3))
+        scheduler.add_job(hard_delete_expiration, trigger=CronTrigger(hour=5))
+        scheduler.add_job(clean_post_resource, trigger=CronTrigger(day_of_week=0, hour=4))
+        scheduler.add_job(database_backup, trigger=CronTrigger(day_of_week=0, hour=3))
         scheduler.start()
         await reset_tag_count()
         await reset_category_count()
@@ -38,7 +37,7 @@ async def lifespan(_: FastAPI):
         scheduler.shutdown()
         await cache.close()
         await engine.dispose()
-        if Config.not_local():
+        if not __debug__:
             database_backup()
         log.info('Exit')
         await log.complete()
@@ -143,7 +142,7 @@ async def clean_post_resource():
     async with new_session() as s:
         stmt = select(PostResource).where(PostResource.id.in_(query.c.id))
         deleted_resources = await s.scalars(stmt)
-        oss.batch_delete([resource.key for resource in deleted_resources.all()])
+        oss_public.batch_delete([resource.key for resource in deleted_resources.all()])
 
         stmt = delete(PostResource).where(PostResource.id.in_(query.c.id))
         result = await s.execute(stmt)

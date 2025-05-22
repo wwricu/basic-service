@@ -12,6 +12,9 @@ wwricu.egg-info
 *.iml
 *.sqlite3
 *.pkl
+*.dir
+*.dat
+*.bak
 *.log
 *.zip
 .env.local
