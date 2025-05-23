@@ -23,12 +23,6 @@ class RelationTypeEnum(StrEnum):
     POST_RES = 'post_resource'
 
 
-class DatabaseActionEnum(StrEnum):
-    BACKUP = 'backup'
-    RESTORE = 'restore'
-    DOWNLOAD = 'download'
-
-
 class EnvironmentEnum(StrEnum):
     LOCAL = 'local'
     DEVELOPMENT = 'dev'
@@ -37,12 +31,10 @@ class EnvironmentEnum(StrEnum):
 
 class ConfigKeyEnum(StrEnum):
     ABOUT_CONTENT = 'about_content'
-    ABOUT_AVATAR = 'about_avatar'
     TOTP_ENFORCE = 'totp_enforce'
     TOTP_SECRET = 'totp_secret'
     USERNAME = 'username'
     PASSWORD = 'password'
-    CACHE_DATA = 'cache_data'
 
 
 class CacheKeyEnum(StrEnum):

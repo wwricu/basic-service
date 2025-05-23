@@ -28,29 +28,17 @@ class StorageConfig(ConfigClass):
 
 
 class DatabaseConfig(ConfigClass):
-    async_driver: str = ''
-    sync_driver: str = ''
+    driver: str
     username: str = ''
     password: str = ''
     host: str = ''
     port: int = 0
     database: str = ''
     url: str | None = None
-    sync_url: str | None = None
 
     def __new__(cls):
-        connect_string = f'{{driver}}://{cls.username}:{cls.password}@{cls.host}:{cls.port}/{cls.database}'
         if cls.url is None:
-            cls.url = connect_string.format(driver=cls.async_driver)
-        if cls.sync_url is None:
-            cls.sync_url = connect_string.format(driver=cls.sync_driver)
-
-
-class RedisConfig(ConfigClass):
-    host: str
-    port: int
-    username: str
-    password: str
+            cls.url = f'{cls.driver}://{cls.username}:{cls.password}@{cls.host}:{cls.port}/{cls.database}'
 
 
 class AdminConfig(ConfigClass):
@@ -65,28 +53,17 @@ class Config(ConfigClass):
     env: EnvironmentEnum = EnvironmentEnum(EnvVarEnum.ENV.get())
 
     @classmethod
-    def is_local(cls) -> bool:
-        return cls.env == EnvironmentEnum.LOCAL
-
-    @classmethod
-    def not_local(cls) -> bool:
-        return not cls.is_local()
-
-    @classmethod
     def load(
         cls,
         admin_config: dict,
         database_config: dict,
         storage_config: dict,
-        redis_config: dict | None = None,
         **kwargs
     ):
         cls.init(**kwargs)
         AdminConfig.init(**admin_config)
         DatabaseConfig.init(**database_config)
         StorageConfig.init(**storage_config)
-        if redis_config:
-            RedisConfig.init(**redis_config)
 
 
 def log_config():

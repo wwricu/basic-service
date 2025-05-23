@@ -4,7 +4,7 @@ from sqlalchemy import Boolean, DateTime, Integer, String, TEXT, UniqueConstrain
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.dialects.mysql.types import LONGTEXT
 
-from domain.constant import Length
+from wwricu.domain.constant import Length
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum
 
 

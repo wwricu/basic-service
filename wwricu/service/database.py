@@ -3,7 +3,6 @@ import ssl
 from asyncio import current_task
 from typing import AsyncGenerator
 
-from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session, async_sessionmaker, create_async_engine
 
 from wwricu.config import DatabaseConfig
@@ -35,14 +34,5 @@ engine = create_async_engine(
     connect_args=dict(ssl=ssl.create_default_context()),
     echo=__debug__
 )
-sync_engine = create_engine(
-    DatabaseConfig.sync_url,
-    connect_args=dict(ssl=ssl.create_default_context()),
-    echo=__debug__
-)
 session_maker = async_sessionmaker(bind=engine)
 session = async_scoped_session(session_maker, scopefunc=current_task)
-
-# from wwricu.domain.entity import Base
-# Base.metadata.create_all(sync_engine)
-
