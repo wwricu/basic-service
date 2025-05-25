@@ -7,7 +7,7 @@ from pydantic import ConfigDict
 from wwricu.domain.common import BaseModel
 
 
-class AWSConst(object):
+class AWSConst:
     S3: str = 's3'
     APP_CONFIG_DATA: str = 'appconfigdata'
     REGION = 'us-west-2'

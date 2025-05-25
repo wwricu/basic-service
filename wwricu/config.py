@@ -12,7 +12,7 @@ from wwricu.domain.enum import EnvironmentEnum, EnvVarEnum
 from wwricu.domain.third import AWSConst, AWSAppConfigSessionResponse, AWSAppConfigConfigResponse
 
 
-class ConfigClass(object):
+class ConfigClass:
     @classmethod
     def init(cls, **kwargs):
         for k, v in kwargs.items():

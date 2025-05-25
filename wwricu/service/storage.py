@@ -53,6 +53,5 @@ class AWSS3Storage:
 
 
 aws_s3_client = boto3.client(AWSConst.S3)
-
 oss_public = AWSS3Storage(aws_s3_client, StorageConfig.bucket)
 oss_private = AWSS3Storage(aws_s3_client, StorageConfig.private_bucket)
