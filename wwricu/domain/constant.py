@@ -1,4 +1,4 @@
-class HttpErrorDetail(object):
+class HttpErrorDetail:
     POST_NOT_FOUND: str = 'Post Not Found'
     NO_SUCH_USER: str = 'NO SUCH USER'
     WRONG_PASSWORD: str = 'WRONG PASSWORD'
@@ -13,7 +13,7 @@ class HttpErrorDetail(object):
     INVALID_VALUE: str = 'Invalid value'
 
 
-class CommonConstant(object):
+class CommonConstant:
     SESSION_ID: str = 'session_id'
     COOKIE_SIGN: str = 'sign'
     EXPIRE_TIME: int = 60 * 60 * 24 * 7

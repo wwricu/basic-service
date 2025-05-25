@@ -71,6 +71,7 @@ async def admin_only(request: Request):
 
 
 def hmac_sign(plain: str) -> str:
+    secure_key = base64.b64decode(AdminConfig.secure_key)
     return hmac.new(secure_key, plain.encode(Config.encoding), hashlib.sha256).hexdigest()
 
 
@@ -83,6 +84,3 @@ async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
         return True
     log.warning(f'Invalid cookie session={session_id} issue_time={issue_time} sign={cookie_sign}')
     return False
-
-
-secure_key = base64.b64decode(AdminConfig.secure_key)

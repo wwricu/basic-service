@@ -12,7 +12,7 @@ from wwricu.domain.enum import EnvironmentEnum, EnvVarEnum
 from wwricu.domain.third import AWSConst, AWSAppConfigSessionResponse, AWSAppConfigConfigResponse
 
 
-class ConfigClass(object):
+class ConfigClass:
     @classmethod
     def init(cls, **kwargs):
         for k, v in kwargs.items():
@@ -99,9 +99,13 @@ def get_config() -> dict:
         ConfigurationProfileIdentifier=config_file.name
     )
     aws_session = AWSAppConfigSessionResponse.model_validate(response)
+    aws_session.check()
+
     # PRICED call on each deployment
     response = app_config_data_client.get_latest_configuration(ConfigurationToken=aws_session.InitialConfigurationToken)
     app_config = AWSAppConfigConfigResponse.model_validate(response)
+    app_config.check()
+
     content = app_config.Configuration.read().decode()
     app_config.Configuration.close()
 

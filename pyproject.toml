@@ -1,7 +1,3 @@
-[build-system]
-requires = ['setuptools'] # REQUIRED if [build-system] table is used
-build-backend = 'setuptools.build_meta' # If not defined, then legacy behavior can happen.
-
 [project]
 name = 'wwricu'
 description = 'wwr.icu api service'
@@ -22,14 +18,11 @@ dependencies = [
 [tool.setuptools.dynamic]
 version = { file = 'version.txt' }
 
-[tool.setuptools.packages]
-find = {}
-
-[tool.pytest.ini_options]
-pythonpath = ['.']
+[tool.setuptools.package-dir]
+wwricu = 'wwricu'
 
 [dependency-groups]
 dev = [
     'pytest==8.3.5',
-    "pytest-asyncio==0.26.0",
+    "pytest-asyncio==0.26.0"
 ]
