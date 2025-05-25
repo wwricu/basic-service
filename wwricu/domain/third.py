@@ -26,7 +26,7 @@ class AWSResponseBase(BaseModel):
     ResponseMetadata: AWSResponseMetaData
 
     def check(self):
-        if self.ResponseMetadata.HTTPStatusCode != http_status.HTTP_200_OK:
+        if self.ResponseMetadata.HTTPStatusCode // 100 != 2:
             raise HTTPException(status_code=self.ResponseMetadata.HTTPStatusCode)
 
 
@@ -38,7 +38,7 @@ class AWSS3Response(AWSResponseBase):
     Body: StreamingBody
 
 
-class AWSS3Object(AWSResponseBase):
+class AWSS3Object(BaseModel):
     Key: str
     LastModified: datetime
     ETag: str
@@ -55,7 +55,6 @@ class AWSS3ListResponse(AWSResponseBase):
     EncodingType: str
     KeyCount: int
     NextContinuationToken: str | None = None
-
 
 class AWSAppConfigSessionResponse(AWSResponseBase):
     InitialConfigurationToken: str
