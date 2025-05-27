@@ -12,7 +12,7 @@ from wwricu.domain.enum import EnvironmentEnum, EnvVarEnum
 from wwricu.domain.third import AWSConst, AWSAppConfigSessionResponse, AWSAppConfigConfigResponse
 
 
-class ConfigClass(object):
+class ConfigClass:
     @classmethod
     def init(cls, **kwargs):
         for k, v in kwargs.items():
@@ -42,13 +42,6 @@ class DatabaseConfig(ConfigClass):
             cls.url = f'{cls.driver}://{cls.username}:{cls.password}@{cls.host}:{cls.port}/{cls.database}'
 
 
-class RedisConfig(ConfigClass):
-    host: str
-    port: int
-    username: str
-    password: str
-
-
 class AdminConfig(ConfigClass):
     username: str
     password: str
@@ -66,15 +59,12 @@ class Config(ConfigClass):
         admin_config: dict,
         database_config: dict,
         storage_config: dict,
-        redis_config: dict | None = None,
         **kwargs
     ):
         cls.init(**kwargs)
         AdminConfig.init(**admin_config)
         DatabaseConfig.init(**database_config)
         StorageConfig.init(**storage_config)
-        if redis_config:
-            RedisConfig.init(**redis_config)
 
 
 def log_config():
@@ -109,9 +99,13 @@ def get_config() -> dict:
         ConfigurationProfileIdentifier=config_file.name
     )
     aws_session = AWSAppConfigSessionResponse.model_validate(response)
+    aws_session.check()
+
     # PRICED call on each deployment
     response = app_config_data_client.get_latest_configuration(ConfigurationToken=aws_session.InitialConfigurationToken)
     app_config = AWSAppConfigConfigResponse.model_validate(response)
+    app_config.check()
+
     content = app_config.Configuration.read().decode()
     app_config.Configuration.close()
 

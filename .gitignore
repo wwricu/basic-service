@@ -18,3 +18,4 @@ wwricu.egg-info
 *.log
 *.zip
 .env.local
+.env
