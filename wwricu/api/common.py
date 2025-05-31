@@ -43,6 +43,8 @@ async def logout(request: Request, response: Response):
 
 @common_api.get('/info', response_model=bool)
 async def info(request: Request) -> bool:
+    if __debug__:
+        return True
     session_id = request.cookies.get(CommonConstant.SESSION_ID)
     cookie_sign = request.cookies.get(CommonConstant.COOKIE_SIGN)
     if valid := await validate_cookie(session_id, cookie_sign):

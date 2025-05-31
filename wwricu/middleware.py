@@ -34,16 +34,14 @@ class AspectMiddleware(BaseHTTPMiddleware):
 
 
 # noinspection PyTypeChecker
-middlewares = [Middleware(AspectMiddleware)]
-
-
-if __debug__ is True:
-    # noinspection PyTypeChecker
-    middlewares.append(Middleware(
+middlewares = [
+    Middleware(AspectMiddleware),
+    Middleware(
         CORSMiddleware,
-        allow_origins=['*'],
+        allow_origin_regex='https?://.*',
         allow_credentials=True,
         allow_methods=['*'],
         allow_headers=['*'],
         expose_headers=['*']
-    ))
+    ) if __debug__ else None
+]

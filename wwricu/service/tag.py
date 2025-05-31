@@ -93,7 +93,7 @@ async def get_posts_tag_lists(post_list: list[BlogPost]) -> dict[int, list[PostT
     query_result = (await session.execute(stmt)).all()
     result = {post.id: [] for post in post_list}
     for post_tag, post_id in query_result:
-        if (post_tag_list := result.get(post_id)) is not None:
+        if post_tag_list := result.get(post_id):
             post_tag_list.append(post_tag)
     return result
 

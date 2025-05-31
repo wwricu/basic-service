@@ -76,8 +76,6 @@ def hmac_sign(plain: str) -> str:
 
 
 async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
-    if __debug__ is True:
-        return True
     if session_id is None or cookie_sign is None or not isinstance(issue_time := await cache.get(session_id), int):
         return False
     if 0 <= int(time.time()) - issue_time < CommonConstant.EXPIRE_TIME and hmac_sign(session_id) == cookie_sign:
