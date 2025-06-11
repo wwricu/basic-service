@@ -101,7 +101,7 @@ async def user_config(user: UserRO, request: Request):
             raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, 'Invalid password')
         password = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt()).decode()
         await set_config(ConfigKeyEnum.PASSWORD, password)
-    if user.reset is True:
+    if user.reset:
         await delete_config([ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD])
     if user.username is not None or user.password is not None or user.reset is True:
         session_id = request.cookies.get(CommonConstant.SESSION_ID)
