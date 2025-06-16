@@ -9,39 +9,51 @@ from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 
 
-class AspectMiddleware(BaseHTTPMiddleware):
+class ExceptionMiddleware(BaseHTTPMiddleware):
     @override
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        b = time.time()
+        log.info('exception middleware')
         try:
-            log.trace('{method} {path} {params}'.format(
-                method=request.method,
-                path=request.url.path,
-                params='' if 'multipart/form-data' in request.headers.get('Content-Type', '') else await request.body(),
-            ))
-            response = await call_next(request)
-            log.trace('{method} {path} {status_code} {time} ms'.format(
-                method=request.method,
-                path=request.url.path,
-                status_code=response.status_code,
-                time=int((time.time() - b) * 1000),
-            ))
-            return response
+            return await call_next(request)
         except Exception as e:
-            log.trace(f'{request.method} {request.url.path} {int((time.time() - b) * 1000)} ms')
+            log.trace(f'{request.method} {request.url.path} error {e}')
             log.exception(e)
             return JSONResponse(str(e), status_code=500)
 
 
-# noinspection PyTypeChecker
+class PerformanceMiddleware(BaseHTTPMiddleware):
+    @override
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        log.info('performance middleware')
+        b = time.time()
+        log.trace('{method} {path} {params}'.format(
+            method=request.method,
+            path=request.url.path,
+            params='' if 'multipart/form-data' in request.headers.get('Content-Type', '') else await request.body(),
+        ))
+        response = await call_next(request)
+        log.trace('{method} {path} {status_code} {time} ms'.format(
+            method=request.method,
+            path=request.url.path,
+            status_code=response.status_code,
+            time=int((time.time() - b) * 1000),
+        ))
+        return response
+
+
 middlewares = [
-    Middleware(AspectMiddleware),
-    Middleware(
-        CORSMiddleware,
-        allow_origin_regex='https?://.*',
-        allow_credentials=True,
-        allow_methods=['*'],
-        allow_headers=['*'],
-        expose_headers=['*']
-    ) if __debug__ else None
+    Middleware(ExceptionMiddleware),
+    Middleware(PerformanceMiddleware)
 ]
+
+if __debug__:
+    middlewares.append(
+        Middleware(
+            CORSMiddleware,
+            allow_origin_regex='https?://.*',
+            allow_credentials=True,
+            allow_methods=['*'],
+            allow_headers=['*'],
+            expose_headers=['*']
+        )
+    )
