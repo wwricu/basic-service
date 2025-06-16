@@ -65,7 +65,7 @@ async def admin_login(login_request: LoginRO) -> bool:
 async def admin_only(request: Request):
     session_id = request.cookies.get(CommonConstant.SESSION_ID)
     cookie_sign = request.cookies.get(CommonConstant.COOKIE_SIGN)
-    if await validate_cookie(session_id, cookie_sign) is not True:
+    if not await validate_cookie(session_id, cookie_sign):
         log.warning(f'Unauthorized access to {request.url.path}')
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.NOT_AUTHORIZED)
 
