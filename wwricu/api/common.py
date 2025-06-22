@@ -18,7 +18,7 @@ common_api = APIRouter(tags=['Common API'])
 @common_api.post('/login', response_model=None)
 async def login(login_request: LoginRO, response: Response):
     async with try_login_lock():
-        if await admin_login(login_request) is not True:
+        if not await admin_login(login_request):
             log.warning(f'{login_request.username} login failure')
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_PASSWORD)
     if (session_id := await cache.get(login_request.username)) is None:
@@ -43,6 +43,8 @@ async def logout(request: Request, response: Response):
 
 @common_api.get('/info', response_model=bool)
 async def info(request: Request) -> bool:
+    if __debug__:
+        return True
     session_id = request.cookies.get(CommonConstant.SESSION_ID)
     cookie_sign = request.cookies.get(CommonConstant.COOKIE_SIGN)
     if valid := await validate_cookie(session_id, cookie_sign):

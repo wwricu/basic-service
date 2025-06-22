@@ -54,9 +54,7 @@ async def trash_edit(trash_bin: TrashBinRO):
     match trash_bin.type:
         case EntityTypeEnum.BLOG_POST:
             entity = BlogPost
-        case EntityTypeEnum.POST_CAT:
-            entity = PostTag
-        case EntityTypeEnum.POST_TAG:
+        case EntityTypeEnum.POST_CAT | EntityTypeEnum.POST_TAG:
             entity = PostTag
         case _:
             raise HTTPException(status.HTTP_404_NOT_FOUND, HttpErrorDetail.UNKNOWN_ENTITY_TYPE)
@@ -79,8 +77,7 @@ async def database(action: DatabaseActionEnum, background_task: BackgroundTasks)
 @manage_api.post('/config/set', response_model=None)
 async def config_set(config: ConfigRO):
     # Set None to delete config
-    value = config.value
-    if value is None:
+    if config.value is None:
         await delete_config([config.key])
         return
     await set_config(config.key, config.value)
@@ -104,7 +101,7 @@ async def user_config(user: UserRO, request: Request):
             raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, 'Invalid password')
         password = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt()).decode()
         await set_config(ConfigKeyEnum.PASSWORD, password)
-    if user.reset is True:
+    if user.reset:
         await delete_config([ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD])
     if user.username is not None or user.password is not None or user.reset is True:
         session_id = request.cookies.get(CommonConstant.SESSION_ID)
@@ -123,8 +120,7 @@ async def enforce_totp_secret(enforce: bool) -> str | None:
 
 @manage_api.get('/totp/confirm')
 async def totp_enforce_confirm(totp: str):
-    secret = await get_config(ConfigKeyEnum.TOTP_SECRET)
-    if secret is None:
+    if (secret := await get_config(ConfigKeyEnum.TOTP_SECRET)) is None:
         raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.NO_TOTP_SECRET)
     totp_client = pyotp.TOTP(secret)
     if not totp_client.verify(totp, valid_window=1):

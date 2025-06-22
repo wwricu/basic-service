@@ -65,7 +65,7 @@ async def admin_login(login_request: LoginRO) -> bool:
 async def admin_only(request: Request):
     session_id = request.cookies.get(CommonConstant.SESSION_ID)
     cookie_sign = request.cookies.get(CommonConstant.COOKIE_SIGN)
-    if await validate_cookie(session_id, cookie_sign) is not True:
+    if not await validate_cookie(session_id, cookie_sign):
         log.warning(f'Unauthorized access to {request.url.path}')
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.NOT_AUTHORIZED)
 
@@ -76,8 +76,6 @@ def hmac_sign(plain: str) -> str:
 
 
 async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
-    if __debug__ is True:
-        return True
     if session_id is None or cookie_sign is None or not isinstance(issue_time := await cache.get(session_id), int):
         return False
     if 0 <= int(time.time()) - issue_time < CommonConstant.EXPIRE_TIME and hmac_sign(session_id) == cookie_sign:

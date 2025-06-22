@@ -7,8 +7,6 @@ from wwricu.service.database import new_session, session
 
 
 async def get_category_by_name(category_name: str) -> PostTag | None:
-    if category_name is None:
-        return None
     stmt = select(PostTag).where(
         PostTag.type == TagTypeEnum.POST_CAT).where(
         PostTag.deleted == False).where(
@@ -28,12 +26,10 @@ async def update_category_count(post: BlogPost, increment: int = 1) -> int:
 
 
 async def update_category(post: BlogPost, post_update: PostUpdateRO):
-    if post is None or post.category_id is None:
-        return
     stmt = select(PostTag).where(
         PostTag.type == TagTypeEnum.POST_CAT).where(
         PostTag.deleted == False).where(
-        PostTag.id == post.category_id
+        PostTag.id == post_update.category_id
     )
     if (category := await session.scalar(stmt)) is None:
         return
@@ -79,7 +75,7 @@ async def get_posts_category(post_list: list[BlogPost]) -> dict[int, PostTag]:
     cat_stmt = select(PostTag).where(
         PostTag.type == TagTypeEnum.POST_CAT).where(
         PostTag.deleted == False).where(
-        PostTag.id.in_([post.category_id for post in post_list])
+        PostTag.id.in_(post.category_id for post in post_list)
     )
     category_dict = {cat.id: cat for cat in (await session.scalars(cat_stmt)).all()}
     return {post.id: category_dict.get(post.category_id) for post in post_list}

@@ -9,41 +9,49 @@ from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 
 
-class AspectMiddleware(BaseHTTPMiddleware):
+class ExceptionMiddleware(BaseHTTPMiddleware):
     @override
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        b = time.time()
         try:
-            log.trace('{method} {path} {params}'.format(
-                method=request.method,
-                path=request.url.path,
-                params='' if 'multipart/form-data' in request.headers.get('Content-Type', '') else await request.body(),
-            ))
-            response = await call_next(request)
-            log.trace('{method} {path} {status_code} {time} ms'.format(
-                method=request.method,
-                path=request.url.path,
-                status_code=response.status_code,
-                time=int((time.time() - b) * 1000),
-            ))
-            return response
+            return await call_next(request)
         except Exception as e:
-            log.trace(f'{request.method} {request.url.path} {int((time.time() - b) * 1000)} ms')
+            log.trace(f'{request.method} {request.url.path} error {e}')
             log.exception(e)
             return JSONResponse(str(e), status_code=500)
 
 
-# noinspection PyTypeChecker
-middlewares = [Middleware(AspectMiddleware)]
+class PerformanceMiddleware(BaseHTTPMiddleware):
+    @override
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        b = time.time()
+        log.trace('{method} {path} {params}'.format(
+            method=request.method,
+            path=request.url.path,
+            params='' if 'multipart/form-data' in request.headers.get('Content-Type', '') else await request.body(),
+        ))
+        response = await call_next(request)
+        log.trace('{method} {path} {status_code} {time} ms'.format(
+            method=request.method,
+            path=request.url.path,
+            status_code=response.status_code,
+            time=int((time.time() - b) * 1000),
+        ))
+        return response
 
 
-if __debug__ is True:
-    # noinspection PyTypeChecker
-    middlewares.append(Middleware(
-        CORSMiddleware,
-        allow_origins=['*'],
-        allow_credentials=True,
-        allow_methods=['*'],
-        allow_headers=['*'],
-        expose_headers=['*']
-    ))
+middlewares = [
+    Middleware(PerformanceMiddleware),
+    Middleware(ExceptionMiddleware)
+]
+
+if __debug__:
+    middlewares.append(
+        Middleware(
+            CORSMiddleware,
+            allow_origin_regex='https?://.*',
+            allow_credentials=True,
+            allow_methods=['*'],
+            allow_headers=['*'],
+            expose_headers=['*']
+        )
+    )

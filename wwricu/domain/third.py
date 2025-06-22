@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from botocore.response import StreamingBody
-from fastapi import HTTPException, status as http_status
+from fastapi import HTTPException
 from pydantic import ConfigDict
 
 from wwricu.domain.common import BaseModel
@@ -55,6 +55,7 @@ class AWSS3ListResponse(AWSResponseBase):
     EncodingType: str
     KeyCount: int
     NextContinuationToken: str | None = None
+
 
 class AWSAppConfigSessionResponse(AWSResponseBase):
     InitialConfigurationToken: str
