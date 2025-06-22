@@ -12,7 +12,6 @@ from starlette.responses import Response, JSONResponse
 class ExceptionMiddleware(BaseHTTPMiddleware):
     @override
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        log.info('exception middleware')
         try:
             return await call_next(request)
         except Exception as e:
@@ -24,7 +23,6 @@ class ExceptionMiddleware(BaseHTTPMiddleware):
 class PerformanceMiddleware(BaseHTTPMiddleware):
     @override
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        log.info('performance middleware')
         b = time.time()
         log.trace('{method} {path} {params}'.format(
             method=request.method,
@@ -42,8 +40,8 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
 
 
 middlewares = [
-    Middleware(ExceptionMiddleware),
-    Middleware(PerformanceMiddleware)
+    Middleware(PerformanceMiddleware),
+    Middleware(ExceptionMiddleware)
 ]
 
 if __debug__:
