@@ -56,6 +56,7 @@ class AWSS3ListResponse(AWSResponseBase):
     KeyCount: int
     NextContinuationToken: str | None = None
 
+
 class AWSAppConfigSessionResponse(AWSResponseBase):
     InitialConfigurationToken: str
 
