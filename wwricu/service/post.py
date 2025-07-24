@@ -45,6 +45,7 @@ async def get_post_detail(blog_post: BlogPost) -> PostDetailVO:
     cover = await get_post_cover(blog_post)
     post_detail = PostDetailVO.model_validate(blog_post)
     post_detail.tag_list = list(map(TagVO.model_validate, tags))
+
     if category is not None:
         post_detail.category = TagVO.model_validate(category)
     if cover is not None:
@@ -68,6 +69,7 @@ async def get_posts_preview(post_list: list[BlogPost]) -> list[PostDetailVO]:
     categories = await get_posts_category(post_list)
     tags = await get_posts_tag_lists(post_list)
     covers = await get_posts_cover(post_list)
+
     def generator(post: BlogPost) -> PostDetailVO:
         detail = PostDetailVO.model_validate(post)
         if category := categories.get(post.id):
@@ -76,4 +78,5 @@ async def get_posts_preview(post_list: list[BlogPost]) -> list[PostDetailVO]:
         if cover := covers.get(post.id):
             detail.cover = PostResourceVO.model_validate(cover)
         return detail
+
     return list(map(generator, post_list))

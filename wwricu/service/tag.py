@@ -40,6 +40,7 @@ async def update_tags(post: BlogPost, post_update: PostUpdateRO):
         prev_tag_ids = {tag.id for tag in await get_post_tags(post)}
     if post_update.status == PostStatusEnum.PUBLISHED:
         post_tag_ids = set(post_update.tag_id_list)
+
     stmt = update(PostTag).where(
         PostTag.deleted == False).where(
         PostTag.type == TagTypeEnum.POST_TAG).values(
