@@ -23,6 +23,7 @@ manage_api = APIRouter(prefix='/manage', tags=['Manage API'], dependencies=[Depe
 @manage_api.get('/trash/all', response_model=list[TrashBinVO])
 async def trash_get_all() -> list[TrashBinVO]:
     deadline = datetime.datetime.now() - datetime.timedelta(days=Config.trash_expire_day)
+
     stmt = select(BlogPost).where(BlogPost.deleted == True).where(BlogPost.update_time > deadline)
     deleted_post = (await session.scalars(stmt)).all()
     deleted_post = [TrashBinVO(
@@ -32,6 +33,7 @@ async def trash_get_all() -> list[TrashBinVO]:
         status=post.status,
         delete_time=post.update_time
     ) for post in deleted_post]
+
     stmt = select(PostTag).where(
         PostTag.deleted == True).where(
         PostTag.type.in_((TagTypeEnum.POST_CAT, EntityTypeEnum.POST_TAG))).where(
@@ -44,6 +46,7 @@ async def trash_get_all() -> list[TrashBinVO]:
         type=EntityTypeEnum.POST_TAG if tag.type == TagTypeEnum.POST_TAG else EntityTypeEnum.POST_CAT,
         delete_time=tag.update_time
     ) for tag in deleted_tag]
+
     result = deleted_post + deleted_tag
     sorted(result, key=lambda item: item.delete_time, reverse=True)
     return result
@@ -96,13 +99,16 @@ async def user_config(user: UserRO, request: Request):
         if len(user.username) < 3 or not bool(re.match('^[a-zA-Z][a-zA-Z0-9_-]*$', user.username)):
             raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, 'Invalid username')
         await set_config(ConfigKeyEnum.USERNAME, user.username)
+
     if user.password is not None:
         if len(user.password) < 8 or user.password.isalnum():
             raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, 'Invalid password')
         password = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt()).decode()
         await set_config(ConfigKeyEnum.PASSWORD, password)
+
     if user.reset:
         await delete_config([ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD])
+
     if user.username is not None or user.password is not None or user.reset is True:
         session_id = request.cookies.get(CommonConstant.SESSION_ID)
         await cache.delete(session_id)
