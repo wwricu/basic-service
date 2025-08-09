@@ -70,6 +70,7 @@ class Config(ConfigClass):
 def log_config():
     logging.Logger.manager.loggerDict.clear()
     log.remove()
+
     if __debug__:
         log.add(sys.stdout, level=logging.DEBUG)
     log_path = EnvVarEnum.LOG_PATH.get()

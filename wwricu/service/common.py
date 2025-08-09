@@ -27,9 +27,11 @@ async def lifespan(_: FastAPI):
         scheduler.add_job(clean_post_resource, trigger=CronTrigger(day_of_week=0, hour=4))
         scheduler.add_job(database_backup, trigger=CronTrigger(day_of_week=0, hour=3))
         scheduler.start()
+
         await reset_tag_count()
         await reset_category_count()
         await reset_system_count()
+
         await cache.set(CacheKeyEnum.STARTUP_TIMESTAMP, int(time.time()), 0)
         log.info('App startup')
         yield
@@ -59,6 +61,7 @@ async def reset_system_count():
         PostTag.deleted == False).where(
         PostTag.type == TagTypeEnum.POST_TAG
     )
+
     async with new_session() as s:
         # single session with transaction cannot be used by gather
         post_count = await s.scalar(post_stmt)

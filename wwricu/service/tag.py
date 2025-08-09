@@ -40,6 +40,7 @@ async def update_tags(post: BlogPost, post_update: PostUpdateRO):
         prev_tag_ids = {tag.id for tag in await get_post_tags(post)}
     if post_update.status == PostStatusEnum.PUBLISHED:
         post_tag_ids = set(post_update.tag_id_list)
+
     stmt = update(PostTag).where(
         PostTag.deleted == False).where(
         PostTag.type == TagTypeEnum.POST_TAG).values(
@@ -93,7 +94,7 @@ async def get_posts_tag_lists(post_list: list[BlogPost]) -> dict[int, list[PostT
     query_result = (await session.execute(stmt)).all()
     result = {post.id: [] for post in post_list}
     for post_tag, post_id in query_result:
-        if post_tag_list := result.get(post_id):
+        if (post_tag_list := result.get(post_id)) is not None:
             post_tag_list.append(post_tag)
     return result
 

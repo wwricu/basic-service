@@ -21,12 +21,15 @@ async def login(login_request: LoginRO, response: Response):
         if not await admin_login(login_request):
             log.warning(f'{login_request.username} login failure')
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_PASSWORD)
+
     if (session_id := await cache.get(login_request.username)) is None:
         session_id = uuid.uuid4().hex
         await cache.set(login_request.username, session_id, CommonConstant.COOKIE_TIMEOUT_SECOND)
-    cookie_sign = hmac_sign(session_id)
+
     await cache.set(session_id, int(time.time()), CommonConstant.COOKIE_TIMEOUT_SECOND)
     await cache.delete(CacheKeyEnum.LOGIN_LOCK)
+
+    cookie_sign = hmac_sign(session_id)
     response.set_cookie(CommonConstant.SESSION_ID, session_id, secure=True, httponly=True, samesite='lax')
     response.set_cookie(CommonConstant.COOKIE_SIGN, cookie_sign, secure=True, httponly=True, samesite='lax')
 
@@ -35,8 +38,10 @@ async def login(login_request: LoginRO, response: Response):
 async def logout(request: Request, response: Response):
     if (session_id := request.cookies.get(CommonConstant.SESSION_ID)) is None:
         return
+
     await cache.delete(session_id)
     await cache.delete(AdminConfig.username)
+
     response.delete_cookie(CommonConstant.SESSION_ID)
     response.delete_cookie(CommonConstant.COOKIE_SIGN)
 
