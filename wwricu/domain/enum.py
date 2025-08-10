@@ -66,3 +66,17 @@ class EnvVarEnum(StrEnum):
 
     def get(self) -> str:
         return os.getenv(self.name, self.value)
+
+
+class WebDavMethodsEnum(StrEnum):
+    PROPFIND = 'PROPFIND'
+    PROPPATCH = 'PROPPATCH'
+    COPY = 'COPY'
+    MOVE = 'MOVE'
+    LOCK = 'LOCK'
+    UNLOCK = 'UNLOCK'
+    MKCOL = 'MKCOL'
+
+    HEAD = 'HEAD'
+    DELETE = 'DELETE'
+    PUT = 'PUT'
