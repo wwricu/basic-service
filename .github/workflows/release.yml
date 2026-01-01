@@ -22,7 +22,7 @@ jobs:
           pip install uv
           uv build
           cp dist/wwricu-$(cat version.txt).tar.gz dist/wwricu.tar.gz
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v2.2.2
         with:
           tag_name: ${{ env.version }}
           files: dist/*
