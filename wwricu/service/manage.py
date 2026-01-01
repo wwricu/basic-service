@@ -13,6 +13,7 @@ async def set_config(key: ConfigKeyEnum, value: str):
     if not isinstance(value, str):
         raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.INVALID_VALUE)
 
+    min_len, max_len = 0, 0
     match key:
         case ConfigKeyEnum.USERNAME:
             min_len, max_len = 4, 16

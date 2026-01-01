@@ -1,7 +1,7 @@
 import asyncio
 import shelve
 import time
-from typing import Protocol
+from typing import Protocol, Any
 
 from loguru import logger as log
 
@@ -27,7 +27,7 @@ class LocalCache:
         _ = self.timeout_callback.pop(key, None)
         self.cache_data.pop(key, None)
 
-    async def get(self, key: str) -> any:
+    async def get(self, key: str) -> Any:
         if not isinstance(key, str):
             return None
         value, expire = self.cache_data.get(key, (None, 0))
@@ -36,7 +36,7 @@ class LocalCache:
             return None
         return value
 
-    async def set(self, key: str, value: any, second: int = 600):
+    async def set(self, key: str, value: Any, second: int = 600):
         if not isinstance(key, str):
             raise ValueError(key)
         if task := self.timeout_callback.pop(key, None):
@@ -58,9 +58,9 @@ class LocalCache:
 
 
 class Cache(Protocol):
-    async def get(self, key: str) -> any:...
+    async def get(self, key: str) -> Any:...
 
-    async def set(self, key: str, value: any, second: int = 600):...
+    async def set(self, key: str, value: Any, second: int = 600):...
 
     async def delete(self, key: str):...
 

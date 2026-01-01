@@ -54,6 +54,7 @@ async def trash_get_all() -> list[TrashBinVO]:
 
 @manage_api.post('/trash/edit', response_model=None)
 async def trash_edit(trash_bin: TrashBinRO):
+    entity = None
     match trash_bin.type:
         case EntityTypeEnum.BLOG_POST:
             entity = BlogPost
