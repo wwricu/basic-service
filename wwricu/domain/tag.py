@@ -1,4 +1,6 @@
-from pydantic import constr
+from typing import Annotated
+
+from pydantic import StringConstraints
 
 from wwricu.domain.common import BaseModel
 from wwricu.domain.enum import TagTypeEnum
@@ -6,7 +8,7 @@ from wwricu.domain.enum import TagTypeEnum
 
 class TagRO(BaseModel):
     id: int | None = None
-    name: constr(max_length=32)
+    name: Annotated[str, StringConstraints(max_length=32)]
     type: TagTypeEnum | None = TagTypeEnum.POST_TAG
 
 

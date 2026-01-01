@@ -89,30 +89,30 @@ async def hard_delete_expiration():
     deleted_posts = select(BlogPost.id).where(
         BlogPost.deleted == True).where(
         BlogPost.update_time < deadline
-    ).subquery()
+    )
     deleted_tags = select(PostTag.id).where(
         PostTag.deleted == True).where(
         PostTag.type == TagTypeEnum.POST_TAG).where(
         PostTag.update_time < deadline
-    ).subquery()
+    )
 
     async with new_session() as s:
         # delete posts
-        stmt = delete(BlogPost).where(BlogPost.id.in_(deleted_posts.c.id))
+        stmt = delete(BlogPost).where(BlogPost.id.in_(deleted_posts))
         result = await s.execute(stmt)
         log.info(f'{result.rowcount} post deleted')
 
         # delete post relations
         stmt = delete(EntityRelation).where(
             EntityRelation.type.in_((RelationTypeEnum.POST_TAG, RelationTypeEnum.POST_RES))).where(
-            EntityRelation.src_id.in_(deleted_posts.c.id)
+            EntityRelation.src_id.in_(deleted_posts)
         )
         await s.execute(stmt)
 
         # delete tag relations
         stmt = delete(EntityRelation).where(
             EntityRelation.type == RelationTypeEnum.POST_TAG).where(
-            EntityRelation.dst_id.in_(deleted_tags.c.id)
+            EntityRelation.dst_id.in_(deleted_tags)
         )
         await s.execute(stmt)
 
@@ -138,15 +138,16 @@ async def clean_post_resource():
         EntityRelation, PostResource.id == EntityRelation.dst_id).where(
         PostResource.deleted == False).where(
         EntityRelation.deleted == False).where(
-        EntityRelation.type == RelationTypeEnum.POST_RES).having(
+        EntityRelation.type == RelationTypeEnum.POST_RES).group_by(
+        EntityRelation.id).having(
         func.count(EntityRelation.id) <= 0
-    ).subquery()
+    )
 
     async with new_session() as s:
-        stmt = select(PostResource).where(PostResource.id.in_(query.c.id))
+        stmt = select(PostResource).where(PostResource.id.in_(query))
         deleted_resources = await s.scalars(stmt)
         oss_public.batch_delete([resource.key for resource in deleted_resources.all()])
 
-        stmt = delete(PostResource).where(PostResource.id.in_(query.c.id))
+        stmt = delete(PostResource).where(PostResource.id.in_(query))
         result = await s.execute(stmt)
         log.info(f'Delete {result.rowcount} unreferenced resources')

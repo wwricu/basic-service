@@ -4,7 +4,7 @@ import pytest
 from loguru import logger as log
 from sqlalchemy import func, select
 
-from wwricu.service.common import reset_system_count
+from wwricu.service.common import clean_post_resource, reset_system_count, hard_delete_expiration
 from wwricu.service.cache import cache
 from wwricu.service.database import new_session
 from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum
@@ -36,3 +36,9 @@ async def test_system_count():
         assert post_count == await session.scalar(post_stmt)
         assert tag_count == await session.scalar(tag_stmt)
         assert category_count == await session.scalar(category_stmt)
+
+
+@pytest.mark.asyncio
+async def test_cron_tasks():
+    await hard_delete_expiration()
+    await clean_post_resource()
