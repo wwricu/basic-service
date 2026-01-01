@@ -138,7 +138,8 @@ async def clean_post_resource():
         EntityRelation, PostResource.id == EntityRelation.dst_id).where(
         PostResource.deleted == False).where(
         EntityRelation.deleted == False).where(
-        EntityRelation.type == RelationTypeEnum.POST_RES).having(
+        EntityRelation.type == RelationTypeEnum.POST_RES).group_by(
+        EntityRelation.id).having(
         func.count(EntityRelation.id) <= 0
     )
 
