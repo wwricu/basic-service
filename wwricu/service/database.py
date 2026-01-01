@@ -2,7 +2,7 @@ import contextlib
 import importlib
 import os
 from asyncio import current_task
-from typing import AsyncGenerator
+from typing import AsyncGenerator, cast
 
 from loguru import logger as log
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session, async_sessionmaker, create_async_engine
@@ -17,19 +17,27 @@ async def open_session():
 
 
 @contextlib.asynccontextmanager
-async def new_session() -> AsyncGenerator[AsyncSession, None]:
+async def new_session_manager() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSession(engine) as s, s.begin():
         yield s
 
 
+def new_session() -> contextlib.AbstractAsyncContextManager[AsyncSession]:
+    return cast(contextlib.AbstractAsyncContextManager[AsyncSession], new_session_manager())
+
+
 @contextlib.asynccontextmanager
-async def get_session() -> AsyncGenerator[AsyncSession, None]:
+async def get_session_manager() -> AsyncGenerator[AsyncSession, None]:
     scoped_session: AsyncSession = session.registry.registry.get(current_task())
     if scoped_session is not None and scoped_session.is_active and scoped_session.in_transaction():
         yield scoped_session
     else:
         async with new_session() as s:
             yield s
+
+
+def get_session() -> contextlib.AbstractAsyncContextManager[AsyncSession]:
+    return cast(contextlib.AbstractAsyncContextManager[AsyncSession], get_session_manager())
 
 
 def database_init():
