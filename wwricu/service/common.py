@@ -99,8 +99,7 @@ async def hard_delete_expiration():
     async with new_session() as s:
         # delete posts
         stmt = delete(BlogPost).where(BlogPost.id.in_(deleted_posts))
-        result = await s.execute(stmt)
-        log.info(f'{result.rowcount} post deleted')
+        await s.execute(stmt)
 
         # delete post relations
         stmt = delete(EntityRelation).where(
@@ -122,8 +121,7 @@ async def hard_delete_expiration():
             PostTag.type.in_((TagTypeEnum.POST_CAT, TagTypeEnum.POST_TAG))).where(
             PostTag.update_time < deadline
         )
-        result = await s.execute(stmt)
-        log.info(f'{result.rowcount} tags and categories deleted')
+        await s.execute(stmt)
 
 
 async def clean_post_resource():
@@ -139,7 +137,7 @@ async def clean_post_resource():
         PostResource.deleted == False).where(
         EntityRelation.deleted == False).where(
         EntityRelation.type == RelationTypeEnum.POST_RES).group_by(
-        EntityRelation.id).having(
+        PostResource.id).having(
         func.count(EntityRelation.id) <= 0
     )
 
@@ -149,5 +147,4 @@ async def clean_post_resource():
         oss_public.batch_delete([resource.key for resource in deleted_resources.all()])
 
         stmt = delete(PostResource).where(PostResource.id.in_(query))
-        result = await s.execute(stmt)
-        log.info(f'Delete {result.rowcount} unreferenced resources')
+        await s.execute(stmt)
