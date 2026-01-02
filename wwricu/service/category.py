@@ -38,7 +38,7 @@ async def update_category(post: BlogPost, post_update: PostUpdateRO):
     if post.status == PostStatusEnum.PUBLISHED:
         prev_category_id = post.category_id
     if post_update.status == PostStatusEnum.PUBLISHED:
-        post_category_id = post.category_id
+        post_category_id = post_update.category_id
 
     if prev_category_id != post_category_id:
         stmt = update(PostTag).where(
