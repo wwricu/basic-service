@@ -34,7 +34,6 @@ class DatabaseConfig(ConfigClass):
     host: str = ''
     port: int = 0
     database: str = ''
-    cache: str = 'cache.sqlite3'
     url: str | None = None
 
     def __new__(cls):
@@ -73,6 +72,8 @@ def log_config():
 
     if __debug__:
         log.add(sys.stdout, level=logging.DEBUG)
+        log.warning('APP RUNNING ON DEBUG MODE')
+
     log_path = EnvVarEnum.LOG_PATH.get()
     os.makedirs(log_path, exist_ok=True)
     log.add(f'{log_path}/server.log', level=logging.DEBUG, rotation='monday at 00:00')
@@ -118,7 +119,5 @@ def get_config() -> dict:
 
 def init():
     log_config()
-    if __debug__:
-        log.warning('APP RUNNING ON DEBUG MODE')
     Config.load(**get_config())
     log.info('Config init')
