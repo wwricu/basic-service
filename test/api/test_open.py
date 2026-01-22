@@ -7,11 +7,11 @@ from wwricu.domain.post import PostDetailVO
 from test.test_utils import client
 
 
-def test_open_get_about() -> AboutPageVO:
+def test_open_get_about():
     response = client.get('/open/about')
     log.info(response.json())
     assert response.status_code == status.HTTP_200_OK
-    return AboutPageVO.model_validate(response.json())
+    AboutPageVO.model_validate(response.json())
 
 
 def test_open_get_post():

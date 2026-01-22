@@ -1,5 +1,6 @@
 import pytest
 
+from loguru import logger as log
 from sqlalchemy import select
 
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
@@ -12,7 +13,7 @@ from wwricu.service.tag import get_posts_tag_lists
 async def test_get_posts_tag_lists():
     post_list = [BlogPost(id=25)]
     result = await get_posts_tag_lists(post_list)
-    print(result)
+    log.info(result)
 
 
 @pytest.mark.asyncio
@@ -28,13 +29,13 @@ async def test_get_posts_tags_sql():
     )
     async with get_session() as session:
         query_result = (await session.execute(stmt)).all()
-        print(query_result)
+        log.info(query_result)
 
         result = {post.id: [] for post in post_list}
         for post_tag, post_id in query_result:
-            print(post_tag.name, post_id)
+            log.info(post_tag.name, post_id)
             if (post_tag_list := result.get(post_id)) is not None:
                 post_tag_list.append(post_tag)
-                print(result.get(25))
-                print(post_tag_list)
-        print(result)
+                log.info(result.get(25))
+                log.info(post_tag_list)
+        log.info(result)
