@@ -114,3 +114,12 @@ async def reset_tag_count():
         ).subquery()
         stmt = update(PostTag).where(PostTag.id == subquery.c.id).values(count=subquery.c.tag_count)
         await s.execute(stmt)
+
+
+async def is_tag_exists(tag_name: str, tag_type: TagTypeEnum) -> bool:
+    stmt = select(func.count(PostTag.id)).where(
+        PostTag.deleted == False).where(
+        PostTag.type == tag_type).where(
+        PostTag.name == tag_name
+    )
+    return await session.scalar(stmt) > 0
