@@ -42,9 +42,6 @@ async def try_login_lock():
 
 
 async def admin_login(login_request: LoginRO) -> bool:
-    if __debug__:
-        return True
-
     enforce = await get_config(ConfigKeyEnum.TOTP_ENFORCE)
     secret = await get_config(ConfigKeyEnum.TOTP_SECRET)
     if enforce is not None and secret is not None and secret is not None:
