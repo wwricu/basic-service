@@ -42,9 +42,6 @@ async def try_login_lock():
 
 
 async def admin_login(login_request: LoginRO) -> bool:
-    if __debug__:
-        return True
-
     enforce = await get_config(ConfigKeyEnum.TOTP_ENFORCE)
     secret = await get_config(ConfigKeyEnum.TOTP_SECRET)
     if enforce is not None and secret is not None and secret is not None:
@@ -63,6 +60,9 @@ async def admin_login(login_request: LoginRO) -> bool:
 
 
 async def admin_only(request: Request):
+    if __debug__:
+        return
+
     session_id = request.cookies.get(CommonConstant.SESSION_ID)
     cookie_sign = request.cookies.get(CommonConstant.COOKIE_SIGN)
     if not await validate_cookie(session_id, cookie_sign):

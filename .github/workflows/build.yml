@@ -5,10 +5,8 @@ on:
       - master
       - release
     paths-ignore:
-      - '**.yml'
       - '**.md'
       - '**.sh'
-      - '**.json'
       - '**.txt'
       - '**.sql'
       - '**.csv'
