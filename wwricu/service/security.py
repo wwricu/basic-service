@@ -5,7 +5,6 @@ import time
 from contextlib import asynccontextmanager
 
 import bcrypt
-import pyotp
 from fastapi import HTTPException, Request, status
 from loguru import logger as log
 from sqlalchemy import select
@@ -17,7 +16,6 @@ from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum
 from wwricu.config import AdminConfig, Config
 from wwricu.service.cache import cache
 from wwricu.service.database import session
-from wwricu.service.manage import get_config
 
 
 @asynccontextmanager
@@ -42,13 +40,6 @@ async def try_login_lock():
 
 
 async def admin_login(login_request: LoginRO) -> bool:
-    enforce = await get_config(ConfigKeyEnum.TOTP_ENFORCE)
-    secret = await get_config(ConfigKeyEnum.TOTP_SECRET)
-    if enforce is not None and secret is not None and secret is not None:
-        totp_client = pyotp.TOTP(secret)
-        if not totp_client.verify(login_request.totp, valid_window=1):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
-
     username, password = AdminConfig.username, AdminConfig.password
     if username_config := await session.scalar(select(SysConfig).where(SysConfig.key == ConfigKeyEnum.USERNAME)):
         username = username_config.value

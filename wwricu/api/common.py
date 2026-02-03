@@ -1,6 +1,7 @@
 import time
 import uuid
 
+import pyotp
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from loguru import logger as log
 
@@ -21,6 +22,16 @@ async def login(login_request: LoginRO, response: Response):
         if not await admin_login(login_request):
             log.warning(f'{login_request.username} login failure')
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_PASSWORD)
+
+    enforce = await get_config(ConfigKeyEnum.TOTP_ENFORCE)
+    secret = await get_config(ConfigKeyEnum.TOTP_SECRET)
+    if enforce is not None and secret is not None:
+        if login_request.totp is None:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=HttpErrorDetail.NEED_TOTP)
+        totp_client = pyotp.TOTP(secret)
+        async with try_login_lock():
+            if not totp_client.verify(login_request.totp, valid_window=1):
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
 
     if (session_id := await cache.get(login_request.username)) is None:
         session_id = uuid.uuid4().hex
@@ -53,8 +64,3 @@ async def info(request: Request) -> bool:
     if valid := await validate_cookie(session_id, cookie_sign):
         await cache.set(session_id, int(time.time()), CommonConstant.COOKIE_TIMEOUT_SECOND)
     return valid
-
-
-@common_api.get('/totp', response_model=bool)
-async def get_totp_status() -> bool:
-    return await get_config(ConfigKeyEnum.TOTP_ENFORCE) == str(True)
