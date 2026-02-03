@@ -9,13 +9,14 @@ on:
       - '**.sh'
       - '**.txt'
       - '**.sql'
-      - '**.csv'
       - '**.gitignore'
   workflow_dispatch:
 jobs:
   build:
-    name: Build
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
