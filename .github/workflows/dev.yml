@@ -15,7 +15,8 @@ on:
 jobs:
   github:
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -34,7 +35,8 @@ jobs:
           prerelease: true
   dockerhub:
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      contents: none
     needs: github
     steps:
       - uses: docker/setup-buildx-action@v3
