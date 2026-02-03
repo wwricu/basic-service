@@ -21,8 +21,6 @@ async def set_config(key: ConfigKeyEnum, value: str):
             min_len, max_len = 8, 32
         case ConfigKeyEnum.TOTP_SECRET:
             min_len, max_len = 32, sys.maxsize
-        case ConfigKeyEnum.ABOUT_CONTENT:
-            min_len, max_len = 0, 500
 
     if not (min_len <= len(value) <= max_len):
         raise ValueError(value)

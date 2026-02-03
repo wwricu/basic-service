@@ -3,6 +3,7 @@ class HttpErrorDetail:
     NO_SUCH_USER: str = 'NO SUCH USER'
     WRONG_PASSWORD: str = 'WRONG PASSWORD'
     WRONG_TOTP: str = 'WRONG TOTP'
+    NEED_TOTP: str = 'Please input TOTP'
     NOT_AUTHORIZED: str = 'Not authorized'
     UPLOAD_FAILURE: str = 'Failed to upload'
     INVALID_TAG_TYPE: str = 'Invalid tag type'
