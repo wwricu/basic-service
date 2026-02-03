@@ -31,7 +31,8 @@ jobs:
           subject-path: 'dist/**/*.tar.gz, dist/**/*.whl'
   dockerhub:
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      contents: none
     needs: github
     steps:
       - uses: docker/setup-buildx-action@v3
