@@ -17,6 +17,5 @@ class HttpErrorDetail:
 class CommonConstant:
     SESSION_ID: str = 'session_id'
     COOKIE_SIGN: str = 'sign'
-    EXPIRE_TIME: int = 60 * 60 * 24 * 7
     APP_NAME: str = 'wwr.icu'
-    COOKIE_TIMEOUT_SECOND: int = 30 * 24 * 60 * 60
+    COOKIE_MAX_AGE: int = 7 * 24 * 60 * 60
