@@ -7,18 +7,21 @@ from loguru import logger as log
 
 
 class LocalCache:
-    cache_data: shelve.Shelf
+    # NOTE: all functions in this class has no await inside so they are atomic in a coroutine context, no lock needed
+    cache_data: dict[str, Any]
     timeout_callback: dict[str, asyncio.Task]
-    cache_name = 'cache'
+    cache_name: str = 'cache'
 
     def __init__(self):
-        self.cache_data = shelve.open(self.cache_name)
         self.timeout_callback = {}
+        with shelve.open(self.cache_name) as shv:
+            self.cache_data = shv.get(self.cache_name, {})
         '''
         NOTE: (... for ... in ...) is a generator expression while [... for ... in ...] is a comprehension
         a generator expression would generate elements on iterating, comprehension create the iteration in advance.
         '''
-        for key in [key for key, (_, expire) in self.cache_data.items() if 0 < expire < time.time()]:
+        now = time.time()
+        for key in [key for key, (_, expire) in self.cache_data.items() if 0 < expire < now]:
             self.cache_data.pop(key, None)
         log.info(f'{len(self.cache_data)} cache entries loaded')
 
@@ -52,9 +55,10 @@ class LocalCache:
         self.cache_data.pop(key, None)
 
     async def close(self):
-        self.cache_data.sync()
-        log.info(f'{len(self.cache_data)} cache entries dumped')
-        self.cache_data.close()
+        with shelve.open(self.cache_name) as shv:
+            shv.clear()
+            shv[self.cache_name] = self.cache_data
+            log.info(f'{len(self.cache_data)} cache entries dumped')
 
 
 class Cache(Protocol):
