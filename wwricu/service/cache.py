@@ -28,6 +28,10 @@ class LocalCache:
             self.cache_data.pop(key, None)
         log.info(f'{len(self.cache_data)} cache entries loaded')
 
+    def cancel_timeout_task(self, key: str):
+        if task := self.timeout_callback.pop(key, None):
+            task.cancel()
+
     async def timeout(self, key: str, second: int):
         await asyncio.sleep(second)
         _ = self.timeout_callback.pop(key, None)
@@ -39,6 +43,7 @@ class LocalCache:
 
         value, expire = self.cache_data.get(key, (None, 0))
         if 0 < expire < time.time():
+            self.cancel_timeout_task(key)
             self.cache_data.pop(key, None)
             return None
 
@@ -48,8 +53,7 @@ class LocalCache:
     async def set(self, key: str, value: Any, second: int = 600):
         if not isinstance(key, str):
             raise ValueError(key)
-        if task := self.timeout_callback.pop(key, None):
-            task.cancel()
+        self.cancel_timeout_task(key)
 
         self.cache_data[key] = value, time.time() + second if second > 0 else 0
         self.cache_data.move_to_end(key)
@@ -57,11 +61,12 @@ class LocalCache:
             self.timeout_callback[key] = asyncio.create_task(self.timeout(key, second))
 
         if len(self.cache_data) > self.max_size:
-            self.cache_data.popitem(last=False)
+            # use sync funcs to ensure deletion atomic
+            lru_key, _ = self.cache_data.popitem(last=False)
+            self.cancel_timeout_task(lru_key)
 
     async def delete(self, key: str):
-        if task := self.timeout_callback.pop(key, None):
-            task.cancel()
+        self.cancel_timeout_task(key)
         self.cache_data.pop(key, None)
 
     async def close(self):
