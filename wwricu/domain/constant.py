@@ -19,3 +19,4 @@ class CommonConstant:
     COOKIE_SIGN: str = 'sign'
     APP_NAME: str = 'wwr.icu'
     COOKIE_MAX_AGE: int = 7 * 24 * 60 * 60
+    COMMON_ERROR: str = 'Internal Server Error'
