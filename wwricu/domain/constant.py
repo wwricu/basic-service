@@ -12,6 +12,7 @@ class HttpErrorDetail:
     CONFIG_NOT_ALLOWED: str = 'Cannot get this config'
     NO_TOTP_SECRET: str = 'No totp secret'
     INVALID_VALUE: str = 'Invalid value'
+    CONTENT_LENGTH: str = '{name} length range: {min_len} ~ {max_len}'
 
 
 class CommonConstant:

@@ -72,7 +72,7 @@ async def open_get_tags(get_tag: TagRequestRO) -> list[TagVO]:
     stmt = select(PostTag).where(
         PostTag.deleted == False).where(
         PostTag.type == get_tag.type).order_by(
-        desc(PostTag.update_time)
+        desc(PostTag.create_time)
     )
     if get_tag.page_index > 0 and get_tag.page_size > 0:
         stmt = stmt.limit(get_tag.page_size).offset((get_tag.page_index - 1) * get_tag.page_size)

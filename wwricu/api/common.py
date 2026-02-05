@@ -26,7 +26,7 @@ async def login(login_request: LoginRO, response: Response):
     enforce = await get_config(ConfigKeyEnum.TOTP_ENFORCE)
     secret = await get_config(ConfigKeyEnum.TOTP_SECRET)
     if enforce is not None and secret is not None:
-        if login_request.totp is None:
+        if not login_request.totp:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=HttpErrorDetail.NEED_TOTP)
         totp_client = pyotp.TOTP(secret)
         async with try_login_lock():
