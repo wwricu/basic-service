@@ -5,7 +5,6 @@ import time
 from contextlib import asynccontextmanager
 
 import bcrypt
-import pyotp
 from fastapi import HTTPException, Request, status
 from loguru import logger as log
 from sqlalchemy import select
@@ -17,7 +16,6 @@ from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum
 from wwricu.config import AdminConfig, Config
 from wwricu.service.cache import cache
 from wwricu.service.database import session
-from wwricu.service.manage import get_config
 
 
 @asynccontextmanager
@@ -42,13 +40,6 @@ async def try_login_lock():
 
 
 async def admin_login(login_request: LoginRO) -> bool:
-    enforce = await get_config(ConfigKeyEnum.TOTP_ENFORCE)
-    secret = await get_config(ConfigKeyEnum.TOTP_SECRET)
-    if enforce is not None and secret is not None and secret is not None:
-        totp_client = pyotp.TOTP(secret)
-        if not totp_client.verify(login_request.totp, valid_window=1):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
-
     username, password = AdminConfig.username, AdminConfig.password
     if username_config := await session.scalar(select(SysConfig).where(SysConfig.key == ConfigKeyEnum.USERNAME)):
         username = username_config.value
@@ -78,7 +69,7 @@ def hmac_sign(plain: str) -> str:
 async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
     if session_id is None or cookie_sign is None or not isinstance(issue_time := await cache.get(session_id), int):
         return False
-    if 0 <= int(time.time()) - issue_time < CommonConstant.EXPIRE_TIME and hmac_sign(session_id) == cookie_sign:
+    if 0 <= int(time.time()) - issue_time < CommonConstant.COOKIE_MAX_AGE and hmac_sign(session_id) == cookie_sign:
         return True
     log.warning(f'Invalid cookie session={session_id} issue_time={issue_time} sign={cookie_sign}')
     return False

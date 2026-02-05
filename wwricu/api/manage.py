@@ -1,3 +1,4 @@
+import base64
 import datetime
 import re
 
@@ -97,15 +98,15 @@ async def config_get(key: str) -> str | None:
 @manage_api.post('/user', response_model=None)
 async def user_config(user: UserRO, request: Request):
     if user.username is not None:
-        if len(user.username) < 3 or not bool(re.match('^[a-zA-Z][a-zA-Z0-9_-]*$', user.username)):
+        if len(user.username) < 4 or not bool(re.match('^[a-zA-Z][a-zA-Z0-9_-]*$', user.username)):
             raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, 'Invalid username')
         await set_config(ConfigKeyEnum.USERNAME, user.username)
 
     if user.password is not None:
         if len(user.password) < 8 or user.password.isalnum():
             raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, 'Invalid password')
-        password = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt()).decode()
-        await set_config(ConfigKeyEnum.PASSWORD, password)
+        credential = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt())
+        await set_config(ConfigKeyEnum.PASSWORD, base64.b64encode(credential).decode())
 
     if user.reset:
         await delete_config([ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD])

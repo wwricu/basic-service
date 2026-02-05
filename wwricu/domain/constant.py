@@ -3,6 +3,7 @@ class HttpErrorDetail:
     NO_SUCH_USER: str = 'NO SUCH USER'
     WRONG_PASSWORD: str = 'WRONG PASSWORD'
     WRONG_TOTP: str = 'WRONG TOTP'
+    NEED_TOTP: str = 'Please input TOTP'
     NOT_AUTHORIZED: str = 'Not authorized'
     UPLOAD_FAILURE: str = 'Failed to upload'
     INVALID_TAG_TYPE: str = 'Invalid tag type'
@@ -11,11 +12,12 @@ class HttpErrorDetail:
     CONFIG_NOT_ALLOWED: str = 'Cannot get this config'
     NO_TOTP_SECRET: str = 'No totp secret'
     INVALID_VALUE: str = 'Invalid value'
+    CONTENT_LENGTH: str = '{name} length range: {min_len} ~ {max_len}'
 
 
 class CommonConstant:
     SESSION_ID: str = 'session_id'
     COOKIE_SIGN: str = 'sign'
-    EXPIRE_TIME: int = 60 * 60 * 24 * 7
     APP_NAME: str = 'wwr.icu'
-    COOKIE_TIMEOUT_SECOND: int = 30 * 24 * 60 * 60
+    COOKIE_MAX_AGE: int = 7 * 24 * 60 * 60
+    COMMON_ERROR: str = 'Internal Server Error'
