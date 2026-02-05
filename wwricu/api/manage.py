@@ -97,7 +97,7 @@ async def config_get(key: str) -> str | None:
 @manage_api.post('/user', response_model=None)
 async def user_config(user: UserRO, request: Request):
     if user.username is not None:
-        if len(user.username) < 3 or not bool(re.match('^[a-zA-Z][a-zA-Z0-9_-]*$', user.username)):
+        if len(user.username) < 4 or not bool(re.match('^[a-zA-Z][a-zA-Z0-9_-]*$', user.username)):
             raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, 'Invalid username')
         await set_config(ConfigKeyEnum.USERNAME, user.username)
 

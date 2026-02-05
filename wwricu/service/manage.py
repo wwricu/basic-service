@@ -23,7 +23,14 @@ async def set_config(key: ConfigKeyEnum, value: str):
             min_len, max_len = 32, sys.maxsize
 
     if not (min_len <= len(value) <= max_len):
-        raise ValueError(value)
+        raise HTTPException(
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+            detail=HttpErrorDetail.CONTENT_LENGTH.format(
+                name=key,
+                min_len=min_len,
+                max_len=max_len if max_len != sys.maxsize else 'Inf',
+            )
+        )
 
     async with get_session() as s:
         stmt = delete(SysConfig).where(SysConfig.key == key)
