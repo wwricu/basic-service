@@ -62,7 +62,7 @@ async def open_get_post(post_id: int) -> PostDetailVO:
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED
     )
-    if (post := (await session.execute(stmt)).one()) is None:
+    if (post := (await session.execute(stmt)).first()) is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     return await get_post_detail(post)
 
