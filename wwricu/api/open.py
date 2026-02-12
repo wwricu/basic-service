@@ -53,6 +53,7 @@ async def open_get_post(post_id: int) -> PostDetailVO:
     stmt = select(
         BlogPost.id,
         BlogPost.title,
+        BlogPost.preview,
         BlogPost.content,
         BlogPost.cover_id,
         BlogPost.category_id,
