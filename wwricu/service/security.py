@@ -5,7 +5,7 @@ import time
 from contextlib import asynccontextmanager
 
 import bcrypt
-from fastapi import HTTPException, Request, status
+from fastapi import HTTPException, Request, Response, status
 from loguru import logger as log
 from sqlalchemy import select
 
@@ -50,15 +50,38 @@ async def admin_login(login_request: LoginRO) -> bool:
     return bcrypt.checkpw(login_request.password.encode(), base64.b64decode(password))
 
 
-async def admin_only(request: Request):
+async def admin_only(request: Request, response: Response):
     if __debug__:
         return
 
     session_id = request.cookies.get(CommonConstant.SESSION_ID)
     cookie_sign = request.cookies.get(CommonConstant.COOKIE_SIGN)
+
     if not await validate_cookie(session_id, cookie_sign):
         log.warning(f'Unauthorized access to {request.url.path}')
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.NOT_AUTHORIZED)
+    if not (cookie_time := await cache.get(session_id)):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.LOGIN_TIMEOUT)
+
+    if (now := int(time.time())) >= cookie_time + CommonConstant.COOKIE_MAX_AGE // 2:
+        log.warning(f'{request.cookies.get(CommonConstant.SESSION_ID)} renew')
+        await cache.set(session_id, now, CommonConstant.COOKIE_MAX_AGE)
+        response.set_cookie(
+            CommonConstant.SESSION_ID,
+            session_id,
+            max_age=60 * 60,
+            secure=True,
+            httponly=True,
+            samesite='lax'
+        )
+        response.set_cookie(
+            CommonConstant.COOKIE_SIGN,
+            hmac_sign(session_id),
+            max_age=60 * 60,
+            secure=True,
+            httponly=True,
+            samesite='lax'
+        )
 
 
 def hmac_sign(plain: str) -> str:
@@ -73,3 +96,26 @@ async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
         return True
     log.warning(f'Invalid cookie session={session_id} issue_time={issue_time} sign={cookie_sign}')
     return False
+
+
+def update_cookies(session_id: str, response: Response):
+    cookie_sign = hmac_sign(session_id)
+
+    response.delete_cookie(CommonConstant.SESSION_ID)
+    response.delete_cookie(CommonConstant.COOKIE_SIGN)
+    response.set_cookie(
+        CommonConstant.SESSION_ID,
+        session_id,
+        max_age=CommonConstant.COOKIE_MAX_AGE,
+        secure=True,
+        httponly=True,
+        samesite='lax'
+    )
+    response.set_cookie(
+        CommonConstant.COOKIE_SIGN,
+        cookie_sign,
+        max_age=CommonConstant.COOKIE_MAX_AGE,
+        secure=True,
+        httponly=True,
+        samesite='lax'
+    )
