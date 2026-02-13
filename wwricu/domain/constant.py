@@ -5,6 +5,7 @@ class HttpErrorDetail:
     WRONG_TOTP: str = 'WRONG TOTP'
     NEED_TOTP: str = 'Please input TOTP'
     NOT_AUTHORIZED: str = 'Not authorized'
+    LOGIN_TIMEOUT: str = 'Login Timeout'
     UPLOAD_FAILURE: str = 'Failed to upload'
     INVALID_TAG_TYPE: str = 'Invalid tag type'
     UNKNOWN_ENTITY_TYPE: str = 'Unknown entity type'
