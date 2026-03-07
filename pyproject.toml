@@ -8,11 +8,11 @@ dependencies = [
     'aiosqlite==0.22.1',
     'apscheduler==3.11.2',
     'bcrypt==5.0.0',
-    'boto3==1.42.50',
-    'fastapi[standard]==0.129.0',
+    'boto3==1.42.63',
+    'fastapi[standard]==0.135.1',
     'loguru==0.7.3',
     'pyotp==2.9.0',
-    'sqlalchemy==2.0.46'
+    "sqlalchemy==2.0.48",
 ]
 
 [tool.setuptools.dynamic]
