@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status as http_status
-from sqlalchemy import update, select
+from sqlalchemy import update, select, desc
 
 from wwricu.domain.entity import PostTag
-from wwricu.domain.tag import TagRO, TagVO
+from wwricu.domain.tag import TagRO, TagVO, TagRequestRO
 from wwricu.service.cache import transient
 from wwricu.service.common import update_system_count
 from wwricu.service.database import session
@@ -25,6 +25,18 @@ async def create_tag(tag_create: TagRO) -> TagVO:
     await session.commit()
     await transient.delete_all()
     return TagVO.model_validate(tag)
+
+
+@tag_api.post('/all', response_model=list[TagVO])
+async def get_tags(get_tag: TagRequestRO) -> list[TagVO]:
+    stmt = select(PostTag).where(
+        PostTag.deleted == False).where(
+        PostTag.type == get_tag.type).order_by(
+        desc(PostTag.create_time)
+    )
+    if get_tag.page_index > 0 and get_tag.page_size > 0:
+        stmt = stmt.limit(get_tag.page_size).offset((get_tag.page_index - 1) * get_tag.page_size)
+    return [TagVO.model_validate(tag) for tag in (await session.scalars(stmt)).all()]
 
 
 @tag_api.post('/update', response_model=TagVO)

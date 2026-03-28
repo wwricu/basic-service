@@ -5,10 +5,10 @@ from sqlalchemy import select, desc, func
 
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, PostTag, SysConfig
-from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, PostStatusEnum
+from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, PostStatusEnum, EntityTypeEnum
 from wwricu.domain.common import AboutPageVO, PageVO
 from wwricu.domain.post import PostDetailVO, PostRequestRO
-from wwricu.domain.tag import TagRequestRO, TagVO
+from wwricu.domain.tag import TagVO
 from wwricu.service.cache import cache, transient
 from wwricu.service.category import get_category_by_name
 from wwricu.service.database import session
@@ -82,15 +82,15 @@ async def open_get_post(post_id: int) -> PostDetailVO:
     return await get_post_detail(post)
 
 
-@open_api.post('/tags', response_model=list[TagVO])
-async def open_get_tags(get_tag: TagRequestRO) -> list[TagVO]:
-    cache_key = CacheKeyEnum.ALL_TAGS.format(tag_list=get_tag.type)
+@open_api.get('/tags/{type}', response_model=list[TagVO])
+async def open_get_tags(tag_type: EntityTypeEnum) -> list[TagVO]:
+    cache_key = CacheKeyEnum.ALL_TAGS.format(type=tag_type)
     if response := await transient.get(cache_key):
         return response
 
     stmt = select(PostTag).where(
         PostTag.deleted == False).where(
-        PostTag.type == get_tag.type).order_by(
+        PostTag.type == tag_type).order_by(
         desc(PostTag.create_time)
     )
 
