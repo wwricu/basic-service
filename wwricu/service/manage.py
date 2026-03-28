@@ -23,7 +23,8 @@ async def delete_config(keys: list[ConfigKeyEnum]):
     stmt = delete(SysConfig).where(SysConfig.key.in_(keys)).where(SysConfig.deleted == False)
     async with get_session() as s:
         await s.execute(stmt)
-    await cache.delete(CacheKeyEnum.CONFIG.format(key=key))
+    for key in keys:
+        await cache.delete(CacheKeyEnum.CONFIG.format(key=key))
 
 
 async def get_config(key: ConfigKeyEnum) -> str | None:
