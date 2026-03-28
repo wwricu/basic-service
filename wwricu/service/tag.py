@@ -123,14 +123,3 @@ async def is_tag_exists(tag_name: str, tag_type: TagTypeEnum) -> bool:
         PostTag.name == tag_name
     )
     return await session.scalar(stmt) > 0
-
-
-async def update_tag_by_id(tag_id: int, name: str | None = None, deleted: bool | None = None):
-    if name is None and deleted is None:
-        return
-    stmt = update(PostTag).where(PostTag.id == tag_id)
-    if name is not None:
-        stmt = stmt.values(name=name)
-    if deleted is not None:
-        stmt = stmt.values(deleted=deleted)
-    await session.execute(stmt)

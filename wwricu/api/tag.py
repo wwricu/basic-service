@@ -6,7 +6,7 @@ from wwricu.domain.tag import TagRO, TagVO
 from wwricu.service.common import update_system_count
 from wwricu.service.database import session
 from wwricu.service.security import admin_only
-from wwricu.service.tag import is_tag_exists, update_tag_by_id
+from wwricu.service.tag import is_tag_exists
 
 tag_api = APIRouter(prefix='/tag', tags=['Tag api'], dependencies=[Depends(admin_only), Depends(update_system_count)])
 
@@ -36,12 +36,13 @@ async def update_tag(tag_update: TagRO) -> TagVO:
     if await is_tag_exists(tag_update.name, tag_update.type):
         raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=f'{tag_update.type} {tag_update.name} already exists')
 
-    await update_tag_by_id(tag_update.id, name=tag_update.name)
-
+    stmt = update(PostTag).where(PostTag.id == tag_update.id).values(name=tag_update.name)
+    await session.execute(stmt)
     tag.name = tag_update.name
     return TagVO.model_validate(tag)
 
 
 @tag_api.get('/delete/{tag_id}', response_model=None)
 async def delete_tag(tag_id: int):
-    await update_tag_by_id(tag_id, deleted=True)
+    stmt = update(PostTag).where(PostTag.id == tag_id).values(deleted=True)
+    await session.execute(stmt)
