@@ -59,7 +59,7 @@ async def update_category(post: BlogPost, post_update: PostUpdateRO):
         category_id=category.id
     )
     await session.execute(stmt)
-    await session.commit()
+    await session.flush()
     await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post.id))
 
 

@@ -81,7 +81,7 @@ async def update_post(post_update: PostUpdateRO) -> PostDetailVO:
     )
     await session.execute(stmt)
 
-    await session.commit()
+    await session.flush()
     await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_update.id))
     await transient.delete_all()
 
@@ -95,7 +95,7 @@ async def update_post_status(post_id: int, status: str) -> PostDetailVO:
     stmt = update(BlogPost).where(BlogPost.id == blog_post.id).values(status=PostStatusEnum(status))
     await session.execute(stmt)
 
-    await session.commit()
+    await session.flush()
     await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
     await transient.delete_all()
 
@@ -113,7 +113,7 @@ async def delete_post(post_id: int):
     stmt = update(BlogPost).where(BlogPost.id == post_id).values(deleted=True)
     await session.execute(stmt)
 
-    await session.commit()
+    await session.flush()
     await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
     await transient.delete_all()
 

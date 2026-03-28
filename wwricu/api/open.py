@@ -82,7 +82,7 @@ async def open_get_post(post_id: int) -> PostDetailVO:
     return await get_post_detail(post)
 
 
-@open_api.get('/tags/{type}', response_model=list[TagVO])
+@open_api.get('/tags/{tag_type}', response_model=list[TagVO])
 async def open_get_tags(tag_type: EntityTypeEnum) -> list[TagVO]:
     cache_key = CacheKeyEnum.ALL_TAGS.format(type=tag_type)
     if response := await transient.get(cache_key):

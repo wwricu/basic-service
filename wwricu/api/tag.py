@@ -22,7 +22,7 @@ async def create_tag(tag_create: TagRO) -> TagVO:
 
     tag = PostTag(name=tag_create.name, type=tag_create.type)
     session.add(tag)
-    await session.commit()
+    await session.flush()
     await transient.delete_all()
     return TagVO.model_validate(tag)
 
@@ -53,7 +53,7 @@ async def update_tag(tag_update: TagRO) -> TagVO:
 
     stmt = update(PostTag).where(PostTag.id == tag_update.id).values(name=tag_update.name)
     await session.execute(stmt)
-    await session.commit()
+    await session.flush()
     await transient.delete_all()
     return TagVO.model_validate(tag)
 
