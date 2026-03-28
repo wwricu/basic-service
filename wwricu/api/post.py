@@ -6,9 +6,10 @@ from sqlalchemy import desc, func, select, update
 
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, PostResource
-from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum
+from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum, CacheKeyEnum
 from wwricu.domain.post import PostDetailVO, PostRequestRO, PostUpdateRO
 from wwricu.domain.common import FileUploadVO, PageVO
+from wwricu.service.cache import cache
 from wwricu.service.common import update_system_count
 from wwricu.service.category import get_category_by_name, update_category, update_category_count
 from wwricu.service.database import session
@@ -81,6 +82,7 @@ async def update_post(post_update: PostUpdateRO) -> PostDetailVO:
         category_id=post_update.category_id
     )
     await session.execute(stmt)
+    await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_update.id))
 
     return await get_post_detail(blog_post)
 
@@ -91,6 +93,7 @@ async def update_post_status(post_id: int, status: str) -> PostDetailVO:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     stmt = update(BlogPost).where(BlogPost.id == blog_post.id).values(status=PostStatusEnum(status))
     await session.execute(stmt)
+    await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
     return await get_post_detail(blog_post)
 
 
@@ -103,6 +106,7 @@ async def delete_post(post_id: int):
     # Retain relations on soft deletion, delete relation on hard deletion
     stmt = update(BlogPost).where(BlogPost.id == post_id).values(deleted=True)
     await session.execute(stmt)
+    await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
 
 
 @post_api.post('/upload', response_model=FileUploadVO)

@@ -50,6 +50,9 @@ async def open_get_posts(post: PostRequestRO) -> PageVO[PostDetailVO]:
 
 @open_api.get('/post/detail/{post_id}', response_model=PostDetailVO)
 async def open_get_post(post_id: int) -> PostDetailVO:
+    cache_key = CacheKeyEnum.POST_DETAIL.format(id=post_id)
+    if post := await cache.get(cache_key):
+        return await get_post_detail(post)
     stmt = select(
         BlogPost.id,
         BlogPost.title,
@@ -65,6 +68,7 @@ async def open_get_post(post_id: int) -> PostDetailVO:
     )
     if (post := (await session.execute(stmt)).first()) is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
+    await cache.set(cache_key, post)
     return await get_post_detail(post)
 
 

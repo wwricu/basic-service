@@ -50,7 +50,7 @@ class LocalCache:
         self.cache_data.move_to_end(key)
         return value
 
-    async def set(self, key: str, value: Any, second: int = 600):
+    async def set(self, key: str, value: Any, second: int = 3600):
         if not isinstance(key, str):
             raise ValueError(key)
         self.cancel_timeout_task(key)
@@ -79,7 +79,7 @@ class LocalCache:
 class Cache(Protocol):
     async def get(self, key: str) -> Any:...
 
-    async def set(self, key: str, value: Any, second: int = 600):...
+    async def set(self, key: str, value: Any, second: int = 3600):...
 
     async def delete(self, key: str):...
 

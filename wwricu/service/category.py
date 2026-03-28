@@ -1,8 +1,9 @@
 from sqlalchemy import case, func, select, update
 
 from wwricu.domain.entity import BlogPost, PostTag
-from wwricu.domain.enum import PostStatusEnum, TagTypeEnum
+from wwricu.domain.enum import PostStatusEnum, TagTypeEnum, CacheKeyEnum
 from wwricu.domain.post import PostUpdateRO
+from wwricu.service.cache import cache
 from wwricu.service.database import new_session, session
 
 
@@ -57,6 +58,7 @@ async def update_category(post: BlogPost, post_update: PostUpdateRO):
         BlogPost.deleted == False).values(
         category_id=category.id
     )
+    await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post.id))
     await session.execute(stmt)
 
 
