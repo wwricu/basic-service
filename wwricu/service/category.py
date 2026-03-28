@@ -58,8 +58,9 @@ async def update_category(post: BlogPost, post_update: PostUpdateRO):
         BlogPost.deleted == False).values(
         category_id=category.id
     )
-    await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post.id))
     await session.execute(stmt)
+    await session.commit()
+    await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post.id))
 
 
 async def get_post_category(post: BlogPost) -> PostTag:

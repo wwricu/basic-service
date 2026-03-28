@@ -12,12 +12,20 @@ class LocalCache:
     cache_data: OrderedDict[str, Any]
     timeout_callback: dict[str, asyncio.Task]
     max_size: int
-    cache_name: str = 'cache'
+    cache_name: str
+    persist: bool
 
-    def __init__(self, max_size: int = 100000):
+    def __init__(self, name: str = 'common', max_size: int = 100000, persist: bool = True):
         now = time.time()
+        self.cache_name = name
         self.max_size = max_size
         self.timeout_callback = {}
+        self.persist = persist
+
+        if not self.persist:
+            self.cache_data = OrderedDict()
+            return
+
         with shelve.open(self.cache_name) as shv:
             self.cache_data = shv.get(self.cache_name, OrderedDict())
         '''
@@ -26,7 +34,7 @@ class LocalCache:
         '''
         for key in [key for key, (_, expire) in self.cache_data.items() if 0 < expire < now]:
             self.cache_data.pop(key, None)
-        log.info(f'{len(self.cache_data)} cache entries loaded')
+        log.info(f'{len(self.cache_data)} {self.cache_name} cache entries loaded')
 
     def cancel_timeout_task(self, key: str):
         if task := self.timeout_callback.pop(key, None):
@@ -69,7 +77,13 @@ class LocalCache:
         self.cancel_timeout_task(key)
         self.cache_data.pop(key, None)
 
+    async def delete_all(self):
+        self.timeout_callback.clear()
+        self.cache_data.clear()
+
     async def close(self):
+        if not self.persist:
+            return
         with shelve.open(self.cache_name) as shv:
             shv.clear()
             shv[self.cache_name] = self.cache_data
@@ -83,7 +97,10 @@ class Cache(Protocol):
 
     async def delete(self, key: str):...
 
+    async def delete_all(self):...
+
     async def close(self):...
 
 
 cache: Cache = LocalCache()
+transient: Cache = LocalCache(name='transient', max_size=20, persist=False)

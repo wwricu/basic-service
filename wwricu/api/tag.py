@@ -3,6 +3,7 @@ from sqlalchemy import update, select
 
 from wwricu.domain.entity import PostTag
 from wwricu.domain.tag import TagRO, TagVO
+from wwricu.service.cache import transient
 from wwricu.service.common import update_system_count
 from wwricu.service.database import session
 from wwricu.service.security import admin_only
@@ -21,7 +22,8 @@ async def create_tag(tag_create: TagRO) -> TagVO:
 
     tag = PostTag(name=tag_create.name, type=tag_create.type)
     session.add(tag)
-    await session.flush()
+    await session.commit()
+    await transient.delete_all()
     return TagVO.model_validate(tag)
 
 
@@ -35,10 +37,12 @@ async def update_tag(tag_update: TagRO) -> TagVO:
 
     if await is_tag_exists(tag_update.name, tag_update.type):
         raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=f'{tag_update.type} {tag_update.name} already exists')
+    tag.name = tag_update.name
 
     stmt = update(PostTag).where(PostTag.id == tag_update.id).values(name=tag_update.name)
     await session.execute(stmt)
-    tag.name = tag_update.name
+    await session.commit()
+    await transient.delete_all()
     return TagVO.model_validate(tag)
 
 
@@ -46,3 +50,4 @@ async def update_tag(tag_update: TagRO) -> TagVO:
 async def delete_tag(tag_id: int):
     stmt = update(PostTag).where(PostTag.id == tag_id).values(deleted=True)
     await session.execute(stmt)
+    await transient.delete_all()

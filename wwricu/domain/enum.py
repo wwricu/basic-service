@@ -52,6 +52,8 @@ class CacheKeyEnum(StrEnum):
     STARTUP_TIMESTAMP = 'startup_timestamp'
     CONFIG = 'config_cache:{key}'
     POST_DETAIL = 'post_cache:{id}'
+    ALL_POSTS = 'all_posts:{page_index}:{page_size}:{category}:{tag_list}'
+    ALL_TAGS = 'all_tags:{type}'
 
 
 class EntityTypeEnum(StrEnum):
