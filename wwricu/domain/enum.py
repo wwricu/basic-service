@@ -50,6 +50,7 @@ class CacheKeyEnum(StrEnum):
     LOGIN_LOCK = 'login_lock'
     LOGIN_RETRIES = 'login_retries'
     STARTUP_TIMESTAMP = 'startup_timestamp'
+    CONFIG = 'config_cache:{key}'
 
 
 class EntityTypeEnum(StrEnum):

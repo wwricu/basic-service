@@ -3,7 +3,8 @@ from sqlalchemy import delete, select
 
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.entity import SysConfig
-from wwricu.domain.enum import ConfigKeyEnum
+from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum
+from wwricu.service.cache import cache
 from wwricu.service.database import get_session
 
 
@@ -15,15 +16,20 @@ async def set_config(key: ConfigKeyEnum, value: str):
         stmt = delete(SysConfig).where(SysConfig.key == key)
         await s.execute(stmt)
         s.add(SysConfig(key=key, value=value))
+    await cache.delete(CacheKeyEnum.CONFIG.format(key=key))
 
 
 async def delete_config(keys: list[ConfigKeyEnum]):
     stmt = delete(SysConfig).where(SysConfig.key.in_(keys)).where(SysConfig.deleted == False)
     async with get_session() as s:
         await s.execute(stmt)
+    await cache.delete(CacheKeyEnum.CONFIG.format(key=key))
 
 
 async def get_config(key: ConfigKeyEnum) -> str | None:
+    if (value := await cache.get(CacheKeyEnum.CONFIG.format(key=key))) is not None:
+        return value
+
     stmt = select(SysConfig.value).where(SysConfig.key == key).where(SysConfig.deleted == False)
     async with get_session() as s:
         return await s.scalar(stmt)
