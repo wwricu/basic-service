@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from botocore.response import StreamingBody
 from fastapi import HTTPException
@@ -8,10 +9,10 @@ from wwricu.domain.common import BaseModel
 
 
 class AWSConst:
-    S3: str = 's3'
-    APP_CONFIG_DATA: str = 'appconfigdata'
-    REGION = 'us-west-2'
-    AWS_DOMAIN = 'amazonaws.com'
+    S3: Literal['s3'] = 's3'
+    APP_CONFIG_DATA: Literal['appconfigdata'] = 'appconfigdata'
+    REGION: str = 'us-west-2'
+    AWS_DOMAIN: str = 'amazonaws.com'
 
 
 class AWSResponseMetaData(BaseModel):
