@@ -12,7 +12,7 @@ from wwricu.domain.common import FileUploadVO, PageVO
 from wwricu.service.cache import cache, transient
 from wwricu.service.common import update_system_count
 from wwricu.service.category import get_category_by_name, update_category, update_category_count
-from wwricu.service.database import session
+from wwricu.service.database import session, on_api_commit
 from wwricu.service.post import get_post_by_id, delete_post_cover, get_posts_preview, get_post_detail
 from wwricu.service.security import admin_only
 from wwricu.service.storage import oss_public
@@ -82,8 +82,8 @@ async def update_post(post_update: PostUpdateRO) -> PostDetailVO:
     await session.execute(stmt)
 
     await session.flush()
-    await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_update.id))
-    await transient.delete_all()
+    on_api_commit(cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_update.id)))
+    on_api_commit(transient.delete_all())
 
     return await get_post_detail(blog_post)
 
@@ -95,9 +95,8 @@ async def update_post_status(post_id: int, status: str) -> PostDetailVO:
     stmt = update(BlogPost).where(BlogPost.id == blog_post.id).values(status=PostStatusEnum(status))
     await session.execute(stmt)
 
-    await session.flush()
-    await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
-    await transient.delete_all()
+    on_api_commit(cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id)))
+    on_api_commit(transient.delete_all())
 
     return await get_post_detail(blog_post)
 
@@ -113,9 +112,8 @@ async def delete_post(post_id: int):
     stmt = update(BlogPost).where(BlogPost.id == post_id).values(deleted=True)
     await session.execute(stmt)
 
-    await session.flush()
-    await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
-    await transient.delete_all()
+    on_api_commit(cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id)))
+    on_api_commit(transient.delete_all())
 
 
 @post_api.post('/upload', response_model=FileUploadVO)
