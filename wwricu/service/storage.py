@@ -1,9 +1,10 @@
 from typing import Generator
 
 import boto3
-from botocore.client import BaseClient
 from fastapi import status as http_status
 from loguru import logger as log
+from mypy_boto3_s3 import S3Client
+from mypy_boto3_s3.type_defs import DeleteTypeDef, ObjectIdentifierTypeDef
 
 from wwricu.config import StorageConfig
 from wwricu.domain.third import AWSConst, AWSS3ListResponse, AWSS3Object, AWSS3Response, AWSResponseBase
@@ -11,9 +12,9 @@ from wwricu.domain.third import AWSConst, AWSS3ListResponse, AWSS3Object, AWSS3R
 
 class AWSS3Storage:
     bucket: str
-    s3_client: BaseClient
+    s3_client: S3Client
 
-    def __init__(self, s3_client: BaseClient, bucket: str):
+    def __init__(self, s3_client: S3Client, bucket: str):
         self.bucket = bucket
         self.s3_client = s3_client
 
@@ -36,7 +37,10 @@ class AWSS3Storage:
     def batch_delete(self, keys: list[str]):
         if keys is None or len(keys) == 0:
             return
-        response = self.s3_client.delete_objects(Bucket=self.bucket, Delete=dict(Objects=[dict(Key=key) for key in keys]))
+        response = self.s3_client.delete_objects(
+            Bucket=self.bucket,
+            Delete=DeleteTypeDef(Objects=[ObjectIdentifierTypeDef(Key=key) for key in keys])
+        )
         AWSResponseBase.model_validate(response).check()
 
     def list_all(self) -> list[AWSS3Object]:
