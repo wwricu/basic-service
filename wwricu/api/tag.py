@@ -5,7 +5,7 @@ from wwricu.domain.entity import PostTag
 from wwricu.domain.tag import TagRO, TagVO, TagRequestRO
 from wwricu.service.cache import transient
 from wwricu.service.common import update_system_count
-from wwricu.service.database import session
+from wwricu.service.database import session, on_api_commit
 from wwricu.service.security import admin_only
 from wwricu.service.tag import is_tag_exists
 
@@ -23,7 +23,7 @@ async def create_tag(tag_create: TagRO) -> TagVO:
     tag = PostTag(name=tag_create.name, type=tag_create.type)
     session.add(tag)
     await session.flush()
-    await transient.delete_all()
+    on_api_commit(transient.delete_all())
     return TagVO.model_validate(tag)
 
 
@@ -53,8 +53,7 @@ async def update_tag(tag_update: TagRO) -> TagVO:
 
     stmt = update(PostTag).where(PostTag.id == tag_update.id).values(name=tag_update.name)
     await session.execute(stmt)
-    await session.flush()
-    await transient.delete_all()
+    on_api_commit(transient.delete_all())
     return TagVO.model_validate(tag)
 
 
@@ -62,4 +61,5 @@ async def update_tag(tag_update: TagRO) -> TagVO:
 async def delete_tag(tag_id: int):
     stmt = update(PostTag).where(PostTag.id == tag_id).values(deleted=True)
     await session.execute(stmt)
-    await transient.delete_all()
+    on_api_commit(transient.delete_all())
+

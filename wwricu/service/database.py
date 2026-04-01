@@ -1,7 +1,10 @@
+import asyncio
 import contextlib
 import importlib
 import os
 from asyncio import current_task
+from collections.abc import Awaitable
+from contextvars import ContextVar
 from typing import AsyncGenerator, cast
 
 from loguru import logger as log
@@ -11,9 +14,28 @@ from wwricu.config import DatabaseConfig
 from wwricu.service.storage import oss_private
 
 
+tasks_on_commit: ContextVar[list[Awaitable] | None] = ContextVar('task_after_commit', default=None)
+
+
+def on_api_commit(func: Awaitable):
+    if not tasks_on_commit.get():
+        tasks_on_commit.set([])
+    tasks_on_commit.get().append(func)
+
+
 async def open_session():
-    async with session.begin():
+    try:
+        await session.begin()
         yield
+        await session.commit()
+        if tasks := tasks_on_commit.get():
+            await asyncio.gather(*tasks)
+    except Exception:
+        await session.rollback()
+        raise
+    finally:
+        await session.close()
+        tasks_on_commit.set(None)
 
 
 @contextlib.asynccontextmanager
