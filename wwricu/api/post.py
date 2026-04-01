@@ -6,12 +6,13 @@ from sqlalchemy import desc, func, select, update
 
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, PostResource
-from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum
+from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum, CacheKeyEnum
 from wwricu.domain.post import PostDetailVO, PostRequestRO, PostUpdateRO
 from wwricu.domain.common import FileUploadVO, PageVO
+from wwricu.service.cache import cache, transient
 from wwricu.service.common import update_system_count
 from wwricu.service.category import get_category_by_name, update_category, update_category_count
-from wwricu.service.database import session
+from wwricu.service.database import session, on_api_commit
 from wwricu.service.post import get_post_by_id, delete_post_cover, get_posts_preview, get_post_detail
 from wwricu.service.security import admin_only
 from wwricu.service.storage import oss_public
@@ -25,8 +26,6 @@ async def create_post() -> PostDetailVO:
     blog_post = BlogPost(status=PostStatusEnum.DRAFT)
     session.add(blog_post)
     await session.flush()
-    await update_category_count(blog_post)
-    await update_tag_count(blog_post)
     return PostDetailVO.model_validate(blog_post)
 
 
@@ -82,6 +81,10 @@ async def update_post(post_update: PostUpdateRO) -> PostDetailVO:
     )
     await session.execute(stmt)
 
+    await session.flush()
+    on_api_commit(cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_update.id)))
+    on_api_commit(transient.delete_all())
+
     return await get_post_detail(blog_post)
 
 
@@ -91,6 +94,10 @@ async def update_post_status(post_id: int, status: str) -> PostDetailVO:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     stmt = update(BlogPost).where(BlogPost.id == blog_post.id).values(status=PostStatusEnum(status))
     await session.execute(stmt)
+
+    on_api_commit(cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id)))
+    on_api_commit(transient.delete_all())
+
     return await get_post_detail(blog_post)
 
 
@@ -98,11 +105,15 @@ async def update_post_status(post_id: int, status: str) -> PostDetailVO:
 async def delete_post(post_id: int):
     if (post := await get_post_by_id(post_id)) is None:
         return
-    await update_category_count(post, -1)
-    await update_tag_count(post, -1)
+    if post.status == PostStatusEnum.PUBLISHED:
+        await update_category_count(post, -1)
+        await update_tag_count(post, -1)
     # Retain relations on soft deletion, delete relation on hard deletion
     stmt = update(BlogPost).where(BlogPost.id == post_id).values(deleted=True)
     await session.execute(stmt)
+
+    on_api_commit(cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id)))
+    on_api_commit(transient.delete_all())
 
 
 @post_api.post('/upload', response_model=FileUploadVO)
