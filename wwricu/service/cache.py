@@ -78,6 +78,8 @@ class LocalCache:
         self.cache_data.pop(key, None)
 
     async def delete_all(self):
+        for task in self.timeout_callback.values():
+            task.cancel()
         self.timeout_callback.clear()
         self.cache_data.clear()
 
