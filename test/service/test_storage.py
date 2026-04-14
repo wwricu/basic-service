@@ -4,7 +4,7 @@ import uuid
 from loguru import logger as log
 
 from wwricu.domain.third import AWSS3Object
-from wwricu.service.storage import oss_private
+from wwricu.component.storage import oss_private
 
 
 def test_oss_private_one():

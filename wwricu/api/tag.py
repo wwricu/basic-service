@@ -1,19 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException, status as http_status
-from sqlalchemy import update, select, desc
 
+from wwricu.database.common import insert
+from wwricu.database.tag import is_tag_exists, get_tag_by_id, update_tag_selective, get_tag_by_type
 from wwricu.domain.entity import PostTag
 from wwricu.domain.tag import TagRO, TagVO, TagRequestRO
-from wwricu.service.cache import transient
-from wwricu.service.common import update_system_count
-from wwricu.service.database import session, on_api_commit
+from wwricu.component.cache import transient
+from wwricu.service.common import reset_system_count
 from wwricu.service.security import admin_only
-from wwricu.service.tag import is_tag_exists
 
-tag_api = APIRouter(prefix='/tag', tags=['Tag api'], dependencies=[Depends(admin_only), Depends(update_system_count)])
+tag_api = APIRouter(prefix='/tag', tags=['Tag api'], dependencies=[Depends(admin_only), Depends(reset_system_count)])
 
 
 @tag_api.post('/create', response_model=TagVO)
-async def create_tag(tag_create: TagRO) -> TagVO:
+async def create_tag_api(tag_create: TagRO) -> TagVO:
     if await is_tag_exists(tag_create.name, tag_create.type):
         raise HTTPException(
             status_code=http_status.HTTP_409_CONFLICT,
@@ -21,28 +20,19 @@ async def create_tag(tag_create: TagRO) -> TagVO:
         )
 
     tag = PostTag(name=tag_create.name, type=tag_create.type)
-    session.add(tag)
-    await session.flush()
-    on_api_commit(transient.delete_all())
+    await insert(tag)
+    await transient.delete_all()
     return TagVO.model_validate(tag)
 
 
 @tag_api.post('/all', response_model=list[TagVO])
-async def get_tags(get_tag: TagRequestRO) -> list[TagVO]:
-    stmt = select(PostTag).where(
-        PostTag.deleted == False).where(
-        PostTag.type == get_tag.type).order_by(
-        desc(PostTag.create_time)
-    )
-    if get_tag.page_index > 0 and get_tag.page_size > 0:
-        stmt = stmt.limit(get_tag.page_size).offset((get_tag.page_index - 1) * get_tag.page_size)
-    return [TagVO.model_validate(tag) for tag in (await session.scalars(stmt)).all()]
+async def get_tags_api(get_tag: TagRequestRO) -> list[TagVO]:
+    return [TagVO.model_validate(tag) for tag in await get_tag_by_type(get_tag)]
 
 
 @tag_api.post('/update', response_model=TagVO)
-async def update_tag(tag_update: TagRO) -> TagVO:
-    stmt = select(PostTag).where(PostTag.id == tag_update.id)
-    if (tag := await session.scalar(stmt)) is None:
+async def update_tag_api(tag_update: TagRO) -> TagVO:
+    if (tag := await get_tag_by_id(tag_update.id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=f'{tag_update.type} not found')
     if tag.name == tag_update.name:
         return TagVO.model_validate(tag)
@@ -51,15 +41,12 @@ async def update_tag(tag_update: TagRO) -> TagVO:
         raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=f'{tag_update.type} {tag_update.name} already exists')
     tag.name = tag_update.name
 
-    stmt = update(PostTag).where(PostTag.id == tag_update.id).values(name=tag_update.name)
-    await session.execute(stmt)
-    on_api_commit(transient.delete_all())
+    await update_tag_selective(tag_update.id, name=tag_update.name)
+    await transient.delete_all()
     return TagVO.model_validate(tag)
 
 
 @tag_api.get('/delete/{tag_id}', response_model=None)
-async def delete_tag(tag_id: int):
-    stmt = update(PostTag).where(PostTag.id == tag_id).values(deleted=True)
-    await session.execute(stmt)
-    on_api_commit(transient.delete_all())
-
+async def delete_tag_api(tag_id: int):
+    await update_tag_selective(tag_id, deleted=True)
+    await transient.delete_all()

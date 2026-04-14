@@ -5,10 +5,10 @@ import pyotp
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from loguru import logger as log
 
+from wwricu.component.cache import cache
 from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum
 from wwricu.domain.common import LoginRO
-from wwricu.service.cache import cache
 from wwricu.service.manage import get_config
 from wwricu.service.security import admin_only, hmac_sign, admin_login, try_login_lock
 
@@ -16,7 +16,7 @@ common_api = APIRouter(tags=['Common API'])
 
 
 @common_api.post('/login', response_model=None)
-async def login(login_request: LoginRO, response: Response):
+async def login_api(login_request: LoginRO, response: Response):
     async with try_login_lock():
         if not await admin_login(login_request):
             log.warning(f'{login_request.username} login failure')
@@ -55,7 +55,7 @@ async def login(login_request: LoginRO, response: Response):
 
 
 @common_api.get('/logout', dependencies=[Depends(admin_only)], response_model=None)
-async def logout(request: Request, response: Response):
+async def logout_api(request: Request, response: Response):
     if (session_id := request.cookies.get(CommonConstant.SESSION_ID)) is None:
         return
     await cache.delete(session_id)
@@ -64,5 +64,5 @@ async def logout(request: Request, response: Response):
 
 
 @common_api.get('/info', dependencies=[Depends(admin_only)], response_model=None)
-async def info():
+async def info_api():
     return

@@ -7,15 +7,13 @@ from contextlib import asynccontextmanager
 import bcrypt
 from fastapi import HTTPException, Request, Response, status
 from loguru import logger as log
-from sqlalchemy import select
 
 from wwricu.domain.common import LoginRO
 from wwricu.domain.constant import CommonConstant, HttpErrorDetail
-from wwricu.domain.entity import SysConfig
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum
 from wwricu.config import AdminConfig, Config
-from wwricu.service.cache import cache
-from wwricu.service.database import session
+from wwricu.component.cache import cache
+from wwricu.service.manage import get_config
 
 
 @asynccontextmanager
@@ -41,10 +39,10 @@ async def try_login_lock():
 
 async def admin_login(login_request: LoginRO) -> bool:
     username, password = AdminConfig.username, AdminConfig.password
-    if username_config := await session.scalar(select(SysConfig).where(SysConfig.key == ConfigKeyEnum.USERNAME)):
-        username = username_config.value
-    if password_config := await session.scalar(select(SysConfig).where(SysConfig.key == ConfigKeyEnum.PASSWORD)):
-        password = password_config.value
+    if config_username := await get_config(ConfigKeyEnum.USERNAME):
+        username = config_username
+    if config_password := await get_config(ConfigKeyEnum.PASSWORD):
+        password = config_password
     if login_request.username != username:
         return False
     return bcrypt.checkpw(login_request.password.encode(), base64.b64decode(password))
@@ -94,7 +92,7 @@ async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
         return False
     if 0 <= int(time.time()) - issue_time < CommonConstant.COOKIE_MAX_AGE and hmac_sign(session_id) == cookie_sign:
         return True
-    log.warning(f'Invalid cookie session={session_id} issue_time={issue_time} sign={cookie_sign}')
+    log.warning(f'Invalid cookie session_id={session_id} issue_time={issue_time} sign={cookie_sign}')
     return False
 
 

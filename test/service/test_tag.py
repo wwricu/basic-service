@@ -3,16 +3,16 @@ import pytest
 from loguru import logger as log
 from sqlalchemy import select
 
+from wwricu.database.tag import get_tags_by_posts
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
 from wwricu.domain.enum import RelationTypeEnum, TagTypeEnum
-from wwricu.service.database import get_session
-from wwricu.service.tag import get_posts_tag_lists
+from wwricu.component.database import get_session
 
 
 @pytest.mark.asyncio
 async def test_get_posts_tag_lists():
     post_list = [BlogPost(id=25)]
-    result = await get_posts_tag_lists(post_list)
+    result = await get_tags_by_posts(post_list)
     log.info(result)
 
 

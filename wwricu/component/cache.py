@@ -20,7 +20,7 @@ class LocalCache:
         self.cache_name = name
         self.max_size = max_size
         self.timeout_callback = {}
-        self.persist = persist
+        self.persist = persist if not __debug__ else False
 
         if not self.persist:
             self.cache_data = OrderedDict()

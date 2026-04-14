@@ -71,12 +71,12 @@ def log_config():
     log.remove()
 
     if __debug__:
-        log.add(sys.stdout, level=logging.DEBUG)
+        log.add(sys.stdout, level=logging.DEBUG, backtrace=False)
         log.warning('APP RUNNING ON DEBUG MODE')
 
     log_path = EnvVarEnum.LOG_PATH.get()
     os.makedirs(log_path, exist_ok=True)
-    log.add(f'{log_path}/server.log', level=logging.DEBUG, rotation='monday at 00:00')
+    log.add(f'{log_path}/server.log', level=logging.DEBUG, rotation='monday at 00:00', backtrace=False)
     log.add(
         f'{log_path}/access.log',
         level=logging.NOTSET,
