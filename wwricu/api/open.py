@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select, desc, func
 
 from wwricu.domain.constant import HttpErrorDetail
-from wwricu.domain.entity import BlogPost, PostTag, SysConfig
+from wwricu.domain.entity import BlogPost, PostTag
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, PostStatusEnum, EntityTypeEnum
 from wwricu.domain.common import AboutPageVO, PageVO
 from wwricu.domain.post import PostDetailVO, PostRequestRO
@@ -12,6 +12,7 @@ from wwricu.domain.tag import TagVO
 from wwricu.service.cache import cache, transient
 from wwricu.service.category import get_category_by_name
 from wwricu.service.database import session
+from wwricu.service.manage import get_config
 from wwricu.service.post import get_post_detail, get_posts_preview
 from wwricu.service.tag import get_post_ids_by_tag_names
 
@@ -101,15 +102,13 @@ async def open_get_tags(tag_type: EntityTypeEnum) -> list[TagVO]:
 
 @open_api.get('/about', response_model=AboutPageVO)
 async def open_get_about() -> AboutPageVO:
-    stmt = select(SysConfig).where(SysConfig.key == ConfigKeyEnum.ABOUT_CONTENT).where(SysConfig.deleted == False)
-    conf = await session.scalar(stmt)
     post, category, tag = await asyncio.gather(
         cache.get(CacheKeyEnum.POST_COUNT),
         cache.get(CacheKeyEnum.CATEGORY_COUNT),
         cache.get(CacheKeyEnum.TAG_COUNT)
     )
     return AboutPageVO(
-        content=conf.value if conf else None,
+        content=await get_config(ConfigKeyEnum.ABOUT_CONTENT),
         post_count=post,
         category_count=category,
         tag_count=tag,
