@@ -33,4 +33,6 @@ async def get_config(key: ConfigKeyEnum) -> str | None:
 
     stmt = select(SysConfig.value).where(SysConfig.key == key).where(SysConfig.deleted == False)
     async with get_session() as s:
-        return await s.scalar(stmt)
+        result = await s.scalar(stmt)
+    await cache.set(CacheKeyEnum.CONFIG.format(key=key), result)
+    return result
