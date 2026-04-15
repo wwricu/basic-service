@@ -7,15 +7,13 @@ from contextlib import asynccontextmanager
 import bcrypt
 from fastapi import HTTPException, Request, Response, status
 from loguru import logger as log
-from sqlalchemy import select
 
 from wwricu.domain.common import LoginRO
 from wwricu.domain.constant import CommonConstant, HttpErrorDetail
-from wwricu.domain.entity import SysConfig
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum
 from wwricu.config import AdminConfig, Config
 from wwricu.service.cache import cache
-from wwricu.service.database import session
+from wwricu.service.manage import get_config
 
 
 @asynccontextmanager
@@ -40,11 +38,11 @@ async def try_login_lock():
 
 
 async def admin_login(login_request: LoginRO) -> bool:
-    username, password = AdminConfig.username, AdminConfig.password
-    if username_config := await session.scalar(select(SysConfig).where(SysConfig.key == ConfigKeyEnum.USERNAME)):
-        username = username_config.value
-    if password_config := await session.scalar(select(SysConfig).where(SysConfig.key == ConfigKeyEnum.PASSWORD)):
-        password = password_config.value
+    username, password = await get_config(ConfigKeyEnum.USERNAME), await get_config(ConfigKeyEnum.PASSWORD)
+    if not username:
+        username = AdminConfig.username
+    if not password:
+        password = AdminConfig.password
     if login_request.username != username:
         return False
     return bcrypt.checkpw(login_request.password.encode(), base64.b64decode(password))
@@ -96,26 +94,3 @@ async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
         return True
     log.warning(f'Invalid cookie session={session_id} issue_time={issue_time} sign={cookie_sign}')
     return False
-
-
-def update_cookies(session_id: str, response: Response):
-    cookie_sign = hmac_sign(session_id)
-
-    response.delete_cookie(CommonConstant.SESSION_ID)
-    response.delete_cookie(CommonConstant.COOKIE_SIGN)
-    response.set_cookie(
-        CommonConstant.SESSION_ID,
-        session_id,
-        max_age=CommonConstant.COOKIE_MAX_AGE,
-        secure=True,
-        httponly=True,
-        samesite='lax'
-    )
-    response.set_cookie(
-        CommonConstant.COOKIE_SIGN,
-        cookie_sign,
-        max_age=CommonConstant.COOKIE_MAX_AGE,
-        secure=True,
-        httponly=True,
-        samesite='lax'
-    )
