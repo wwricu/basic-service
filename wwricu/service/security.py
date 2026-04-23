@@ -38,11 +38,11 @@ async def try_login_lock():
 
 
 async def admin_login(login_request: LoginRO) -> bool:
-    username, password = AdminConfig.username, AdminConfig.password
-    if config_username := await get_config(ConfigKeyEnum.USERNAME):
-        username = config_username
-    if config_password := await get_config(ConfigKeyEnum.PASSWORD):
-        password = config_password
+    username, password = await get_config(ConfigKeyEnum.USERNAME), await get_config(ConfigKeyEnum.PASSWORD)
+    if not username:
+        username = AdminConfig.username
+    if not password:
+        password = AdminConfig.password
     if login_request.username != username:
         return False
     return bcrypt.checkpw(login_request.password.encode(), base64.b64decode(password))
