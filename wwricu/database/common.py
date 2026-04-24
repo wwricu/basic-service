@@ -1,4 +1,4 @@
-from sqlalchemy import select, delete as sql_delete
+from sqlalchemy import select, delete
 
 from wwricu.component.database import get_session
 from wwricu.domain.entity import Base, SysConfig
@@ -24,12 +24,12 @@ async def insert_all(entities: list[Base]) -> list[Base]:
 
 async def set_config(key: ConfigKeyEnum, value: str):
     async with get_session() as s:
-        await s.execute(sql_delete(SysConfig).where(SysConfig.key == key))
+        await s.execute(delete(SysConfig).where(SysConfig.key == key))
         s.add(SysConfig(key=key, value=value))
 
 
 async def delete_config(keys: list[ConfigKeyEnum]):
-    stmt = sql_delete(SysConfig).where(SysConfig.key.in_(keys)).where(SysConfig.deleted == False)
+    stmt = delete(SysConfig).where(SysConfig.key.in_(keys)).where(SysConfig.deleted == False)
     async with get_session() as s:
         await s.execute(stmt)
 

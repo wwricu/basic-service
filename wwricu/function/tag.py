@@ -2,16 +2,16 @@ from fastapi import HTTPException, status as http_status
 
 from wwricu.database.common import insert, insert_all
 from wwricu.database.relation import delete_post_tags, get_tag_ids_by_post_id
-from wwricu.database.tag import is_tag_exists, get_tag_by_id, update_tag_selective, update_tag_post_count, increase_post_tag_count, get_tags_by_ids
+from wwricu.database.tag import update_tag_selective, update_tag_post_count, increase_post_tag_count, get_tags_by_example, get_tags_count
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
-from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum
+from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
 from wwricu.domain.post import PostUpdateRO
-from wwricu.domain.tag import TagRO, TagVO
+from wwricu.domain.tag import TagRO, TagVO, TagQueryDTO
 from wwricu.component.cache import transient
 
 
 async def create_tag(tag_create: TagRO) -> TagVO:
-    if await is_tag_exists(tag_create.name, tag_create.type):
+    if await get_tags_count(TagQueryDTO(name=tag_create.name, type=tag_create.type)) > 0:
         raise HTTPException(
             status_code=http_status.HTTP_409_CONFLICT,
             detail=f'{tag_create.type} {tag_create.name} already exists'
@@ -23,12 +23,12 @@ async def create_tag(tag_create: TagRO) -> TagVO:
 
 
 async def update_tag_full(tag_update: TagRO) -> TagVO:
-    tag = await get_tag_by_id(tag_update.id)
+    tag = (await get_tags_by_example(TagQueryDTO(tag_ids=[tag_update.id])) or [None])[0]
     if tag is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=f'{tag_update.type} not found')
     if tag.name == tag_update.name:
         return TagVO.model_validate(tag)
-    if await is_tag_exists(tag_update.name, tag_update.type):
+    if await get_tags_count(TagQueryDTO(name=tag_update.name, type=tag_update.type)) > 0:
         raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=f'{tag_update.type} {tag_update.name} already exists')
     tag.name = tag_update.name
     await update_tag_selective(tag_update.id, name=tag_update.name)
@@ -36,7 +36,7 @@ async def update_tag_full(tag_update: TagRO) -> TagVO:
 
 
 async def update_tags(post: BlogPost, post_update: PostUpdateRO):
-    tags = await get_tags_by_ids(post_update.tag_id_list)
+    tags = await get_tags_by_example(TagQueryDTO(tag_ids=post_update.tag_id_list, type=TagTypeEnum.POST_TAG))
 
     prev_tag_ids, post_tag_ids = set(), set()
     if post.status == PostStatusEnum.PUBLISHED:
@@ -58,4 +58,4 @@ async def update_tag_count(post: BlogPost, increment: int = 1):
 
 async def get_post_tags(post: BlogPost) -> list[PostTag]:
     tag_ids = await get_tag_ids_by_post_id(post.id)
-    return await get_tags_by_ids(tag_ids)
+    return await get_tags_by_example(TagQueryDTO(tag_ids=tag_ids, type=TagTypeEnum.POST_TAG))

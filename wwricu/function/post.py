@@ -2,11 +2,10 @@ import uuid
 
 from fastapi import HTTPException, UploadFile, status as http_status
 
-from wwricu.database.category import get_category_by_name, get_category_by_id, update_category_count
+from wwricu.database.tag import get_category, get_tags_by_posts, update_category_count
 from wwricu.database.common import insert
 from wwricu.database.post import get_post_ids_by_tag_names, get_post_by_id, get_posts_by_example, get_posts_count, update_post_selective
 from wwricu.database.resource import get_post_cover, delete_resource, get_posts_cover
-from wwricu.database.tag import get_tags_by_posts
 from wwricu.domain.common import FileUploadVO, PageVO
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum
@@ -27,7 +26,7 @@ async def build_post_query(post: PostRequestRO, *, public: bool = False) -> Post
         page_index=post.page_index,
         post_ids=await get_post_ids_by_tag_names(post.tag_list) if post.tag_list else None
     )
-    if post.category and (category := await get_category_by_name(post.category)):
+    if post.category and (category := await get_category(name=post.category)):
         query.category_id = category.id
     return query
 
@@ -51,7 +50,7 @@ async def delete_post_cover(post: BlogPost):
 
 
 async def get_post_detail(blog_post: BlogPost) -> PostDetailVO:
-    category = await get_category_by_id(blog_post.category_id)
+    category = await get_category(category_id=blog_post.category_id)
     tags = await get_post_tags(blog_post)
     cover = await get_post_cover(blog_post.cover_id)
     post_detail = PostDetailVO.model_validate(blog_post)

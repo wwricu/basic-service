@@ -64,16 +64,20 @@ def test_open_get_posts_pagination():
 
 
 def test_open_get_post_detail_from_list():
-    list_response = client.post('/open/post/all', json={})
-    assert list_response.status_code == status.HTTP_200_OK
-    page = PageVO.model_validate(list_response.json())
-    if len(page.data) > 0:
-        post_id = PostDetailVO.model_validate(page.data[0]).id
+    post_id, tag_id, category_id = _create_published_post_with_tag()
+    try:
+        list_response = client.post('/open/post/all', json={})
+        assert list_response.status_code == status.HTTP_200_OK
+        page = PageVO.model_validate(list_response.json())
+        post_ids = [PostDetailVO.model_validate(p).id for p in page.data]
+        assert post_id in post_ids
         response = client.get(f'/open/post/detail/{post_id}')
         log.info(response.json())
         assert response.status_code == status.HTTP_200_OK
         detail = PostDetailVO.model_validate(response.json())
         assert detail.id == post_id
+    finally:
+        _cleanup_post_and_tags(post_id, tag_id, category_id)
 
 
 def test_open_get_post_detail_after_publish():

@@ -12,12 +12,12 @@ from wwricu.component.cache import cache
 from wwricu.component.database import database_backup, engine
 from wwricu.component.storage import oss_public
 from wwricu.config import Config
-from wwricu.database.category import reset_category_count, get_category_count
+from wwricu.database.tag import reset_tag_count, get_tags_count, delete_tag_before, reset_category_count
 from wwricu.database.post import delete_post_before, get_posts_count
 from wwricu.database.resource import delete_post_resource
-from wwricu.database.tag import reset_tag_count, get_tag_count, delete_tag_before
-from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum
+from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum
 from wwricu.domain.post import PostQueryDTO
+from wwricu.domain.tag import TagQueryDTO
 
 
 @asynccontextmanager
@@ -47,9 +47,9 @@ async def lifespan(_: FastAPI):
 
 
 async def reset_system_count():
-    post_count = await get_posts_count(PostQueryDTO(deleted=False, status=PostStatusEnum.PUBLISHED))
-    category_count = await get_category_count()
-    tag_count = await get_tag_count()
+    post_count = await get_posts_count(PostQueryDTO(status=PostStatusEnum.PUBLISHED))
+    category_count = await get_tags_count(TagQueryDTO(type=TagTypeEnum.POST_CAT))
+    tag_count = await get_tags_count(TagQueryDTO(type=TagTypeEnum.POST_TAG))
     log.info(f'{post_count=} {category_count=} {tag_count=}')
     await asyncio.gather(
         cache.set(CacheKeyEnum.POST_COUNT, post_count, 0),

@@ -52,7 +52,7 @@ class PostDetailVO(BaseModel):
 class PostQueryDTO(BaseModel):
     post_ids: list[int] | None = None
     category_id: int | None = None
-    deleted: bool | None = None
+    deleted: bool | None = False
     status: PostStatusEnum | None = None
     page_index: int | None = None
     page_size: int | None = None

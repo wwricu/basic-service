@@ -10,12 +10,13 @@ from sqlalchemy import update, delete
 from wwricu.config import Config
 from wwricu.database import common
 from wwricu.database.post import get_posts_by_example
-from wwricu.database.tag import get_all_deleted_tags
+from wwricu.database.tag import get_tags_by_example
 from wwricu.domain.common import TrashBinRO, TrashBinVO, UserRO
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, EntityTypeEnum, PostStatusEnum, TagTypeEnum
 from wwricu.domain.entity import BlogPost, PostTag
 from wwricu.domain.post import PostQueryDTO
+from wwricu.domain.tag import TagQueryDTO
 from wwricu.component.cache import cache
 from wwricu.component.database import get_session
 
@@ -57,7 +58,7 @@ async def get_trash_list() -> list[TrashBinVO]:
         name=tag.name,
         type=EntityTypeEnum.POST_TAG if tag.type == TagTypeEnum.POST_TAG else EntityTypeEnum.POST_CAT,
         delete_time=tag.update_time
-    ) for tag in await get_all_deleted_tags(deadline)]
+    ) for tag in await get_tags_by_example(TagQueryDTO(deleted=True, deadline=deadline))]
 
     result = deleted_post + deleted_tag
     result.sort(key=lambda item: item.delete_time, reverse=True)

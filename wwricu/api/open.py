@@ -3,12 +3,12 @@ import asyncio
 from fastapi import APIRouter, HTTPException, status
 
 from wwricu.database.post import get_public_post
-from wwricu.database.tag import get_tag_by_type
+from wwricu.database.tag import get_tags_by_example
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, TagTypeEnum
 from wwricu.domain.common import AboutPageVO, PageVO
 from wwricu.domain.post import PostDetailVO, PostRequestRO
-from wwricu.domain.tag import TagVO, TagRequestRO
+from wwricu.domain.tag import TagVO, TagQueryDTO
 from wwricu.component.cache import cache, transient
 from wwricu.function.manage import get_config
 from wwricu.function.post import build_post_query, get_post_detail, get_posts_by_query
@@ -48,7 +48,7 @@ async def open_get_tags_api(tag_type: TagTypeEnum) -> list[TagVO]:
     cache_key = CacheKeyEnum.ALL_TAGS.format(type=tag_type)
     if response := await transient.get(cache_key):
         return response
-    response = [TagVO.model_validate(tag) for tag in await get_tag_by_type(TagRequestRO(type=tag_type))]
+    response = [TagVO.model_validate(tag) for tag in await get_tags_by_example(TagQueryDTO(type=tag_type))]
     await transient.set(cache_key, response)
     return response
 

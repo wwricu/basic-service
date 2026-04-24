@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
-from wwricu.database.tag import get_tag_by_type, update_tag_selective
-from wwricu.domain.tag import TagRO, TagVO, TagRequestRO
+from wwricu.database.tag import get_tags_by_example, update_tag_selective
+from wwricu.domain.tag import TagRO, TagVO, TagRequestRO, TagQueryDTO
 from wwricu.component.cache import transient
 from wwricu.function.common import reset_system_count
 from wwricu.function.security import admin_only
@@ -17,7 +17,7 @@ async def create_tag_api(tag_create: TagRO) -> TagVO:
 
 @tag_api.post('/all', response_model=list[TagVO])
 async def get_tags_api(get_tag: TagRequestRO) -> list[TagVO]:
-    return [TagVO.model_validate(tag) for tag in await get_tag_by_type(get_tag)]
+    return [TagVO.model_validate(tag) for tag in await get_tags_by_example(TagQueryDTO(type=get_tag.type, page_index=get_tag.page_index, page_size=get_tag.page_size))]
 
 
 @tag_api.post('/update', response_model=TagVO)

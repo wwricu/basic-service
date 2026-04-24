@@ -1,23 +1,42 @@
 from datetime import datetime
 
-from sqlalchemy import select, update, func, case, delete, desc
+from sqlalchemy import select, update, func, case, delete, desc, Select
 
 from wwricu.component.database import get_session
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
-from wwricu.domain.tag import TagRequestRO
+from wwricu.domain.tag import TagQueryDTO
 
 
-async def get_tags_by_ids(tag_ids: list[int]) -> list[PostTag]:
-    if not tag_ids:
-        return []
-    stmt = select(PostTag).where(
-        PostTag.type == TagTypeEnum.POST_TAG).where(
-        PostTag.deleted == False).where(
-        PostTag.id.in_(tag_ids)
-    )
+async def build_tag_example(query: TagQueryDTO) -> Select:
+    stmt = select(PostTag)
+    if query.type is not None:
+        stmt = stmt.where(PostTag.type == query.type)
+    if query.deleted is not None:
+        stmt = stmt.where(PostTag.deleted == query.deleted)
+    if query.tag_ids is not None:
+        stmt = stmt.where(PostTag.id.in_(query.tag_ids))
+    if query.name is not None:
+        stmt = stmt.where(PostTag.name == query.name)
+    if query.deadline is not None:
+        stmt = stmt.where(PostTag.update_time > query.deadline)
+    return stmt
+
+
+async def get_tags_by_example(query: TagQueryDTO) -> list[PostTag]:
+    stmt = await build_tag_example(query)
+    stmt = stmt.order_by(desc(PostTag.create_time))
+    if query.page_size is not None and query.page_index is not None and query.page_size > 0 and query.page_index > 0:
+        stmt = stmt.limit(query.page_size).offset((query.page_index - 1) * query.page_size)
     async with get_session() as s:
         return list((await s.scalars(stmt)).all())
+
+
+async def get_tags_count(query: TagQueryDTO) -> int:
+    stmt = await build_tag_example(query)
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    async with get_session() as s:
+        return await s.scalar(count_stmt)
 
 
 async def reset_tag_count():
@@ -35,25 +54,6 @@ async def reset_tag_count():
     stmt = update(PostTag).where(PostTag.id == subquery.c.id).values(count=subquery.c.tag_count)
     async with get_session() as s:
         await s.execute(stmt)
-
-
-async def is_tag_exists(tag_name: str, tag_type: TagTypeEnum) -> bool:
-    stmt = select(func.count(PostTag.id)).where(
-        PostTag.deleted == False).where(
-        PostTag.type == tag_type).where(
-        PostTag.name == tag_name
-    )
-    async with get_session() as s:
-        return await s.scalar(stmt) > 0
-
-
-async def get_tag_count() -> int:
-    stmt = select(func.count(PostTag.id)).where(
-        PostTag.deleted == False).where(
-        PostTag.type == TagTypeEnum.POST_TAG
-    )
-    async with get_session() as s:
-        return await s.scalar(stmt)
 
 
 async def update_tag_post_count(prev_tag_ids: set[int], post_tag_ids: set[int]) -> None:
@@ -107,13 +107,63 @@ async def delete_tag_before(deadline: datetime):
         EntityRelation.type == RelationTypeEnum.POST_TAG).where(
         EntityRelation.dst_id.in_(deleted_tags)
     )
-    stmt = delete(PostTag).where(
-        PostTag.deleted == True).where(
-        PostTag.type.in_((TagTypeEnum.POST_CAT, TagTypeEnum.POST_TAG))).where(
-        PostTag.update_time < deadline
-    )
+    stmt = delete(PostTag).where(PostTag.deleted == True).where(PostTag.update_time < deadline)
     async with get_session() as s:
         await s.execute(tag_stmt)
+        await s.execute(stmt)
+
+
+async def get_category(category_id: int | None = None, name: str | None = None) -> PostTag | None:
+    if category_id is None and name is None:
+        return None
+    query = TagQueryDTO(type=TagTypeEnum.POST_CAT)
+    if category_id is not None:
+        query.tag_ids = [category_id]
+    if name is not None:
+        query.name = name
+    if len(tags := await get_tags_by_example(query)) > 1:
+        raise ValueError
+    return tags[0] if tags else None
+
+
+async def update_category_count(post: BlogPost, increment: int = 1):
+    stmt = update(PostTag).where(
+        PostTag.id == post.category_id).where(
+        PostTag.deleted == False).where(
+        PostTag.type == TagTypeEnum.POST_CAT).values(
+        count=PostTag.count + increment
+    )
+    async with get_session() as s:
+        await s.execute(stmt)
+
+
+async def reset_category_count():
+    subquery = select(PostTag.id, func.count(BlogPost.id).label('category_count')).join(
+        BlogPost, PostTag.id == BlogPost.category_id).where(
+        PostTag.deleted == False).where(
+        BlogPost.deleted == False).where(
+        PostTag.type == TagTypeEnum.POST_CAT).where(
+        BlogPost.status == PostStatusEnum.PUBLISHED
+    ).group_by(PostTag.id).subquery()
+    stmt = update(PostTag).where(PostTag.id == subquery.c.id).values(count=subquery.c.category_count)
+    async with get_session() as s:
+        await s.execute(stmt)
+
+
+async def update_category_post_count(prev_category_id: int, post_category_id: int):
+    if prev_category_id == post_category_id:
+        return
+    stmt = update(PostTag).where(
+        PostTag.deleted == False).where(
+        PostTag.type == TagTypeEnum.POST_CAT).where(
+        PostTag.id.in_((prev_category_id, post_category_id))).values(
+        count=case(
+            (PostTag.id == prev_category_id, PostTag.count - 1),
+            (PostTag.id == post_category_id, PostTag.count + 1),
+            else_=PostTag.count
+        )
+    )
+    async with get_session() as s:
         await s.execute(stmt)
 
 
@@ -121,27 +171,3 @@ async def update_tag_selective(tag_id: int, **kwargs):
     stmt = update(PostTag).where(PostTag.id == tag_id).where(PostTag.deleted == False).values(**kwargs)
     async with get_session() as s:
         await s.execute(stmt)
-
-
-async def get_tag_by_type(get_tag: TagRequestRO) -> list[PostTag]:
-    stmt = select(PostTag).where(
-        PostTag.deleted == False).where(
-        PostTag.type == get_tag.type).order_by(
-        desc(PostTag.create_time)
-    )
-    if get_tag.page_index > 0 and get_tag.page_size > 0:
-        stmt = stmt.limit(get_tag.page_size).offset((get_tag.page_index - 1) * get_tag.page_size)
-    async with get_session() as s:
-        return list((await s.scalars(stmt)).all())
-
-
-async def get_tag_by_id(tag_id: int) -> PostTag:
-    stmt = select(PostTag).where(PostTag.id == tag_id).where(PostTag.deleted == False)
-    async with get_session() as s:
-        return await s.scalar(stmt)
-
-
-async def get_all_deleted_tags(deadline: datetime) -> list[PostTag]:
-    stmt = select(PostTag).where(PostTag.deleted == True).where(PostTag.update_time > deadline)
-    async with get_session() as s:
-        return list((await s.scalars(stmt)).all())
