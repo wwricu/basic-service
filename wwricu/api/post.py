@@ -4,8 +4,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status 
 
 from wwricu.database.category import get_category_by_name, update_category_count
 from wwricu.database.common import insert
-from wwricu.database.post import get_post_ids_by_tag_names, get_post_by_id, update_post_selective, \
-    update_post, get_posts_by_example, get_posts_count
+from wwricu.database.post import get_post_ids_by_tag_names, get_post_by_id, update_post_selective, update_post
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, PostResource
 from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum, CacheKeyEnum
@@ -15,7 +14,7 @@ from wwricu.component.cache import cache, transient
 from wwricu.service.common import reset_system_count
 from wwricu.service.category import update_category
 from wwricu.component.database import transaction
-from wwricu.service.post import delete_post_cover, get_posts_preview, get_post_detail
+from wwricu.service.post import delete_post_cover, get_post_detail, get_posts_by_query
 from wwricu.service.security import admin_only
 from wwricu.component.storage import oss_public
 from wwricu.service.tag import update_tags, update_tag_count
@@ -41,13 +40,7 @@ async def get_posts(post: PostRequestRO) -> PageVO[PostDetailVO]:
     )
     if post.category and (category := await get_category_by_name(post.category)):
         query.category_id = category.id
-    posts = await get_posts_by_example(query)
-    return PageVO[PostDetailVO](
-        page_size=post.page_size,
-        page_index=post.page_index,
-        count=await get_posts_count(query),
-        data=await get_posts_preview(posts)
-    )
+    return await get_posts_by_query(query)
 
 
 @post_api.get('/detail/{post_id}', response_model=PostDetailVO | None)

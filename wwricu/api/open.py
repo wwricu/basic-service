@@ -3,7 +3,7 @@ import asyncio
 from fastapi import APIRouter, HTTPException, status
 
 from wwricu.database.category import get_category_by_name
-from wwricu.database.post import get_posts_by_example, get_posts_count, get_post_ids_by_tag_names, get_public_post
+from wwricu.database.post import get_post_ids_by_tag_names, get_public_post
 from wwricu.database.tag import get_tag_by_type
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, TagTypeEnum, PostStatusEnum
@@ -12,7 +12,7 @@ from wwricu.domain.post import PostDetailVO, PostRequestRO, PostQueryDTO
 from wwricu.domain.tag import TagVO, TagRequestRO
 from wwricu.component.cache import cache, transient
 from wwricu.service.manage import get_config
-from wwricu.service.post import get_post_detail, get_posts_preview
+from wwricu.service.post import get_post_detail, get_posts_preview, get_posts_by_query
 
 open_api = APIRouter(prefix='/open', tags=['Open API'])
 
@@ -38,14 +38,7 @@ async def open_get_posts_api(post: PostRequestRO) -> PageVO[PostDetailVO]:
     if post.category and (category := await get_category_by_name(post.category)):
         query.category_id = category.id
 
-    posts = await get_posts_by_example(query)
-    response = PageVO[PostDetailVO](
-        page_index=post.page_index,
-        page_size=post.page_size,
-        count = await get_posts_count(query),
-        data = await get_posts_preview(posts)
-    )
-
+    response = await get_posts_by_query(query)
     await transient.set(cache_key, response)
     return response
 
