@@ -5,8 +5,8 @@ from wwricu.database.tag import is_tag_exists, get_tag_by_id, update_tag_selecti
 from wwricu.domain.entity import PostTag
 from wwricu.domain.tag import TagRO, TagVO, TagRequestRO
 from wwricu.component.cache import transient
-from wwricu.service.common import reset_system_count
-from wwricu.service.security import admin_only
+from wwricu.function.common import reset_system_count
+from wwricu.function.security import admin_only
 
 tag_api = APIRouter(prefix='/tag', tags=['Tag api'], dependencies=[Depends(admin_only), Depends(reset_system_count)])
 

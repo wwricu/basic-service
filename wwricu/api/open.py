@@ -11,8 +11,8 @@ from wwricu.domain.common import AboutPageVO, PageVO
 from wwricu.domain.post import PostDetailVO, PostRequestRO, PostQueryDTO
 from wwricu.domain.tag import TagVO, TagRequestRO
 from wwricu.component.cache import cache, transient
-from wwricu.service.manage import get_config
-from wwricu.service.post import get_post_detail, get_posts_preview, get_posts_by_query
+from wwricu.function.manage import get_config
+from wwricu.function.post import get_post_detail, get_posts_preview, get_posts_by_query
 
 open_api = APIRouter(prefix='/open', tags=['Open API'])
 

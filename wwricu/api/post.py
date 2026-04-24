@@ -11,13 +11,13 @@ from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum, CacheKeyEnu
 from wwricu.domain.post import PostDetailVO, PostRequestRO, PostUpdateRO, PostQueryDTO
 from wwricu.domain.common import FileUploadVO, PageVO
 from wwricu.component.cache import cache, transient
-from wwricu.service.common import reset_system_count
-from wwricu.service.category import update_category
+from wwricu.function.common import reset_system_count
+from wwricu.function.category import update_category
 from wwricu.component.database import transaction
-from wwricu.service.post import delete_post_cover, get_post_detail, get_posts_by_query
-from wwricu.service.security import admin_only
+from wwricu.function.post import delete_post_cover, get_post_detail, get_posts_by_query
+from wwricu.function.security import admin_only
 from wwricu.component.storage import oss_public
-from wwricu.service.tag import update_tags, update_tag_count
+from wwricu.function.tag import update_tags, update_tag_count
 
 post_api = APIRouter(prefix='/post', tags=['Post Management'], dependencies=[Depends(admin_only)])
 

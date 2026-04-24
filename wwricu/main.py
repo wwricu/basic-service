@@ -4,7 +4,7 @@ from wwricu.api import api_router
 from wwricu.domain.constant import CommonConstant
 from wwricu.domain.enum import EnvVarEnum
 from wwricu.component.middleware import middlewares
-from wwricu.service.common import lifespan
+from wwricu.function.common import lifespan
 
 
 app = FastAPI(

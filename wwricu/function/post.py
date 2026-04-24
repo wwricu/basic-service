@@ -7,9 +7,9 @@ from wwricu.domain.enum import PostStatusEnum
 from wwricu.domain.post import PostDetailVO, PostResourceVO, PostQueryDTO
 from wwricu.domain.tag import TagVO
 from wwricu.domain.entity import BlogPost
-from wwricu.service.category import get_posts_category
+from wwricu.function.category import get_posts_category
 from wwricu.component.storage import oss_public
-from wwricu.service.tag import get_post_tags
+from wwricu.function.tag import get_post_tags
 
 
 async def get_posts_by_query(query: PostQueryDTO) -> PageVO[PostDetailVO]:

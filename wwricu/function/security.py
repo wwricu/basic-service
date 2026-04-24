@@ -13,7 +13,7 @@ from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum
 from wwricu.config import AdminConfig, Config
 from wwricu.component.cache import cache
-from wwricu.service.manage import get_config
+from wwricu.function.manage import get_config
 
 
 @asynccontextmanager

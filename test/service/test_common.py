@@ -4,7 +4,7 @@ import pytest
 from loguru import logger as log
 from sqlalchemy import func, select
 
-from wwricu.service.common import clean_post_resource, reset_system_count, hard_delete_expiration
+from wwricu.function.common import clean_post_resource, reset_system_count, hard_delete_expiration
 from wwricu.component.cache import cache
 from wwricu.component.database import get_session
 from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum

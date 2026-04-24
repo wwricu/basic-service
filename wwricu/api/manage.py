@@ -12,14 +12,14 @@ from wwricu.config import DatabaseConfig, Config
 from wwricu.database.post import get_posts_by_example
 from wwricu.database.tag import get_all_deleted_tags
 from wwricu.domain.post import PostQueryDTO
-from wwricu.service.manage import set_config, get_config, delete_config
+from wwricu.function.manage import set_config, get_config, delete_config
 from wwricu.domain.common import ConfigRO, TrashBinRO, TrashBinVO, UserRO
 from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.enum import DatabaseActionEnum, EntityTypeEnum, TagTypeEnum, ConfigKeyEnum, PostStatusEnum
 from wwricu.domain.entity import BlogPost, PostTag
 from wwricu.component.cache import cache
 from wwricu.component.database import database_restore, database_backup, get_session
-from wwricu.service.security import admin_only
+from wwricu.function.security import admin_only
 
 manage_api = APIRouter(prefix='/manage', tags=['Manage API'], dependencies=[Depends(admin_only)])
 
