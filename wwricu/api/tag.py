@@ -22,7 +22,9 @@ async def get_tags_api(get_tag: TagRequestRO) -> list[TagVO]:
 
 @tag_api.post('/update', response_model=TagVO)
 async def update_tag_api(tag_update: TagRO) -> TagVO:
-    return await update_tag_full(tag_update)
+    response = await update_tag_full(tag_update)
+    await transient.delete_all()
+    return response
 
 
 @tag_api.get('/delete/{tag_id}', response_model=None)

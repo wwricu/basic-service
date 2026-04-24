@@ -32,7 +32,6 @@ async def update_tag_full(tag_update: TagRO) -> TagVO:
         raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=f'{tag_update.type} {tag_update.name} already exists')
     tag.name = tag_update.name
     await update_tag_selective(tag_update.id, name=tag_update.name)
-    await transient.delete_all()
     return TagVO.model_validate(tag)
 
 

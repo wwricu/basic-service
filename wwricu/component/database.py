@@ -1,8 +1,9 @@
 import contextlib
+import functools
 import importlib
 import os
 from asyncio import current_task
-from typing import AsyncGenerator, cast
+from typing import AsyncGenerator, cast, Callable
 
 from loguru import logger as log
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session, async_sessionmaker, create_async_engine
@@ -23,6 +24,13 @@ async def get_session_manager() -> AsyncGenerator[AsyncSession, None]:
 
 def get_session() -> contextlib.AbstractAsyncContextManager[AsyncSession]:
     return cast(contextlib.AbstractAsyncContextManager[AsyncSession], get_session_manager())
+
+
+def transaction(f: Callable) -> Callable:
+    @functools.wraps(f)
+    async def wrapper(*args, **kwargs):
+        return await f(*args, **kwargs)
+    return wrapper
 
 
 def database_init():
@@ -61,4 +69,3 @@ engine = create_async_engine(DatabaseConfig.url, echo=__debug__)
 # expire_on_commit=False keeps entities usable after session closes
 session_maker = async_sessionmaker(bind=engine, expire_on_commit=False)
 session = async_scoped_session(session_maker, scopefunc=current_task)
-transaction = get_session

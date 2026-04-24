@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, Form, UploadFile
 
+from wwricu.component.cache import cache, transient
 from wwricu.database.common import insert
 from wwricu.database.post import get_post_by_id
 from wwricu.domain.common import FileUploadVO, PageVO
 from wwricu.domain.entity import BlogPost
-from wwricu.domain.enum import PostStatusEnum
+from wwricu.domain.enum import PostStatusEnum, CacheKeyEnum
 from wwricu.domain.post import PostDetailVO, PostRequestRO, PostUpdateRO
 from wwricu.function.common import reset_system_count
 from wwricu.function.post import build_post_query, delete_post_full, get_post_detail, get_posts_by_query, update_post_full, update_post_status_full, upload_post_file
@@ -35,17 +36,25 @@ async def get_post(post_id: int) -> PostDetailVO | None:
 
 @post_api.post('/update', dependencies=[Depends(reset_system_count)], response_model=PostDetailVO)
 async def update_post_api(post_update: PostUpdateRO) -> PostDetailVO:
-    return await update_post_full(post_update)
+    detail = await update_post_full(post_update)
+    await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_update.id))
+    await transient.delete_all()
+    return detail
 
 
 @post_api.get('/status/{post_id}', dependencies=[Depends(reset_system_count)], response_model=PostDetailVO)
 async def update_post_status_api(post_id: int, status: str) -> PostDetailVO:
-    return await update_post_status_full(post_id, status)
+    response = await update_post_status_full(post_id, status)
+    await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
+    await transient.delete_all()
+    return response
 
 
 @post_api.get('/delete/{post_id}', dependencies=[Depends(reset_system_count)], response_model=None)
 async def delete_post_api(post_id: int):
     await delete_post_full(post_id)
+    await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
+    await transient.delete_all()
 
 
 @post_api.post('/upload', response_model=FileUploadVO)
