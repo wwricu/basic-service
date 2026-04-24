@@ -5,6 +5,7 @@ import time
 from contextlib import asynccontextmanager
 
 import bcrypt
+import pyotp
 from fastapi import HTTPException, Request, Response, status
 from loguru import logger as log
 
@@ -46,6 +47,24 @@ async def admin_login(login_request: LoginRO) -> bool:
     if login_request.username != username:
         return False
     return bcrypt.checkpw(login_request.password.encode(), base64.b64decode(password))
+
+
+async def authenticate(login_request: LoginRO):
+    async with try_login_lock():
+        if not await admin_login(login_request):
+            log.warning(f'{login_request.username} login failure')
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_PASSWORD)
+
+    enforce = await get_config(ConfigKeyEnum.TOTP_ENFORCE)
+    secret = await get_config(ConfigKeyEnum.TOTP_SECRET)
+    if enforce is None or secret is None:
+        return
+    if not login_request.totp:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=HttpErrorDetail.NEED_TOTP)
+    totp_client = pyotp.TOTP(secret)
+    async with try_login_lock():
+        if not totp_client.verify(login_request.totp, valid_window=1):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
 
 
 async def admin_only(request: Request, response: Response):

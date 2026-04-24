@@ -2,17 +2,16 @@ import asyncio
 
 from fastapi import APIRouter, HTTPException, status
 
-from wwricu.database.category import get_category_by_name
-from wwricu.database.post import get_post_ids_by_tag_names, get_public_post
+from wwricu.database.post import get_public_post
 from wwricu.database.tag import get_tag_by_type
 from wwricu.domain.constant import HttpErrorDetail
-from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, TagTypeEnum, PostStatusEnum
+from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, TagTypeEnum
 from wwricu.domain.common import AboutPageVO, PageVO
-from wwricu.domain.post import PostDetailVO, PostRequestRO, PostQueryDTO
+from wwricu.domain.post import PostDetailVO, PostRequestRO
 from wwricu.domain.tag import TagVO, TagRequestRO
 from wwricu.component.cache import cache, transient
 from wwricu.function.manage import get_config
-from wwricu.function.post import get_post_detail, get_posts_preview, get_posts_by_query
+from wwricu.function.post import build_post_query, get_post_detail, get_posts_by_query
 
 open_api = APIRouter(prefix='/open', tags=['Open API'])
 
@@ -27,17 +26,7 @@ async def open_get_posts_api(post: PostRequestRO) -> PageVO[PostDetailVO]:
     )
     if response := await transient.get(cache_key):
         return response
-
-    query = PostQueryDTO(
-        post_ids=await get_post_ids_by_tag_names(post.tag_list) if post.tag_list else None,
-        deleted=False,
-        status=PostStatusEnum.PUBLISHED,
-        page_index=post.page_index,
-        page_size=post.page_size,
-    )
-    if post.category and (category := await get_category_by_name(post.category)):
-        query.category_id = category.id
-
+    query = await build_post_query(post, public=True)
     response = await get_posts_by_query(query)
     await transient.set(cache_key, response)
     return response
@@ -46,8 +35,8 @@ async def open_get_posts_api(post: PostRequestRO) -> PageVO[PostDetailVO]:
 @open_api.get('/post/detail/{post_id}', response_model=PostDetailVO)
 async def open_get_post_api(post_id: int) -> PostDetailVO:
     cache_key = CacheKeyEnum.POST_DETAIL.format(id=post_id)
-    if post := await cache.get(cache_key):
-        return await get_post_detail(post)
+    if cached_post := await cache.get(cache_key):
+        return await get_post_detail(cached_post)
     if (post := await get_public_post(post_id)) is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     await cache.set(cache_key, post)
@@ -59,7 +48,6 @@ async def open_get_tags_api(tag_type: TagTypeEnum) -> list[TagVO]:
     cache_key = CacheKeyEnum.ALL_TAGS.format(type=tag_type)
     if response := await transient.get(cache_key):
         return response
-
     response = [TagVO.model_validate(tag) for tag in await get_tag_by_type(TagRequestRO(type=tag_type))]
     await transient.set(cache_key, response)
     return response
