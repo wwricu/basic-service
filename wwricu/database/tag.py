@@ -171,3 +171,24 @@ async def update_tag_selective(tag_id: int, **kwargs):
     stmt = update(PostTag).where(PostTag.id == tag_id).where(PostTag.deleted == False).values(**kwargs)
     async with get_session() as s:
         await s.execute(stmt)
+
+
+async def delete_post_tags(post_id: int):
+    stmt = update(EntityRelation).where(
+        EntityRelation.type == RelationTypeEnum.POST_TAG).where(
+        EntityRelation.deleted == False).where(
+        EntityRelation.src_id == post_id).values(
+        deleted=True
+    )
+    async with get_session() as s:
+        await s.execute(stmt)
+
+
+async def get_tag_ids_by_post_id(post_id: int) -> list[int]:
+    stmt = select(EntityRelation.dst_id).where(
+        EntityRelation.type == RelationTypeEnum.POST_TAG).where(
+        EntityRelation.deleted == False).where(
+        EntityRelation.src_id == post_id
+    )
+    async with get_session() as s:
+        return list((await s.scalars(stmt)).all())

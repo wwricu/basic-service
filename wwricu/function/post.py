@@ -14,8 +14,7 @@ from wwricu.domain.tag import TagVO
 from wwricu.domain.entity import BlogPost, PostResource
 from wwricu.component.database import transaction
 from wwricu.component.storage import oss_public
-from wwricu.function.category import get_posts_category, update_category
-from wwricu.function.tag import get_post_tags, update_tag_count, update_tags
+from wwricu.function.tag import get_post_tags, update_tag_count, update_tags, update_category, get_posts_category
 
 
 async def build_post_query(post: PostRequestRO, *, public: bool = False) -> PostQueryDTO:

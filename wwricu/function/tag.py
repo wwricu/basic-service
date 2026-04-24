@@ -1,8 +1,8 @@
 from fastapi import HTTPException, status as http_status
 
 from wwricu.database.common import insert, insert_all
-from wwricu.database.relation import delete_post_tags, get_tag_ids_by_post_id
-from wwricu.database.tag import update_tag_selective, update_tag_post_count, increase_post_tag_count, get_tags_by_example, get_tags_count
+from wwricu.database.post import update_post_selective
+from wwricu.database.tag import update_tag_selective, update_category_post_count, update_tag_post_count, increase_post_tag_count, get_tags_by_example, get_tags_count, get_category, delete_post_tags, get_tag_ids_by_post_id
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
 from wwricu.domain.post import PostUpdateRO
@@ -59,3 +59,28 @@ async def update_tag_count(post: BlogPost, increment: int = 1):
 async def get_post_tags(post: BlogPost) -> list[PostTag]:
     tag_ids = await get_tag_ids_by_post_id(post.id)
     return await get_tags_by_example(TagQueryDTO(tag_ids=tag_ids, type=TagTypeEnum.POST_TAG))
+
+
+async def update_category(post: BlogPost, post_update: PostUpdateRO):
+    if (category := await get_category(category_id=post_update.category_id)) is None:
+        return
+
+    prev_category_id, post_category_id = None, None
+    if post.status == PostStatusEnum.PUBLISHED:
+        prev_category_id = post.category_id
+    if post_update.status == PostStatusEnum.PUBLISHED:
+        post_category_id = post_update.category_id
+
+    await update_category_post_count(prev_category_id, post_category_id)
+    await update_post_selective(post.id, category_id=category.id)
+
+
+async def get_posts_category(post_list: list[BlogPost]) -> dict[int, PostTag]:
+    if not post_list:
+        return {}
+    category_ids = [post.category_id for post in post_list if post.category_id]
+    if not category_ids:
+        return {}
+    categories = await get_tags_by_example(TagQueryDTO(tag_ids=category_ids, type=TagTypeEnum.POST_CAT))
+    category_dict = {cat.id: cat for cat in categories}
+    return {post.id: category_dict.get(post.category_id) for post in post_list}
