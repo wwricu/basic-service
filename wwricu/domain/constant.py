@@ -22,3 +22,4 @@ class CommonConstant:
     APP_NAME: str = 'wwr.icu'
     COOKIE_MAX_AGE: int = 7 * 24 * 60 * 60
     COMMON_ERROR: str = 'Internal Server Error'
+    ONE_DAY_SECONDS: int = 60 * 60 * 24

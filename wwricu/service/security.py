@@ -61,25 +61,10 @@ async def admin_only(request: Request, response: Response):
     if not (cookie_time := await cache.get(session_id)):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.LOGIN_TIMEOUT)
 
-    if (now := int(time.time())) >= cookie_time + CommonConstant.COOKIE_MAX_AGE // 2:
+    if (now := int(time.time())) >= cookie_time + CommonConstant.ONE_DAY_SECONDS:
         log.warning(f'{request.cookies.get(CommonConstant.SESSION_ID)} renew')
         await cache.set(session_id, now, CommonConstant.COOKIE_MAX_AGE)
-        response.set_cookie(
-            CommonConstant.SESSION_ID,
-            session_id,
-            max_age=60 * 60,
-            secure=True,
-            httponly=True,
-            samesite='lax'
-        )
-        response.set_cookie(
-            CommonConstant.COOKIE_SIGN,
-            hmac_sign(session_id),
-            max_age=60 * 60,
-            secure=True,
-            httponly=True,
-            samesite='lax'
-        )
+        update_cookies(session_id, response)
 
 
 def hmac_sign(plain: str) -> str:
@@ -97,8 +82,6 @@ async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
 
 
 def update_cookies(session_id: str, response: Response):
-    cookie_sign = hmac_sign(session_id)
-
     response.delete_cookie(CommonConstant.SESSION_ID)
     response.delete_cookie(CommonConstant.COOKIE_SIGN)
     response.set_cookie(
@@ -111,7 +94,7 @@ def update_cookies(session_id: str, response: Response):
     )
     response.set_cookie(
         CommonConstant.COOKIE_SIGN,
-        cookie_sign,
+        hmac_sign(session_id),
         max_age=CommonConstant.COOKIE_MAX_AGE,
         secure=True,
         httponly=True,

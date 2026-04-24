@@ -14,8 +14,8 @@ async def delete_post_cover(post: BlogPost):
     """HARD DELETE the resource because we are using free object storage"""
     if (resource := await get_post_cover(post.cover_id)) is None:
         return
-    oss_public.delete(resource.key)
     await delete_resource(resource.id)
+    oss_public.delete(resource.key)
 
 
 async def get_post_detail(blog_post: BlogPost) -> PostDetailVO:

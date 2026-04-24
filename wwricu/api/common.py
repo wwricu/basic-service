@@ -10,7 +10,7 @@ from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum
 from wwricu.domain.common import LoginRO
 from wwricu.service.manage import get_config
-from wwricu.service.security import admin_only, hmac_sign, admin_login, try_login_lock
+from wwricu.service.security import admin_only, admin_login, try_login_lock, update_cookies
 
 common_api = APIRouter(tags=['Common API'])
 
@@ -35,23 +35,7 @@ async def login_api(login_request: LoginRO, response: Response):
     session_id = uuid.uuid4().hex
     await cache.set(session_id, int(time.time()), CommonConstant.COOKIE_MAX_AGE)
     await cache.delete(CacheKeyEnum.LOGIN_LOCK)
-
-    response.set_cookie(
-        CommonConstant.SESSION_ID,
-        session_id,
-        max_age=CommonConstant.COOKIE_MAX_AGE,
-        secure=True,
-        httponly=True,
-        samesite='lax'
-    )
-    response.set_cookie(
-        CommonConstant.COOKIE_SIGN,
-        hmac_sign(session_id),
-        max_age=CommonConstant.COOKIE_MAX_AGE,
-        secure=True,
-        httponly=True,
-        samesite='lax'
-    )
+    update_cookies(session_id, response)
 
 
 @common_api.get('/logout', dependencies=[Depends(admin_only)], response_model=None)
