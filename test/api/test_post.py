@@ -118,7 +118,8 @@ def test_update_post():
         response = client.post('/post/update', json=update_data)
         log.info(response.json())
         assert response.status_code == status.HTTP_200_OK
-        updated = PostDetailVO.model_validate(response.json())
+        detail_response = client.get(f'/post/detail/{post.id}')
+        updated = PostDetailVO.model_validate(detail_response.json())
         assert updated.title == 'Updated Title'
         assert updated.content == 'Updated content'
         assert updated.status == PostStatusEnum.PUBLISHED
@@ -144,7 +145,9 @@ def test_update_post_with_tags_and_category():
         }
         response = client.post('/post/update', json=update_data)
         assert response.status_code == status.HTTP_200_OK
-        updated = PostDetailVO.model_validate(response.json())
+        detail_response = client.get(f'/post/detail/{post.id}')
+        updated = PostDetailVO.model_validate(detail_response.json())
+        assert updated.title == 'Post With Tags'
         assert len(updated.tag_list) == 1
         assert updated.tag_list[0].id == tag.id
         assert updated.category is not None
@@ -175,12 +178,14 @@ def test_update_post_status():
         response = client.get(f'/post/status/{post.id}?status=published')
         log.info(response.json())
         assert response.status_code == status.HTTP_200_OK
-        updated = PostDetailVO.model_validate(response.json())
+        detail_response = client.get(f'/post/detail/{post.id}')
+        updated = PostDetailVO.model_validate(detail_response.json())
         assert updated.status == PostStatusEnum.PUBLISHED
 
         response = client.get(f'/post/status/{post.id}?status=draft')
         assert response.status_code == status.HTTP_200_OK
-        updated = PostDetailVO.model_validate(response.json())
+        detail_response = client.get(f'/post/detail/{post.id}')
+        updated = PostDetailVO.model_validate(detail_response.json())
         assert updated.status == PostStatusEnum.DRAFT
     finally:
         client.get(f'/post/delete/{post.id}')

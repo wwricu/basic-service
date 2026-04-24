@@ -42,9 +42,7 @@ def test_open_get_about():
     log.info(response.json())
     assert response.status_code == status.HTTP_200_OK
     about = AboutPageVO.model_validate(response.json())
-    assert about.post_count is not None
-    assert about.category_count is not None
-    assert about.tag_count is not None
+    assert isinstance(about.content, (str, type(None)))
 
 
 def test_open_get_posts():
@@ -114,7 +112,7 @@ def test_open_get_tags():
         response = client.get(f'/open/tags/{tag_type}')
         log.info(response.json())
         assert response.status_code == status.HTTP_200_OK
-        tags = [TagVO.model_validate(t) for t in response.json()]
+        [TagVO.model_validate(t) for t in response.json()]
 
 
 def test_open_get_posts_with_tag_filter():

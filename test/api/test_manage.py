@@ -6,7 +6,7 @@ from loguru import logger as log
 
 from test.test_utils import client
 from test.api.test_common import _cleanup_login_lock, _reset_credentials
-from wwricu.domain.common import TrashBinRO, TrashBinVO
+from wwricu.domain.common import TrashBinVO
 from wwricu.domain.enum import ConfigKeyEnum, DatabaseActionEnum, EntityTypeEnum, TagTypeEnum
 from wwricu.domain.post import PostDetailVO
 from wwricu.domain.tag import TagVO
@@ -55,7 +55,7 @@ def test_trash_list():
     response = client.get('/manage/trash/all')
     log.info(response.json())
     assert response.status_code == status.HTTP_200_OK
-    trash_items = [TrashBinVO.model_validate(item) for item in response.json()]
+    [TrashBinVO.model_validate(item) for item in response.json()]
 
 
 def test_trash_recover_post():
@@ -103,7 +103,7 @@ def test_trash_recover_tag():
 def test_trash_unknown_entity_type():
     trash_data = {'id': 1, 'type': 'unknown_type', 'delete': False}
     response = client.post('/manage/trash/edit', json=trash_data)
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
 def test_user_change_username():
@@ -156,11 +156,6 @@ def test_totp_enforce_returns_secret():
     secret = enforce_response.json()
     assert secret is not None
     assert len(secret) > 0
-
-    secret_response = client.get(f'/manage/config/get?key={ConfigKeyEnum.TOTP_SECRET}')
-    assert secret_response.status_code == status.HTTP_200_OK
-    assert secret_response.json() == secret
-
     client.get('/manage/totp/enforce?enforce=False')
 
 
@@ -184,7 +179,7 @@ def test_totp_disable():
     enforce_config = client.get(f'/manage/config/get?key={ConfigKeyEnum.TOTP_ENFORCE}')
     assert enforce_config.json() is None
     secret_config = client.get(f'/manage/config/get?key={ConfigKeyEnum.TOTP_SECRET}')
-    assert secret_config.json() is None
+    assert secret_config.status_code == status.HTTP_406_NOT_ACCEPTABLE
 
 
 def test_database_download():

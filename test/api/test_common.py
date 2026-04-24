@@ -1,3 +1,5 @@
+import asyncio
+
 import pyotp
 from fastapi import status
 from loguru import logger as log
@@ -9,10 +11,8 @@ from wwricu.domain.enum import CacheKeyEnum
 
 
 def _cleanup_login_lock():
-    cache.cache_data.pop(CacheKeyEnum.LOGIN_LOCK, None)
-    cache.cancel_timeout_task(CacheKeyEnum.LOGIN_LOCK)
-    cache.cache_data.pop(CacheKeyEnum.LOGIN_RETRIES, None)
-    cache.cancel_timeout_task(CacheKeyEnum.LOGIN_RETRIES)
+    asyncio.run(cache.delete(CacheKeyEnum.LOGIN_LOCK))
+    asyncio.run(cache.delete(CacheKeyEnum.LOGIN_RETRIES))
 
 
 def _set_password(password: str):
@@ -131,7 +131,7 @@ def test_totp_enforce_confirm_login_disable():
         assert confirm_response.status_code == status.HTTP_200_OK
 
         login_response = client.post('/login', json={'username': 'wwr', 'password': 'Test@1234'})
-        assert login_response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert login_response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
         _cleanup_login_lock()
         totp_code = totp_client.now()

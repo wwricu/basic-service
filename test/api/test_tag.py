@@ -5,7 +5,7 @@ from loguru import logger as log
 
 from test.test_utils import client
 from wwricu.domain.enum import TagTypeEnum
-from wwricu.domain.tag import TagRO, TagVO, TagRequestRO
+from wwricu.domain.tag import TagVO
 
 
 def _create_tag(name: str = None, tag_type: TagTypeEnum = TagTypeEnum.POST_TAG) -> TagVO:

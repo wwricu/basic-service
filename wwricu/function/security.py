@@ -60,7 +60,7 @@ async def authenticate(login_request: LoginRO):
     if enforce is None or secret is None:
         return
     if not login_request.totp:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=HttpErrorDetail.NEED_TOTP)
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=HttpErrorDetail.NEED_TOTP)
     totp_client = pyotp.TOTP(secret)
     async with try_login_lock():
         if not totp_client.verify(login_request.totp, valid_window=1):
