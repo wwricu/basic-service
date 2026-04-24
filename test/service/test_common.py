@@ -32,10 +32,10 @@ async def test_system_count():
         PostTag.type == TagTypeEnum.POST_TAG
     )
     log.info(f'{post_count=} {category_count=} {tag_count=}')
-    async with get_session() as session:
-        assert post_count == await session.scalar(post_stmt)
-        assert tag_count == await session.scalar(tag_stmt)
-        assert category_count == await session.scalar(category_stmt)
+    async with get_session() as s:
+        assert post_count == await s.scalar(post_stmt)
+        assert tag_count == await s.scalar(tag_stmt)
+        assert category_count == await s.scalar(category_stmt)
 
 
 @pytest.mark.asyncio

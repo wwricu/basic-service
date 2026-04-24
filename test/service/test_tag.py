@@ -27,8 +27,8 @@ async def test_get_posts_tags_sql():
         EntityRelation.deleted == False).where(
         EntityRelation.src_id.in_(post.id for post in post_list)
     )
-    async with get_session() as session:
-        query_result = (await session.execute(stmt)).all()
+    async with get_session() as s:
+        query_result = (await s.execute(stmt)).all()
         log.info(query_result)
 
         result = {post.id: [] for post in post_list}
