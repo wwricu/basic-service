@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      version: ${{ steps.build.outputs.version }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -24,9 +26,9 @@ jobs:
           python-version: '3.12'
       - id: build
         run: |
+          echo version=$(cat version.txt) >> $GITHUB_OUTPUT
           pip install uv
           uv build
-          cp dist/wwricu-$(cat version.txt).tar.gz dist/wwricu.tar.gz
       - uses: softprops/action-gh-release@v2.2.2
         with:
           tag_name: snapshot
@@ -48,4 +50,5 @@ jobs:
         with:
           push: true
           file: DockerfileDev
+          build-args: VERSION=${{ needs.github.outputs.version }}
           tags: wwricu/basic-service:snapshot
