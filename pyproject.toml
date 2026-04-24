@@ -19,6 +19,9 @@ dependencies = [
 [tool.setuptools.dynamic]
 version = { file = 'version.txt' }
 
+[tool.setuptools.packages.find]
+include = ['wwricu*']
+
 [tool.setuptools.package-dir]
 wwricu = 'wwricu'
 
