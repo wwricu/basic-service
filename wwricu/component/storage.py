@@ -21,9 +21,9 @@ class AWSS3Storage:
     def get(self, key: str) -> bytes:
         # If S3 object_name was not specified, use file_name
         response = self.s3_client.get_object(Bucket=self.bucket, Key=key)
-        response = AWSS3Response.model_validate(response)
-        response.check()
-        return response.Body.read()
+        s3_resp = AWSS3Response.model_validate(response)
+        s3_resp.check()
+        return s3_resp.Body.read()
 
     def put(self, key: str, data: bytes) -> str:
         response = self.s3_client.put_object(Bucket=self.bucket, Key=key, Body=data)
@@ -45,27 +45,28 @@ class AWSS3Storage:
 
     def list_all(self) -> list[AWSS3Object]:
         response = self.s3_client.list_objects_v2(Bucket=self.bucket)
-        response = AWSS3ListResponse.model_validate(response)
-        response.check()
-        return response.Contents
+        s3_resp = AWSS3ListResponse.model_validate(response)
+        s3_resp.check()
+        return s3_resp.Contents
 
     def list_page(self, page_size: int = 100) -> Generator[AWSS3Object, None, None]:
         continuation_token = None
         while True:
-            kwargs = dict(Bucket=self.bucket, MaxKeys=page_size)
-            if continuation_token:
-                kwargs.update(ContinuationToken=continuation_token)
-            response = self.s3_client.list_objects_v2(**kwargs)
+            response = self.s3_client.list_objects_v2(
+                Bucket=self.bucket,
+                MaxKeys=page_size,
+                ContinuationToken=continuation_token
+            ) if continuation_token else self.s3_client.list_objects_v2(Bucket=self.bucket, MaxKeys=page_size)
 
-            response = AWSS3ListResponse.model_validate(response)
-            if response.ResponseMetadata.HTTPStatusCode != http_status.HTTP_200_OK:
-                log.warning(f'Failed to list objects: {response.ResponseMetadata}')
+            s3_resp = AWSS3ListResponse.model_validate(response)
+            if s3_resp.ResponseMetadata.HTTPStatusCode != http_status.HTTP_200_OK:
+                log.warning(f'Failed to list objects: {s3_resp.ResponseMetadata}')
                 continue
 
-            yield from response.Contents
-            if not response.IsTruncated:
+            yield from s3_resp.Contents
+            if not s3_resp.IsTruncated:
                 break
-            continuation_token = response.NextContinuationToken
+            continuation_token = s3_resp.NextContinuationToken
 
 
 aws_s3_client = boto3.client(AWSConst.S3)

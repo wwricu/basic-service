@@ -25,6 +25,9 @@ include = ['wwricu*']
 [tool.setuptools.package-dir]
 wwricu = 'wwricu'
 
+[tool.mypy]
+ignore_missing_imports = true
+
 [tool.ruff.lint]
 ignore = ['E712']
 
