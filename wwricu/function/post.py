@@ -98,6 +98,7 @@ async def update_post_full(post_update: PostUpdateRO) -> PostDetailVO:
     await update_category(blog_post, post_update)
     await update_tags(blog_post, post_update)
     await update_post(post_update)
+    blog_post = await get_post_by_id(post_update.id)
     return await get_post_detail(blog_post)
 
 
@@ -105,6 +106,7 @@ async def update_post_status_full(post_id: int, new_status: str) -> PostDetailVO
     if (blog_post := await get_post_by_id(post_id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     await update_post_selective(blog_post.id, status=PostStatusEnum(new_status))
+    blog_post = await get_post_by_id(post_id)
     return await get_post_detail(blog_post)
 
 

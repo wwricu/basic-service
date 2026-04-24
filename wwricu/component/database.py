@@ -26,10 +26,11 @@ def get_session() -> contextlib.AbstractAsyncContextManager[AsyncSession]:
     return cast(contextlib.AbstractAsyncContextManager[AsyncSession], get_session_manager())
 
 
-def transaction(f: Callable) -> Callable:
-    @functools.wraps(f)
+def transaction(func: Callable) -> Callable:
+    @functools.wraps(func)
     async def wrapper(*args, **kwargs):
-        return await f(*args, **kwargs)
+        async with get_session():
+            return await func(*args, **kwargs)
     return wrapper
 
 

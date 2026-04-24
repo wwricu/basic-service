@@ -59,7 +59,8 @@ async def get_tag_count() -> int:
 async def update_tag_post_count(prev_tag_ids: set[int], post_tag_ids: set[int]) -> None:
     stmt = update(PostTag).where(
         PostTag.deleted == False).where(
-        PostTag.type == TagTypeEnum.POST_TAG).values(
+        PostTag.type == TagTypeEnum.POST_TAG).where(
+        PostTag.id.in_(prev_tag_ids | post_tag_ids)).values(
         count=case(
             (PostTag.id.in_(prev_tag_ids - post_tag_ids), PostTag.count - 1),
             (PostTag.id.in_(post_tag_ids - prev_tag_ids), PostTag.count + 1),

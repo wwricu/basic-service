@@ -58,7 +58,7 @@ async def delete_post_before(deadline: datetime):
 
 
 async def update_post(post_update: PostUpdateRO):
-    stmt = update(BlogPost).where(BlogPost.id == post_update.id).values(
+    stmt = update(BlogPost).where(BlogPost.id == post_update.id).where(BlogPost.deleted == False).values(
         title=post_update.title,
         content=post_update.content,
         preview=post_update.preview,

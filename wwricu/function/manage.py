@@ -36,7 +36,9 @@ async def delete_config(keys: list[ConfigKeyEnum]):
 async def get_config(key: ConfigKeyEnum) -> str | None:
     if (value := await cache.get(CacheKeyEnum.CONFIG.format(key=key))) is not None:
         return value
-    return await common.get_config(key)
+    if (value := await common.get_config(key)) is not None:
+        await cache.set(CacheKeyEnum.CONFIG.format(key=key), value)
+    return value
 
 
 async def get_trash_list() -> list[TrashBinVO]:
@@ -71,9 +73,9 @@ async def update_trash(trash_bin: TrashBinRO) -> None:
             entity = PostTag
         case _:
             raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.UNKNOWN_ENTITY_TYPE)
-    async with get_session() as session:
-        stmt = delete(entity).where(entity.deleted == True) if trash_bin.delete else update(entity).values(deleted=False)
-        await session.execute(stmt.where(entity.id == trash_bin.id))
+    async with get_session() as s:
+        stmt = delete(entity) if trash_bin.delete else update(entity).values(deleted=False)
+        await s.execute(stmt.where(entity.deleted == True).where(entity.id == trash_bin.id))
 
 
 async def update_user_config(user: UserRO, session_id: str | None) -> None:

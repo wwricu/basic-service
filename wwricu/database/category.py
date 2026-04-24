@@ -75,7 +75,8 @@ async def update_category_post_count(prev_category_id: int, post_category_id: in
         return
     stmt = update(PostTag).where(
         PostTag.deleted == False).where(
-        PostTag.type == TagTypeEnum.POST_CAT).values(
+        PostTag.type == TagTypeEnum.POST_CAT).where(
+        PostTag.id.in_((prev_category_id, post_category_id))).values(
         count=case(
             (PostTag.id == prev_category_id, PostTag.count - 1),
             (PostTag.id == post_category_id, PostTag.count + 1),
