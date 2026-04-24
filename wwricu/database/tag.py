@@ -118,7 +118,7 @@ async def delete_tag_before(deadline: datetime):
 
 
 async def update_tag_selective(tag_id: int, **kwargs):
-    stmt = update(PostTag).where(PostTag.id == tag_id).values(**kwargs)
+    stmt = update(PostTag).where(PostTag.id == tag_id).where(PostTag.deleted == False).values(**kwargs)
     async with get_session() as s:
         await s.execute(stmt)
 

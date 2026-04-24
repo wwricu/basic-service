@@ -1,5 +1,5 @@
 from wwricu.database.category import get_category_by_id, update_category_post_count, get_categories_by_ids
-from wwricu.database.post import update_post_category
+from wwricu.database.post import update_post_selective
 from wwricu.domain.entity import BlogPost, PostTag
 from wwricu.domain.enum import PostStatusEnum
 from wwricu.domain.post import PostUpdateRO
@@ -16,7 +16,7 @@ async def update_category(post: BlogPost, post_update: PostUpdateRO):
         post_category_id = post_update.category_id
 
     await update_category_post_count(prev_category_id, post_category_id)
-    await update_post_category(post.id, category.id)
+    await update_post_selective(post.id, category_id=category.id)
 
 
 async def get_posts_category(post_list: list[BlogPost]) -> dict[int, PostTag]:

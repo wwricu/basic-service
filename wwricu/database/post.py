@@ -6,23 +6,13 @@ from sqlalchemy.orm import defer
 from wwricu.component.database import get_session
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
-from wwricu.domain.post import PostUpdateRO, PostQueryDTO
+from wwricu.domain.post import PostQueryDTO
 
 
 async def get_post_by_id(post_id: int) -> BlogPost:
     stmt = select(BlogPost).where(BlogPost.id == post_id).where(BlogPost.deleted == False)
     async with get_session() as s:
         return await s.scalar(stmt)
-
-
-async def update_post_category(post_id: int, category_id: int):
-    stmt = update(BlogPost).where(
-        BlogPost.id == post_id).where(
-        BlogPost.deleted == False).values(
-        category_id=category_id
-    )
-    async with get_session() as s:
-        await s.execute(stmt)
 
 
 async def get_post_ids_by_tag_names(tag_names: list[str]) -> list[int]:
@@ -57,21 +47,8 @@ async def delete_post_before(deadline: datetime):
         await s.execute(stmt)
 
 
-async def update_post(post_update: PostUpdateRO):
-    stmt = update(BlogPost).where(BlogPost.id == post_update.id).where(BlogPost.deleted == False).values(
-        title=post_update.title,
-        content=post_update.content,
-        preview=post_update.preview,
-        cover_id=post_update.cover_id,
-        status=post_update.status,
-        category_id=post_update.category_id
-    )
-    async with get_session() as s:
-        await s.execute(stmt)
-
-
 async def update_post_selective(post_id: int, **kwargs):
-    stmt = update(BlogPost).where(BlogPost.id == post_id).values(**kwargs)
+    stmt = update(BlogPost).where(BlogPost.id == post_id).where(BlogPost.deleted == False).values(**kwargs)
     async with get_session() as s:
         await s.execute(stmt)
 

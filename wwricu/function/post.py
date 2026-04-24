@@ -4,7 +4,7 @@ from fastapi import HTTPException, UploadFile, status as http_status
 
 from wwricu.database.category import get_category_by_name, get_category_by_id, update_category_count
 from wwricu.database.common import insert
-from wwricu.database.post import get_post_ids_by_tag_names, get_post_by_id, get_posts_by_example, get_posts_count, update_post_selective, update_post
+from wwricu.database.post import get_post_ids_by_tag_names, get_post_by_id, get_posts_by_example, get_posts_count, update_post_selective
 from wwricu.database.resource import get_post_cover, delete_resource, get_posts_cover
 from wwricu.database.tag import get_tags_by_posts
 from wwricu.domain.common import FileUploadVO, PageVO
@@ -97,7 +97,15 @@ async def update_post_full(post_update: PostUpdateRO) -> PostDetailVO:
         await delete_post_cover(blog_post)
     await update_category(blog_post, post_update)
     await update_tags(blog_post, post_update)
-    await update_post(post_update)
+    await update_post_selective(
+        post_update.id,
+        title=post_update.title,
+        content=post_update.content,
+        preview=post_update.preview,
+        cover_id=post_update.cover_id,
+        status=post_update.status,
+        category_id=post_update.category_id
+    )
     blog_post = await get_post_by_id(post_update.id)
     return await get_post_detail(blog_post)
 
