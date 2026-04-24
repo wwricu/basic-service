@@ -67,6 +67,7 @@ class EnvVarEnum(StrEnum):
     ROOT_PATH = '/'
     LOG_PATH = 'logs'
     CONFIG_FILE = 'config.json'
+    VERSION = '0.0.1'
 
     def get(self) -> str:
         return os.getenv(self.name, self.value)

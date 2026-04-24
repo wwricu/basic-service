@@ -12,6 +12,7 @@ app = FastAPI(
     lifespan=lifespan,
     middleware=middlewares,
     debug=__debug__,
+    version=EnvVarEnum.VERSION.get(),
     root_path=EnvVarEnum.ROOT_PATH.get()
 )
 app.include_router(api_router)
