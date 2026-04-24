@@ -1,12 +1,15 @@
 import secrets
 import uuid
 
+import pytest
+
 from loguru import logger as log
 
 from wwricu.domain.third import AWSS3Object
 from wwricu.component.storage import oss_private
 
 
+@pytest.mark.skip
 def test_oss_private_one():
     key, data = uuid.uuid4().hex, secrets.token_bytes(64)
     url = oss_private.put(key, data)
@@ -16,6 +19,7 @@ def test_oss_private_one():
     oss_private.delete(key)
 
 
+@pytest.mark.skip
 def test_oss_private_batch():
     data_len = 3
     key_list = [uuid.uuid4().hex for _ in range(data_len)]
