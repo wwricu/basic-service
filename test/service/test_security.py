@@ -9,4 +9,4 @@ def test_bcrypt():
     credential = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
     credential = base64.b64encode(credential).decode()
     result = bcrypt.checkpw(password.encode(), base64.b64decode(credential))
-    assert result == True
+    assert result

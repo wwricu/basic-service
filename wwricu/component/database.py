@@ -51,7 +51,7 @@ def database_backup():
     with open(DatabaseConfig.database, mode='rb') as f:
         # PRICED call on each restart and every week
         oss_private.put(DatabaseConfig.database, f.read())
-    log.info(f'Backup database success')
+    log.info('Backup database success')
 
 
 async def database_restore():
