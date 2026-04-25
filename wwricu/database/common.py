@@ -19,7 +19,7 @@ async def insert_all(entities: list[Base]) -> list[Base]:
         await s.flush()
         for entity in entities:
             await s.refresh(entity)
-    return entities
+    return list(entities)
 
 
 async def set_config(key: ConfigKeyEnum, value: str):

@@ -45,7 +45,7 @@ class LocalCache:
         _ = self.timeout_callback.pop(key, None)
         self.cache_data.pop(key, None)
 
-    async def get(self, key: str) -> Any:
+    async def get(self, key: str | None) -> Any:
         if not isinstance(key, str) or key not in self.cache_data:
             return None
 
@@ -58,7 +58,7 @@ class LocalCache:
         self.cache_data.move_to_end(key)
         return value
 
-    async def set(self, key: str, value: Any, second: int = 3600):
+    async def set(self, key: str | None, value: Any, second: int = 3600):
         if not isinstance(key, str):
             raise ValueError(key)
         self.cancel_timeout_task(key)
@@ -73,7 +73,9 @@ class LocalCache:
             lru_key, _ = self.cache_data.popitem(last=False)
             self.cancel_timeout_task(lru_key)
 
-    async def delete(self, key: str):
+    async def delete(self, key: str | None):
+        if not isinstance(key, str) or key not in self.cache_data:
+            return
         self.cancel_timeout_task(key)
         self.cache_data.pop(key, None)
 
@@ -93,11 +95,11 @@ class LocalCache:
 
 
 class Cache(Protocol):
-    async def get(self, key: str) -> Any:...
+    async def get(self, key: str | None) -> Any:...
 
-    async def set(self, key: str, value: Any, second: int = 3600):...
+    async def set(self, key: str | None, value: Any, second: int = 3600):...
 
-    async def delete(self, key: str):...
+    async def delete(self, key: str | None):...
 
     async def delete_all(self):...
 

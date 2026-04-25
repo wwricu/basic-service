@@ -36,7 +36,7 @@ async def get_tags_count(query: TagQueryDTO) -> int:
     stmt = await build_tag_example(query)
     count_stmt = select(func.count()).select_from(stmt.subquery())
     async with get_session() as s:
-        return await s.scalar(count_stmt)
+        return await s.scalar(count_stmt) or 0
 
 
 async def reset_tag_count():
@@ -150,7 +150,7 @@ async def reset_category_count():
         await s.execute(stmt)
 
 
-async def update_category_post_count(prev_category_id: int, post_category_id: int):
+async def update_category_post_count(prev_category_id: int | None, post_category_id: int | None):
     if prev_category_id == post_category_id:
         return
     stmt = update(PostTag).where(

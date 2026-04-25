@@ -80,7 +80,7 @@ async def get_posts_count(query: PostQueryDTO) -> int:
     stmt = await build_post_example(query)
     count_stmt = select(func.count()).select_from(stmt.subquery())
     async with get_session() as s:
-        return await s.scalar(count_stmt)
+        return await s.scalar(count_stmt) or 0
 
 
 async def build_post_example(query: PostQueryDTO) -> Select:
