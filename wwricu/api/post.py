@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Form, UploadFile
 
 from wwricu.component.cache import cache, transient
 from wwricu.database.common import insert
-from wwricu.database.post import get_post_by_id
+from wwricu.database import post_db
 from wwricu.domain.common import FileUploadVO, PageVO
 from wwricu.domain.entity import BlogPost
 from wwricu.domain.enum import PostStatusEnum, CacheKeyEnum, PostResourceTypeEnum
@@ -29,7 +29,7 @@ async def get_posts(post: PostRequestRO) -> PageVO[PostDetailVO]:
 
 @post_api.get('/detail/{post_id}', response_model=PostDetailVO | None)
 async def get_post(post_id: int) -> PostDetailVO | None:
-    if (post := await get_post_by_id(post_id)) is None:
+    if (post := await post_db.get_post_by_id(post_id)) is None:
         return None
     return await get_post_detail(post)
 

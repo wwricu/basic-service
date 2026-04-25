@@ -12,9 +12,7 @@ from wwricu.component.cache import cache
 from wwricu.component.database import database_backup, engine
 from wwricu.component.storage import oss_public
 from wwricu.config import Config
-from wwricu.database.tag import reset_tag_count, get_tags_count, delete_tag_before, reset_category_count
-from wwricu.database.post import delete_post_before, get_posts_count
-from wwricu.database.resource import cleanup_unlinked_resources
+from wwricu.database import post_db, res_db, tag_db
 from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum
 from wwricu.domain.post import PostQueryDTO
 from wwricu.domain.tag import TagQueryDTO
@@ -29,8 +27,8 @@ async def lifespan(_: FastAPI):
         scheduler.add_job(database_backup, trigger=CronTrigger(day_of_week=0, hour=3))
         scheduler.start()
 
-        await reset_tag_count()
-        await reset_category_count()
+        await tag_db.reset_tag_count()
+        await tag_db.reset_category_count()
         await init_public_counts()
 
         await cache.set(CacheKeyEnum.STARTUP_TIMESTAMP, int(time.time()), 0)
@@ -47,9 +45,9 @@ async def lifespan(_: FastAPI):
 
 
 async def init_public_counts():
-    post_count = await get_posts_count(PostQueryDTO(status=PostStatusEnum.PUBLISHED))
-    category_count = await get_tags_count(TagQueryDTO(type=TagTypeEnum.POST_CAT))
-    tag_count = await get_tags_count(TagQueryDTO(type=TagTypeEnum.POST_TAG))
+    post_count = await post_db.get_posts_count(PostQueryDTO(status=PostStatusEnum.PUBLISHED))
+    category_count = await tag_db.get_tags_count(TagQueryDTO(type=TagTypeEnum.POST_CAT))
+    tag_count = await tag_db.get_tags_count(TagQueryDTO(type=TagTypeEnum.POST_TAG))
     log.info(f'{post_count=} {category_count=} {tag_count=}')
     await asyncio.gather(
         cache.set(CacheKeyEnum.POST_COUNT, post_count, 0),
@@ -61,8 +59,8 @@ async def init_public_counts():
 async def purge_expired_entities():
     log.info('hard deleting expired entities')
     deadline = datetime.datetime.now() - datetime.timedelta(days=Config.trash_expire_day)
-    await delete_post_before(deadline)
-    await delete_tag_before(deadline)
+    await post_db.delete_post_before(deadline)
+    await tag_db.delete_tag_before(deadline)
 
 
 async def cleanup_orphan_resources():
@@ -73,5 +71,5 @@ async def cleanup_orphan_resources():
     All relations hard deleted, resource hard deleted, oss file deleted;
     """
     log.info('start cleaning post resources')
-    deleted_resources = await cleanup_unlinked_resources()
+    deleted_resources = await res_db.cleanup_unlinked_resources()
     await oss_public.batch_delete([resource.key for resource in deleted_resources])
