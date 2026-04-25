@@ -66,7 +66,7 @@ async def get_trash_list() -> list[TrashBinVO]:
 
 
 async def update_trash(trash_bin: TrashBinRO) -> None:
-    entity = None
+    entity: type[BlogPost] | type[PostTag] | None = None
     match trash_bin.type:
         case EntityTypeEnum.BLOG_POST:
             entity = BlogPost

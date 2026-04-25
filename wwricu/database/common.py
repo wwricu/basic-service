@@ -15,13 +15,13 @@ async def insert(entity: Base) -> Base:
     return entity
 
 
-async def insert_all(entities: Sequence[Base]) -> Sequence[Base]:
+async def insert_all(entities: Sequence[Base]) -> list[Base]:
     async with get_session() as s:
         s.add_all(entities)
         await s.flush()
         for entity in entities:
             await s.refresh(entity)
-    return entities
+    return list(entities)
 
 
 async def set_config(key: ConfigKeyEnum, value: str):

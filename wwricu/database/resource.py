@@ -5,7 +5,7 @@ from wwricu.domain.entity import BlogPost, PostResource, EntityRelation
 from wwricu.domain.enum import PostResourceTypeEnum, RelationTypeEnum
 
 
-async def get_post_cover(resource_id: int) -> PostResource:
+async def get_post_cover(resource_id: int) -> PostResource | None:
     stmt = select(PostResource).where(
         PostResource.deleted == False).where(
         PostResource.type == PostResourceTypeEnum.COVER_IMAGE).where(
@@ -47,9 +47,9 @@ async def delete_post_resource() -> list[PostResource]:
     )
 
     async with get_session() as s:
-        stmt = select(PostResource).where(PostResource.id.in_(query))
-        deleted_resources = (await s.scalars(stmt)).all()
-        stmt = delete(PostResource).where(PostResource.id.in_(query))
-        await s.execute(stmt)
+        select_stmt = select(PostResource).where(PostResource.id.in_(query))
+        deleted_resources = (await s.scalars(select_stmt)).all()
+        delete_stmt = delete(PostResource).where(PostResource.id.in_(query))
+        await s.execute(delete_stmt)
 
     return list(deleted_resources)
