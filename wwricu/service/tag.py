@@ -1,8 +1,7 @@
 from fastapi import HTTPException, status as http_status
 
+import wwricu.database as db
 from wwricu.database import post_db, tag_db
-from wwricu.database.common import insert, insert_all
-
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
@@ -18,7 +17,7 @@ async def create_tag(tag_create: TagRO) -> TagVO:
             detail=f'{tag_create.type} {tag_create.name} already exists'
         )
     tag = PostTag(name=tag_create.name, type=tag_create.type)
-    await insert(tag)
+    await db.insert(tag)
     await transient.delete_all()
     return TagVO.model_validate(tag)
 
@@ -50,7 +49,7 @@ async def update_post_tags(post: BlogPost, post_update: PostUpdateRO):
     await tag_db.delete_post_tags(post.id)
 
     relations = [EntityRelation(src_id=post.id, dst_id=t.id, type=RelationTypeEnum.POST_TAG) for t in tags]
-    await insert_all(relations)
+    await db.insert_all(relations)
 
 
 async def update_tag_count(post: BlogPost, increment: int = 1):

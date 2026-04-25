@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Form, UploadFile
 
+import wwricu.database as db
 from wwricu.component.cache import cache, transient
-from wwricu.database.common import insert
 from wwricu.database import post_db
 from wwricu.domain.common import FileUploadVO, PageVO
 from wwricu.domain.entity import BlogPost
@@ -17,7 +17,7 @@ post_api = APIRouter(prefix='/post', tags=['Post Management'], dependencies=[Dep
 @post_api.get('/create', dependencies=[Depends(init_public_counts)], response_model=PostDetailVO)
 async def create_post_api() -> PostDetailVO:
     blog_post = BlogPost(status=PostStatusEnum.DRAFT)
-    await insert(blog_post)
+    await db.insert(blog_post)
     return PostDetailVO.model_validate(blog_post)
 
 

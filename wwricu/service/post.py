@@ -3,8 +3,8 @@ import uuid
 
 from fastapi import HTTPException, UploadFile, status as http_status
 
+import wwricu.database as db
 from wwricu.database import post_db, tag_db, res_db
-from wwricu.database.common import insert
 from wwricu.domain.common import FileUploadVO, PageVO
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum
@@ -133,5 +133,5 @@ async def upload_post_file(file: UploadFile, post_id: int, file_type: PostResour
     key = f'post/{post_id}/{file_type}_{uuid.uuid4().hex}'
     url = await oss_public.put(key, await file.read())
     resource = PostResource(name=file.filename, key=key, type=file_type, post_id=post.id, url=url)
-    await insert(resource)
+    await db.insert(resource)
     return FileUploadVO(id=resource.id, name=file.filename, key=key, location=url)

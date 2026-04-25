@@ -8,8 +8,7 @@ from fastapi import HTTPException, status as http_status
 from sqlalchemy import update, delete
 
 from wwricu.config import Config
-from wwricu.database import common
-from wwricu.database import post_db, tag_db
+from wwricu.database import conf_db, post_db, tag_db
 from wwricu.domain.common import TrashBinRO, TrashBinVO, UserRO
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, EntityTypeEnum, PostStatusEnum, TagTypeEnum
@@ -23,12 +22,12 @@ from wwricu.component.database import get_session
 async def set_sys_config(key: ConfigKeyEnum, value: str):
     if not isinstance(value, str):
         raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.INVALID_VALUE)
-    await common.set_sys_config(key, value)
+    await conf_db.upsert(key, value)
     await cache.delete(CacheKeyEnum.CONFIG.format(key=key))
 
 
 async def delete_sys_config(keys: list[ConfigKeyEnum]):
-    await common.delete_sys_config(keys)
+    await conf_db.remove(keys)
     for key in keys:
         await cache.delete(CacheKeyEnum.CONFIG.format(key=key))
 
@@ -36,7 +35,7 @@ async def delete_sys_config(keys: list[ConfigKeyEnum]):
 async def get_sys_config(key: ConfigKeyEnum) -> str | None:
     if (value := await cache.get(CacheKeyEnum.CONFIG.format(key=key))) is not None:
         return value
-    if (value := await common.get_sys_config(key)) is not None:
+    if (value := await conf_db.get(key)) is not None:
         await cache.set(CacheKeyEnum.CONFIG.format(key=key), value)
     return value
 
