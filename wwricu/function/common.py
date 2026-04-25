@@ -41,7 +41,7 @@ async def lifespan(_: FastAPI):
         await cache.close()
         await engine.dispose()
         if not __debug__:
-            database_backup()
+            await database_backup()
         log.info('Exit')
         await log.complete()
 
@@ -74,4 +74,4 @@ async def clean_post_resource():
     """
     log.info('start cleaning post resources')
     deleted_resources = await delete_post_resource()
-    oss_public.batch_delete([resource.key for resource in deleted_resources])
+    await oss_public.batch_delete([resource.key for resource in deleted_resources])

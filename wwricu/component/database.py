@@ -5,6 +5,7 @@ import os
 from asyncio import current_task
 from typing import AsyncGenerator, cast, Callable
 
+from anyio import open_file
 from loguru import logger as log
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session, async_sessionmaker, create_async_engine
 
@@ -38,29 +39,28 @@ def database_init():
     if os.path.exists(DatabaseConfig.database):
         return
     # PRICED call on each deploy
-    if database := oss_private.get(DatabaseConfig.database):
+    if database := oss_private.sync_get(DatabaseConfig.database):
         log.warning(f'Download database as {DatabaseConfig.database}')
         with open(DatabaseConfig.database, mode='wb+') as f:
             f.write(database)
 
 
-def database_backup():
+async def database_backup():
     if not os.path.exists(DatabaseConfig.database):
         return
     log.warning(f'Backup database {DatabaseConfig.database}')
-    with open(DatabaseConfig.database, mode='rb') as f:
+    async with await open_file(DatabaseConfig.database, mode='rb') as f:
         # PRICED call on each restart and every week
-        oss_private.put(DatabaseConfig.database, f.read())
+        await oss_private.put(DatabaseConfig.database, await f.read())
     log.info('Backup database success')
 
 
 async def database_restore():
-    if not os.path.exists(DatabaseConfig.database):
-        return
     try:
-        await session.close_all()
         await engine.dispose()
         os.remove(DatabaseConfig.database)
+    except Exception as e:
+        log.warning(f'Failed to restore database {e}')
     finally:
         importlib.reload(importlib.import_module(__name__))
 
