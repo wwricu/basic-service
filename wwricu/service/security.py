@@ -18,24 +18,16 @@ from wwricu.service.manage import get_config
 
 
 @asynccontextmanager
-async def login_lock():
-    if await sys_cache.get(CacheKeyEnum.LOGIN_LOCK) is not None:
+async def login_lock(username: str):
+    user_key = CacheKeyEnum.LOGIN_RETRIES.format(username=username)
+    if (retries := await sys_cache.get(user_key)) is None:
+        retries = 0
+    if retries >= 5:
         log.warning('LOGIN FORBIDDEN')
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='LOGIN FORBIDDEN')
-    try:
-        yield
-        await sys_cache.delete(CacheKeyEnum.LOGIN_LOCK)
-        await sys_cache.delete(CacheKeyEnum.LOGIN_RETRIES)
-    except Exception as e:
-        if (retries := await sys_cache.get(CacheKeyEnum.LOGIN_RETRIES)) is None:
-            retries = 0
-        log.warning(f'Login failed {retries=}')
-        if retries >= 2:
-            await sys_cache.set(CacheKeyEnum.LOGIN_LOCK, True, 600)
-            await sys_cache.delete(CacheKeyEnum.LOGIN_RETRIES)
-        else:
-            await sys_cache.set(CacheKeyEnum.LOGIN_RETRIES, retries + 1, 300)
-        raise e
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=HttpErrorDetail.LOGIN_FORBIDDEN)
+    await sys_cache.set(user_key, retries + 1, 300)
+    yield
+    await sys_cache.delete(user_key)
 
 
 async def verify_credentials(login_request: LoginRO) -> bool:
@@ -45,12 +37,13 @@ async def verify_credentials(login_request: LoginRO) -> bool:
     if not password:
         password = AdminConfig.password
     if login_request.username != username:
+        # warning: bypass attack
         return False
     return bcrypt.checkpw(login_request.password.encode(), base64.b64decode(password))
 
 
 async def authenticate_admin(login_request: LoginRO):
-    async with login_lock():
+    async with login_lock(login_request.username):
         if not await verify_credentials(login_request):
             log.warning(f'{login_request.username} login failure')
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_PASSWORD)
@@ -61,10 +54,8 @@ async def authenticate_admin(login_request: LoginRO):
         return
     if not login_request.totp:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=HttpErrorDetail.NEED_TOTP)
-    totp_client = pyotp.TOTP(secret)
-    async with login_lock():
-        if not totp_client.verify(login_request.totp, valid_window=1):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
+    if not pyotp.TOTP(secret).verify(login_request.totp, valid_window=1):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
 
 
 async def rate_limit(request: Request):

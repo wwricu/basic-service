@@ -3,20 +3,16 @@ from enum import StrEnum
 
 class HttpErrorDetail(StrEnum):
     POST_NOT_FOUND = 'Post Not Found'
-    NO_SUCH_USER = 'NO SUCH USER'
     WRONG_PASSWORD = 'WRONG PASSWORD'
     WRONG_TOTP = 'WRONG TOTP'
+    LOGIN_FORBIDDEN = 'LOGIN FORBIDDEN'
     NEED_TOTP = 'Please input TOTP'
     NOT_AUTHORIZED = 'Not authorized'
     LOGIN_TIMEOUT = 'Login Timeout'
-    UPLOAD_FAILURE = 'Failed to upload'
-    INVALID_TAG_TYPE = 'Invalid tag type'
     UNKNOWN_ENTITY_TYPE = 'Unknown entity type'
-    LENGTH_EXCEEDED = 'Length exceeded'
     CONFIG_NOT_ALLOWED = 'Cannot get this config'
     NO_TOTP_SECRET = 'No totp secret'
     INVALID_VALUE = 'Invalid value'
-    CONTENT_LENGTH = '{name} length range: {min_len} ~ {max_len}'
     TOO_MANY_REQUESTS = 'Too many requests'
 
 
