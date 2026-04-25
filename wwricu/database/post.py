@@ -9,13 +9,13 @@ from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
 from wwricu.domain.post import PostQueryDTO
 
 
-async def get_post_by_id(post_id: int) -> BlogPost | None:
+async def find_by_id(post_id: int) -> BlogPost | None:
     stmt = select(BlogPost).where(BlogPost.id == post_id).where(BlogPost.deleted == False)
     async with get_session() as s:
         return await s.scalar(stmt)
 
 
-async def get_post_ids_by_tag_names(tag_names: list[str]) -> list[int]:
+async def find_by_ids_by_tags(tag_names: list[str]) -> list[int]:
     if not tag_names:
         return []
     stmt = select(BlogPost.id).join(
@@ -32,7 +32,7 @@ async def get_post_ids_by_tag_names(tag_names: list[str]) -> list[int]:
         return list((await s.scalars(stmt)).all())
 
 
-async def delete_post_before(deadline: datetime):
+async def delete_before(deadline: datetime):
     deleted_posts = select(BlogPost.id).where(
         BlogPost.deleted == True).where(
         BlogPost.update_time < deadline
@@ -47,13 +47,13 @@ async def delete_post_before(deadline: datetime):
         await s.execute(stmt)
 
 
-async def update_post_selective(post_id: int, **kwargs):
+async def update_selective(post_id: int, **kwargs):
     stmt = update(BlogPost).where(BlogPost.id == post_id).where(BlogPost.deleted == False).values(**kwargs)
     async with get_session() as s:
         await s.execute(stmt)
 
 
-async def get_public_post(post_id: int) -> BlogPost | None:
+async def find_published(post_id: int) -> BlogPost | None:
     stmt = select(BlogPost).where(
         BlogPost.id == post_id).where(
         BlogPost.deleted == False).where(
@@ -63,8 +63,8 @@ async def get_public_post(post_id: int) -> BlogPost | None:
         return await s.scalar(stmt)
 
 
-async def get_posts_by_example(query: PostQueryDTO) -> list[BlogPost]:
-    stmt = await build_post_example(query)
+async def find_by_criteria(query: PostQueryDTO) -> list[BlogPost]:
+    stmt = await build_criteria(query)
     if query.page_size is not None and query.page_index is not None:
         stmt = stmt.order_by(
             desc(BlogPost.create_time)).limit(
@@ -76,14 +76,14 @@ async def get_posts_by_example(query: PostQueryDTO) -> list[BlogPost]:
         return list(posts_result.all())
 
 
-async def get_posts_count(query: PostQueryDTO) -> int:
-    stmt = await build_post_example(query)
+async def count(query: PostQueryDTO) -> int:
+    stmt = await build_criteria(query)
     count_stmt = select(func.count()).select_from(stmt.subquery())
     async with get_session() as s:
         return await s.scalar(count_stmt) or 0
 
 
-async def build_post_example(query: PostQueryDTO) -> Select:
+async def build_criteria(query: PostQueryDTO) -> Select:
     stmt = select(BlogPost).options(defer(BlogPost.content, raiseload=True))
     if query.status is not None:
         stmt = stmt.where(BlogPost.status == query.status.value)

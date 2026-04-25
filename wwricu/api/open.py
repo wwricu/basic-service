@@ -36,7 +36,7 @@ async def open_get_post_api(post_id: int) -> PostDetailVO:
     cache_key = CacheKeyEnum.POST_DETAIL.format(id=post_id)
     if cached_post := await cache.get(cache_key):
         return await get_post_detail(cached_post)
-    if (post := await post_db.get_public_post(post_id)) is None:
+    if (post := await post_db.find_published(post_id)) is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     await cache.set(cache_key, post)
     return await get_post_detail(post)
@@ -47,7 +47,7 @@ async def open_get_tags_api(tag_type: TagTypeEnum) -> list[TagVO]:
     cache_key = CacheKeyEnum.ALL_TAGS.format(type=tag_type)
     if response := await transient.get(cache_key):
         return response
-    response = [TagVO.model_validate(tag) for tag in await tag_db.get_tags_by_example(TagQueryDTO(type=tag_type))]
+    response = [TagVO.model_validate(tag) for tag in await tag_db.get_by_criteria(TagQueryDTO(type=tag_type))]
     await transient.set(cache_key, response)
     return response
 

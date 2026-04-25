@@ -22,7 +22,7 @@ async def build_post_query(post: PostRequestRO, *, public: bool = False) -> Post
         deleted=False if public else post.deleted,
         page_size=post.page_size,
         page_index=post.page_index,
-        post_ids=await post_db.get_post_ids_by_tag_names(post.tag_list) if post.tag_list else None
+        post_ids=await post_db.find_by_ids_by_tags(post.tag_list) if post.tag_list else None
     )
     if post.category and (category := await tag_db.get_category(name=post.category)):
         query.category_id = category.id
@@ -30,11 +30,11 @@ async def build_post_query(post: PostRequestRO, *, public: bool = False) -> Post
 
 
 async def get_posts_by_query(query: PostQueryDTO) -> PageVO[PostDetailVO]:
-    posts = await post_db.get_posts_by_example(query)
+    posts = await post_db.find_by_criteria(query)
     return PageVO[PostDetailVO](
         page_size=query.page_size,
         page_index=query.page_index,
-        count=await post_db.get_posts_count(query),
+        count=await post_db.count(query),
         data=await get_posts_preview(posts)
     )
 
@@ -90,13 +90,13 @@ async def get_posts_preview(post_list: list[BlogPost]) -> list[PostDetailVO]:
 
 @transaction
 async def update_post_full(post_update: PostUpdateRO) -> PostDetailVO:
-    if (blog_post := await post_db.get_post_by_id(post_update.id)) is None:
+    if (blog_post := await post_db.find_by_id(post_update.id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     if blog_post.cover_id is not None and blog_post.cover_id != post_update.cover_id:
         await delete_post_cover(blog_post)
     await update_category(blog_post, post_update)
     await update_post_tags(blog_post, post_update)
-    await post_db.update_post_selective(
+    await post_db.update_selective(
         post_update.id,
         title=post_update.title,
         content=post_update.content,
@@ -105,30 +105,30 @@ async def update_post_full(post_update: PostUpdateRO) -> PostDetailVO:
         status=post_update.status,
         category_id=post_update.category_id
     )
-    blog_post = await post_db.get_post_by_id(post_update.id)
+    blog_post = await post_db.find_by_id(post_update.id)
     return await get_post_detail(blog_post)
 
 
 async def update_post_status_full(post_id: int, new_status: PostStatusEnum) -> PostDetailVO:
-    if (blog_post := await post_db.get_post_by_id(post_id)) is None:
+    if (blog_post := await post_db.find_by_id(post_id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
-    await post_db.update_post_selective(blog_post.id, status=new_status)
-    blog_post = await post_db.get_post_by_id(post_id)
+    await post_db.update_selective(blog_post.id, status=new_status)
+    blog_post = await post_db.find_by_id(post_id)
     return await get_post_detail(blog_post)
 
 
 @transaction
 async def delete_post_full(post_id: int) -> None:
-    if (post := await post_db.get_post_by_id(post_id)) is None:
+    if (post := await post_db.find_by_id(post_id)) is None:
         return
     if post.status == PostStatusEnum.PUBLISHED:
         await tag_db.update_category_count(post, -1)
         await update_tag_count(post, -1)
-    await post_db.update_post_selective(post.id, deleted=True)
+    await post_db.update_selective(post.id, deleted=True)
 
 
 async def upload_post_file(file: UploadFile, post_id: int, file_type: PostResourceTypeEnum) -> FileUploadVO:
-    if (post := await post_db.get_post_by_id(post_id)) is None:
+    if (post := await post_db.find_by_id(post_id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     key = f'post/{post_id}/{file_type}_{uuid.uuid4().hex}'
     url = await oss_public.put(key, await file.read())

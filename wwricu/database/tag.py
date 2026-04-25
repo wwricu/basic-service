@@ -8,7 +8,7 @@ from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
 from wwricu.domain.tag import TagQueryDTO
 
 
-async def build_tag_example(query: TagQueryDTO) -> Select:
+async def build_criteria(query: TagQueryDTO) -> Select:
     stmt = select(PostTag)
     if query.type is not None:
         stmt = stmt.where(PostTag.type == query.type)
@@ -23,8 +23,8 @@ async def build_tag_example(query: TagQueryDTO) -> Select:
     return stmt
 
 
-async def get_tags_by_example(query: TagQueryDTO) -> list[PostTag]:
-    stmt = await build_tag_example(query)
+async def get_by_criteria(query: TagQueryDTO) -> list[PostTag]:
+    stmt = await build_criteria(query)
     stmt = stmt.order_by(desc(PostTag.create_time))
     if query.page_size is not None and query.page_index is not None and query.page_size > 0 and query.page_index > 0:
         stmt = stmt.limit(query.page_size).offset((query.page_index - 1) * query.page_size)
@@ -32,8 +32,8 @@ async def get_tags_by_example(query: TagQueryDTO) -> list[PostTag]:
         return list((await s.scalars(stmt)).all())
 
 
-async def get_tags_count(query: TagQueryDTO) -> int:
-    stmt = await build_tag_example(query)
+async def count(query: TagQueryDTO) -> int:
+    stmt = await build_criteria(query)
     count_stmt = select(func.count()).select_from(stmt.subquery())
     async with get_session() as s:
         return await s.scalar(count_stmt) or 0
@@ -121,7 +121,7 @@ async def get_category(category_id: int | None = None, name: str | None = None) 
         query.tag_ids = [category_id]
     if name is not None:
         query.name = name
-    if len(tags := await get_tags_by_example(query)) > 1:
+    if len(tags := await get_by_criteria(query)) > 1:
         raise ValueError
     return tags[0] if tags else None
 
@@ -167,7 +167,7 @@ async def update_category_post_count(prev_category_id: int | None, post_category
         await s.execute(stmt)
 
 
-async def update_tag_selective(tag_id: int, **kwargs):
+async def update_selective(tag_id: int, **kwargs):
     stmt = update(PostTag).where(PostTag.id == tag_id).where(PostTag.deleted == False).values(**kwargs)
     async with get_session() as s:
         await s.execute(stmt)

@@ -50,14 +50,14 @@ async def list_trash() -> list[TrashBinVO]:
         type=EntityTypeEnum.BLOG_POST,
         status=PostStatusEnum(post.status),
         delete_time=post.update_time
-    ) for post in await post_db.get_posts_by_example(PostQueryDTO(deadline=deadline, deleted=True))]
+    ) for post in await post_db.find_by_criteria(PostQueryDTO(deadline=deadline, deleted=True))]
 
     deleted_tag = [TrashBinVO(
         id=tag.id,
         name=tag.name,
         type=EntityTypeEnum.POST_TAG if tag.type == TagTypeEnum.POST_TAG else EntityTypeEnum.POST_CAT,
         delete_time=tag.update_time
-    ) for tag in await tag_db.get_tags_by_example(TagQueryDTO(deleted=True, deadline=deadline))]
+    ) for tag in await tag_db.get_by_criteria(TagQueryDTO(deleted=True, deadline=deadline))]
 
     result = deleted_post + deleted_tag
     result.sort(key=lambda item: item.delete_time, reverse=True)

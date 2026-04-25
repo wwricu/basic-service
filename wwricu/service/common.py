@@ -45,9 +45,9 @@ async def lifespan(_: FastAPI):
 
 
 async def init_public_counts():
-    post_count = await post_db.get_posts_count(PostQueryDTO(status=PostStatusEnum.PUBLISHED))
-    category_count = await tag_db.get_tags_count(TagQueryDTO(type=TagTypeEnum.POST_CAT))
-    tag_count = await tag_db.get_tags_count(TagQueryDTO(type=TagTypeEnum.POST_TAG))
+    post_count = await post_db.count(PostQueryDTO(status=PostStatusEnum.PUBLISHED))
+    category_count = await tag_db.count(TagQueryDTO(type=TagTypeEnum.POST_CAT))
+    tag_count = await tag_db.count(TagQueryDTO(type=TagTypeEnum.POST_TAG))
     log.info(f'{post_count=} {category_count=} {tag_count=}')
     await asyncio.gather(
         cache.set(CacheKeyEnum.POST_COUNT, post_count, 0),
@@ -59,7 +59,7 @@ async def init_public_counts():
 async def purge_expired_entities():
     log.info('hard deleting expired entities')
     deadline = datetime.datetime.now() - datetime.timedelta(days=Config.trash_expire_day)
-    await post_db.delete_post_before(deadline)
+    await post_db.delete_before(deadline)
     await tag_db.delete_tag_before(deadline)
 
 
