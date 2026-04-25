@@ -7,7 +7,6 @@ from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
 from wwricu.domain.post import PostUpdateRO
 from wwricu.domain.tag import TagRO, TagVO, TagQueryDTO
-from wwricu.component.cache import transient
 
 
 async def create(tag_create: TagRO) -> TagVO:
@@ -18,7 +17,6 @@ async def create(tag_create: TagRO) -> TagVO:
         )
     tag = PostTag(name=tag_create.name, type=tag_create.type)
     await db.insert(tag)
-    await transient.delete_all()
     return TagVO.model_validate(tag)
 
 
