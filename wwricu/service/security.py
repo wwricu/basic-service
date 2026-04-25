@@ -29,17 +29,17 @@ async def login_lock(username: str):
     await sys_cache.delete(user_key)
 
 
-def rate_limit(limit: int = 100):
+def rate_limit(limit: int = 100, seconds: int = 60):
     async def wrapper(request: Request):
         if __debug__:
             return
         host = request.client.host if request.client else ''
         host_key = CacheKeyEnum.HOST_RATE.format(host=host)
         count = await sys_cache.get(host_key) or 0
-        await sys_cache.set(host_key, count + 1, 60)
         if count >= limit:
             log.warning(f'Rate limit exceeded for {host}')
             raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=HttpErrorDetail.TOO_MANY_REQUESTS)
+        await sys_cache.set(host_key, count + 1, seconds)
     return wrapper
 
 
