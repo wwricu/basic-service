@@ -5,14 +5,14 @@ from fastapi import status
 from loguru import logger as log
 
 from test.test_utils import client
-from wwricu.component.cache import cache
+from wwricu.component.cache import sys_cache
 from wwricu.domain.constant import CommonConstant
 from wwricu.domain.enum import CacheKeyEnum
 
 
 def _cleanup_login_lock():
-    asyncio.run(cache.delete(CacheKeyEnum.LOGIN_LOCK))
-    asyncio.run(cache.delete(CacheKeyEnum.LOGIN_RETRIES))
+    asyncio.run(sys_cache.delete(CacheKeyEnum.LOGIN_LOCK))
+    asyncio.run(sys_cache.delete(CacheKeyEnum.LOGIN_RETRIES))
 
 
 def _set_password(password: str):

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from wwricu.database import tag_db
 from wwricu.domain.tag import TagRO, TagVO, TagRequestRO, TagQueryDTO
-from wwricu.component.cache import transient
+from wwricu.component.cache import query_cache
 from wwricu.service import common_service, security_service, tag_service
 
 tag_api = APIRouter(
@@ -15,7 +15,7 @@ tag_api = APIRouter(
 @tag_api.post('/create', response_model=TagVO)
 async def create_tag_api(tag_create: TagRO) -> TagVO:
     response = await tag_service.create(tag_create)
-    await transient.delete_all()
+    await query_cache.delete_all()
     return response
 
 
@@ -27,11 +27,11 @@ async def get_tags_api(get_tag: TagRequestRO) -> list[TagVO]:
 @tag_api.post('/update', response_model=TagVO)
 async def update_tag_api(tag_update: TagRO) -> TagVO:
     response = await tag_service.update_tag(tag_update)
-    await transient.delete_all()
+    await query_cache.delete_all()
     return response
 
 
 @tag_api.get('/delete/{tag_id}', response_model=None)
 async def delete_tag_api(tag_id: int):
     await tag_db.update_selective(tag_id, deleted=True)
-    await transient.delete_all()
+    await query_cache.delete_all()

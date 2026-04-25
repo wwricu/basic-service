@@ -13,28 +13,28 @@ from wwricu.domain.common import LoginRO
 from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum
 from wwricu.config import AdminConfig, Config
-from wwricu.component.cache import cache
+from wwricu.component.cache import sys_cache
 from wwricu.service.manage import get_config
 
 
 @asynccontextmanager
 async def login_lock():
-    if await cache.get(CacheKeyEnum.LOGIN_LOCK) is not None:
+    if await sys_cache.get(CacheKeyEnum.LOGIN_LOCK) is not None:
         log.warning('LOGIN FORBIDDEN')
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='LOGIN FORBIDDEN')
     try:
         yield
-        await cache.delete(CacheKeyEnum.LOGIN_LOCK)
-        await cache.delete(CacheKeyEnum.LOGIN_RETRIES)
+        await sys_cache.delete(CacheKeyEnum.LOGIN_LOCK)
+        await sys_cache.delete(CacheKeyEnum.LOGIN_RETRIES)
     except Exception as e:
-        if (retries := await cache.get(CacheKeyEnum.LOGIN_RETRIES)) is None:
+        if (retries := await sys_cache.get(CacheKeyEnum.LOGIN_RETRIES)) is None:
             retries = 0
         log.warning(f'Login failed {retries=}')
         if retries >= 2:
-            await cache.set(CacheKeyEnum.LOGIN_LOCK, True, 600)
-            await cache.delete(CacheKeyEnum.LOGIN_RETRIES)
+            await sys_cache.set(CacheKeyEnum.LOGIN_LOCK, True, 600)
+            await sys_cache.delete(CacheKeyEnum.LOGIN_RETRIES)
         else:
-            await cache.set(CacheKeyEnum.LOGIN_RETRIES, retries + 1, 300)
+            await sys_cache.set(CacheKeyEnum.LOGIN_RETRIES, retries + 1, 300)
         raise e
 
 
@@ -79,12 +79,12 @@ async def require_admin(request: Request, response: Response):
     if not await validate_cookie(session_id, cookie_sign):
         log.warning(f'Unauthorized access to {request.url.path}')
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.NOT_AUTHORIZED)
-    if not (cookie_time := await cache.get(session_id)):
+    if not (cookie_time := await sys_cache.get(session_id)):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.LOGIN_TIMEOUT)
 
     if (now := int(time.time())) >= cookie_time + CommonConstant.ONE_DAY_SECONDS:
         log.warning(f'{session_id} renew')
-        await cache.set(session_id, now, CommonConstant.COOKIE_MAX_AGE)
+        await sys_cache.set(session_id, now, CommonConstant.COOKIE_MAX_AGE)
         set_auth_cookies(session_id, response)
 
 
@@ -94,7 +94,7 @@ def hmac_sign(plain: str) -> str:
 
 
 async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
-    if not isinstance(issue_time := await cache.get(session_id), int):
+    if not isinstance(issue_time := await sys_cache.get(session_id), int):
         return False
     if 0 <= int(time.time()) - issue_time < CommonConstant.COOKIE_MAX_AGE and hmac_sign(session_id) == cookie_sign:
         return True

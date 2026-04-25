@@ -15,7 +15,7 @@ from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, EntityTypeEnum, Post
 from wwricu.domain.entity import BlogPost, PostTag
 from wwricu.domain.post import PostQueryDTO
 from wwricu.domain.tag import TagQueryDTO
-from wwricu.component.cache import cache
+from wwricu.component.cache import sys_cache
 from wwricu.component.database import get_session
 
 
@@ -23,20 +23,20 @@ async def set_config(key: ConfigKeyEnum, value: str):
     if not isinstance(value, str):
         raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.INVALID_VALUE)
     await conf_db.upsert(key, value)
-    await cache.delete(CacheKeyEnum.CONFIG.format(key=key))
+    await sys_cache.delete(CacheKeyEnum.CONFIG.format(key=key))
 
 
 async def delete_config(keys: list[ConfigKeyEnum]):
     await conf_db.remove(keys)
     for key in keys:
-        await cache.delete(CacheKeyEnum.CONFIG.format(key=key))
+        await sys_cache.delete(CacheKeyEnum.CONFIG.format(key=key))
 
 
 async def get_config(key: ConfigKeyEnum) -> str | None:
-    if (value := await cache.get(CacheKeyEnum.CONFIG.format(key=key))) is not None:
+    if (value := await sys_cache.get(CacheKeyEnum.CONFIG.format(key=key))) is not None:
         return value
     if (value := await conf_db.get(key)) is not None:
-        await cache.set(CacheKeyEnum.CONFIG.format(key=key), value)
+        await sys_cache.set(CacheKeyEnum.CONFIG.format(key=key), value)
     return value
 
 
@@ -93,7 +93,7 @@ async def update_admin_user(user: UserRO, session_id: str | None) -> None:
         await delete_config([ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD])
 
     if user.username is not None or user.password is not None or user.reset is True:
-        await cache.delete(session_id)
+        await sys_cache.delete(session_id)
 
 
 async def enforce_totp(enforce: bool) -> str | None:

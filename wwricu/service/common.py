@@ -8,7 +8,7 @@ from apscheduler.triggers.cron import CronTrigger
 from fastapi import FastAPI
 from loguru import logger as log
 
-from wwricu.component.cache import cache
+from wwricu.component.cache import sys_cache
 from wwricu.component.database import database_backup, engine
 from wwricu.component.storage import oss_public
 from wwricu.config import Config
@@ -31,12 +31,12 @@ async def lifespan(_: FastAPI):
         await tag_db.reset_category_count()
         await reset_sys_config()
 
-        await cache.set(CacheKeyEnum.STARTUP_TIMESTAMP, int(time.time()), 0)
+        await sys_cache.set(CacheKeyEnum.STARTUP_TIMESTAMP, int(time.time()), 0)
         log.info('App startup')
         yield
     finally:
         scheduler.shutdown()
-        await cache.close()
+        await sys_cache.close()
         await engine.dispose()
         if not __debug__:
             await database_backup()
@@ -50,9 +50,9 @@ async def reset_sys_config():
     tag_count = await tag_db.count(TagQueryDTO(type=TagTypeEnum.POST_TAG))
     log.info(f'{post_count=} {category_count=} {tag_count=}')
     await asyncio.gather(
-        cache.set(CacheKeyEnum.POST_COUNT, post_count, 0),
-        cache.set(CacheKeyEnum.CATEGORY_COUNT, category_count, 0),
-        cache.set(CacheKeyEnum.TAG_COUNT, tag_count, 0)
+        sys_cache.set(CacheKeyEnum.POST_COUNT, post_count, 0),
+        sys_cache.set(CacheKeyEnum.CATEGORY_COUNT, category_count, 0),
+        sys_cache.set(CacheKeyEnum.TAG_COUNT, tag_count, 0)
     )
 
 

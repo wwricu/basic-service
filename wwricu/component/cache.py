@@ -106,5 +106,6 @@ class Cache(Protocol):
     async def close(self):...
 
 
-cache: Cache = LocalCache()
-transient: Cache = LocalCache(name='transient', max_size=20, persist=False)
+sys_cache: Cache = LocalCache()
+query_cache: Cache = LocalCache(name='transient', max_size=20, persist=False)
+post_cache: Cache = LocalCache(name='post', max_size=100, persist=False)

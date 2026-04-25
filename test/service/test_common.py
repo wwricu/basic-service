@@ -5,7 +5,7 @@ from loguru import logger as log
 from sqlalchemy import func, select
 
 from wwricu.service.common import cleanup_orphan_resources, reset_sys_config, purge_expired_entities
-from wwricu.component.cache import cache
+from wwricu.component.cache import sys_cache
 from wwricu.component.database import get_session
 from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum
 from wwricu.domain.entity import BlogPost, PostTag
@@ -15,9 +15,9 @@ from wwricu.domain.entity import BlogPost, PostTag
 async def test_system_count():
     await reset_sys_config()
     post_count, category_count, tag_count = await asyncio.gather(
-        cache.get(CacheKeyEnum.POST_COUNT),
-        cache.get(CacheKeyEnum.CATEGORY_COUNT),
-        cache.get(CacheKeyEnum.TAG_COUNT)
+        sys_cache.get(CacheKeyEnum.POST_COUNT),
+        sys_cache.get(CacheKeyEnum.CATEGORY_COUNT),
+        sys_cache.get(CacheKeyEnum.TAG_COUNT)
     )
     post_stmt = select(func.count(BlogPost.id)).where(
         BlogPost.deleted == False).where(
