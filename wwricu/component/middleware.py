@@ -1,4 +1,5 @@
 import time
+from contextvars import ContextVar
 from typing import override
 
 from fastapi import HTTPException, status
@@ -9,7 +10,9 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 
-from wwricu.domain.constant import CommonConstant
+from wwricu.domain.constant import CommonConstant, HttpHeader
+
+real_ip:ContextVar[str] = ContextVar('real_ip', default='')
 
 
 class ExceptionMiddleware(BaseHTTPMiddleware):
@@ -29,8 +32,15 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
     @override
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         b = time.time()
-        response = await call_next(request)
-        log.trace(f'{request.method} {request.url.path} {response.status_code} {int((time.time() - b) * 1000)} ms')
+        ip = (
+            request.headers.get(HttpHeader.X_REAL_IP) or
+            request.headers.get(HttpHeader.X_FORWARD_FOR, '').split(',')[0].strip() or
+            (request.client.host if request.client else '')
+        )
+        real_ip.set(ip)
+        with log.contextualize(real_ip=ip):
+            response = await call_next(request)
+            log.trace(f'{real_ip.get()} | {request.method} {request.url.path} {response.status_code} {int((time.time() - b) * 1000)} ms')
         return response
 
 

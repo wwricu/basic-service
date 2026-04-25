@@ -71,7 +71,7 @@ def configure_logging():
     log.remove()
 
     if __debug__:
-        log.add(sys.stdout, level=logging.DEBUG, backtrace=False)
+        log.add(sys.stdout, level=logging.NOTSET, backtrace=False)
         log.warning('APP RUNNING ON DEBUG MODE')
 
     log_path = EnvVarEnum.LOG_PATH.get()

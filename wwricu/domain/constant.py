@@ -23,3 +23,8 @@ class CommonConstant:
     COMMON_ERROR: str = 'Internal Server Error'
     COOKIE_MAX_AGE: int = 7 * 24 * 60 * 60
     ONE_DAY_SECONDS: int = 60 * 60 * 24
+
+
+class HttpHeader(StrEnum):
+    X_REAL_IP = 'X-Real-IP'
+    X_FORWARD_FOR = 'X-Forwarded-For'

@@ -13,7 +13,7 @@ common_api = APIRouter(tags=['Common API'])
 
 @common_api.post('/login', response_model=None, dependencies=[Depends(security_service.rate_limit(30))])
 async def login_api(login_request: LoginRO, response: Response):
-    await security_service.authenticate_admin(login_request)
+    await security_service.authenticate(login_request)
     session_id = uuid.uuid4().hex
     await sys_cache.set(session_id, int(time.time()), CommonConstant.COOKIE_MAX_AGE)
     security_service.set_auth_cookies(session_id, response)

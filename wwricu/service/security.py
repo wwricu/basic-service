@@ -9,6 +9,7 @@ import pyotp
 from fastapi import HTTPException, Request, Response, status
 from loguru import logger as log
 
+from wwricu.component.middleware import real_ip
 from wwricu.domain.common import LoginRO
 from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum
@@ -19,43 +20,37 @@ from wwricu.service.manage import get_config
 
 @asynccontextmanager
 async def login_lock(username: str):
-    user_key = CacheKeyEnum.LOGIN_RETRIES.format(username=username)
-    retries = await sys_cache.get(user_key) or 0
+    key = CacheKeyEnum.LOGIN_RETRIES.format(username=username)
+    retries = await sys_cache.get(key) or 0
     if retries >= 5:
-        log.warning('LOGIN FORBIDDEN')
+        log.warning(f'LOGIN FORBIDDEN on {username}')
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=HttpErrorDetail.LOGIN_FORBIDDEN)
-    await sys_cache.set(user_key, retries + 1, 300)
+    await sys_cache.set(key, retries + 1, 300)
     yield
-    await sys_cache.delete(user_key)
+    await sys_cache.delete(key)
 
 
-def rate_limit(limit: int = 100, seconds: int = 60):
-    async def wrapper(request: Request):
-        if __debug__:
-            return
-        host = request.client.host if request.client else ''
-        host_key = CacheKeyEnum.HOST_RATE.format(host=host)
-        count = await sys_cache.get(host_key) or 0
+def rate_limit(limit: int, seconds: int = 60):
+    async def wrapper():
+        key = CacheKeyEnum.IP_QUOTE.format(ip=real_ip.get())
+        count = await sys_cache.get(key) or 0
         if count >= limit:
-            log.warning(f'Rate limit exceeded for {host}')
+            log.warning(f'Rate limit exceeded for {real_ip.get()}')
             raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=HttpErrorDetail.TOO_MANY_REQUESTS)
-        await sys_cache.set(host_key, count + 1, seconds)
+        await sys_cache.set(key, count + 1, seconds)
     return wrapper
 
 
-async def verify_credentials(login_request: LoginRO) -> bool:
+async def verify_credentials(request: LoginRO) -> bool:
     username, password = await get_config(ConfigKeyEnum.USERNAME), await get_config(ConfigKeyEnum.PASSWORD)
     if not username:
         username = AdminConfig.username
     if not password:
         password = AdminConfig.password
-    if login_request.username != username:
-        # warning: bypass attack
-        return False
-    return bcrypt.checkpw(login_request.password.encode(), base64.b64decode(password))
+    return bcrypt.checkpw(request.password.encode(), base64.b64decode(password)) and request.username == username
 
 
-async def authenticate_admin(login_request: LoginRO):
+async def authenticate(login_request: LoginRO):
     async with login_lock(login_request.username):
         if not await verify_credentials(login_request):
             log.warning(f'{login_request.username} login failure')
