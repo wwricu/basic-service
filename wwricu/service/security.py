@@ -20,14 +20,27 @@ from wwricu.service.manage import get_config
 @asynccontextmanager
 async def login_lock(username: str):
     user_key = CacheKeyEnum.LOGIN_RETRIES.format(username=username)
-    if (retries := await sys_cache.get(user_key)) is None:
-        retries = 0
+    retries = await sys_cache.get(user_key) or 0
     if retries >= 5:
         log.warning('LOGIN FORBIDDEN')
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=HttpErrorDetail.LOGIN_FORBIDDEN)
     await sys_cache.set(user_key, retries + 1, 300)
     yield
     await sys_cache.delete(user_key)
+
+
+def rate_limit(limit: int = 100):
+    async def wrapper(request: Request):
+        if __debug__:
+            return
+        host = request.client.host if request.client else ''
+        host_key = CacheKeyEnum.HOST_RATE.format(host=host)
+        count = await sys_cache.get(host_key) or 0
+        await sys_cache.set(host_key, count + 1, 60)
+        if count >= limit:
+            log.warning(f'Rate limit exceeded for {host}')
+            raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=HttpErrorDetail.TOO_MANY_REQUESTS)
+    return wrapper
 
 
 async def verify_credentials(login_request: LoginRO) -> bool:
@@ -56,16 +69,6 @@ async def authenticate_admin(login_request: LoginRO):
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=HttpErrorDetail.NEED_TOTP)
     if not pyotp.TOTP(secret).verify(login_request.totp, valid_window=1):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
-
-
-async def rate_limit(request: Request):
-    if __debug__:
-        return
-    host = request.client.host if request.client else ''
-    count = await sys_cache.incr(CacheKeyEnum.HOST_RATE.format(host=host), 1, 60)
-    if count > 100:  # TODO: config
-        log.warning(f'Rate limit exceeded for {host}')
-        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=HttpErrorDetail.TOO_MANY_REQUESTS)
 
 
 async def require_admin(request: Request, response: Response):

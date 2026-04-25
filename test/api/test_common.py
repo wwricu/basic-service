@@ -11,8 +11,9 @@ from wwricu.domain.enum import CacheKeyEnum
 
 
 def _cleanup_login_lock():
-    asyncio.run(sys_cache.delete(CacheKeyEnum.LOGIN_LOCK))
-    asyncio.run(sys_cache.delete(CacheKeyEnum.LOGIN_RETRIES))
+    for key in list(sys_cache.cache_data.keys()):
+        if key.startswith('login_retries:'):
+            asyncio.run(sys_cache.delete(key))
 
 
 def _set_password(password: str):

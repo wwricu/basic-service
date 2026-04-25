@@ -6,18 +6,16 @@ from fastapi import APIRouter, Depends, Request, Response
 from wwricu.component.cache import sys_cache
 from wwricu.domain.common import LoginRO
 from wwricu.domain.constant import CommonConstant
-from wwricu.domain.enum import CacheKeyEnum
 from wwricu.service import security_service
 
 common_api = APIRouter(tags=['Common API'])
 
 
-@common_api.post('/login', response_model=None, dependencies=[Depends(security_service.rate_limit)])
+@common_api.post('/login', response_model=None, dependencies=[Depends(security_service.rate_limit(10))])
 async def login_api(login_request: LoginRO, response: Response):
     await security_service.authenticate_admin(login_request)
     session_id = uuid.uuid4().hex
     await sys_cache.set(session_id, int(time.time()), CommonConstant.COOKIE_MAX_AGE)
-    await sys_cache.delete(CacheKeyEnum.LOGIN_LOCK)
     security_service.set_auth_cookies(session_id, response)
 
 
