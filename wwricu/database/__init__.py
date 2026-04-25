@@ -20,4 +20,3 @@ async def insert_all(entities: Sequence[Base]) -> list[Base]:
         for entity in entities:
             await s.refresh(entity)
     return list(entities)
-

@@ -9,8 +9,7 @@ from wwricu.domain.common import AboutPageVO, PageVO
 from wwricu.domain.post import PostDetailVO, PostRequestRO
 from wwricu.domain.tag import TagVO, TagQueryDTO
 from wwricu.component.cache import cache, transient
-from wwricu.service.manage import get_sys_config
-from wwricu.service.post import build_post_query, get_post_detail, get_posts_by_query
+from wwricu.service import manage_service, post_service
 
 open_api = APIRouter(prefix='/open', tags=['Open API'])
 
@@ -25,8 +24,8 @@ async def open_get_posts_api(post: PostRequestRO) -> PageVO[PostDetailVO]:
     )
     if response := await transient.get(cache_key):
         return response
-    query = await build_post_query(post, public=True)
-    response = await get_posts_by_query(query)
+    query = await post_service.build_post_query(post, public=True)
+    response = await post_service.get_posts_by_query(query)
     await transient.set(cache_key, response)
     return response
 
@@ -35,11 +34,11 @@ async def open_get_posts_api(post: PostRequestRO) -> PageVO[PostDetailVO]:
 async def open_get_post_api(post_id: int) -> PostDetailVO:
     cache_key = CacheKeyEnum.POST_DETAIL.format(id=post_id)
     if cached_post := await cache.get(cache_key):
-        return await get_post_detail(cached_post)
+        return await post_service.get_post_detail(cached_post)
     if (post := await post_db.find_published(post_id)) is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     await cache.set(cache_key, post)
-    return await get_post_detail(post)
+    return await post_service.get_post_detail(post)
 
 
 @open_api.get('/tags/{tag_type}', response_model=list[TagVO])
@@ -60,7 +59,7 @@ async def open_get_about_api() -> AboutPageVO:
         cache.get(CacheKeyEnum.TAG_COUNT)
     )
     return AboutPageVO(
-        content=await get_sys_config(ConfigKeyEnum.ABOUT_CONTENT),
+        content=await manage_service.get_sys_config(ConfigKeyEnum.ABOUT_CONTENT),
         post_count=post,
         category_count=category,
         tag_count=tag,
