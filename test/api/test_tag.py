@@ -8,7 +8,7 @@ from wwricu.domain.enum import TagTypeEnum
 from wwricu.domain.tag import TagVO
 
 
-def _create_tag(name: str = None, tag_type: TagTypeEnum = TagTypeEnum.POST_TAG) -> TagVO:
+def _create_tag(name: str | None = None, tag_type: TagTypeEnum = TagTypeEnum.POST_TAG) -> TagVO:
     tag_name = name or f'test_{tag_type}_{uuid.uuid4().hex[:8]}'
     response = client.post('/tag/create', json={'name': tag_name, 'type': tag_type})
     assert response.status_code == status.HTTP_200_OK

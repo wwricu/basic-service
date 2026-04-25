@@ -7,7 +7,6 @@ from loguru import logger as log
 from test.test_utils import client
 from wwricu.component.cache import sys_cache
 from wwricu.domain.constant import CommonConstant
-from wwricu.domain.enum import CacheKeyEnum
 
 
 def _cleanup_login_lock():

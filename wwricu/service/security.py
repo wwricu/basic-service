@@ -32,10 +32,11 @@ async def login_lock(username: str):
 
 def rate_limit(limit: int, seconds: int = 60):
     async def wrapper():
-        key = CacheKeyEnum.IP_QUOTE.format(ip=real_ip.get())
+        client_ip = real_ip.get().split(':')[0]
+        key = CacheKeyEnum.IP_QUOTE.format(ip=client_ip)
         count = await sys_cache.get(key) or 0
         if count >= limit:
-            log.warning(f'Rate limit exceeded for {real_ip.get()}')
+            log.warning(f'Rate limit exceeded for {client_ip}')
             raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=HttpErrorDetail.TOO_MANY_REQUESTS)
         await sys_cache.set(key, count + 1, seconds)
     return wrapper
