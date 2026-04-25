@@ -1,103 +1,109 @@
-import json
 import logging
 import os
 import sys
+import uuid
 from pathlib import Path
 
 import boto3
+from dotenv import load_dotenv
 from loguru import logger as log
+from pydantic import BaseModel, Field
+from pydantic_settings import BaseSettings
 
 from wwricu.domain.constant import CommonConstant
-from wwricu.domain.enum import EnvironmentEnum, EnvVarEnum
+from wwricu.domain.enum import EnvironmentEnum
 from wwricu.domain.third import AWSConst, AWSAppConfigSessionResponse, AWSAppConfigConfigResponse
 
 
-class ConfigClass:
-    @classmethod
-    def init(cls, **kwargs):
-        for k, v in kwargs.items():
-            if k in cls.__annotations__:
-                setattr(cls, k, v)
-        cls.__new__(cls)
-
-
-class StorageConfig(ConfigClass):
+class StorageConfig(BaseModel):
     region: str
     bucket: str
     private_bucket: str
 
 
-class DatabaseConfig(ConfigClass):
+class DatabaseConfig(BaseModel):
     driver: str
     username: str = ''
     password: str = ''
     host: str = ''
     port: int = 0
     database: str = ''
-    url: str | None = None
 
-    def __new__(cls):
-        if cls.url is None:
-            cls.url = f'{cls.driver}://{cls.username}:{cls.password}@{cls.host}:{cls.port}/{cls.database}'
+    @property
+    def url(self):
+        return f'{self.driver}://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}'
 
 
-class AdminConfig(ConfigClass):
+class Throttle(BaseModel):
+    name: str = Field(default_factory=lambda: uuid.uuid4().hex)
+    enable: bool = True
+    qps: float
+    capacity: float
+
+
+class ThrottleConfig(BaseModel):
+    login_ip: Throttle = Throttle(qps=1, capacity=5)
+    login_global: Throttle = Throttle(qps=10, capacity=50)
+    open_ip: Throttle = Throttle(qps=20, capacity=100)
+
+
+class SecurityConfig(BaseModel):
     username: str
     password: str
-    secure_key: str
+    secret_key: str
+    throttle: ThrottleConfig = ThrottleConfig()
 
 
-class Config(ConfigClass):
+class Config(BaseSettings):
     encoding: str = 'utf-8'
     trash_expire_day: int = 30
-    env: EnvironmentEnum = EnvironmentEnum(EnvVarEnum.ENV.get())
 
-    @classmethod
-    def load(
-        cls,
-        admin_config: dict,
-        database_config: dict,
-        storage_config: dict,
-        **kwargs
-    ):
-        cls.init(**kwargs)
-        AdminConfig.init(**admin_config)
-        DatabaseConfig.init(**database_config)
-        StorageConfig.init(**storage_config)
+    storage: StorageConfig
+    database: DatabaseConfig
+    security: SecurityConfig
 
 
-def log_config():
+class EnvironmentVariable(BaseSettings):
+    ENV: EnvironmentEnum = EnvironmentEnum.LOCAL
+    ROOT_PATH: str = '/'
+    LOG_PATH: str = 'logs'
+    CONFIG_FILE: str = 'config.json'
+    VERSION: str = '0.0.1'
+
+
+def init_log():
     logging.Logger.manager.loggerDict.clear()
     log.remove()
 
     if __debug__:
-        log.add(sys.stdout, level=logging.DEBUG)
+        log.add(sys.stdout, level=logging.NOTSET, backtrace=False)
         log.warning('APP RUNNING ON DEBUG MODE')
 
-    log_path = EnvVarEnum.LOG_PATH.get()
+    log_path = env.LOG_PATH
     os.makedirs(log_path, exist_ok=True)
-    log.add(f'{log_path}/server.log', level=logging.DEBUG, rotation='monday at 00:00')
+    log.add(f'{log_path}/server.log', level=logging.NOTSET, rotation='10 MB', retention=10, backtrace=False)
     log.add(
         f'{log_path}/access.log',
         level=logging.NOTSET,
         filter=lambda record: record.get('level').no < logging.DEBUG,
-        rotation='monday at 00:00'
+        rotation='20 MB',
+        retention=10
     )
 
 
-def get_config() -> dict:
-    log.info(f'env={Config.env.value}')
-    config_file = Path(EnvVarEnum.CONFIG_FILE.get())
+def init_config() -> Config:
+    log.info(f'env={env.ENV}')
+    config_file = Path(env.CONFIG_FILE)
     if config_file.exists() and config_file.is_file():
         log.info(f'Getting config from {config_file.absolute()}')
         with config_file.open() as f:
-            return json.loads(f.read())
+            return Config.model_validate_json(f.read())
 
     log.warning(f'Getting config from {AWSConst.APP_CONFIG_DATA}')
     app_config_data_client = boto3.client(AWSConst.APP_CONFIG_DATA, region_name=AWSConst.REGION)
     response = app_config_data_client.start_configuration_session(
         ApplicationIdentifier=CommonConstant.APP_NAME,
-        EnvironmentIdentifier=Config.env,
+        EnvironmentIdentifier=EnvironmentEnum(env.ENV),
         ConfigurationProfileIdentifier=config_file.name
     )
     aws_session = AWSAppConfigSessionResponse.model_validate(response)
@@ -105,19 +111,19 @@ def get_config() -> dict:
 
     # PRICED call on each deployment
     response = app_config_data_client.get_latest_configuration(ConfigurationToken=aws_session.InitialConfigurationToken)
-    app_config = AWSAppConfigConfigResponse.model_validate(response)
-    app_config.check()
+    aws_app_config = AWSAppConfigConfigResponse.model_validate(response)
+    aws_app_config.check()
 
-    content = app_config.Configuration.read().decode()
-    app_config.Configuration.close()
+    content = aws_app_config.Configuration.read().decode()
+    aws_app_config.Configuration.close()
 
     config_file.parent.mkdir(parents=True, exist_ok=True)
     with config_file.open('wt+') as f:
         f.write(content)
-    return json.loads(content)
+    return Config.model_validate_json(content)
 
 
-def init():
-    log_config()
-    Config.load(**get_config())
-    log.info('Config init')
+load_dotenv()
+env = EnvironmentVariable()
+init_log()
+app_config = init_config()

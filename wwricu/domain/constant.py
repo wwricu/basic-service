@@ -1,24 +1,35 @@
-class HttpErrorDetail:
-    POST_NOT_FOUND: str = 'Post Not Found'
-    NO_SUCH_USER: str = 'NO SUCH USER'
-    WRONG_PASSWORD: str = 'WRONG PASSWORD'
-    WRONG_TOTP: str = 'WRONG TOTP'
-    NEED_TOTP: str = 'Please input TOTP'
-    NOT_AUTHORIZED: str = 'Not authorized'
-    LOGIN_TIMEOUT: str = 'Login Timeout'
-    UPLOAD_FAILURE: str = 'Failed to upload'
-    INVALID_TAG_TYPE: str = 'Invalid tag type'
-    UNKNOWN_ENTITY_TYPE: str = 'Unknown entity type'
-    LENGTH_EXCEEDED: str = 'Length exceeded'
-    CONFIG_NOT_ALLOWED: str = 'Cannot get this config'
-    NO_TOTP_SECRET: str = 'No totp secret'
-    INVALID_VALUE: str = 'Invalid value'
-    CONTENT_LENGTH: str = '{name} length range: {min_len} ~ {max_len}'
+from enum import IntEnum, StrEnum
 
 
-class CommonConstant:
-    SESSION_ID: str = 'session_id'
-    COOKIE_SIGN: str = 'sign'
-    APP_NAME: str = 'wwr.icu'
-    COOKIE_MAX_AGE: int = 7 * 24 * 60 * 60
-    COMMON_ERROR: str = 'Internal Server Error'
+class HttpErrorDetail(StrEnum):
+    POST_NOT_FOUND = 'Post Not Found'
+    WRONG_PASSWORD = 'WRONG PASSWORD'
+    WRONG_TOTP = 'WRONG TOTP'
+    NEED_TOTP = 'Please input TOTP'
+    NOT_AUTHORIZED = 'Not authorized'
+    UNKNOWN_ENTITY_TYPE = 'Unknown entity type'
+    CONFIG_NOT_ALLOWED = 'Cannot get this config'
+    NO_TOTP_SECRET = 'No totp secret'
+    INVALID_VALUE = 'Invalid value'
+    TOO_MANY_REQUESTS = 'Too many requests'
+
+
+class CommonConstant(StrEnum):
+    SESSION_ID_2FA = '2fa_session_id'
+    SESSION_ID = 'session_id'
+    COOKIE_SIGN = 'sign'
+    APP_NAME = 'wwr.icu'
+    COMMON_ERROR = 'Internal Server Error'
+    GLOBAL_TOKEN_BUCKET_ID = 'global'
+
+
+class TimeConstant(IntEnum):
+    COOKIE_MAX_AGE = 7 * 24 * 60 * 60
+    ONE_DAY_SECONDS = 60 * 60 * 24
+    TOTP_EXPIRATION = 300
+    CACHE_EXPIRATION = 600
+
+
+class HttpHeader(StrEnum):
+    X_REAL_IP = 'X-Real-IP'
+    X_FORWARD_FOR = 'X-Forwarded-For'

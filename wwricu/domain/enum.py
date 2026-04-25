@@ -1,4 +1,3 @@
-import os
 from enum import StrEnum
 
 
@@ -47,26 +46,16 @@ class CacheKeyEnum(StrEnum):
     POST_COUNT = 'post_count'
     CATEGORY_COUNT = 'category_count'
     TAG_COUNT = 'tag_count'
-    LOGIN_LOCK = 'login_lock'
-    LOGIN_RETRIES = 'login_retries'
     STARTUP_TIMESTAMP = 'startup_timestamp'
     CONFIG = 'config_cache:{key}'
     POST_DETAIL = 'post_cache:{id}'
     ALL_POSTS = 'all_posts:{page_index}:{page_size}:{category}:{tag_list}'
     ALL_TAGS = 'all_tags:{type}'
+    IP_QUOTE = 'ip_quota:{ip}'
+    TOKEN_BUCKET = 'token_bucket_id:{name}:{id}'
 
 
 class EntityTypeEnum(StrEnum):
     BLOG_POST = 'blog_post'
     POST_TAG = 'post_tag'
     POST_CAT = 'post_category'
-
-
-class EnvVarEnum(StrEnum):
-    ENV = EnvironmentEnum.LOCAL.value
-    ROOT_PATH = '/'
-    LOG_PATH = 'logs'
-    CONFIG_FILE = 'config.json'
-
-    def get(self) -> str:
-        return os.getenv(self.name, self.value)
