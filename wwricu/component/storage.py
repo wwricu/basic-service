@@ -1,4 +1,5 @@
-from typing import Generator
+import asyncio
+from collections.abc import AsyncGenerator, Generator
 
 import boto3
 from fastapi import status as http_status
@@ -18,23 +19,23 @@ class AWSS3Storage:
         self.bucket = bucket
         self.s3_client = s3_client
 
-    def get(self, key: str) -> bytes:
+    def sync_get(self, key: str) -> bytes:
         # If S3 object_name was not specified, use file_name
         response = self.s3_client.get_object(Bucket=self.bucket, Key=key)
         s3_resp = AWSS3Response.model_validate(response)
         s3_resp.check()
         return s3_resp.Body.read()
 
-    def put(self, key: str, data: bytes) -> str:
+    def sync_put(self, key: str, data: bytes) -> str:
         response = self.s3_client.put_object(Bucket=self.bucket, Key=key, Body=data)
         AWSResponseBase.model_validate(response).check()
         return f'https://{AWSConst.S3}.{StorageConfig.region}.{AWSConst.AWS_DOMAIN}/{self.bucket}/{key}'
 
-    def delete(self, key: str):
+    def sync_delete(self, key: str):
         response = self.s3_client.delete_object(Bucket=self.bucket, Key=key)
         AWSResponseBase.model_validate(response).check()
 
-    def batch_delete(self, keys: list[str]):
+    def sync_batch_delete(self, keys: list[str]):
         if not keys:
             return
         response = self.s3_client.delete_objects(
@@ -43,13 +44,13 @@ class AWSS3Storage:
         )
         AWSResponseBase.model_validate(response).check()
 
-    def list_all(self) -> list[AWSS3Object]:
+    def sync_list_all(self) -> list[AWSS3Object]:
         response = self.s3_client.list_objects_v2(Bucket=self.bucket)
         s3_resp = AWSS3ListResponse.model_validate(response)
         s3_resp.check()
         return s3_resp.Contents
 
-    def list_page(self, page_size: int = 100) -> Generator[AWSS3Object, None, None]:
+    def sync_list_page(self, page_size: int = 100) -> Generator[AWSS3Object, None, None]:
         continuation_token = None
         while True:
             response = self.s3_client.list_objects_v2(
@@ -61,12 +62,31 @@ class AWSS3Storage:
             s3_resp = AWSS3ListResponse.model_validate(response)
             if s3_resp.ResponseMetadata.HTTPStatusCode != http_status.HTTP_200_OK:
                 log.warning(f'Failed to list objects: {s3_resp.ResponseMetadata}')
-                continue
+                break
 
             yield from s3_resp.Contents
             if not s3_resp.IsTruncated:
                 break
             continuation_token = s3_resp.NextContinuationToken
+
+    async def get(self, key: str) -> bytes:
+        return await asyncio.to_thread(self.sync_get, key)
+
+    async def put(self, key: str, data: bytes) -> str:
+        return await asyncio.to_thread(self.sync_put, key, data)
+
+    async def delete(self, key: str):
+        await asyncio.to_thread(self.sync_delete, key)
+
+    async def batch_delete(self, keys: list[str]):
+        await asyncio.to_thread(self.sync_batch_delete, keys)
+
+    async def list_all(self) -> list[AWSS3Object]:
+        return await asyncio.to_thread(self.sync_list_all)
+
+    async def list_page(self, page_size: int = 100) -> AsyncGenerator[AWSS3Object, None]:
+        for item in await asyncio.to_thread(lambda: list(self.sync_list_page(page_size))):
+            yield item
 
 
 aws_s3_client = boto3.client(AWSConst.S3)

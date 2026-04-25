@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 
 from fastapi import HTTPException, UploadFile, status as http_status
@@ -45,7 +46,7 @@ async def delete_post_cover(post: BlogPost):
     if (resource := await get_post_cover(post.cover_id)) is None:
         return
     await delete_resource(resource.id)
-    oss_public.delete(resource.key)
+    asyncio.create_task(oss_public.delete(resource.key))
 
 
 async def get_post_detail(blog_post: BlogPost | None) -> PostDetailVO:
@@ -132,7 +133,7 @@ async def upload_post_file(file: UploadFile, post_id: int, file_type: PostResour
     if (post := await get_post_by_id(post_id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     key = f'post/{post_id}/{file_type}_{uuid.uuid4().hex}'
-    url = oss_public.put(key, await file.read())
+    url = await oss_public.put(key, await file.read())
     resource = PostResource(name=file.filename, key=key, type=file_type, post_id=post.id, url=url)
     await insert(resource)
     return FileUploadVO(id=resource.id, name=file.filename, key=key, location=url)
