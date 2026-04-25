@@ -17,6 +17,7 @@ class HttpErrorDetail(StrEnum):
     NO_TOTP_SECRET = 'No totp secret'
     INVALID_VALUE = 'Invalid value'
     CONTENT_LENGTH = '{name} length range: {min_len} ~ {max_len}'
+    TOO_MANY_REQUESTS = 'Too many requests'
 
 
 class CommonConstant:

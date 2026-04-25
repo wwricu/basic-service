@@ -67,6 +67,16 @@ async def authenticate_admin(login_request: LoginRO):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
 
 
+async def rate_limit(request: Request):
+    if __debug__:
+        return
+    host = request.client.host if request.client else ''
+    count = await sys_cache.incr(CacheKeyEnum.HOST_RATE.format(host=host), 1, 60)
+    if count > 100:  # TODO: config
+        log.warning(f'Rate limit exceeded for {host}')
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=HttpErrorDetail.TOO_MANY_REQUESTS)
+
+
 async def require_admin(request: Request, response: Response):
     if __debug__:
         return

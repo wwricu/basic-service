@@ -73,6 +73,14 @@ class LocalCache:
             lru_key, _ = self.cache_data.popitem(last=False)
             self.cancel_timeout_task(lru_key)
 
+    async def incr(self, key: str | None, delta: int = 1, second: int = 3600) -> int:
+        if not isinstance(key, str):
+            raise ValueError(key)
+        # NO race without Awaitable
+        value = (await self.get(key) or 0) + delta
+        await self.set(key, value, second)
+        return value
+
     async def delete(self, key: str | None):
         if not isinstance(key, str) or key not in self.cache_data:
             return
@@ -98,6 +106,8 @@ class Cache(Protocol):
     async def get(self, key: str | None) -> Any:...
 
     async def set(self, key: str | None, value: Any, second: int = 3600):...
+
+    async def incr(self, key: str | None, delta: int = 1, second: int = 3600) -> int:...
 
     async def delete(self, key: str | None):...
 

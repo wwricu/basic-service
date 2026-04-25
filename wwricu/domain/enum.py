@@ -54,6 +54,7 @@ class CacheKeyEnum(StrEnum):
     POST_DETAIL = 'post_cache:{id}'
     ALL_POSTS = 'all_posts:{page_index}:{page_size}:{category}:{tag_list}'
     ALL_TAGS = 'all_tags:{type}'
+    HOST_RATE = 'host_rate:{host}'
 
 
 class EntityTypeEnum(StrEnum):

@@ -12,7 +12,7 @@ from wwricu.service import security_service
 common_api = APIRouter(tags=['Common API'])
 
 
-@common_api.post('/login', response_model=None)
+@common_api.post('/login', response_model=None, dependencies=[Depends(security_service.rate_limit)])
 async def login_api(login_request: LoginRO, response: Response):
     await security_service.authenticate_admin(login_request)
     session_id = uuid.uuid4().hex
