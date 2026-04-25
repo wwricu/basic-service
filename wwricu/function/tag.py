@@ -3,6 +3,7 @@ from fastapi import HTTPException, status as http_status
 from wwricu.database.common import insert, insert_all
 from wwricu.database.post import update_post_selective
 from wwricu.database.tag import update_tag_selective, update_category_post_count, update_tag_post_count, increase_post_tag_count, get_tags_by_example, get_tags_count, get_category, delete_post_tags, get_tag_ids_by_post_id
+from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
 from wwricu.domain.post import PostUpdateRO
@@ -24,7 +25,7 @@ async def create_tag(tag_create: TagRO) -> TagVO:
 
 async def update_tag_full(tag_update: TagRO) -> TagVO:
     if tag_update.id is None:
-        raise HTTPException(http_status.HTTP_400_BAD_REQUEST, detail='update with no id')
+        raise HTTPException(http_status.HTTP_400_BAD_REQUEST, detail=HttpErrorDetail.INVALID_VALUE)
     if not (tags := await get_tags_by_example(TagQueryDTO(tag_ids=[tag_update.id]))) or (tag := tags[0]) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=f'{tag_update.type} not found')
     if tag.name == tag_update.name:

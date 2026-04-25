@@ -5,7 +5,7 @@ from wwricu.database.common import insert
 from wwricu.database.post import get_post_by_id
 from wwricu.domain.common import FileUploadVO, PageVO
 from wwricu.domain.entity import BlogPost
-from wwricu.domain.enum import PostStatusEnum, CacheKeyEnum
+from wwricu.domain.enum import PostStatusEnum, CacheKeyEnum, PostResourceTypeEnum
 from wwricu.domain.post import PostDetailVO, PostRequestRO, PostUpdateRO
 from wwricu.function.common import reset_system_count
 from wwricu.function.post import build_post_query, delete_post_full, get_post_detail, get_posts_by_query, update_post_full, update_post_status_full, upload_post_file
@@ -43,7 +43,7 @@ async def update_post_api(post_update: PostUpdateRO) -> PostDetailVO:
 
 
 @post_api.get('/status/{post_id}', dependencies=[Depends(reset_system_count)], response_model=PostDetailVO)
-async def update_post_status_api(post_id: int, status: str) -> PostDetailVO:
+async def update_post_status_api(post_id: int, status: PostStatusEnum) -> PostDetailVO:
     response = await update_post_status_full(post_id, status)
     await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
     await transient.delete_all()
@@ -58,5 +58,5 @@ async def delete_post_api(post_id: int):
 
 
 @post_api.post('/upload', response_model=FileUploadVO)
-async def upload_post_file_api(file: UploadFile, post_id: int = Form(), file_type: str = Form()) -> FileUploadVO:
+async def upload_post_file_api(file: UploadFile, post_id: int = Form(), file_type: PostResourceTypeEnum = Form()) -> FileUploadVO:
     return await upload_post_file(file, post_id, file_type)

@@ -35,7 +35,7 @@ class AWSS3Storage:
         AWSResponseBase.model_validate(response).check()
 
     def batch_delete(self, keys: list[str]):
-        if keys is None or len(keys) == 0:
+        if not keys:
             return
         response = self.s3_client.delete_objects(
             Bucket=self.bucket,

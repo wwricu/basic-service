@@ -110,10 +110,10 @@ async def update_post_full(post_update: PostUpdateRO) -> PostDetailVO:
     return await get_post_detail(blog_post)
 
 
-async def update_post_status_full(post_id: int, new_status: str) -> PostDetailVO:
+async def update_post_status_full(post_id: int, new_status: PostStatusEnum) -> PostDetailVO:
     if (blog_post := await get_post_by_id(post_id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
-    await update_post_selective(blog_post.id, status=PostStatusEnum(new_status))
+    await update_post_selective(blog_post.id, status=new_status)
     blog_post = await get_post_by_id(post_id)
     return await get_post_detail(blog_post)
 
@@ -128,12 +128,11 @@ async def delete_post_full(post_id: int) -> None:
     await update_post_selective(post.id, deleted=True)
 
 
-async def upload_post_file(file: UploadFile, post_id: int, file_type: str) -> FileUploadVO:
+async def upload_post_file(file: UploadFile, post_id: int, file_type: PostResourceTypeEnum) -> FileUploadVO:
     if (post := await get_post_by_id(post_id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
-    type_enum = PostResourceTypeEnum(file_type)
-    key = f'post/{post_id}/{type_enum}_{uuid.uuid4().hex}'
+    key = f'post/{post_id}/{file_type}_{uuid.uuid4().hex}'
     url = oss_public.put(key, await file.read())
-    resource = PostResource(name=file.filename, key=key, type=type_enum, post_id=post.id, url=url)
+    resource = PostResource(name=file.filename, key=key, type=file_type, post_id=post.id, url=url)
     await insert(resource)
     return FileUploadVO(id=resource.id, name=file.filename, key=key, location=url)

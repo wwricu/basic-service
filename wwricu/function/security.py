@@ -83,7 +83,7 @@ async def admin_only(request: Request, response: Response):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.LOGIN_TIMEOUT)
 
     if (now := int(time.time())) >= cookie_time + CommonConstant.ONE_DAY_SECONDS:
-        log.warning(f'{request.cookies.get(CommonConstant.SESSION_ID)} renew')
+        log.warning(f'{session_id} renew')
         await cache.set(session_id, now, CommonConstant.COOKIE_MAX_AGE)
         update_cookies(session_id, response)
 
@@ -94,7 +94,7 @@ def hmac_sign(plain: str) -> str:
 
 
 async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
-    if session_id is None or cookie_sign is None or not isinstance(issue_time := await cache.get(session_id), int):
+    if not isinstance(issue_time := await cache.get(session_id), int):
         return False
     if 0 <= int(time.time()) - issue_time < CommonConstant.COOKIE_MAX_AGE and hmac_sign(session_id) == cookie_sign:
         return True
