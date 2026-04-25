@@ -8,7 +8,7 @@ from wwricu.service import common_service, security_service, tag_service
 tag_api = APIRouter(
     prefix='/tag',
     tags=['Tag api'],
-    dependencies=[Depends(security_service.require_admin), Depends(common_service.init_public_counts)]
+    dependencies=[Depends(security_service.require_admin), Depends(common_service.reset_sys_config)]
 )
 
 

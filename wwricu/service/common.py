@@ -29,7 +29,7 @@ async def lifespan(_: FastAPI):
 
         await tag_db.reset_tag_count()
         await tag_db.reset_category_count()
-        await init_public_counts()
+        await reset_sys_config()
 
         await cache.set(CacheKeyEnum.STARTUP_TIMESTAMP, int(time.time()), 0)
         log.info('App startup')
@@ -44,7 +44,7 @@ async def lifespan(_: FastAPI):
         await log.complete()
 
 
-async def init_public_counts():
+async def reset_sys_config():
     post_count = await post_db.count(PostQueryDTO(status=PostStatusEnum.PUBLISHED))
     category_count = await tag_db.count(TagQueryDTO(type=TagTypeEnum.POST_CAT))
     tag_count = await tag_db.count(TagQueryDTO(type=TagTypeEnum.POST_TAG))

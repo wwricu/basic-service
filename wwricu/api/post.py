@@ -12,7 +12,7 @@ from wwricu.service import common_service, post_service, security_service
 post_api = APIRouter(prefix='/post', tags=['Post Management'], dependencies=[Depends(security_service.require_admin)])
 
 
-@post_api.get('/create', dependencies=[Depends(common_service.init_public_counts)], response_model=PostDetailVO)
+@post_api.get('/create', dependencies=[Depends(common_service.reset_sys_config)], response_model=PostDetailVO)
 async def create_post_api() -> PostDetailVO:
     blog_post = BlogPost(status=PostStatusEnum.DRAFT)
     await db.insert(blog_post)
@@ -32,7 +32,7 @@ async def get_post(post_id: int) -> PostDetailVO | None:
     return await post_service.get_post_detail(post)
 
 
-@post_api.post('/update', dependencies=[Depends(common_service.init_public_counts)], response_model=PostDetailVO)
+@post_api.post('/update', dependencies=[Depends(common_service.reset_sys_config)], response_model=PostDetailVO)
 async def update_post_api(post_update: PostUpdateRO) -> PostDetailVO:
     detail = await post_service.update_post_full(post_update)
     await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_update.id))
@@ -40,7 +40,7 @@ async def update_post_api(post_update: PostUpdateRO) -> PostDetailVO:
     return detail
 
 
-@post_api.get('/status/{post_id}', dependencies=[Depends(common_service.init_public_counts)], response_model=PostDetailVO)
+@post_api.get('/status/{post_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=PostDetailVO)
 async def update_post_status_api(post_id: int, status: PostStatusEnum) -> PostDetailVO:
     response = await post_service.update_post_status_full(post_id, status)
     await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
@@ -48,7 +48,7 @@ async def update_post_status_api(post_id: int, status: PostStatusEnum) -> PostDe
     return response
 
 
-@post_api.get('/delete/{post_id}', dependencies=[Depends(common_service.init_public_counts)], response_model=None)
+@post_api.get('/delete/{post_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=None)
 async def delete_post_api(post_id: int):
     await post_service.delete_post_full(post_id)
     await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
