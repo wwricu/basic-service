@@ -36,7 +36,7 @@ async def get_posts_cover(post_list: list[BlogPost]) -> dict[int, PostResource]:
         return {post_id: cover for cover, post_id in result.all()}
 
 
-async def delete_post_resource() -> list[PostResource]:
+async def cleanup_unlinked_resources() -> list[PostResource]:
     query = select(PostResource.id).join(
         EntityRelation, PostResource.id == EntityRelation.dst_id).where(
         PostResource.deleted == False).where(

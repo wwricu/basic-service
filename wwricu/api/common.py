@@ -7,21 +7,21 @@ from wwricu.component.cache import cache
 from wwricu.domain.common import LoginRO
 from wwricu.domain.constant import CommonConstant
 from wwricu.domain.enum import CacheKeyEnum
-from wwricu.function.security import admin_only, update_cookies, authenticate
+from wwricu.service.security import require_admin, set_auth_cookies, authenticate_admin
 
 common_api = APIRouter(tags=['Common API'])
 
 
 @common_api.post('/login', response_model=None)
 async def login_api(login_request: LoginRO, response: Response):
-    await authenticate(login_request)
+    await authenticate_admin(login_request)
     session_id = uuid.uuid4().hex
     await cache.set(session_id, int(time.time()), CommonConstant.COOKIE_MAX_AGE)
     await cache.delete(CacheKeyEnum.LOGIN_LOCK)
-    update_cookies(session_id, response)
+    set_auth_cookies(session_id, response)
 
 
-@common_api.get('/logout', dependencies=[Depends(admin_only)], response_model=None)
+@common_api.get('/logout', dependencies=[Depends(require_admin)], response_model=None)
 async def logout_api(request: Request, response: Response):
     if (session_id := request.cookies.get(CommonConstant.SESSION_ID)) is None:
         return
@@ -30,6 +30,6 @@ async def logout_api(request: Request, response: Response):
     response.delete_cookie(CommonConstant.COOKIE_SIGN)
 
 
-@common_api.get('/info', dependencies=[Depends(admin_only)], response_model=None)
+@common_api.get('/info', dependencies=[Depends(require_admin)], response_model=None)
 async def info_api():
     return

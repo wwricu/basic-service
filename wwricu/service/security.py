@@ -14,11 +14,11 @@ from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum
 from wwricu.config import AdminConfig, Config
 from wwricu.component.cache import cache
-from wwricu.function.manage import get_config
+from wwricu.service.manage import get_sys_config
 
 
 @asynccontextmanager
-async def try_login_lock():
+async def login_lock():
     if await cache.get(CacheKeyEnum.LOGIN_LOCK) is not None:
         log.warning('LOGIN FORBIDDEN')
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='LOGIN FORBIDDEN')
@@ -38,8 +38,8 @@ async def try_login_lock():
         raise e
 
 
-async def admin_login(login_request: LoginRO) -> bool:
-    username, password = await get_config(ConfigKeyEnum.USERNAME), await get_config(ConfigKeyEnum.PASSWORD)
+async def verify_credentials(login_request: LoginRO) -> bool:
+    username, password = await get_sys_config(ConfigKeyEnum.USERNAME), await get_sys_config(ConfigKeyEnum.PASSWORD)
     if not username:
         username = AdminConfig.username
     if not password:
@@ -49,25 +49,25 @@ async def admin_login(login_request: LoginRO) -> bool:
     return bcrypt.checkpw(login_request.password.encode(), base64.b64decode(password))
 
 
-async def authenticate(login_request: LoginRO):
-    async with try_login_lock():
-        if not await admin_login(login_request):
+async def authenticate_admin(login_request: LoginRO):
+    async with login_lock():
+        if not await verify_credentials(login_request):
             log.warning(f'{login_request.username} login failure')
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_PASSWORD)
 
-    enforce = await get_config(ConfigKeyEnum.TOTP_ENFORCE)
-    secret = await get_config(ConfigKeyEnum.TOTP_SECRET)
+    enforce = await get_sys_config(ConfigKeyEnum.TOTP_ENFORCE)
+    secret = await get_sys_config(ConfigKeyEnum.TOTP_SECRET)
     if enforce is None or secret is None:
         return
     if not login_request.totp:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=HttpErrorDetail.NEED_TOTP)
     totp_client = pyotp.TOTP(secret)
-    async with try_login_lock():
+    async with login_lock():
         if not totp_client.verify(login_request.totp, valid_window=1):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
 
 
-async def admin_only(request: Request, response: Response):
+async def require_admin(request: Request, response: Response):
     if __debug__:
         return
 
@@ -85,7 +85,7 @@ async def admin_only(request: Request, response: Response):
     if (now := int(time.time())) >= cookie_time + CommonConstant.ONE_DAY_SECONDS:
         log.warning(f'{session_id} renew')
         await cache.set(session_id, now, CommonConstant.COOKIE_MAX_AGE)
-        update_cookies(session_id, response)
+        set_auth_cookies(session_id, response)
 
 
 def hmac_sign(plain: str) -> str:
@@ -102,7 +102,7 @@ async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
     return False
 
 
-def update_cookies(session_id: str, response: Response):
+def set_auth_cookies(session_id: str, response: Response):
     response.delete_cookie(CommonConstant.SESSION_ID)
     response.delete_cookie(CommonConstant.COOKIE_SIGN)
     response.set_cookie(

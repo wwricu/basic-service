@@ -66,7 +66,7 @@ class Config(ConfigClass):
         StorageConfig.init(**storage_config)
 
 
-def log_config():
+def configure_logging():
     logging.Logger.manager.loggerDict.clear()
     log.remove()
 
@@ -85,7 +85,7 @@ def log_config():
     )
 
 
-def get_config() -> dict:
+def load_app_config() -> dict:
     log.info(f'env={Config.env.value}')
     config_file = Path(EnvVarEnum.CONFIG_FILE.get())
     if config_file.exists() and config_file.is_file():
@@ -117,7 +117,7 @@ def get_config() -> dict:
     return json.loads(content)
 
 
-def init():
-    log_config()
-    Config.load(**get_config())
+def initialize_app():
+    configure_logging()
+    Config.load(**load_app_config())
     log.info('Config init')

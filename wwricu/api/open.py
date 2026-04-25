@@ -10,8 +10,8 @@ from wwricu.domain.common import AboutPageVO, PageVO
 from wwricu.domain.post import PostDetailVO, PostRequestRO
 from wwricu.domain.tag import TagVO, TagQueryDTO
 from wwricu.component.cache import cache, transient
-from wwricu.function.manage import get_config
-from wwricu.function.post import build_post_query, get_post_detail, get_posts_by_query
+from wwricu.service.manage import get_sys_config
+from wwricu.service.post import build_post_query, get_post_detail, get_posts_by_query
 
 open_api = APIRouter(prefix='/open', tags=['Open API'])
 
@@ -61,7 +61,7 @@ async def open_get_about_api() -> AboutPageVO:
         cache.get(CacheKeyEnum.TAG_COUNT)
     )
     return AboutPageVO(
-        content=await get_config(ConfigKeyEnum.ABOUT_CONTENT),
+        content=await get_sys_config(ConfigKeyEnum.ABOUT_CONTENT),
         post_count=post,
         category_count=category,
         tag_count=tag,

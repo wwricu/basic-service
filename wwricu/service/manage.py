@@ -21,28 +21,28 @@ from wwricu.component.cache import cache
 from wwricu.component.database import get_session
 
 
-async def set_config(key: ConfigKeyEnum, value: str):
+async def set_sys_config(key: ConfigKeyEnum, value: str):
     if not isinstance(value, str):
         raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.INVALID_VALUE)
-    await common.set_config(key, value)
+    await common.set_sys_config(key, value)
     await cache.delete(CacheKeyEnum.CONFIG.format(key=key))
 
 
-async def delete_config(keys: list[ConfigKeyEnum]):
-    await common.delete_config(keys)
+async def delete_sys_config(keys: list[ConfigKeyEnum]):
+    await common.delete_sys_config(keys)
     for key in keys:
         await cache.delete(CacheKeyEnum.CONFIG.format(key=key))
 
 
-async def get_config(key: ConfigKeyEnum) -> str | None:
+async def get_sys_config(key: ConfigKeyEnum) -> str | None:
     if (value := await cache.get(CacheKeyEnum.CONFIG.format(key=key))) is not None:
         return value
-    if (value := await common.get_config(key)) is not None:
+    if (value := await common.get_sys_config(key)) is not None:
         await cache.set(CacheKeyEnum.CONFIG.format(key=key), value)
     return value
 
 
-async def get_trash_list() -> list[TrashBinVO]:
+async def list_trash() -> list[TrashBinVO]:
     deadline = datetime.datetime.now() - datetime.timedelta(days=Config.trash_expire_day)
 
     deleted_post = [TrashBinVO(
@@ -65,7 +65,7 @@ async def get_trash_list() -> list[TrashBinVO]:
     return result
 
 
-async def update_trash(trash_bin: TrashBinRO) -> None:
+async def process_trash(trash_bin: TrashBinRO) -> None:
     entity: type[BlogPost] | type[PostTag] | None = None
     match trash_bin.type:
         case EntityTypeEnum.BLOG_POST:
@@ -79,20 +79,20 @@ async def update_trash(trash_bin: TrashBinRO) -> None:
         await s.execute(stmt.where(entity.deleted == True).where(entity.id == trash_bin.id))
 
 
-async def update_user_config(user: UserRO, session_id: str | None) -> None:
+async def update_admin_user(user: UserRO, session_id: str | None) -> None:
     if user.username is not None:
         if len(user.username) < 4 or not bool(re.match('^[a-zA-Z][a-zA-Z0-9_-]*$', user.username)):
             raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE, detail='Invalid username')
-        await set_config(ConfigKeyEnum.USERNAME, user.username)
+        await set_sys_config(ConfigKeyEnum.USERNAME, user.username)
 
     if user.password is not None:
         if len(user.password) < 8 or user.password.isalnum():
             raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE, detail='Invalid password')
         credential = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt())
-        await set_config(ConfigKeyEnum.PASSWORD, base64.b64encode(credential).decode())
+        await set_sys_config(ConfigKeyEnum.PASSWORD, base64.b64encode(credential).decode())
 
     if user.reset:
-        await delete_config([ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD])
+        await delete_sys_config([ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD])
 
     if user.username is not None or user.password is not None or user.reset is True:
         await cache.delete(session_id)
@@ -100,17 +100,17 @@ async def update_user_config(user: UserRO, session_id: str | None) -> None:
 
 async def enforce_totp(enforce: bool) -> str | None:
     if not enforce:
-        await delete_config([ConfigKeyEnum.TOTP_ENFORCE, ConfigKeyEnum.TOTP_SECRET])
+        await delete_sys_config([ConfigKeyEnum.TOTP_ENFORCE, ConfigKeyEnum.TOTP_SECRET])
         return None
     secret = pyotp.random_base32()
-    await set_config(ConfigKeyEnum.TOTP_SECRET, secret)
+    await set_sys_config(ConfigKeyEnum.TOTP_SECRET, secret)
     return secret
 
 
 async def confirm_totp(totp: str) -> None:
-    if (secret := await get_config(ConfigKeyEnum.TOTP_SECRET)) is None:
+    if (secret := await get_sys_config(ConfigKeyEnum.TOTP_SECRET)) is None:
         raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.NO_TOTP_SECRET)
     totp_client = pyotp.TOTP(secret)
     if not totp_client.verify(totp, valid_window=1):
         raise HTTPException(status_code=http_status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
-    await set_config(ConfigKeyEnum.TOTP_ENFORCE, str(True))
+    await set_sys_config(ConfigKeyEnum.TOTP_ENFORCE, str(True))

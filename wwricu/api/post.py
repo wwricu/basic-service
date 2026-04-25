@@ -7,14 +7,14 @@ from wwricu.domain.common import FileUploadVO, PageVO
 from wwricu.domain.entity import BlogPost
 from wwricu.domain.enum import PostStatusEnum, CacheKeyEnum, PostResourceTypeEnum
 from wwricu.domain.post import PostDetailVO, PostRequestRO, PostUpdateRO
-from wwricu.function.common import reset_system_count
-from wwricu.function.post import build_post_query, delete_post_full, get_post_detail, get_posts_by_query, update_post_full, update_post_status_full, upload_post_file
-from wwricu.function.security import admin_only
+from wwricu.service.common import init_public_counts
+from wwricu.service.post import build_post_query, delete_post_full, get_post_detail, get_posts_by_query, update_post_full, update_post_status_full, upload_post_file
+from wwricu.service.security import require_admin
 
-post_api = APIRouter(prefix='/post', tags=['Post Management'], dependencies=[Depends(admin_only)])
+post_api = APIRouter(prefix='/post', tags=['Post Management'], dependencies=[Depends(require_admin)])
 
 
-@post_api.get('/create', dependencies=[Depends(reset_system_count)], response_model=PostDetailVO)
+@post_api.get('/create', dependencies=[Depends(init_public_counts)], response_model=PostDetailVO)
 async def create_post_api() -> PostDetailVO:
     blog_post = BlogPost(status=PostStatusEnum.DRAFT)
     await insert(blog_post)
@@ -34,7 +34,7 @@ async def get_post(post_id: int) -> PostDetailVO | None:
     return await get_post_detail(post)
 
 
-@post_api.post('/update', dependencies=[Depends(reset_system_count)], response_model=PostDetailVO)
+@post_api.post('/update', dependencies=[Depends(init_public_counts)], response_model=PostDetailVO)
 async def update_post_api(post_update: PostUpdateRO) -> PostDetailVO:
     detail = await update_post_full(post_update)
     await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_update.id))
@@ -42,7 +42,7 @@ async def update_post_api(post_update: PostUpdateRO) -> PostDetailVO:
     return detail
 
 
-@post_api.get('/status/{post_id}', dependencies=[Depends(reset_system_count)], response_model=PostDetailVO)
+@post_api.get('/status/{post_id}', dependencies=[Depends(init_public_counts)], response_model=PostDetailVO)
 async def update_post_status_api(post_id: int, status: PostStatusEnum) -> PostDetailVO:
     response = await update_post_status_full(post_id, status)
     await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
@@ -50,7 +50,7 @@ async def update_post_status_api(post_id: int, status: PostStatusEnum) -> PostDe
     return response
 
 
-@post_api.get('/delete/{post_id}', dependencies=[Depends(reset_system_count)], response_model=None)
+@post_api.get('/delete/{post_id}', dependencies=[Depends(init_public_counts)], response_model=None)
 async def delete_post_api(post_id: int):
     await delete_post_full(post_id)
     await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))

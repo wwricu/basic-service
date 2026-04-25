@@ -37,7 +37,7 @@ async def update_tag_full(tag_update: TagRO) -> TagVO:
     return TagVO.model_validate(tag)
 
 
-async def update_tags(post: BlogPost, post_update: PostUpdateRO):
+async def update_post_tags(post: BlogPost, post_update: PostUpdateRO):
     tags = await get_tags_by_example(TagQueryDTO(tag_ids=post_update.tag_id_list, type=TagTypeEnum.POST_TAG))
 
     prev_tag_ids, post_tag_ids = set(), set()

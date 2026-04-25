@@ -15,7 +15,7 @@ from wwricu.domain.tag import TagVO
 from wwricu.domain.entity import BlogPost, PostResource
 from wwricu.component.database import transaction
 from wwricu.component.storage import oss_public
-from wwricu.function.tag import get_post_tags, update_tag_count, update_tags, update_category, get_posts_category
+from wwricu.service.tag import get_post_tags, update_tag_count, update_post_tags, update_category, get_posts_category
 
 
 async def build_post_query(post: PostRequestRO, *, public: bool = False) -> PostQueryDTO:
@@ -97,7 +97,7 @@ async def update_post_full(post_update: PostUpdateRO) -> PostDetailVO:
     if blog_post.cover_id is not None and blog_post.cover_id != post_update.cover_id:
         await delete_post_cover(blog_post)
     await update_category(blog_post, post_update)
-    await update_tags(blog_post, post_update)
+    await update_post_tags(blog_post, post_update)
     await update_post_selective(
         post_update.id,
         title=post_update.title,

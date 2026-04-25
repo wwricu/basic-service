@@ -3,11 +3,11 @@ from fastapi import APIRouter, Depends
 from wwricu.database.tag import get_tags_by_example, update_tag_selective
 from wwricu.domain.tag import TagRO, TagVO, TagRequestRO, TagQueryDTO
 from wwricu.component.cache import transient
-from wwricu.function.common import reset_system_count
-from wwricu.function.security import admin_only
-from wwricu.function.tag import create_tag, update_tag_full
+from wwricu.service.common import init_public_counts
+from wwricu.service.security import require_admin
+from wwricu.service.tag import create_tag, update_tag_full
 
-tag_api = APIRouter(prefix='/tag', tags=['Tag api'], dependencies=[Depends(admin_only), Depends(reset_system_count)])
+tag_api = APIRouter(prefix='/tag', tags=['Tag api'], dependencies=[Depends(require_admin), Depends(init_public_counts)])
 
 
 @tag_api.post('/create', response_model=TagVO)
