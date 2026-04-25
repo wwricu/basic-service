@@ -13,3 +13,5 @@ api_router.include_router(manage_api)
 api_router.include_router(open_api)
 api_router.include_router(post_api)
 api_router.include_router(tag_api)
+
+__all__ = ['api_router']

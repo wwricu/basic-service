@@ -47,13 +47,13 @@ class CacheKeyEnum(StrEnum):
     POST_COUNT = 'post_count'
     CATEGORY_COUNT = 'category_count'
     TAG_COUNT = 'tag_count'
-    LOGIN_LOCK = 'login_lock'
-    LOGIN_RETRIES = 'login_retries'
     STARTUP_TIMESTAMP = 'startup_timestamp'
     CONFIG = 'config_cache:{key}'
     POST_DETAIL = 'post_cache:{id}'
     ALL_POSTS = 'all_posts:{page_index}:{page_size}:{category}:{tag_list}'
     ALL_TAGS = 'all_tags:{type}'
+    IP_QUOTE = 'ip_quota:{ip}'
+    TOKEN_BUCKET = 'token_bucket_id:{name}:{id}'
 
 
 class EntityTypeEnum(StrEnum):
@@ -67,6 +67,7 @@ class EnvVarEnum(StrEnum):
     ROOT_PATH = '/'
     LOG_PATH = 'logs'
     CONFIG_FILE = 'config.json'
+    VERSION = '0.0.1'
 
     def get(self) -> str:
         return os.getenv(self.name, self.value)

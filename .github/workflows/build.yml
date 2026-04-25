@@ -26,8 +26,7 @@ jobs:
       - run: |
           pip install uv
           uv build
-          cp dist/wwricu-$(cat version.txt).tar.gz dist/wwricu.tar.gz
       - uses: actions/upload-artifact@v4
         with:
           name: wwricu.tar.gz
-          path: dist/wwricu.tar.gz
+          path: dist/wwricu-$(cat version.txt).tar.gz

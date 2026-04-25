@@ -34,10 +34,10 @@ class DatabaseConfig(ConfigClass):
     host: str = ''
     port: int = 0
     database: str = ''
-    url: str | None = None
+    url: str = ''
 
     def __new__(cls):
-        if cls.url is None:
+        if not cls.url:
             cls.url = f'{cls.driver}://{cls.username}:{cls.password}@{cls.host}:{cls.port}/{cls.database}'
 
 
@@ -53,13 +53,7 @@ class Config(ConfigClass):
     env: EnvironmentEnum = EnvironmentEnum(EnvVarEnum.ENV.get())
 
     @classmethod
-    def load(
-        cls,
-        admin_config: dict,
-        database_config: dict,
-        storage_config: dict,
-        **kwargs
-    ):
+    def load(cls, admin_config: dict, database_config: dict, storage_config: dict, **kwargs):
         cls.init(**kwargs)
         AdminConfig.init(**admin_config)
         DatabaseConfig.init(**database_config)
@@ -71,21 +65,22 @@ def log_config():
     log.remove()
 
     if __debug__:
-        log.add(sys.stdout, level=logging.DEBUG)
+        log.add(sys.stdout, level=logging.NOTSET, backtrace=False)
         log.warning('APP RUNNING ON DEBUG MODE')
 
     log_path = EnvVarEnum.LOG_PATH.get()
     os.makedirs(log_path, exist_ok=True)
-    log.add(f'{log_path}/server.log', level=logging.DEBUG, rotation='monday at 00:00')
+    log.add(f'{log_path}/server.log', level=logging.NOTSET, rotation='10 MB', retention=10, backtrace=False)
     log.add(
         f'{log_path}/access.log',
         level=logging.NOTSET,
         filter=lambda record: record.get('level').no < logging.DEBUG,
-        rotation='monday at 00:00'
+        rotation='20 MB',
+        retention=10
     )
 
 
-def get_config() -> dict:
+def load() -> dict:
     log.info(f'env={Config.env.value}')
     config_file = Path(EnvVarEnum.CONFIG_FILE.get())
     if config_file.exists() and config_file.is_file():
@@ -119,5 +114,5 @@ def get_config() -> dict:
 
 def init():
     log_config()
-    Config.load(**get_config())
+    Config.load(**load())
     log.info('Config init')

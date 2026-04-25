@@ -47,3 +47,13 @@ class PostDetailVO(BaseModel):
     status: PostStatusEnum | None = None
     create_time: datetime | None = None
     update_time: datetime | None = None
+
+
+class PostQueryDTO(BaseModel):
+    post_ids: list[int] | None = None
+    category_id: int | None = None
+    deleted: bool | None = False
+    status: PostStatusEnum | None = None
+    page_index: int | None = None
+    page_size: int | None = None
+    deadline: datetime | None = None

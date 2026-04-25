@@ -10,8 +10,8 @@ class BaseModel(PydanticBaseModel):
 
 
 class LoginRO(BaseModel):
-    username: str
-    password: str
+    username: str = ''
+    password: str = ''
     totp: str | None = None
 
 
@@ -27,24 +27,24 @@ class ConfigRO(BaseModel):
 
 
 class PageVO[T](BaseModel):
-    page_index: int
-    page_size: int
+    page_index: int | None
+    page_size: int | None
     count: int
     data: list[T] = Field(default_factory=list)
 
 
 class FileUploadVO(BaseModel):
     id: int
-    name: str
+    name: str | None = None
     key: str
     location: str
 
 
 class AboutPageVO(BaseModel):
     content: str | None = None
-    post_count: int = 0
-    category_count: int = 0
-    tag_count: int = 0
+    post_count: int | None = 0
+    category_count: int | None = 0
+    tag_count: int | None = 0
     startup_timestamp: int | None = None
 
 
@@ -60,3 +60,8 @@ class TrashBinVO(BaseModel):
     type: EntityTypeEnum
     status: PostStatusEnum | None = None
     delete_time: datetime
+
+
+class TokenBucketState(BaseModel):
+    tokens: float
+    updated_at: float
