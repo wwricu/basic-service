@@ -14,7 +14,7 @@ from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum
 from wwricu.config import AdminConfig, Config
 from wwricu.component.cache import cache
-from wwricu.service.manage import get_sys_config
+from wwricu.service.manage import get_config
 
 
 @asynccontextmanager
@@ -39,7 +39,7 @@ async def login_lock():
 
 
 async def verify_credentials(login_request: LoginRO) -> bool:
-    username, password = await get_sys_config(ConfigKeyEnum.USERNAME), await get_sys_config(ConfigKeyEnum.PASSWORD)
+    username, password = await get_config(ConfigKeyEnum.USERNAME), await get_config(ConfigKeyEnum.PASSWORD)
     if not username:
         username = AdminConfig.username
     if not password:
@@ -55,8 +55,8 @@ async def authenticate_admin(login_request: LoginRO):
             log.warning(f'{login_request.username} login failure')
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_PASSWORD)
 
-    enforce = await get_sys_config(ConfigKeyEnum.TOTP_ENFORCE)
-    secret = await get_sys_config(ConfigKeyEnum.TOTP_SECRET)
+    enforce = await get_config(ConfigKeyEnum.TOTP_ENFORCE)
+    secret = await get_config(ConfigKeyEnum.TOTP_SECRET)
     if enforce is None or secret is None:
         return
     if not login_request.totp:

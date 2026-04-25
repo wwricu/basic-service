@@ -10,7 +10,7 @@ from wwricu.domain.tag import TagRO, TagVO, TagQueryDTO
 from wwricu.component.cache import transient
 
 
-async def create_tag(tag_create: TagRO) -> TagVO:
+async def create(tag_create: TagRO) -> TagVO:
     if await tag_db.count(TagQueryDTO(name=tag_create.name, type=tag_create.type)) > 0:
         raise HTTPException(
             status_code=http_status.HTTP_409_CONFLICT,
@@ -22,7 +22,7 @@ async def create_tag(tag_create: TagRO) -> TagVO:
     return TagVO.model_validate(tag)
 
 
-async def update_tag_full(tag_update: TagRO) -> TagVO:
+async def update_tag(tag_update: TagRO) -> TagVO:
     if tag_update.id is None:
         raise HTTPException(http_status.HTTP_400_BAD_REQUEST, detail=HttpErrorDetail.INVALID_VALUE)
     if not (tags := await tag_db.get_by_criteria(TagQueryDTO(tag_ids=[tag_update.id]))) or (tag := tags[0]) is None:

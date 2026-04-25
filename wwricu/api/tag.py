@@ -14,7 +14,7 @@ tag_api = APIRouter(
 
 @tag_api.post('/create', response_model=TagVO)
 async def create_tag_api(tag_create: TagRO) -> TagVO:
-    return await tag_service.create_tag(tag_create)
+    return await tag_service.create(tag_create)
 
 
 @tag_api.post('/all', response_model=list[TagVO])
@@ -24,7 +24,7 @@ async def get_tags_api(get_tag: TagRequestRO) -> list[TagVO]:
 
 @tag_api.post('/update', response_model=TagVO)
 async def update_tag_api(tag_update: TagRO) -> TagVO:
-    response = await tag_service.update_tag_full(tag_update)
+    response = await tag_service.update_tag(tag_update)
     await transient.delete_all()
     return response
 

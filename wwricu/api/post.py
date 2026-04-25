@@ -21,20 +21,20 @@ async def create_post_api() -> PostDetailVO:
 
 @post_api.post('/all', response_model=PageVO[PostDetailVO])
 async def get_posts(post: PostRequestRO) -> PageVO[PostDetailVO]:
-    query = await post_service.build_post_query(post)
-    return await post_service.get_posts_by_query(query)
+    query = await post_service.build_query(post)
+    return await post_service.list_by_query(query)
 
 
 @post_api.get('/detail/{post_id}', response_model=PostDetailVO | None)
 async def get_post(post_id: int) -> PostDetailVO | None:
     if (post := await post_db.find_by_id(post_id)) is None:
         return None
-    return await post_service.get_post_detail(post)
+    return await post_service.get_detail(post)
 
 
 @post_api.post('/update', dependencies=[Depends(common_service.reset_sys_config)], response_model=PostDetailVO)
 async def update_post_api(post_update: PostUpdateRO) -> PostDetailVO:
-    detail = await post_service.update_post_full(post_update)
+    detail = await post_service.update(post_update)
     await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_update.id))
     await transient.delete_all()
     return detail
@@ -42,7 +42,7 @@ async def update_post_api(post_update: PostUpdateRO) -> PostDetailVO:
 
 @post_api.get('/status/{post_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=PostDetailVO)
 async def update_post_status_api(post_id: int, status: PostStatusEnum) -> PostDetailVO:
-    response = await post_service.update_post_status_full(post_id, status)
+    response = await post_service.update_status(post_id, status)
     await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
     await transient.delete_all()
     return response
@@ -50,11 +50,11 @@ async def update_post_status_api(post_id: int, status: PostStatusEnum) -> PostDe
 
 @post_api.get('/delete/{post_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=None)
 async def delete_post_api(post_id: int):
-    await post_service.delete_post_full(post_id)
+    await post_service.delete(post_id)
     await cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
     await transient.delete_all()
 
 
 @post_api.post('/upload', response_model=FileUploadVO)
 async def upload_post_file_api(file: UploadFile, post_id: int = Form(), file_type: PostResourceTypeEnum = Form()) -> FileUploadVO:
-    return await post_service.upload_post_file(file, post_id, file_type)
+    return await post_service.upload_file(file, post_id, file_type)

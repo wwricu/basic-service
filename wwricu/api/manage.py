@@ -36,16 +36,16 @@ async def database_api(action: DatabaseActionEnum, background_task: BackgroundTa
 @manage_api.post('/config/set', response_model=None)
 async def config_set_api(config: ConfigRO):
     if config.value is None:
-        await manage_service.delete_sys_config([config.key])
+        await manage_service.delete_config([config.key])
         return
-    await manage_service.set_sys_config(config.key, config.value)
+    await manage_service.set_config(config.key, config.value)
 
 
 @manage_api.get('/config/get', response_model=str | None)
 async def config_get_api(key: str) -> str | None:
     if key == ConfigKeyEnum.TOTP_SECRET:
         raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.CONFIG_NOT_ALLOWED)
-    return await manage_service.get_sys_config(ConfigKeyEnum(key))
+    return await manage_service.get_config(ConfigKeyEnum(key))
 
 
 @manage_api.post('/user', response_model=None)
