@@ -48,7 +48,9 @@ async def delete_post_cover(post: BlogPost):
     oss_public.delete(resource.key)
 
 
-async def get_post_detail(blog_post: BlogPost) -> PostDetailVO:
+async def get_post_detail(blog_post: BlogPost | None) -> PostDetailVO:
+    if blog_post is None:
+        raise ValueError
     category = await get_category(category_id=blog_post.category_id)
     tags = await get_post_tags(blog_post)
     cover = await get_post_cover(blog_post.cover_id)

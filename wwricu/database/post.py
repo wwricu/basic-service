@@ -9,7 +9,7 @@ from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
 from wwricu.domain.post import PostQueryDTO
 
 
-async def get_post_by_id(post_id: int) -> BlogPost:
+async def get_post_by_id(post_id: int) -> BlogPost | None:
     stmt = select(BlogPost).where(BlogPost.id == post_id).where(BlogPost.deleted == False)
     async with get_session() as s:
         return await s.scalar(stmt)
@@ -53,7 +53,7 @@ async def update_post_selective(post_id: int, **kwargs):
         await s.execute(stmt)
 
 
-async def get_public_post(post_id: int) -> BlogPost:
+async def get_public_post(post_id: int) -> BlogPost | None:
     stmt = select(BlogPost).where(
         BlogPost.id == post_id).where(
         BlogPost.deleted == False).where(

@@ -23,8 +23,9 @@ async def create_tag(tag_create: TagRO) -> TagVO:
 
 
 async def update_tag_full(tag_update: TagRO) -> TagVO:
-    tag = (await get_tags_by_example(TagQueryDTO(tag_ids=[tag_update.id])) or [None])[0]
-    if tag is None:
+    if tag_update.id is None:
+        raise HTTPException(http_status.HTTP_400_BAD_REQUEST, detail='update with no id')
+    if not (tags := await get_tags_by_example(TagQueryDTO(tag_ids=[tag_update.id]))) or (tag := tags[0]) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=f'{tag_update.type} not found')
     if tag.name == tag_update.name:
         return TagVO.model_validate(tag)
@@ -83,4 +84,4 @@ async def get_posts_category(post_list: list[BlogPost]) -> dict[int, PostTag]:
         return {}
     categories = await get_tags_by_example(TagQueryDTO(tag_ids=category_ids, type=TagTypeEnum.POST_CAT))
     category_dict = {cat.id: cat for cat in categories}
-    return {post.id: category_dict.get(post.category_id) for post in post_list}
+    return {post.id: tag for post in post_list if (tag := category_dict.get(post.category_id))}

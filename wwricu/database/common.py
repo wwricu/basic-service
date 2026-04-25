@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from sqlalchemy import select, delete
 
 from wwricu.component.database import get_session
@@ -13,13 +15,13 @@ async def insert(entity: Base) -> Base:
     return entity
 
 
-async def insert_all(entities: list[Base]) -> list[Base]:
+async def insert_all(entities: Sequence[Base]) -> Sequence[Base]:
     async with get_session() as s:
         s.add_all(entities)
         await s.flush()
         for entity in entities:
             await s.refresh(entity)
-    return list(entities)
+    return entities
 
 
 async def set_config(key: ConfigKeyEnum, value: str):

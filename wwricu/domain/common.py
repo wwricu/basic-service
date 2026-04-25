@@ -27,15 +27,15 @@ class ConfigRO(BaseModel):
 
 
 class PageVO[T](BaseModel):
-    page_index: int
-    page_size: int
+    page_index: int | None
+    page_size: int | None
     count: int
     data: list[T] = Field(default_factory=list)
 
 
 class FileUploadVO(BaseModel):
     id: int
-    name: str
+    name: str | None = None
     key: str
     location: str
 

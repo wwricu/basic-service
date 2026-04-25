@@ -90,7 +90,7 @@ async def get_tags_by_posts(post_list: list[BlogPost]) -> dict[int, list[PostTag
     )
     async with get_session() as s:
         query_result = (await s.execute(stmt)).all()
-        result = {post.id: [] for post in post_list}
+        result: dict[int, list[PostTag]] = {post.id: [] for post in post_list}
         for post_tag, post_id in query_result:
             if post_tag_list := result.get(post_id):
                 post_tag_list.append(post_tag)

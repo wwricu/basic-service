@@ -34,10 +34,10 @@ class DatabaseConfig(ConfigClass):
     host: str = ''
     port: int = 0
     database: str = ''
-    url: str | None = None
+    url: str = ''
 
     def __new__(cls):
-        if cls.url is None:
+        if not cls.url:
             cls.url = f'{cls.driver}://{cls.username}:{cls.password}@{cls.host}:{cls.port}/{cls.database}'
 
 
