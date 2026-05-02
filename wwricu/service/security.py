@@ -1,121 +1,130 @@
+import asyncio
 import base64
+import functools
 import hashlib
 import hmac
 import time
-from contextlib import asynccontextmanager
+import uuid
+from typing import Callable
 
 import bcrypt
+import pyotp
 from fastapi import HTTPException, Request, Response, status
 from loguru import logger as log
-from sqlalchemy import select
 
-from wwricu.domain.common import LoginRO
-from wwricu.domain.constant import CommonConstant, HttpErrorDetail
-from wwricu.domain.entity import SysConfig
-from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum
-from wwricu.config import AdminConfig, Config
-from wwricu.service.cache import cache
-from wwricu.service.database import session
-
-
-@asynccontextmanager
-async def try_login_lock():
-    if await cache.get(CacheKeyEnum.LOGIN_LOCK) is not None:
-        log.warning('LOGIN FORBIDDEN')
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='LOGIN FORBIDDEN')
-    try:
-        yield
-        await cache.delete(CacheKeyEnum.LOGIN_LOCK)
-        await cache.delete(CacheKeyEnum.LOGIN_RETRIES)
-    except Exception as e:
-        if (retries := await cache.get(CacheKeyEnum.LOGIN_RETRIES)) is None:
-            retries = 0
-        log.warning(f'Login failed {retries=}')
-        if retries >= 2:
-            await cache.set(CacheKeyEnum.LOGIN_LOCK, True, 600)
-            await cache.delete(CacheKeyEnum.LOGIN_RETRIES)
-        else:
-            await cache.set(CacheKeyEnum.LOGIN_RETRIES, retries + 1, 300)
-        raise e
+from wwricu.component.cache import sys_cache
+from wwricu.component.middleware import real_ip
+from wwricu.component.token_bucket import login_ip_limiter, login_global_limiter, open_ip_limiter
+from wwricu.config import app_config
+from wwricu.domain.common import LoginRO, LoginVO
+from wwricu.domain.constant import CommonConstant, HttpErrorDetail, TimeConstant
+from wwricu.domain.enum import ConfigKeyEnum
+from wwricu.service.manage import get_config
 
 
-async def admin_login(login_request: LoginRO) -> bool:
-    username, password = AdminConfig.username, AdminConfig.password
-    if username_config := await session.scalar(select(SysConfig).where(SysConfig.key == ConfigKeyEnum.USERNAME)):
-        username = username_config.value
-    if password_config := await session.scalar(select(SysConfig).where(SysConfig.key == ConfigKeyEnum.PASSWORD)):
-        password = password_config.value
-    if login_request.username != username:
-        return False
-    return bcrypt.checkpw(login_request.password.encode(), base64.b64decode(password))
+async def login_limiter():
+    if not await login_ip_limiter.allow(real_ip.get()):
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=HttpErrorDetail.TOO_MANY_REQUESTS)
+    if not await login_global_limiter.allow(CommonConstant.GLOBAL_TOKEN_BUCKET_ID):
+        log.warning('Global login rate limit exceeded')
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=HttpErrorDetail.TOO_MANY_REQUESTS)
 
 
-async def admin_only(request: Request, response: Response):
+async def open_limiter():
+    if not await open_ip_limiter.allow(real_ip.get()):
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=HttpErrorDetail.TOO_MANY_REQUESTS)
+
+
+async def authenticate(login_request: LoginRO, request: Request, response: Response) -> LoginVO:
+    session_id = uuid.uuid4().hex
+    session_2fa_id = request.cookies.get(CommonConstant.SESSION_ID_2FA)
+
+    secret = await get_config(ConfigKeyEnum.TOTP_SECRET)
+    enforce = await get_config(ConfigKeyEnum.TOTP_ENFORCE)
+
+    if session_2fa_id and (not enforce or not login_request.totp):
+        await sys_cache.delete(session_2fa_id)
+        response.delete_cookie(CommonConstant.SESSION_ID_2FA)
+    elif session_2fa_id and enforce and secret and login_request.totp and await sys_cache.get(session_2fa_id):
+        if not pyotp.TOTP(secret).verify(login_request.totp, valid_window=1):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
+        await sys_cache.delete(session_2fa_id)
+        response.delete_cookie(CommonConstant.SESSION_ID_2FA)
+        await login(session_id, response)
+        return LoginVO()
+
+    if not await verify_credentials(login_request):
+        log.warning(f'{login_request.username} login failure')
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_PASSWORD)
+
+    if await get_config(ConfigKeyEnum.TOTP_ENFORCE):
+        await sys_cache.set(session_id, True, TimeConstant.TOTP_EXPIRATION)
+        response.set_cookie(CommonConstant.SESSION_ID_2FA, session_id, max_age=TimeConstant.TOTP_EXPIRATION, secure=True, httponly=True, samesite='lax')
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return LoginVO(detail=HttpErrorDetail.NEED_TOTP)
+
+    await login(session_id, response)
+    return LoginVO()
+
+
+async def require_admin(request: Request, response: Response):
     if __debug__:
         return
 
     session_id = request.cookies.get(CommonConstant.SESSION_ID)
     cookie_sign = request.cookies.get(CommonConstant.COOKIE_SIGN)
+    if session_id is None or cookie_sign is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.NOT_AUTHORIZED)
 
-    if not await validate_cookie(session_id, cookie_sign):
+    if (
+        not isinstance(issue_time := await sys_cache.get(session_id), int) or
+        issue_time < 0 or
+        int(time.time()) - issue_time >= TimeConstant.COOKIE_MAX_AGE or
+        hmac_sign(session_id) != cookie_sign
+    ):
         log.warning(f'Unauthorized access to {request.url.path}')
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.NOT_AUTHORIZED)
-    if not (cookie_time := await cache.get(session_id)):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.LOGIN_TIMEOUT)
 
-    if (now := int(time.time())) >= cookie_time + CommonConstant.COOKIE_MAX_AGE // 2:
-        log.warning(f'{request.cookies.get(CommonConstant.SESSION_ID)} renew')
-        await cache.set(session_id, now, CommonConstant.COOKIE_MAX_AGE)
-        response.set_cookie(
-            CommonConstant.SESSION_ID,
-            session_id,
-            max_age=60 * 60,
-            secure=True,
-            httponly=True,
-            samesite='lax'
-        )
-        response.set_cookie(
-            CommonConstant.COOKIE_SIGN,
-            hmac_sign(session_id),
-            max_age=60 * 60,
-            secure=True,
-            httponly=True,
-            samesite='lax'
-        )
+    if issue_time + TimeConstant.ONE_DAY_SECONDS < int(time.time()):
+        log.warning(f'{session_id} renew')
+        await login(session_id, response)
 
 
 def hmac_sign(plain: str) -> str:
-    secure_key = base64.b64decode(AdminConfig.secure_key)
-    return hmac.new(secure_key, plain.encode(Config.encoding), hashlib.sha256).hexdigest()
+    return hmac.new(secret_key, plain.encode(app_config.encoding), hashlib.sha256).hexdigest()
 
 
-async def validate_cookie(session_id: str, cookie_sign: str) -> bool:
-    if session_id is None or cookie_sign is None or not isinstance(issue_time := await cache.get(session_id), int):
-        return False
-    if 0 <= int(time.time()) - issue_time < CommonConstant.COOKIE_MAX_AGE and hmac_sign(session_id) == cookie_sign:
-        return True
-    log.warning(f'Invalid cookie session={session_id} issue_time={issue_time} sign={cookie_sign}')
-    return False
+async def login(session_id: str, response: Response):
+    await sys_cache.set(session_id, int(time.time()), TimeConstant.COOKIE_MAX_AGE)
+    response.set_cookie(CommonConstant.SESSION_ID, session_id, TimeConstant.COOKIE_MAX_AGE, secure=True, httponly=True, samesite='lax')
+    response.set_cookie(CommonConstant.COOKIE_SIGN, hmac_sign(session_id), TimeConstant.COOKIE_MAX_AGE, secure=True, httponly=True, samesite='lax')
 
 
-def update_cookies(session_id: str, response: Response):
-    cookie_sign = hmac_sign(session_id)
+def throttle(concurrent: int, timeout: float):
+    sem = asyncio.Semaphore(concurrent)
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            try:
+                await asyncio.wait_for(sem.acquire(), timeout=timeout)
+            except asyncio.TimeoutError:
+                raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, detail=HttpErrorDetail.TOO_MANY_REQUESTS)
+            try:
+                return await func(*args, **kwargs)
+            finally:
+                sem.release()
+        return wrapper
+    return decorator
 
-    response.delete_cookie(CommonConstant.SESSION_ID)
-    response.delete_cookie(CommonConstant.COOKIE_SIGN)
-    response.set_cookie(
-        CommonConstant.SESSION_ID,
-        session_id,
-        max_age=CommonConstant.COOKIE_MAX_AGE,
-        secure=True,
-        httponly=True,
-        samesite='lax'
-    )
-    response.set_cookie(
-        CommonConstant.COOKIE_SIGN,
-        cookie_sign,
-        max_age=CommonConstant.COOKIE_MAX_AGE,
-        secure=True,
-        httponly=True,
-        samesite='lax'
-    )
+
+@throttle(concurrent=1, timeout=2.0)
+async def verify_credentials(request: LoginRO) -> bool:
+    username, password = await get_config(ConfigKeyEnum.USERNAME), await get_config(ConfigKeyEnum.PASSWORD)
+    if not username:
+        username = app_config.security.username
+    if not password:
+        password = app_config.security.password
+    return await asyncio.to_thread(bcrypt.checkpw, request.password.encode(), base64.b64decode(password)) and request.username == username
+
+
+secret_key = base64.b64decode(app_config.security.secret_key)
