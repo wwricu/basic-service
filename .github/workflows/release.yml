@@ -21,7 +21,6 @@ jobs:
           echo version=$(cat version.txt) >> $GITHUB_OUTPUT
           pip install uv
           uv build
-          cp dist/wwricu-$(cat version.txt).tar.gz dist/wwricu.tar.gz
       - uses: softprops/action-gh-release@v2.2.2
         with:
           tag_name: ${{ env.version }}
@@ -45,4 +44,5 @@ jobs:
           push: true
           sbom: true
           provenance: mode=max
+          build-args: VERSION=${{ needs.github.outputs.version }}
           tags: wwricu/basic-service:${{ needs.github.outputs.version }}, wwricu/basic-service:snapshot, wwricu/basic-service:latest
