@@ -2,9 +2,8 @@ import secrets
 
 from fastapi import APIRouter, Depends, Form, UploadFile
 
-import wwricu.database as db
 from wwricu.component.cache import query_cache, post_cache
-from wwricu.database import post_db
+from wwricu.database import common_db, post_db
 from wwricu.domain.common import FileUploadVO, PageVO
 from wwricu.domain.entity import BlogPost
 from wwricu.domain.enum import PostStatusEnum, CacheKeyEnum, PostResourceTypeEnum
@@ -19,7 +18,7 @@ async def create_post_api() -> PostDetailVO:
     while await post_db.find_by_id(post_id := 1_000_000_000 + secrets.randbelow(9_000_000_000)):
         pass
     blog_post = BlogPost(id=post_id, status=PostStatusEnum.DRAFT)
-    await db.insert(blog_post)
+    await common_db.insert(blog_post)
     return PostDetailVO.model_validate(blog_post)
 
 
