@@ -1,4 +1,3 @@
-import asyncio
 import uuid
 
 from fastapi import HTTPException, UploadFile, status as http_status
@@ -43,7 +42,7 @@ async def delete_cover(post: BlogPost):
     if (resource := await res_db.find_post_cover(post.cover_id)) is None:
         return
     await res_db.delete_resource(resource.id)
-    asyncio.create_task(oss_public.delete(resource.key))
+    # asyncio.create_task(oss_public.delete(resource.key))
 
 
 async def get_detail(blog_post: BlogPost | None) -> PostDetailVO:
@@ -88,25 +87,25 @@ async def get_preview(post_list: list[BlogPost]) -> list[PostDetailVO]:
 
 
 @transaction
-async def update(post_update: PostUpdateRO) -> PostDetailVO:
-    if (blog_post := await post_db.find_by_id(post_update.id)) is None:
+async def update(new_post: PostUpdateRO) -> PostDetailVO:
+    if (post := await post_db.find_by_id(new_post.id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
-    if blog_post.cover_id is not None and blog_post.cover_id != post_update.cover_id:
-        await delete_cover(blog_post)
-    tag_update = TagUpdateDTO(category_id=post_update.category_id, tag_id_list=post_update.tag_id_list, status=post_update.status)
-    await update_post_category(blog_post, tag_update)
-    await update_post_tags(blog_post, tag_update)
+    if post.cover_id is not None and post.cover_id != new_post.cover_id:
+        await delete_cover(post)
+    tag_update = TagUpdateDTO(category_id=new_post.category_id, tag_id_list=new_post.tag_id_list, status=new_post.status)
+    await update_post_category(post, tag_update)
+    await update_post_tags(post, tag_update)
     await post_db.update_selective(
-        post_update.id,
-        title=post_update.title,
-        content=post_update.content,
-        preview=post_update.preview,
-        cover_id=post_update.cover_id,
-        status=post_update.status,
-        category_id=post_update.category_id
+        new_post.id,
+        title=new_post.title,
+        content=new_post.content,
+        preview=new_post.preview,
+        cover_id=new_post.cover_id,
+        status=new_post.status,
+        category_id=new_post.category_id
     )
-    blog_post = await post_db.find_by_id(post_update.id)
-    return await get_detail(blog_post)
+    post = await post_db.find_by_id(new_post.id)
+    return await get_detail(post)
 
 
 @transaction

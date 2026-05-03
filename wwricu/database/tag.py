@@ -19,8 +19,6 @@ async def build_criteria(query: TagQueryDTO) -> Select:
         stmt = stmt.where(PostTag.id.in_(query.tag_ids))
     if query.name is not None:
         stmt = stmt.where(PostTag.name == query.name)
-    if query.deadline is not None:
-        stmt = stmt.where(PostTag.update_time > query.deadline)
     return stmt
 
 
@@ -79,22 +77,6 @@ async def find_tags_by_posts(post_list: list[BlogPost]) -> dict[int, list[PostTa
     for post_tag, post_id in query_result:
         result[post_id].append(post_tag)
     return result
-
-
-async def delete_tag_before(deadline: datetime):
-    deleted_tags = select(PostTag.id).where(
-        PostTag.deleted == True).where(
-        PostTag.type == TagTypeEnum.POST_TAG).where(
-        PostTag.update_time < deadline
-    )
-    tag_stmt = delete(EntityRelation).where(
-        EntityRelation.type == RelationTypeEnum.POST_TAG).where(
-        EntityRelation.dst_id.in_(deleted_tags)
-    )
-    stmt = delete(PostTag).where(PostTag.deleted == True).where(PostTag.update_time < deadline)
-    async with get_session() as s:
-        await s.execute(tag_stmt)
-        await s.execute(stmt)
 
 
 async def find_category(category_id: int | None = None, name: str | None = None) -> PostTag | None:

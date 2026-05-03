@@ -24,7 +24,6 @@ class TagQueryDTO(BaseModel):
     name: str | None = None
     type: TagTypeEnum | None = None
     deleted: bool | None = False
-    deadline: datetime | None = None
     page_index: int | None = None
     page_size: int | None = None
 

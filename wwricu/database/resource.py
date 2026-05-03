@@ -34,18 +34,3 @@ async def find_posts_cover(post_list: list[BlogPost]) -> dict[int, PostResource]
     async with get_session() as s:
         result = await s.execute(stmt)
         return {post_id: cover for cover, post_id in result.all()}
-
-
-async def cleanup_unlinked_resources() -> list[PostResource]:
-    linked = select(EntityRelation.dst_id).where(
-        EntityRelation.deleted == False).where(
-        EntityRelation.type == RelationTypeEnum.POST_RES
-    ).distinct()
-    select_stmt = select(PostResource).where(PostResource.deleted == False).where(PostResource.id.notin_(linked))
-
-    async with get_session() as s:
-        deleted_resources = list((await s.scalars(select_stmt)).all())
-        delete_stmt = delete(PostResource).where(PostResource.id.in_((r.id for r in deleted_resources)))
-        await s.execute(delete_stmt)
-
-    return deleted_resources

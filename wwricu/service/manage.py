@@ -39,22 +39,20 @@ async def get_config(key: ConfigKeyEnum) -> str | None:
 
 
 async def list_trash() -> list[TrashBinVO]:
-    deadline = datetime.datetime.now() - datetime.timedelta(days=app_config.trash_expire_day)
-
     deleted_post = [TrashBinVO(
         id=post.id,
         name=post.title,
         type=EntityTypeEnum.BLOG_POST,
         status=PostStatusEnum(post.status),
         delete_time=post.update_time
-    ) for post in await post_db.find_by_criteria(PostQueryDTO(deadline=deadline, deleted=True))]
+    ) for post in await post_db.find_by_criteria(PostQueryDTO(deleted=True))]
 
     deleted_tag = [TrashBinVO(
         id=tag.id,
         name=tag.name,
         type=EntityTypeEnum.POST_TAG if tag.type == TagTypeEnum.POST_TAG else EntityTypeEnum.POST_CAT,
         delete_time=tag.update_time
-    ) for tag in await tag_db.find_by_criteria(TagQueryDTO(deleted=True, deadline=deadline))]
+    ) for tag in await tag_db.find_by_criteria(TagQueryDTO(deleted=True))]
 
     result = deleted_post + deleted_tag
     result.sort(key=lambda item: item.delete_time, reverse=True)
