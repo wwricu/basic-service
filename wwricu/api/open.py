@@ -1,5 +1,3 @@
-import asyncio
-
 from fastapi import APIRouter, HTTPException, status, Depends
 
 from wwricu.component.cache import sys_cache, query_cache, post_cache
@@ -20,7 +18,7 @@ async def open_get_posts_api(post: PostRequestRO) -> PageVO[PostDetailVO]:
         page_index=post.page_index,
         page_size=post.page_size,
         category=post.category,
-        tag_list=post.tag_list if post.tag_list else None
+        tag_list=post.tag_list or None
     )
     if response := await query_cache.get(cache_key):
         return response
@@ -53,15 +51,10 @@ async def open_get_tags_api(tag_type: TagTypeEnum) -> list[TagVO]:
 
 @open_api.get('/about', response_model=AboutPageVO)
 async def open_get_about_api() -> AboutPageVO:
-    post, category, tag = await asyncio.gather(
-        sys_cache.get(CacheKeyEnum.POST_COUNT),
-        sys_cache.get(CacheKeyEnum.CATEGORY_COUNT),
-        sys_cache.get(CacheKeyEnum.TAG_COUNT)
-    )
     return AboutPageVO(
         content=await manage_service.get_config(ConfigKeyEnum.ABOUT_CONTENT),
-        post_count=post,
-        category_count=category,
-        tag_count=tag,
-        startup_timestamp=await sys_cache.get(CacheKeyEnum.STARTUP_TIMESTAMP)
+        post_count=await sys_cache.get(CacheKeyEnum.POST_COUNT) or 0,
+        category_count=await sys_cache.get(CacheKeyEnum.CATEGORY_COUNT) or 0,
+        tag_count=await sys_cache.get(CacheKeyEnum.TAG_COUNT) or 0,
+        startup_timestamp=await sys_cache.get(CacheKeyEnum.STARTUP_TIMESTAMP) or 0
     )

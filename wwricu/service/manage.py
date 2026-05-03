@@ -8,7 +8,7 @@ from fastapi import HTTPException, status as http_status
 
 from wwricu.component.cache import sys_cache
 from wwricu.config import app_config
-from wwricu.database import conf_db, post_db, tag_db, entity_trash
+from wwricu.database import common_db, conf_db, post_db, tag_db
 from wwricu.domain.common import TrashBinRO, TrashBinVO, UserRO
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, EntityTypeEnum, PostStatusEnum, TagTypeEnum
@@ -69,7 +69,7 @@ async def process_trash(trash_bin: TrashBinRO):
     }.get(trash_bin.type)
     if entity is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.UNKNOWN_ENTITY_TYPE)
-    await entity_trash(entity, trash_bin.id, hard_delete=trash_bin.delete)
+    await common_db.entity_trash(entity, trash_bin.id, hard_delete=trash_bin.delete)
 
 
 async def update_admin_user(user: UserRO, session_id: str | None):

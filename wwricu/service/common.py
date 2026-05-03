@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 import time
 from contextlib import asynccontextmanager
@@ -44,11 +43,9 @@ async def reset_sys_config():
     category_count = await tag_db.count(TagQueryDTO(type=TagTypeEnum.POST_CAT))
     tag_count = await tag_db.count(TagQueryDTO(type=TagTypeEnum.POST_TAG))
     log.info(f'{post_count=} {category_count=} {tag_count=}')
-    await asyncio.gather(
-        sys_cache.set(CacheKeyEnum.POST_COUNT, post_count, 0),
-        sys_cache.set(CacheKeyEnum.CATEGORY_COUNT, category_count, 0),
-        sys_cache.set(CacheKeyEnum.TAG_COUNT, tag_count, 0)
-    )
+    await sys_cache.set(CacheKeyEnum.POST_COUNT, post_count, 0)
+    await sys_cache.set(CacheKeyEnum.CATEGORY_COUNT, category_count, 0)
+    await sys_cache.set(CacheKeyEnum.TAG_COUNT, tag_count, 0)
 
 
 async def purge_expired_entities():
