@@ -19,7 +19,6 @@ class PostResourceTypeEnum(StrEnum):
 
 class RelationTypeEnum(StrEnum):
     POST_TAG = 'post_tag'
-    POST_RES = 'post_resource'
 
 
 class DatabaseActionEnum(StrEnum):

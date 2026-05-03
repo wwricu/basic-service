@@ -1,6 +1,8 @@
+import asyncio
 import uuid
 
 from fastapi import HTTPException, UploadFile, status as http_status
+from loguru import logger as log
 
 from wwricu.component.database import transaction
 from wwricu.component.storage import oss_public
@@ -42,7 +44,8 @@ async def delete_cover(post: BlogPost):
     if (resource := await res_db.find_post_cover(post.cover_id)) is None:
         return
     await res_db.delete_resource(resource.id)
-    # asyncio.create_task(oss_public.delete(resource.key))
+    log.warning(f'delete cover {resource.key}')
+    asyncio.create_task(oss_public.delete(resource.key))
 
 
 async def get_detail(blog_post: BlogPost | None) -> PostDetailVO:

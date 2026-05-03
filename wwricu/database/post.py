@@ -1,6 +1,4 @@
-from datetime import datetime
-
-from sqlalchemy import select, update, func, delete, desc, Select
+from sqlalchemy import select, update, func, desc, Select
 from sqlalchemy.orm import defer
 
 from wwricu.component.database import get_session

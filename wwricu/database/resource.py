@@ -1,8 +1,8 @@
 from sqlalchemy import delete, select
 
 from wwricu.component.database import get_session
-from wwricu.domain.entity import BlogPost, PostResource, EntityRelation
-from wwricu.domain.enum import PostResourceTypeEnum, RelationTypeEnum
+from wwricu.domain.entity import BlogPost, PostResource
+from wwricu.domain.enum import PostResourceTypeEnum
 
 
 async def find_post_cover(resource_id: int) -> PostResource | None:

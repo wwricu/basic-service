@@ -1,5 +1,4 @@
 from collections import defaultdict
-from datetime import datetime
 
 from sqlalchemy import select, update, func, case, delete, desc, Select
 
@@ -143,3 +142,11 @@ async def find_tag_ids_by_post_id(post_id: int) -> list[int]:
     )
     async with get_session() as s:
         return list((await s.scalars(stmt)).all())
+
+
+async def delete_unlink_relation():
+    post_query = ~select(BlogPost.id).where(BlogPost.id == EntityRelation.src_id).exists()
+    tag_query = ~select(PostTag.id).where(PostTag.id == EntityRelation.dst_id).exists()
+    stmt = delete(EntityRelation).where(post_query | tag_query)
+    async with get_session() as s:
+        await s.execute(stmt)
