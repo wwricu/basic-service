@@ -12,8 +12,8 @@ from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, PostResource
 from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum
 from wwricu.domain.post import PostDetailVO, PostQueryDTO, PostRequestRO, PostResourceVO, PostUpdateRO
-from wwricu.domain.tag import TagVO
-from wwricu.service.tag import get_post_tags, update_tag_count, update_post_tags, update_category, get_posts_category
+from wwricu.domain.tag import TagVO, TagUpdateDTO
+from wwricu.service.tag import get_post_tags, update_tag_count, update_post_tags, update_post_category, get_posts_category
 
 
 async def build_query(post: PostRequestRO, *, public: bool = False) -> PostQueryDTO:
@@ -94,8 +94,9 @@ async def update(post_update: PostUpdateRO) -> PostDetailVO:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
     if blog_post.cover_id is not None and blog_post.cover_id != post_update.cover_id:
         await delete_cover(blog_post)
-    await update_category(blog_post, post_update)
-    await update_post_tags(blog_post, post_update)
+    tag_update = TagUpdateDTO(category_id=post_update.category_id, tag_id_list=post_update.tag_id_list, status=post_update.status)
+    await update_post_category(blog_post, tag_update)
+    await update_post_tags(blog_post, tag_update)
     await post_db.update_selective(
         post_update.id,
         title=post_update.title,
@@ -109,22 +110,34 @@ async def update(post_update: PostUpdateRO) -> PostDetailVO:
     return await get_detail(blog_post)
 
 
-async def update_status(post_id: int, new_status: PostStatusEnum) -> PostDetailVO:
+@transaction
+async def update_status(post_id: int, status: PostStatusEnum):
     if (blog_post := await post_db.find_by_id(post_id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
-    await post_db.update_selective(blog_post.id, status=new_status)
-    blog_post = await post_db.find_by_id(post_id)
-    return await get_detail(blog_post)
+
+    tag_update = TagUpdateDTO(
+        category_id=blog_post.category_id,
+        tag_id_list=await tag_db.find_tag_ids_by_post_id(blog_post.id),
+        status=status
+    )
+
+    await update_post_category(blog_post, tag_update)
+    await update_post_tags(blog_post, tag_update)
+    await post_db.update_selective(blog_post.id, status=tag_update.status)
 
 
 @transaction
-async def delete(post_id: int):
+async def update_deleted(post_id: int, deleted: bool = True):
+    if not deleted:
+        await post_db.update_selective(post_id, deleted=False)
     if (post := await post_db.find_by_id(post_id)) is None:
         return
+    delta = -1 if deleted else 1
     if post.status == PostStatusEnum.PUBLISHED:
-        await tag_db.update_category_count(post, -1)
-        await update_tag_count(post, -1)
-    await post_db.update_selective(post.id, deleted=True)
+        await tag_db.update_category_count(post, delta)
+        await update_tag_count(post, delta)
+    if deleted:
+        await post_db.update_selective(post.id, deleted=True)
 
 
 async def upload_file(file: UploadFile, post_id: int, file_type: PostResourceTypeEnum) -> FileUploadVO:

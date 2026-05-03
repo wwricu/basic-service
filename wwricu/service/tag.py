@@ -5,8 +5,7 @@ from wwricu.database import post_db, tag_db
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
-from wwricu.domain.post import PostUpdateRO
-from wwricu.domain.tag import TagRO, TagVO, TagQueryDTO
+from wwricu.domain.tag import TagRO, TagVO, TagQueryDTO, TagUpdateDTO
 
 
 async def create(tag_create: TagRO) -> TagVO:
@@ -34,20 +33,21 @@ async def update_tag(tag_update: TagRO) -> TagVO:
     return TagVO.model_validate(tag)
 
 
-async def update_post_tags(post: BlogPost, post_update: PostUpdateRO):
-    tags = await tag_db.find_by_criteria(TagQueryDTO(tag_ids=post_update.tag_id_list, type=TagTypeEnum.POST_TAG))
+async def update_post_tags(post: BlogPost, tag_update: TagUpdateDTO):
+    tags = await tag_db.find_by_criteria(TagQueryDTO(tag_ids=tag_update.tag_id_list, type=TagTypeEnum.POST_TAG))
+    tag_ids, update_tag_ids = {tag.id for tag in await get_post_tags(post)}, set(tag_update.tag_id_list)
 
-    prev_tag_ids, post_tag_ids = set(), set()
+    if tag_ids != update_tag_ids:
+        await tag_db.delete_post_tags(post.id)
+        relations = [EntityRelation(src_id=post.id, dst_id=t.id, type=RelationTypeEnum.POST_TAG) for t in tags]
+        await db.insert_all(relations)
+
+    bef_tag_ids, aft_tag_ids = set(), set()
     if post.status == PostStatusEnum.PUBLISHED:
-        prev_tag_ids = {tag.id for tag in await get_post_tags(post)}
-    if post_update.status == PostStatusEnum.PUBLISHED:
-        post_tag_ids = set(post_update.tag_id_list)
-
-    await tag_db.update_tag_post_count(prev_tag_ids, post_tag_ids)
-    await tag_db.delete_post_tags(post.id)
-
-    relations = [EntityRelation(src_id=post.id, dst_id=t.id, type=RelationTypeEnum.POST_TAG) for t in tags]
-    await db.insert_all(relations)
+        bef_tag_ids = tag_ids
+    if tag_update.status == PostStatusEnum.PUBLISHED:
+        aft_tag_ids = update_tag_ids
+    await tag_db.update_tag_post_count(bef_tag_ids, aft_tag_ids)
 
 
 async def update_tag_count(post: BlogPost, increment: int = 1):
@@ -60,18 +60,17 @@ async def get_post_tags(post: BlogPost) -> list[PostTag]:
     return await tag_db.find_by_criteria(TagQueryDTO(tag_ids=tag_ids, type=TagTypeEnum.POST_TAG))
 
 
-async def update_category(post: BlogPost, post_update: PostUpdateRO):
-    if (category := await tag_db.find_category(category_id=post_update.category_id)) is None:
-        return
+async def update_post_category(post: BlogPost, count_update: TagUpdateDTO):
+    if count_update.category_id != count_update.category_id:
+        category = await tag_db.find_category(category_id=count_update.category_id)
+        await post_db.update_selective(post.id, category_id=category.id if category else None)
 
-    prev_category_id, post_category_id = None, None
+    bef_category_id, aft_category_id = None, None
     if post.status == PostStatusEnum.PUBLISHED:
-        prev_category_id = post.category_id
-    if post_update.status == PostStatusEnum.PUBLISHED:
-        post_category_id = post_update.category_id
-
-    await tag_db.update_category_post_count(prev_category_id, post_category_id)
-    await post_db.update_selective(post.id, category_id=category.id)
+        bef_category_id = post.category_id
+    if count_update.status == PostStatusEnum.PUBLISHED:
+        aft_category_id = count_update.category_id
+    await tag_db.update_category_post_count(bef_category_id, aft_category_id)
 
 
 async def get_posts_category(post_list: list[BlogPost]) -> dict[int, PostTag]:

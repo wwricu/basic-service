@@ -1,3 +1,5 @@
+import secrets
+
 from fastapi import APIRouter, Depends, Form, UploadFile
 
 import wwricu.database as db
@@ -12,9 +14,11 @@ from wwricu.service import common_service, post_service, security_service
 post_api = APIRouter(prefix='/post', tags=['Post Management'], dependencies=[Depends(security_service.require_admin)])
 
 
-@post_api.get('/create', dependencies=[Depends(common_service.reset_sys_config)], response_model=PostDetailVO)
+@post_api.get('/create', response_model=PostDetailVO)
 async def create_post_api() -> PostDetailVO:
-    blog_post = BlogPost(status=PostStatusEnum.DRAFT)
+    while await post_db.find_by_id(post_id := 1_000_000_000 + secrets.randbelow(9_000_000_000)):
+        pass
+    blog_post = BlogPost(id=post_id, status=PostStatusEnum.DRAFT)
     await db.insert(blog_post)
     return PostDetailVO.model_validate(blog_post)
 
@@ -40,17 +44,16 @@ async def update_post_api(post_update: PostUpdateRO) -> PostDetailVO:
     return detail
 
 
-@post_api.get('/status/{post_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=PostDetailVO)
-async def update_post_status_api(post_id: int, status: PostStatusEnum) -> PostDetailVO:
-    response = await post_service.update_status(post_id, status)
+@post_api.get('/status/{post_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=None)
+async def update_post_status_api(post_id: int, status: PostStatusEnum):
+    await post_service.update_status(post_id, status=status)
     await post_cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
     await query_cache.delete_all()
-    return response
 
 
 @post_api.get('/delete/{post_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=None)
 async def delete_post_api(post_id: int):
-    await post_service.delete(post_id)
+    await post_service.update_deleted(post_id, deleted=True)
     await post_cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
     await query_cache.delete_all()
 
