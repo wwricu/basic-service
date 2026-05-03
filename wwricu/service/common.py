@@ -27,10 +27,6 @@ async def lifespan(app: FastAPI):
         scheduler.add_job(database_manager.backup, trigger=CronTrigger(day_of_week=0, hour=3))
         scheduler.start()
 
-        await tag_db.reset_tag_count()
-        await tag_db.reset_category_count()
-        await reset_sys_config()
-
         await sys_cache.set(CacheKeyEnum.STARTUP_TIMESTAMP, int(time.time()), 0)
         log.info(f'{app.title} startup')
         yield
@@ -43,6 +39,7 @@ async def lifespan(app: FastAPI):
 
 
 async def reset_sys_config():
+    yield
     post_count = await post_db.count(PostQueryDTO(status=PostStatusEnum.PUBLISHED))
     category_count = await tag_db.count(TagQueryDTO(type=TagTypeEnum.POST_CAT))
     tag_count = await tag_db.count(TagQueryDTO(type=TagTypeEnum.POST_TAG))

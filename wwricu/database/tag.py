@@ -5,7 +5,7 @@ from sqlalchemy import select, update, func, case, delete, desc, Select
 
 from wwricu.component.database import get_session
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
-from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
+from wwricu.domain.enum import RelationTypeEnum, TagTypeEnum
 from wwricu.domain.tag import TagQueryDTO
 
 
@@ -39,23 +39,6 @@ async def count(query: TagQueryDTO) -> int:
     count_stmt = select(func.count()).select_from(stmt.subquery())
     async with get_session() as s:
         return await s.scalar(count_stmt) or 0
-
-
-async def reset_tag_count():
-    subquery = select(PostTag.id, func.count(BlogPost.id).label('tag_count')).join(
-        EntityRelation, PostTag.id == EntityRelation.dst_id).join(
-        BlogPost, EntityRelation.src_id == BlogPost.id).where(
-        PostTag.deleted == False).where(
-        EntityRelation.deleted == False).where(
-        BlogPost.deleted == False).where(
-        PostTag.type == TagTypeEnum.POST_TAG).where(
-        EntityRelation.type == RelationTypeEnum.POST_TAG).where(
-        BlogPost.status == PostStatusEnum.PUBLISHED).group_by(
-        PostTag.id
-    ).subquery()
-    stmt = update(PostTag).where(PostTag.id == subquery.c.id).values(count=subquery.c.tag_count)
-    async with get_session() as s:
-        await s.execute(stmt)
 
 
 async def update_tag_post_count(prev_tag_ids: set[int], post_tag_ids: set[int]):
@@ -134,19 +117,6 @@ async def update_category_count(post: BlogPost, increment: int = 1):
         PostTag.type == TagTypeEnum.POST_CAT).values(
         count=PostTag.count + increment
     )
-    async with get_session() as s:
-        await s.execute(stmt)
-
-
-async def reset_category_count():
-    subquery = select(PostTag.id, func.count(BlogPost.id).label('category_count')).join(
-        BlogPost, PostTag.id == BlogPost.category_id).where(
-        PostTag.deleted == False).where(
-        BlogPost.deleted == False).where(
-        PostTag.type == TagTypeEnum.POST_CAT).where(
-        BlogPost.status == PostStatusEnum.PUBLISHED
-    ).group_by(PostTag.id).subquery()
-    stmt = update(PostTag).where(PostTag.id == subquery.c.id).values(count=subquery.c.category_count)
     async with get_session() as s:
         await s.execute(stmt)
 
