@@ -122,8 +122,6 @@ async def update_category_count(post: BlogPost, increment: int = 1):
 
 
 async def update_category_post_count(prev_category_id: int | None, post_category_id: int | None):
-    if prev_category_id == post_category_id:
-        return
     stmt = update(PostTag).where(
         PostTag.deleted == False).where(
         PostTag.type == TagTypeEnum.POST_CAT).where(

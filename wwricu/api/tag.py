@@ -20,7 +20,7 @@ async def get_tags_api(get_tag: TagRequestRO) -> list[TagVO]:
     return [TagVO.model_validate(tag) for tag in await tag_db.find_by_criteria(TagQueryDTO(type=get_tag.type, page_index=get_tag.page_index, page_size=get_tag.page_size))]
 
 
-@tag_api.post('/update', dependencies=[Depends(common_service.reset_sys_config)], response_model=TagVO)
+@tag_api.post('/update', response_model=TagVO)
 async def update_tag_api(tag_update: TagRO) -> TagVO:
     response = await tag_service.update_tag(tag_update)
     await query_cache.delete_all()
