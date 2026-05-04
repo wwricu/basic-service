@@ -46,3 +46,14 @@ jobs:
           provenance: mode=max
           build-args: VERSION=${{ needs.github.outputs.version }}
           tags: wwricu/basic-service:${{ needs.github.outputs.version }}, wwricu/basic-service:snapshot, wwricu/basic-service:latest
+  deploy:
+    runs-on: ubuntu-latest
+    needs: dockerhub
+    permissions:
+      contents: write
+    steps:
+      - uses: peter-evans/repository-dispatch@v4
+        with:
+          repository: wwricu/deploy
+          event-type: deploy-service-release
+          token: ${{ secrets.PAT }}
