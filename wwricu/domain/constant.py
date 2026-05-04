@@ -21,6 +21,9 @@ class CommonConstant(StrEnum):
     APP_NAME = 'wwr.icu'
     COMMON_ERROR = 'Internal Server Error'
     GLOBAL_TOKEN_BUCKET_ID = 'global'
+    IMG_TAG = 'img'
+    SRC_PROP = 'src'
+    HTML_PARSER = 'html.parser'
 
 
 class TimeConstant(IntEnum):

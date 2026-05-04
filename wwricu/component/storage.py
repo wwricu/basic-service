@@ -69,6 +69,13 @@ class AWSS3Storage:
                 break
             continuation_token = s3_resp.NextContinuationToken
 
+    def get_key(self, url: str) -> str | None:
+        bucket = f'/{self.bucket}/'
+        if not url or bucket not in url:
+            return None
+        url = url.strip()
+        return url[url.find(bucket) + len(bucket):]
+
     async def get(self, key: str) -> bytes:
         return await asyncio.to_thread(self.sync_get, key)
 

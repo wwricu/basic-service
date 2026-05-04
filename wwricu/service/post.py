@@ -1,6 +1,6 @@
-import asyncio
 import uuid
 
+from bs4 import BeautifulSoup
 from fastapi import HTTPException, UploadFile, status as http_status
 from loguru import logger as log
 
@@ -8,7 +8,7 @@ from wwricu.component.database import transaction
 from wwricu.component.storage import oss_public
 from wwricu.database import common_db, post_db, tag_db, res_db
 from wwricu.domain.common import FileUploadVO, PageVO
-from wwricu.domain.constant import HttpErrorDetail
+from wwricu.domain.constant import HttpErrorDetail, CommonConstant
 from wwricu.domain.entity import BlogPost, PostResource
 from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum
 from wwricu.domain.post import PostDetailVO, PostQueryDTO, PostRequestRO, PostResourceVO, PostUpdateRO
@@ -37,15 +37,6 @@ async def list_by_query(query: PostQueryDTO) -> PageVO[PostDetailVO]:
         count=await post_db.count(query),
         data=await get_preview(posts)
     )
-
-
-async def delete_cover(post: BlogPost):
-    """HARD DELETE the resource because we are using free object storage"""
-    if (resource := await res_db.find_post_cover(post.cover_id)) is None:
-        return
-    await res_db.delete_resource(resource.id)
-    log.warning(f'delete cover {resource.key}')
-    asyncio.create_task(oss_public.delete(resource.key))
 
 
 async def get_detail(blog_post: BlogPost | None) -> PostDetailVO:
@@ -93,8 +84,17 @@ async def get_preview(post_list: list[BlogPost]) -> list[PostDetailVO]:
 async def update(new_post: PostUpdateRO) -> PostDetailVO:
     if (post := await post_db.find_by_id(new_post.id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
-    if post.cover_id is not None and post.cover_id != new_post.cover_id:
-        await delete_cover(post)
+
+    bef_keys = await get_resource_keys(post.content)
+    aft_keys = await get_resource_keys(new_post.content)
+    if delete_keys := list(bef_keys - aft_keys):
+        await res_db.delete_resources(delete_keys)
+        log.warning(f'delete resource {delete_keys}')
+
+    if post.cover_id is not None and post.cover_id != new_post.cover_id and (res := await res_db.find_post_cover(post.cover_id)):
+        await res_db.delete_resources([res.key])
+        log.warning(f'delete cover {res.key}')
+
     tag_update = TagUpdateDTO(category_id=new_post.category_id, tag_id_list=new_post.tag_id_list, status=new_post.status)
     await update_post_category(post, tag_update)
     await update_post_tags(post, tag_update)
@@ -107,6 +107,7 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
         status=new_post.status,
         category_id=new_post.category_id
     )
+
     post = await post_db.find_by_id(new_post.id)
     return await get_detail(post)
 
@@ -149,3 +150,13 @@ async def upload_file(file: UploadFile, post_id: int, file_type: PostResourceTyp
     resource = PostResource(name=file.filename, key=key, type=file_type, post_id=post.id, url=url)
     await common_db.insert(resource)
     return FileUploadVO(id=resource.id, name=file.filename, key=key, location=url)
+
+
+async def get_resource_keys(content: str) -> set[str]:
+    soup = BeautifulSoup(content, CommonConstant.HTML_PARSER)
+    keys = set()
+    for img in soup.find_all(CommonConstant.IMG_TAG):
+        src = img.get(CommonConstant.SRC_PROP)
+        if isinstance(src, str) and (key := oss_public.get_key(src)):
+            keys.add(key)
+    return keys

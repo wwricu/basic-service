@@ -1,4 +1,4 @@
-from sqlalchemy import delete, select
+from sqlalchemy import select, update
 
 from wwricu.component.database import get_session
 from wwricu.domain.entity import BlogPost, PostResource
@@ -15,8 +15,8 @@ async def find_post_cover(resource_id: int) -> PostResource | None:
         return await s.scalar(stmt)
 
 
-async def delete_resource(resource_id: int):
-    stmt = delete(PostResource).where(PostResource.id == resource_id)
+async def delete_resources(keys: list[str]):
+    stmt = update(PostResource).where(PostResource.key.in_(keys)).values(deleted=True)
     async with get_session() as s:
         await s.execute(stmt)
 
