@@ -31,6 +31,7 @@ class CommonConstant(StrEnum):
 class TimeConstant(IntEnum):
     COOKIE_MAX_AGE = 7 * 24 * 60 * 60
     ONE_DAY_SECONDS = 60 * 60 * 24
+    ONE_HOUR_SECONDS = 60 * 60
     TOTP_EXPIRATION = 300
     CACHE_EXPIRATION = 600
 

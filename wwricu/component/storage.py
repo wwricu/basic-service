@@ -7,7 +7,7 @@ from loguru import logger as log
 from mypy_boto3_s3 import S3Client
 from mypy_boto3_s3.type_defs import DeleteTypeDef, ObjectIdentifierTypeDef
 
-from wwricu.config import app_config
+from wwricu.config import app_config, env
 from wwricu.domain.third import AWSConst, AWSS3ListResponse, AWSS3Object, AWSS3Response, AWSResponseBase
 
 
@@ -29,7 +29,7 @@ class AWSS3Storage:
     def sync_put(self, key: str, data: bytes) -> str:
         response = self.s3_client.put_object(Bucket=self.bucket, Key=key, Body=data)
         AWSResponseBase.model_validate(response).check()
-        return f'https://{AWSConst.S3}.{app_config.storage.region}.{AWSConst.AWS_DOMAIN}/{self.bucket}/{key}'
+        return f'https://{env.RESOURCE_HOSTNAME}/image/{key}'
 
     def sync_delete(self, key: str):
         response = self.s3_client.delete_object(Bucket=self.bucket, Key=key)
@@ -69,6 +69,13 @@ class AWSS3Storage:
                 break
             continuation_token = s3_resp.NextContinuationToken
 
+    def generate_presigned_url(self, key: str, expires: int) -> str:
+        return self.s3_client.generate_presigned_url(
+            AWSConst.GET_OBJECT,
+            Params=dict(Bucket=self.bucket, Key=key),
+            ExpiresIn=expires
+        )
+
     def get_key_from_url(self, url: str) -> str | None:
         bucket = f'/{self.bucket}/'
         if not url or bucket not in url:
@@ -86,6 +93,6 @@ class AWSS3Storage:
         await asyncio.to_thread(self.sync_delete, key)
 
 
-aws_s3_client = boto3.client(AWSConst.S3)
+aws_s3_client = boto3.client(AWSConst.S3, region_name=AWSConst.REGION)
 oss_public = AWSS3Storage(aws_s3_client, app_config.storage.bucket)
 oss_private = AWSS3Storage(aws_s3_client, app_config.storage.private_bucket)
