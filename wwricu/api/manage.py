@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse
 from loguru import logger as log
 
 from wwricu.component.cache import query_cache
-from wwricu.component.database import database_manager, transaction
+from wwricu.component.database import database_manager
 from wwricu.component.storage import oss_public
 from wwricu.config import app_config
 from wwricu.database import res_db
@@ -20,17 +20,20 @@ async def trash_get_all_api() -> list[TrashBinVO]:
     return await manage_service.list_trash()
 
 
-@transaction
 @manage_api.post('/trash/edit', response_model=None)
 async def trash_edit_api(trash_bin: TrashBinRO):
+    is_resource_type = trash_bin.type in (EntityTypeEnum.POST_IMAGE, EntityTypeEnum.POST_COVER)
+    if is_resource_type and trash_bin.delete is False:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=HttpErrorDetail.RECOVER_RESOURCE)
+    resource = await res_db.find_by_id(trash_bin.id, deleted=True) if trash_bin.delete and is_resource_type else None
+
     await manage_service.process_trash(trash_bin)
-    if (
-        trash_bin.delete is True and (res := await res_db.find_post_cover(trash_bin.id)) and
-        (trash_bin.type == EntityTypeEnum.POST_IMAGE or trash_bin.type == EntityTypeEnum.POST_COVER)
-    ):
-        await oss_public.delete(res.key)
-        log.warning(f'delete resource {res.key}')
-        await query_cache.delete_all()
+    await query_cache.delete_all()
+
+    if resource:
+        await oss_public.delete(resource.key)
+        log.warning(f'delete resource {resource.key}')
+    
 
 
 @manage_api.get('/database', response_model=None)

@@ -44,7 +44,7 @@ async def get_detail(blog_post: BlogPost | None) -> PostDetailVO:
         raise ValueError
     category = await tag_db.find_category(category_id=blog_post.category_id)
     tags = await get_post_tags(blog_post)
-    cover = await res_db.find_post_cover(blog_post.cover_id)
+    cover = await res_db.find_by_id(blog_post.cover_id, PostResourceTypeEnum.COVER_IMAGE)
     post_detail = PostDetailVO.model_validate(blog_post)
     post_detail.tag_list = list(map(TagVO.model_validate, tags))
 
@@ -91,7 +91,11 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
         await res_db.delete_resources(delete_keys)
         log.info(f'delete resource {delete_keys}')
 
-    if post.cover_id is not None and post.cover_id != new_post.cover_id and (res := await res_db.find_post_cover(post.cover_id)):
+    if (
+        post.cover_id is not None and
+        post.cover_id != new_post.cover_id and
+        (res := await res_db.find_by_id(post.cover_id, PostResourceTypeEnum.COVER_IMAGE))
+    ):
         await res_db.delete_resources([res.key])
         log.info(f'delete cover {res.key}')
 

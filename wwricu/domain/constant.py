@@ -2,6 +2,7 @@ from enum import IntEnum, StrEnum
 
 
 class HttpErrorDetail(StrEnum):
+    RECOVER_RESOURCE = 'Orphan resource cannot be recovered'
     DELETE_PUBLISH = 'Published post cannot be deleted'
     POST_NOT_FOUND = 'Post Not Found'
     WRONG_PASSWORD = 'WRONG PASSWORD'

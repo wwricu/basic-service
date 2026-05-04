@@ -81,7 +81,7 @@ def init_log():
 
     log_path = env.LOG_PATH
     os.makedirs(log_path, exist_ok=True)
-    log.add(f'{log_path}/server.log', level=logging.NOTSET, rotation='10 MB', retention=10, backtrace=False)
+    log.add(f'{log_path}/server.log', level=logging.DEBUG, rotation='10 MB', retention=10, backtrace=False)
     log.add(
         f'{log_path}/access.log',
         level=logging.NOTSET,

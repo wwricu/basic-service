@@ -84,7 +84,6 @@ async def process_trash(trash_bin: TrashBinRO):
             await res_db.delete_post_resources(trash_bin.id)
         else:
             await update_deleted(trash_bin.id, deleted=False)
-
     await common_db.entity_trash(entity, trash_bin.id, hard_delete=trash_bin.delete)
 
 
