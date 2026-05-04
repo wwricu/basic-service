@@ -25,7 +25,7 @@ async def trash_edit_api(trash_bin: TrashBinRO):
     is_resource_type = trash_bin.type in (EntityTypeEnum.POST_IMAGE, EntityTypeEnum.POST_COVER)
     if is_resource_type and trash_bin.delete is False:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=HttpErrorDetail.RECOVER_RESOURCE)
-    resource = await res_db.find_by_id(trash_bin.id, deleted=True) if trash_bin.delete and is_resource_type else None
+    resource = await res_db.find_by_id(trash_bin.id, deleted=True) if is_resource_type else None
 
     await manage_service.process_trash(trash_bin)
     await query_cache.delete_all()
@@ -33,7 +33,6 @@ async def trash_edit_api(trash_bin: TrashBinRO):
     if resource:
         await oss_public.delete(resource.key)
         log.warning(f'delete resource {resource.key}')
-    
 
 
 @manage_api.get('/database', response_model=None)

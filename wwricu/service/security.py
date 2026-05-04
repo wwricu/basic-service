@@ -91,7 +91,7 @@ async def require_admin(request: Request, response: Response):
 
 
 def hmac_sign(plain: str) -> str:
-    return hmac.new(secret_key, plain.encode(app_config.encoding), hashlib.sha256).hexdigest()
+    return hmac.new(base64.b64decode(app_config.security.secret_key), plain.encode(app_config.encoding), hashlib.sha256).hexdigest()
 
 
 async def login(session_id: str, response: Response):
@@ -125,6 +125,3 @@ async def verify_credentials(request: LoginRO) -> bool:
     if not password:
         password = app_config.security.password
     return await asyncio.to_thread(bcrypt.checkpw, request.password.encode(), base64.b64decode(password)) and request.username == username
-
-
-secret_key = base64.b64decode(app_config.security.secret_key)

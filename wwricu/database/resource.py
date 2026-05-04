@@ -6,11 +6,7 @@ from wwricu.domain.enum import PostResourceTypeEnum
 
 
 async def find_by_id(resource_id: int, resource_type: PostResourceTypeEnum | None = None, deleted: bool = False) -> PostResource | None:
-    stmt = select(PostResource).where(
-        PostResource.deleted == deleted).where(
-        PostResource.type == PostResourceTypeEnum.COVER_IMAGE).where(
-        PostResource.id == resource_id
-    )
+    stmt = select(PostResource).where(PostResource.deleted == deleted).where(PostResource.id == resource_id)
     if resource_type is not None:
         stmt = stmt.where(PostResource.type == resource_type)
     async with get_session() as s:

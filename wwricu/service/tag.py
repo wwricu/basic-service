@@ -60,7 +60,7 @@ async def get_post_tags(post: BlogPost) -> list[PostTag]:
 
 
 async def update_post_category(post: BlogPost, count_update: TagUpdateDTO):
-    if count_update.category_id != count_update.category_id:
+    if post.category_id != count_update.category_id:
         category = await tag_db.find_category(category_id=count_update.category_id)
         await post_db.update_selective(post.id, category_id=category.id if category else None)
 
