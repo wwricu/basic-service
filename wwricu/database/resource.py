@@ -44,3 +44,9 @@ async def find_deleted_resource() -> list[PostResource]:
     stmt = select(PostResource).where(PostResource.deleted == True)
     async with get_session() as s:
         return list((await s.scalars(stmt)).all())
+
+
+async def find_post_covers(post_id: int) -> list[PostResource]:
+    stmt = select(PostResource).where(PostResource.post_id == post_id).where(PostResource.deleted == False)
+    async with get_session() as s:
+        return list((await s.scalars(stmt)).all())

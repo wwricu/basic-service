@@ -85,19 +85,13 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
     if (post := await post_db.find_by_id(new_post.id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
 
-    bef_keys = await get_resource_keys(post.content)
+    covers = await res_db.find_post_covers(post.id)
+    bef_keys = await get_resource_keys(post.content) | {cover.key for cover in covers if cover.id != new_post.cover_id}
     aft_keys = await get_resource_keys(new_post.content)
+
     if delete_keys := list(bef_keys - aft_keys):
         await res_db.delete_resources(delete_keys)
         log.info(f'delete resource {delete_keys}')
-
-    if (
-        post.cover_id is not None and
-        post.cover_id != new_post.cover_id and
-        (res := await res_db.find_by_id(post.cover_id, PostResourceTypeEnum.COVER_IMAGE))
-    ):
-        await res_db.delete_resources([res.key])
-        log.info(f'delete cover {res.key}')
 
     tag_update = TagUpdateDTO(category_id=new_post.category_id, tag_id_list=new_post.tag_id_list, status=new_post.status)
     await update_post_category(post, tag_update)
