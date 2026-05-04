@@ -21,6 +21,12 @@ async def delete_resources(keys: list[str]):
         await s.execute(stmt)
 
 
+async def delete_post_resources(post_id: int):
+    stmt = update(PostResource).where(PostResource.post_id == post_id).values(deleted=True)
+    async with get_session() as s:
+        await s.execute(stmt)
+
+
 async def find_posts_cover(post_list: list[BlogPost]) -> dict[int, PostResource]:
     if not post_list:
         return {}
@@ -33,4 +39,10 @@ async def find_posts_cover(post_list: list[BlogPost]) -> dict[int, PostResource]
     )
     async with get_session() as s:
         result = await s.execute(stmt)
-        return {post_id: cover for cover, post_id in result.all()}
+    return {post_id: cover for cover, post_id in result.all()}
+
+
+async def find_deleted_resource() -> list[PostResource]:
+    stmt = select(PostResource).where(PostResource.deleted == True)
+    async with get_session() as s:
+        return list((await s.scalars(stmt)).all())

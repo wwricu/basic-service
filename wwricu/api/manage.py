@@ -1,13 +1,16 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from fastapi.responses import FileResponse
+from loguru import logger as log
 
 from wwricu.component.cache import query_cache
 from wwricu.component.database import database_manager, transaction
+from wwricu.component.storage import oss_public
 from wwricu.config import app_config
+from wwricu.database import res_db
 from wwricu.domain.common import ConfigRO, TrashBinRO, TrashBinVO, UserRO
 from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.enum import ConfigKeyEnum, DatabaseActionEnum, EntityTypeEnum
-from wwricu.service import manage_service, security_service, post_service
+from wwricu.service import manage_service, security_service
 
 manage_api = APIRouter(prefix='/manage', tags=['Manage API'], dependencies=[Depends(security_service.require_admin)])
 
@@ -21,9 +24,13 @@ async def trash_get_all_api() -> list[TrashBinVO]:
 @manage_api.post('/trash/edit', response_model=None)
 async def trash_edit_api(trash_bin: TrashBinRO):
     await manage_service.process_trash(trash_bin)
-    if trash_bin.type == EntityTypeEnum.BLOG_POST and trash_bin.delete is False:
-        await post_service.update_deleted(trash_bin.id, deleted=False)
-    await query_cache.delete_all()
+    if (
+        trash_bin.delete is True and (res := await res_db.find_post_cover(trash_bin.id)) and
+        (trash_bin.type == EntityTypeEnum.POST_IMAGE or trash_bin.type == EntityTypeEnum.POST_COVER)
+    ):
+        await oss_public.delete(res.key)
+        log.warning(f'delete resource {res.key}')
+        await query_cache.delete_all()
 
 
 @manage_api.get('/database', response_model=None)

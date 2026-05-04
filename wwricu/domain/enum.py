@@ -55,6 +55,8 @@ class CacheKeyEnum(StrEnum):
 
 
 class EntityTypeEnum(StrEnum):
-    BLOG_POST = 'blog_post'
-    POST_TAG = 'post_tag'
-    POST_CAT = 'post_category'
+    BLOG_POST = 'Post'
+    POST_TAG = 'Tag'
+    POST_CAT = 'Category'
+    POST_IMAGE = 'Image'
+    POST_COVER = 'Cover'

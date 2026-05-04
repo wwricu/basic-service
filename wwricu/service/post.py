@@ -89,11 +89,11 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
     aft_keys = await get_resource_keys(new_post.content)
     if delete_keys := list(bef_keys - aft_keys):
         await res_db.delete_resources(delete_keys)
-        log.warning(f'delete resource {delete_keys}')
+        log.info(f'delete resource {delete_keys}')
 
     if post.cover_id is not None and post.cover_id != new_post.cover_id and (res := await res_db.find_post_cover(post.cover_id)):
         await res_db.delete_resources([res.key])
-        log.warning(f'delete cover {res.key}')
+        log.info(f'delete cover {res.key}')
 
     tag_update = TagUpdateDTO(category_id=new_post.category_id, tag_id_list=new_post.tag_id_list, status=new_post.status)
     await update_post_category(post, tag_update)
@@ -130,6 +130,12 @@ async def update_status(post_id: int, status: PostStatusEnum):
 
 @transaction
 async def update_deleted(post_id: int, deleted: bool = True):
+    if (post := await post_db.find_by_id(post_id)) is None:
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
+    if post.deleted == deleted:
+        return
+    if deleted is True and post.status == PostStatusEnum.PUBLISHED:
+        raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.DELETE_PUBLISH)
     if not deleted:
         await post_db.update_selective(post_id, deleted=False)
     if (post := await post_db.find_by_id(post_id)) is None:
@@ -157,6 +163,6 @@ async def get_resource_keys(content: str) -> set[str]:
     keys = set()
     for img in soup.find_all(CommonConstant.IMG_TAG):
         src = img.get(CommonConstant.SRC_PROP)
-        if isinstance(src, str) and (key := oss_public.get_key(src)):
+        if isinstance(src, str) and (key := oss_public.get_key_from_url(src)):
             keys.add(key)
     return keys

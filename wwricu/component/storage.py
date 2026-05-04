@@ -69,7 +69,7 @@ class AWSS3Storage:
                 break
             continuation_token = s3_resp.NextContinuationToken
 
-    def get_key(self, url: str) -> str | None:
+    def get_key_from_url(self, url: str) -> str | None:
         bucket = f'/{self.bucket}/'
         if not url or bucket not in url:
             return None
@@ -84,15 +84,6 @@ class AWSS3Storage:
 
     async def delete(self, key: str):
         await asyncio.to_thread(self.sync_delete, key)
-
-    async def batch_delete(self, keys: list[str]):
-        await asyncio.to_thread(self.sync_batch_delete, keys)
-
-    async def list_all(self) -> list[AWSS3Object]:
-        return await asyncio.to_thread(self.sync_list_all)
-
-    async def list_page(self, page_size: int = 100) -> list[AWSS3Object]:
-        return list(await asyncio.to_thread(self.sync_list_page, page_size))
 
 
 aws_s3_client = boto3.client(AWSConst.S3)

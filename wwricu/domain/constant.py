@@ -2,6 +2,7 @@ from enum import IntEnum, StrEnum
 
 
 class HttpErrorDetail(StrEnum):
+    DELETE_PUBLISH = 'Published post cannot be deleted'
     POST_NOT_FOUND = 'Post Not Found'
     WRONG_PASSWORD = 'WRONG PASSWORD'
     WRONG_TOTP = 'WRONG TOTP'
