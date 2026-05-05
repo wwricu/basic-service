@@ -8,7 +8,7 @@ from wwricu.component.database import transaction
 from wwricu.component.storage import oss_public
 from wwricu.config import app_config
 from wwricu.database import common_db, post_db, tag_db, res_db
-from wwricu.domain.common import FileUploadVO, PageVO
+from wwricu.domain.common import FileUploadVO, PageVO, TrashBinRO
 from wwricu.domain.constant import HttpErrorDetail, CommonConstant
 from wwricu.domain.entity import BlogPost, PostResource
 from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum
@@ -138,7 +138,7 @@ async def update_deleted(post_id: int, deleted: bool = True):
     if post.deleted == deleted:
         return
     if deleted is True and post.status == PostStatusEnum.PUBLISHED:
-        raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.DELETE_PUBLISH)
+        raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE)
     if not deleted:
         await post_db.update_selective(post_id, deleted=False)
     if (post := await post_db.find_by_id(post_id)) is None:
@@ -163,3 +163,25 @@ async def upload_file(file: UploadFile, post_id: int, file_type: PostResourceTyp
     await common_db.insert(resource)
     log.info(f'upload file {file.filename} to {post_id=} {file.size=} {url=}')
     return FileUploadVO(id=resource.id, name=file.filename, key=key, location=url)
+
+
+@transaction
+async def process_trash(trash_bin: TrashBinRO):
+    if trash_bin.delete:
+        resources = await res_db.find_by_post_id(trash_bin.id)
+        await res_db.delete_by_keys([res.key for res in resources])
+        await common_db.hard_delete(BlogPost, trash_bin.id)
+    else:
+        await update_deleted(trash_bin.id, deleted=False)
+
+
+async def process_resource_trash(trash_bin: TrashBinRO):
+    if trash_bin.delete is False:
+        raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN)
+
+    resource = await res_db.find_by_id(trash_bin.id, deleted=True)
+    await common_db.hard_delete(PostResource, trash_bin.id)
+
+    if resource:
+        await oss_public.delete(resource.key)
+        log.warning(f'delete resource {resource.key}')

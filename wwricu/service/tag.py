@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status as http_status
 
 from wwricu.database import common_db, post_db, tag_db
+from wwricu.domain.common import TrashBinRO
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
@@ -78,3 +79,10 @@ async def get_posts_category(post_list: list[BlogPost]) -> dict[int, PostTag]:
     categories = await tag_db.find_by_criteria(TagQueryDTO(tag_ids=category_ids, type=TagTypeEnum.POST_CAT))
     category_dict = {cat.id: cat for cat in categories}
     return {post.id: tag for post in post_list if (tag := category_dict.get(post.category_id))}
+
+
+async def process_trash(trash_bin: TrashBinRO):
+    if trash_bin.delete:
+        await common_db.hard_delete(PostTag, trash_bin.id)
+    else:
+        await common_db.recover(PostTag, trash_bin.id)

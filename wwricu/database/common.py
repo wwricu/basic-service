@@ -23,8 +23,13 @@ async def insert_all(entities: Sequence[Base]) -> list[Base]:
     return list(entities)
 
 
-async def entity_trash(entity: type[Base], entity_id: int, hard_delete: bool | None = False):
+async def hard_delete(table: type[Base], primary_id: int):
+    stmt = delete(table).where(table.id == primary_id).where(table.deleted == True)
     async with get_session() as s:
-        stmt = delete(entity) if hard_delete else update(entity).values(deleted=False)
-        stmt = stmt.where(entity.id == entity_id).where(entity.deleted == True)
+        await s.execute(stmt)
+
+
+async def recover(table: type[Base], primary_id: int):
+    stmt = update(table).where(table.id == primary_id).where(table.deleted == True).values(deleted=False)
+    async with get_session() as s:
         await s.execute(stmt)

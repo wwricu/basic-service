@@ -6,15 +6,12 @@ import pyotp
 from fastapi import HTTPException, status as http_status
 
 from wwricu.component.cache import sys_cache
-from wwricu.component.database import transaction
-from wwricu.database import common_db, conf_db, post_db, tag_db, res_db
-from wwricu.domain.common import TrashBinRO, TrashBinVO, UserRO
+from wwricu.database import conf_db, post_db, tag_db, res_db
+from wwricu.domain.common import TrashBinVO, UserRO
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, EntityTypeEnum, TagTypeEnum, PostResourceTypeEnum
-from wwricu.domain.entity import BlogPost, PostTag, PostResource
 from wwricu.domain.post import PostQueryDTO
 from wwricu.domain.tag import TagQueryDTO
-from wwricu.service.post import update_deleted
 
 
 async def set_config(key: ConfigKeyEnum, value: str):
@@ -67,27 +64,6 @@ async def list_trash() -> list[TrashBinVO]:
     return result
 
 
-@transaction
-async def process_trash(trash_bin: TrashBinRO):
-    entity = {
-        EntityTypeEnum.BLOG_POST: BlogPost,
-        EntityTypeEnum.POST_TAG: PostTag,
-        EntityTypeEnum.POST_CAT: PostTag,
-        EntityTypeEnum.POST_COVER: PostResource,
-        EntityTypeEnum.POST_IMAGE: PostResource
-    }.get(trash_bin.type)
-    if entity is None:
-        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.UNKNOWN_ENTITY_TYPE)
-
-    if trash_bin.type == EntityTypeEnum.BLOG_POST:
-        if trash_bin.delete:
-            resources = await res_db.find_by_post_id(trash_bin.id)
-            await res_db.delete_by_keys([res.key for res in resources])
-        else:
-            await update_deleted(trash_bin.id, deleted=False)
-    await common_db.entity_trash(entity, trash_bin.id, hard_delete=trash_bin.delete)
-
-
 async def update_admin_user(user: UserRO, session_id: str | None):
     if user.username is not None:
         if len(user.username) < 4 or not bool(re.match('^[a-zA-Z][a-zA-Z0-9_-]*$', user.username)):
@@ -118,7 +94,7 @@ async def enforce_totp(enforce: bool) -> str | None:
 
 async def confirm_totp(totp: str):
     if (secret := await get_config(ConfigKeyEnum.TOTP_SECRET)) is None:
-        raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.NO_TOTP_SECRET)
+        raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE)
     totp_client = pyotp.TOTP(secret)
     if not totp_client.verify(totp, valid_window=1):
         raise HTTPException(status_code=http_status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)

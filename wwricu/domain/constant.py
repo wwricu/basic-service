@@ -2,16 +2,10 @@ from enum import IntEnum, StrEnum
 
 
 class HttpErrorDetail(StrEnum):
-    RECOVER_RESOURCE = 'Orphan resource cannot be recovered'
-    DELETE_PUBLISH = 'Published post cannot be deleted'
     POST_NOT_FOUND = 'Post Not Found'
-    WRONG_PASSWORD = 'WRONG PASSWORD'
-    WRONG_TOTP = 'WRONG TOTP'
+    WRONG_PASSWORD = 'Wrong Username or Password'
+    WRONG_TOTP = 'Wrong TOTP'
     NEED_TOTP = 'Please input TOTP'
-    NOT_AUTHORIZED = 'Not authorized'
-    UNKNOWN_ENTITY_TYPE = 'Unknown entity type'
-    CONFIG_NOT_ALLOWED = 'Cannot get this config'
-    NO_TOTP_SECRET = 'No totp secret'
     INVALID_VALUE = 'Invalid value'
     TOO_MANY_REQUESTS = 'Too many requests'
 
