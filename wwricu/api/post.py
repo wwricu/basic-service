@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, Form, UploadFile
+import secrets
 
-import wwricu.database as db
+from fastapi import APIRouter, Depends, Form, UploadFile, HTTPException, status as http_status
+
 from wwricu.component.cache import query_cache, post_cache
-from wwricu.database import post_db
+from wwricu.database import common_db, post_db
 from wwricu.domain.common import FileUploadVO, PageVO
 from wwricu.domain.entity import BlogPost
 from wwricu.domain.enum import PostStatusEnum, CacheKeyEnum, PostResourceTypeEnum
@@ -12,10 +13,12 @@ from wwricu.service import common_service, post_service, security_service
 post_api = APIRouter(prefix='/post', tags=['Post Management'], dependencies=[Depends(security_service.require_admin)])
 
 
-@post_api.get('/create', dependencies=[Depends(common_service.reset_sys_config)], response_model=PostDetailVO)
+@post_api.get('/create', response_model=PostDetailVO)
 async def create_post_api() -> PostDetailVO:
-    blog_post = BlogPost(status=PostStatusEnum.DRAFT)
-    await db.insert(blog_post)
+    while await post_db.find_by_id(post_id := 1_000_000_000 + secrets.randbelow(9_000_000_000)):
+        pass
+    blog_post = BlogPost(id=post_id, status=PostStatusEnum.DRAFT)
+    await common_db.insert(blog_post)
     return PostDetailVO.model_validate(blog_post)
 
 
@@ -40,19 +43,20 @@ async def update_post_api(post_update: PostUpdateRO) -> PostDetailVO:
     return detail
 
 
-@post_api.get('/status/{post_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=PostDetailVO)
-async def update_post_status_api(post_id: int, status: PostStatusEnum) -> PostDetailVO:
-    response = await post_service.update_status(post_id, status)
+@post_api.get('/status/{post_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=None)
+async def update_post_status_api(post_id: int, status: PostStatusEnum):
+    await post_service.update_status(post_id, status=status)
     await post_cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
     await query_cache.delete_all()
-    return response
 
 
 @post_api.get('/delete/{post_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=None)
-async def delete_post_api(post_id: int):
-    await post_service.delete(post_id)
-    await post_cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
-    await query_cache.delete_all()
+async def delete_post_draft_api(post_id: int):
+    if (post := await post_db.find_by_id(post_id)) is None:
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND)
+    if post.status == PostStatusEnum.PUBLISHED:
+        raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST)
+    await post_db.update_selective(post_id, deleted=True)
 
 
 @post_api.post('/upload', response_model=FileUploadVO)

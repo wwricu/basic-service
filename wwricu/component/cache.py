@@ -131,4 +131,5 @@ class Cache(Protocol):
 sys_cache: Cache = LocalCache(name='sys', persist=True)
 query_cache: Cache = LocalCache(name='query')
 post_cache: Cache = LocalCache(name='post')
+image_cache: Cache = LocalCache(name='image', max_size=10000)
 bucket_cache = LocalCache(name='bucket', max_size=100000)

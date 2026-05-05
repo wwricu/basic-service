@@ -1,11 +1,10 @@
 from collections import defaultdict
-from datetime import datetime
 
 from sqlalchemy import select, update, func, case, delete, desc, Select
 
 from wwricu.component.database import get_session
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
-from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
+from wwricu.domain.enum import RelationTypeEnum, TagTypeEnum
 from wwricu.domain.tag import TagQueryDTO
 
 
@@ -19,8 +18,6 @@ async def build_criteria(query: TagQueryDTO) -> Select:
         stmt = stmt.where(PostTag.id.in_(query.tag_ids))
     if query.name is not None:
         stmt = stmt.where(PostTag.name == query.name)
-    if query.deadline is not None:
-        stmt = stmt.where(PostTag.update_time > query.deadline)
     return stmt
 
 
@@ -39,23 +36,6 @@ async def count(query: TagQueryDTO) -> int:
     count_stmt = select(func.count()).select_from(stmt.subquery())
     async with get_session() as s:
         return await s.scalar(count_stmt) or 0
-
-
-async def reset_tag_count():
-    subquery = select(PostTag.id, func.count(BlogPost.id).label('tag_count')).join(
-        EntityRelation, PostTag.id == EntityRelation.dst_id).join(
-        BlogPost, EntityRelation.src_id == BlogPost.id).where(
-        PostTag.deleted == False).where(
-        EntityRelation.deleted == False).where(
-        BlogPost.deleted == False).where(
-        PostTag.type == TagTypeEnum.POST_TAG).where(
-        EntityRelation.type == RelationTypeEnum.POST_TAG).where(
-        BlogPost.status == PostStatusEnum.PUBLISHED).group_by(
-        PostTag.id
-    ).subquery()
-    stmt = update(PostTag).where(PostTag.id == subquery.c.id).values(count=subquery.c.tag_count)
-    async with get_session() as s:
-        await s.execute(stmt)
 
 
 async def update_tag_post_count(prev_tag_ids: set[int], post_tag_ids: set[int]):
@@ -98,22 +78,6 @@ async def find_tags_by_posts(post_list: list[BlogPost]) -> dict[int, list[PostTa
     return result
 
 
-async def delete_tag_before(deadline: datetime):
-    deleted_tags = select(PostTag.id).where(
-        PostTag.deleted == True).where(
-        PostTag.type == TagTypeEnum.POST_TAG).where(
-        PostTag.update_time < deadline
-    )
-    tag_stmt = delete(EntityRelation).where(
-        EntityRelation.type == RelationTypeEnum.POST_TAG).where(
-        EntityRelation.dst_id.in_(deleted_tags)
-    )
-    stmt = delete(PostTag).where(PostTag.deleted == True).where(PostTag.update_time < deadline)
-    async with get_session() as s:
-        await s.execute(tag_stmt)
-        await s.execute(stmt)
-
-
 async def find_category(category_id: int | None = None, name: str | None = None) -> PostTag | None:
     if category_id is None and name is None:
         return None
@@ -127,33 +91,7 @@ async def find_category(category_id: int | None = None, name: str | None = None)
     return tags[0] if tags else None
 
 
-async def update_category_count(post: BlogPost, increment: int = 1):
-    stmt = update(PostTag).where(
-        PostTag.id == post.category_id).where(
-        PostTag.deleted == False).where(
-        PostTag.type == TagTypeEnum.POST_CAT).values(
-        count=PostTag.count + increment
-    )
-    async with get_session() as s:
-        await s.execute(stmt)
-
-
-async def reset_category_count():
-    subquery = select(PostTag.id, func.count(BlogPost.id).label('category_count')).join(
-        BlogPost, PostTag.id == BlogPost.category_id).where(
-        PostTag.deleted == False).where(
-        BlogPost.deleted == False).where(
-        PostTag.type == TagTypeEnum.POST_CAT).where(
-        BlogPost.status == PostStatusEnum.PUBLISHED
-    ).group_by(PostTag.id).subquery()
-    stmt = update(PostTag).where(PostTag.id == subquery.c.id).values(count=subquery.c.category_count)
-    async with get_session() as s:
-        await s.execute(stmt)
-
-
 async def update_category_post_count(prev_category_id: int | None, post_category_id: int | None):
-    if prev_category_id == post_category_id:
-        return
     stmt = update(PostTag).where(
         PostTag.deleted == False).where(
         PostTag.type == TagTypeEnum.POST_CAT).where(
@@ -193,3 +131,11 @@ async def find_tag_ids_by_post_id(post_id: int) -> list[int]:
     )
     async with get_session() as s:
         return list((await s.scalars(stmt)).all())
+
+
+async def delete_unlink_relation():
+    post_query = ~select(BlogPost.id).where(BlogPost.id == EntityRelation.src_id).exists()
+    tag_query = ~select(PostTag.id).where(PostTag.id == EntityRelation.dst_id).exists()
+    stmt = delete(EntityRelation).where(post_query | tag_query)
+    async with get_session() as s:
+        await s.execute(stmt)

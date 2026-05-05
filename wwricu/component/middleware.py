@@ -33,14 +33,11 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
             request.headers.get(HttpHeader.X_REAL_IP) or
             request.headers.get(HttpHeader.X_FORWARD_FOR, '').split(',')[0].strip() or
             (request.client.host if request.client else '')
-        ))
+        ).split(':')[0])
         response = await call_next(request)
         log.trace(f'{real_ip.get()} | {request.method} {request.url.path} {response.status_code} {int((time.time() - b) * 1000)} ms')
         return response
 
 
 real_ip:ContextVar[str] = ContextVar('real_ip', default='')
-middlewares = [
-    Middleware(PerformanceMiddleware),
-    Middleware(ExceptionMiddleware)
-]
+middlewares = [Middleware(PerformanceMiddleware), Middleware(ExceptionMiddleware)]

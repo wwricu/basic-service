@@ -1,10 +1,9 @@
-from datetime import datetime
 from typing import Annotated
 
-from pydantic import StringConstraints
+from pydantic import StringConstraints, Field
 
 from wwricu.domain.common import BaseModel
-from wwricu.domain.enum import TagTypeEnum
+from wwricu.domain.enum import TagTypeEnum, PostStatusEnum
 
 
 class TagRO(BaseModel):
@@ -24,7 +23,6 @@ class TagQueryDTO(BaseModel):
     name: str | None = None
     type: TagTypeEnum | None = None
     deleted: bool | None = False
-    deadline: datetime | None = None
     page_index: int | None = None
     page_size: int | None = None
 
@@ -34,3 +32,9 @@ class TagVO(BaseModel):
     name: str
     type: TagTypeEnum
     count: int | None = None
+
+
+class TagUpdateDTO(BaseModel):
+    tag_id_list: list[int] = Field(default_factory=list)
+    category_id: int | None = None
+    status: PostStatusEnum

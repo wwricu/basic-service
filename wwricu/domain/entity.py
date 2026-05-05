@@ -53,7 +53,7 @@ class PostResource(Base):
     __tablename__ = 'wwr_post_resource'
     post_id: Mapped[int] = mapped_column(Integer, index=True)
     name: Mapped[str] = mapped_column(String, nullable=True)
-    key: Mapped[str] = mapped_column(String)
+    key: Mapped[str] = mapped_column(String, unique=True)
     type: Mapped[str] = mapped_column(String, nullable=True, index=True)
     url: Mapped[str] = mapped_column(TEXT, nullable=True)
 

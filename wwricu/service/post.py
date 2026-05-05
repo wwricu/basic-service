@@ -1,19 +1,20 @@
-import asyncio
 import uuid
 
+from bs4 import BeautifulSoup
 from fastapi import HTTPException, UploadFile, status as http_status
+from loguru import logger as log
 
-import wwricu.database as db
 from wwricu.component.database import transaction
 from wwricu.component.storage import oss_public
-from wwricu.database import post_db, tag_db, res_db
-from wwricu.domain.common import FileUploadVO, PageVO
-from wwricu.domain.constant import HttpErrorDetail
+from wwricu.config import app_config
+from wwricu.database import common_db, post_db, tag_db, res_db
+from wwricu.domain.common import FileUploadVO, PageVO, TrashBinRO
+from wwricu.domain.constant import HttpErrorDetail, CommonConstant
 from wwricu.domain.entity import BlogPost, PostResource
 from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum
 from wwricu.domain.post import PostDetailVO, PostQueryDTO, PostRequestRO, PostResourceVO, PostUpdateRO
-from wwricu.domain.tag import TagVO
-from wwricu.service.tag import get_post_tags, update_tag_count, update_post_tags, update_category, get_posts_category
+from wwricu.domain.tag import TagVO, TagUpdateDTO
+from wwricu.service.tag import get_post_tags, update_post_tags, update_post_category, get_posts_category
 
 
 async def build_query(post: PostRequestRO, *, public: bool = False) -> PostQueryDTO:
@@ -39,20 +40,12 @@ async def list_by_query(query: PostQueryDTO) -> PageVO[PostDetailVO]:
     )
 
 
-async def delete_cover(post: BlogPost):
-    """HARD DELETE the resource because we are using free object storage"""
-    if (resource := await res_db.find_post_cover(post.cover_id)) is None:
-        return
-    await res_db.delete_resource(resource.id)
-    asyncio.create_task(oss_public.delete(resource.key))
-
-
 async def get_detail(blog_post: BlogPost | None) -> PostDetailVO:
     if blog_post is None:
         raise ValueError
     category = await tag_db.find_category(category_id=blog_post.category_id)
     tags = await get_post_tags(blog_post)
-    cover = await res_db.find_post_cover(blog_post.cover_id)
+    cover = await res_db.find_by_id(blog_post.cover_id, PostResourceTypeEnum.COVER_IMAGE)
     post_detail = PostDetailVO.model_validate(blog_post)
     post_detail.tag_list = list(map(TagVO.model_validate, tags))
 
@@ -89,49 +82,86 @@ async def get_preview(post_list: list[BlogPost]) -> list[PostDetailVO]:
 
 
 @transaction
-async def update(post_update: PostUpdateRO) -> PostDetailVO:
-    if (blog_post := await post_db.find_by_id(post_update.id)) is None:
+async def update(new_post: PostUpdateRO) -> PostDetailVO:
+    if (post := await post_db.find_by_id(new_post.id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
-    if blog_post.cover_id is not None and blog_post.cover_id != post_update.cover_id:
-        await delete_cover(blog_post)
-    await update_category(blog_post, post_update)
-    await update_post_tags(blog_post, post_update)
+
+    resources = await res_db.find_by_post_id(post.id)
+    bef_keys = {res.key for res in resources if res.id != new_post.cover_id}
+    aft_keys = set()
+    for img in BeautifulSoup(new_post.content, CommonConstant.HTML_PARSER).find_all(CommonConstant.IMG_TAG):
+        src = img.get(CommonConstant.SRC_PROP)
+        if isinstance(src, str) and (key := oss_public.get_key_from_url(src)):
+            aft_keys.add(key)
+
+    if delete_keys := list(bef_keys - aft_keys):
+        await res_db.delete_by_keys(delete_keys)
+        log.info(f'delete resource {delete_keys}')
+
+    tag_update = TagUpdateDTO(category_id=new_post.category_id, tag_id_list=new_post.tag_id_list, status=new_post.status)
+    await update_post_category(post, tag_update)
+    await update_post_tags(post, tag_update)
     await post_db.update_selective(
-        post_update.id,
-        title=post_update.title,
-        content=post_update.content,
-        preview=post_update.preview,
-        cover_id=post_update.cover_id,
-        status=post_update.status,
-        category_id=post_update.category_id
+        new_post.id,
+        title=new_post.title,
+        content=new_post.content,
+        preview=new_post.preview,
+        cover_id=new_post.cover_id,
+        status=new_post.status,
+        category_id=new_post.category_id
     )
-    blog_post = await post_db.find_by_id(post_update.id)
-    return await get_detail(blog_post)
 
-
-async def update_status(post_id: int, new_status: PostStatusEnum) -> PostDetailVO:
-    if (blog_post := await post_db.find_by_id(post_id)) is None:
-        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
-    await post_db.update_selective(blog_post.id, status=new_status)
-    blog_post = await post_db.find_by_id(post_id)
-    return await get_detail(blog_post)
+    post = await post_db.find_by_id(new_post.id)
+    return await get_detail(post)
 
 
 @transaction
-async def delete(post_id: int):
-    if (post := await post_db.find_by_id(post_id)) is None:
-        return
-    if post.status == PostStatusEnum.PUBLISHED:
-        await tag_db.update_category_count(post, -1)
-        await update_tag_count(post, -1)
-    await post_db.update_selective(post.id, deleted=True)
+async def update_status(post_id: int, status: PostStatusEnum):
+    if (blog_post := await post_db.find_by_id(post_id)) is None:
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
+
+    tag_update = TagUpdateDTO(
+        category_id=blog_post.category_id,
+        tag_id_list=await tag_db.find_tag_ids_by_post_id(blog_post.id),
+        status=status
+    )
+
+    await update_post_category(blog_post, tag_update)
+    await update_post_tags(blog_post, tag_update)
+    await post_db.update_selective(blog_post.id, status=tag_update.status)
 
 
 async def upload_file(file: UploadFile, post_id: int, file_type: PostResourceTypeEnum) -> FileUploadVO:
     if (post := await post_db.find_by_id(post_id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
+    if file.size is None or file.size > app_config.max_upload_size:
+        raise HTTPException(http_status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
+
     key = f'post/{post_id}/{file_type}_{uuid.uuid4().hex}'
     url = await oss_public.put(key, await file.read())
     resource = PostResource(name=file.filename, key=key, type=file_type, post_id=post.id, url=url)
-    await db.insert(resource)
+    await common_db.insert(resource)
+    log.info(f'upload file {file.filename} to {post_id=} {file.size=} {url=}')
     return FileUploadVO(id=resource.id, name=file.filename, key=key, location=url)
+
+
+@transaction
+async def process_trash(trash_bin: TrashBinRO):
+    if trash_bin.delete:
+        resources = await res_db.find_by_post_id(trash_bin.id)
+        await res_db.delete_by_keys([res.key for res in resources])
+        await common_db.hard_delete(BlogPost, trash_bin.id)
+    else:
+        await post_db.update_selective(trash_bin.id, deleted=False)
+
+
+async def process_resource_trash(trash_bin: TrashBinRO):
+    if trash_bin.delete is False:
+        raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN)
+
+    resource = await res_db.find_by_id(trash_bin.id, deleted=True)
+    await common_db.hard_delete(PostResource, trash_bin.id)
+
+    if resource:
+        await oss_public.delete(resource.key)
+        log.warning(f'delete resource {resource.key}')

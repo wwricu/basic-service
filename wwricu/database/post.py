@@ -1,6 +1,4 @@
-from datetime import datetime
-
-from sqlalchemy import select, update, func, delete, desc, Select
+from sqlalchemy import select, update, func, desc, Select
 from sqlalchemy.orm import defer
 
 from wwricu.component.database import get_session
@@ -30,18 +28,6 @@ async def find_by_ids_by_tags(tag_names: list[str]) -> list[int]:
     )
     async with get_session() as s:
         return list((await s.scalars(stmt)).all())
-
-
-async def delete_before(deadline: datetime):
-    deleted_posts = select(BlogPost.id).where(BlogPost.deleted == True).where(BlogPost.update_time < deadline)
-    post_stmt = delete(BlogPost).where(BlogPost.id.in_(deleted_posts))
-    stmt = delete(EntityRelation).where(
-        EntityRelation.type.in_((RelationTypeEnum.POST_TAG, RelationTypeEnum.POST_RES))).where(
-        EntityRelation.src_id.in_(deleted_posts)
-    )
-    async with get_session() as s:
-        await s.execute(post_stmt)
-        await s.execute(stmt)
 
 
 async def update_selective(post_id: int, **kwargs):
@@ -88,6 +74,4 @@ async def build_criteria(query: PostQueryDTO) -> Select:
         stmt = stmt.where(BlogPost.category_id == query.category_id)
     if query.post_ids is not None:
         stmt = stmt.where(BlogPost.id.in_(query.post_ids))
-    if query.deadline is not None:
-        stmt = stmt.where(BlogPost.update_time > query.deadline)
     return stmt

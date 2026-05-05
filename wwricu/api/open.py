@@ -1,11 +1,11 @@
-import asyncio
-
 from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi.responses import RedirectResponse
 
-from wwricu.component.cache import sys_cache, query_cache, post_cache
+from wwricu.component.cache import sys_cache, query_cache, post_cache, image_cache
+from wwricu.component.storage import oss_public
 from wwricu.database import post_db, tag_db
 from wwricu.domain.common import AboutPageVO, PageVO
-from wwricu.domain.constant import HttpErrorDetail
+from wwricu.domain.constant import HttpErrorDetail, TimeConstant
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, TagTypeEnum
 from wwricu.domain.post import PostDetailVO, PostRequestRO
 from wwricu.domain.tag import TagVO, TagQueryDTO
@@ -20,7 +20,7 @@ async def open_get_posts_api(post: PostRequestRO) -> PageVO[PostDetailVO]:
         page_index=post.page_index,
         page_size=post.page_size,
         category=post.category,
-        tag_list=post.tag_list if post.tag_list else None
+        tag_list=post.tag_list or None
     )
     if response := await query_cache.get(cache_key):
         return response
@@ -53,15 +53,19 @@ async def open_get_tags_api(tag_type: TagTypeEnum) -> list[TagVO]:
 
 @open_api.get('/about', response_model=AboutPageVO)
 async def open_get_about_api() -> AboutPageVO:
-    post, category, tag = await asyncio.gather(
-        sys_cache.get(CacheKeyEnum.POST_COUNT),
-        sys_cache.get(CacheKeyEnum.CATEGORY_COUNT),
-        sys_cache.get(CacheKeyEnum.TAG_COUNT)
-    )
     return AboutPageVO(
         content=await manage_service.get_config(ConfigKeyEnum.ABOUT_CONTENT),
-        post_count=post,
-        category_count=category,
-        tag_count=tag,
-        startup_timestamp=await sys_cache.get(CacheKeyEnum.STARTUP_TIMESTAMP)
+        post_count=await sys_cache.get(CacheKeyEnum.POST_COUNT) or 0,
+        category_count=await sys_cache.get(CacheKeyEnum.CATEGORY_COUNT) or 0,
+        tag_count=await sys_cache.get(CacheKeyEnum.TAG_COUNT) or 0,
+        startup_timestamp=await sys_cache.get(CacheKeyEnum.STARTUP_TIMESTAMP) or 0
     )
+
+
+@open_api.get('/image/{key:path}')
+async def image_api(key: str):
+    if url := await image_cache.get(key):
+        return RedirectResponse(url)
+    url = oss_public.generate_presigned_url(key, expires=TimeConstant.ONE_DAY_SECONDS)
+    await image_cache.set(key, url, second=TimeConstant.ONE_DAY_SECONDS - TimeConstant.ONE_HOUR_SECONDS)
+    return RedirectResponse(url)
