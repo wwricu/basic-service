@@ -7,13 +7,17 @@ from loguru import logger as log
 from mypy_boto3_s3 import S3Client
 from mypy_boto3_s3.type_defs import DeleteTypeDef, ObjectIdentifierTypeDef
 
-from wwricu.config import app_config
+from wwricu.config import app_config, env
 from wwricu.domain.third import AWSConst, AWSS3ListResponse, AWSS3Object, AWSS3Response, AWSResponseBase
 
 
 class AWSS3Storage:
     bucket: str
     s3_client: S3Client
+
+    @property
+    def resource_api(self) -> str:
+        return f'https://{env.RESOURCE_HOSTNAME}/image/'
 
     def __init__(self, s3_client: S3Client, bucket: str):
         self.bucket = bucket
@@ -29,7 +33,7 @@ class AWSS3Storage:
     def sync_put(self, key: str, data: bytes) -> str:
         response = self.s3_client.put_object(Bucket=self.bucket, Key=key, Body=data)
         AWSResponseBase.model_validate(response).check()
-        return f'https://{AWSConst.S3}.{app_config.storage.region}.{AWSConst.AWS_DOMAIN}/{self.bucket}/{key}'
+        return f'{self.resource_api}{key}'
 
     def sync_delete(self, key: str):
         response = self.s3_client.delete_object(Bucket=self.bucket, Key=key)
@@ -69,6 +73,19 @@ class AWSS3Storage:
                 break
             continuation_token = s3_resp.NextContinuationToken
 
+    def generate_presigned_url(self, key: str, expires: int) -> str:
+        return self.s3_client.generate_presigned_url(
+            AWSConst.GET_OBJECT,
+            Params=dict(Bucket=self.bucket, Key=key),
+            ExpiresIn=expires
+        )
+
+    def get_key_from_url(self, url: str) -> str | None:
+        if not url or not url.startswith(self.resource_api):
+            return None
+        url = url.strip()
+        return url.removeprefix(self.resource_api)
+
     async def get(self, key: str) -> bytes:
         return await asyncio.to_thread(self.sync_get, key)
 
@@ -78,16 +95,7 @@ class AWSS3Storage:
     async def delete(self, key: str):
         await asyncio.to_thread(self.sync_delete, key)
 
-    async def batch_delete(self, keys: list[str]):
-        await asyncio.to_thread(self.sync_batch_delete, keys)
 
-    async def list_all(self) -> list[AWSS3Object]:
-        return await asyncio.to_thread(self.sync_list_all)
-
-    async def list_page(self, page_size: int = 100) -> list[AWSS3Object]:
-        return list(await asyncio.to_thread(self.sync_list_page, page_size))
-
-
-aws_s3_client = boto3.client(AWSConst.S3)
+aws_s3_client = boto3.client(AWSConst.S3, region_name=AWSConst.REGION)
 oss_public = AWSS3Storage(aws_s3_client, app_config.storage.bucket)
 oss_private = AWSS3Storage(aws_s3_client, app_config.storage.private_bucket)

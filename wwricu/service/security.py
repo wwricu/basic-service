@@ -12,6 +12,7 @@ import pyotp
 from fastapi import HTTPException, Request, Response, status
 from loguru import logger as log
 
+import wwricu.service.manage as manage_service
 from wwricu.component.cache import sys_cache
 from wwricu.component.middleware import real_ip
 from wwricu.component.token_bucket import login_ip_limiter, login_global_limiter, open_ip_limiter
@@ -19,7 +20,6 @@ from wwricu.config import app_config
 from wwricu.domain.common import LoginRO, LoginVO
 from wwricu.domain.constant import CommonConstant, HttpErrorDetail, TimeConstant
 from wwricu.domain.enum import ConfigKeyEnum
-from wwricu.service.manage import get_config
 
 
 async def login_limiter():
@@ -39,8 +39,8 @@ async def authenticate(login_request: LoginRO, request: Request, response: Respo
     session_id = uuid.uuid4().hex
     session_2fa_id = request.cookies.get(CommonConstant.SESSION_ID_2FA)
 
-    secret = await get_config(ConfigKeyEnum.TOTP_SECRET)
-    enforce = await get_config(ConfigKeyEnum.TOTP_ENFORCE)
+    secret = await manage_service.get_config(ConfigKeyEnum.TOTP_SECRET)
+    enforce = await manage_service.get_config(ConfigKeyEnum.TOTP_ENFORCE)
 
     if session_2fa_id and (not enforce or not login_request.totp):
         await sys_cache.delete(session_2fa_id)
@@ -57,7 +57,7 @@ async def authenticate(login_request: LoginRO, request: Request, response: Respo
         log.warning(f'{login_request.username} login failure')
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_PASSWORD)
 
-    if await get_config(ConfigKeyEnum.TOTP_ENFORCE):
+    if await manage_service.get_config(ConfigKeyEnum.TOTP_ENFORCE):
         await sys_cache.set(session_id, True, TimeConstant.TOTP_EXPIRATION)
         response.set_cookie(CommonConstant.SESSION_ID_2FA, session_id, max_age=TimeConstant.TOTP_EXPIRATION, secure=True, httponly=True, samesite='lax')
         response.status_code = status.HTTP_401_UNAUTHORIZED
@@ -74,7 +74,7 @@ async def require_admin(request: Request, response: Response):
     session_id = request.cookies.get(CommonConstant.SESSION_ID)
     cookie_sign = request.cookies.get(CommonConstant.COOKIE_SIGN)
     if session_id is None or cookie_sign is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.NOT_AUTHORIZED)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     if (
         not isinstance(issue_time := await sys_cache.get(session_id), int) or
@@ -83,7 +83,7 @@ async def require_admin(request: Request, response: Response):
         hmac_sign(session_id) != cookie_sign
     ):
         log.warning(f'Unauthorized access to {request.url.path}')
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.NOT_AUTHORIZED)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     if issue_time + TimeConstant.ONE_DAY_SECONDS < int(time.time()):
         log.warning(f'{session_id} renew')
@@ -91,7 +91,7 @@ async def require_admin(request: Request, response: Response):
 
 
 def hmac_sign(plain: str) -> str:
-    return hmac.new(secret_key, plain.encode(app_config.encoding), hashlib.sha256).hexdigest()
+    return hmac.new(base64.b64decode(app_config.security.secret_key), plain.encode(app_config.encoding), hashlib.sha256).hexdigest()
 
 
 async def login(session_id: str, response: Response):
@@ -119,7 +119,8 @@ def throttle(concurrent: int, timeout: float):
 
 @throttle(concurrent=1, timeout=2.0)
 async def verify_credentials(request: LoginRO) -> bool:
-    username, password = await get_config(ConfigKeyEnum.USERNAME), await get_config(ConfigKeyEnum.PASSWORD)
+    username = await manage_service.get_config(ConfigKeyEnum.USERNAME)
+    password = await manage_service.get_config(ConfigKeyEnum.PASSWORD)
     if not username:
         username = app_config.security.username
     if not password:
@@ -127,4 +128,9 @@ async def verify_credentials(request: LoginRO) -> bool:
     return await asyncio.to_thread(bcrypt.checkpw, request.password.encode(), base64.b64decode(password)) and request.username == username
 
 
-secret_key = base64.b64decode(app_config.security.secret_key)
+async def logout(request: Request, response: Response):
+    if (session_id := request.cookies.get(CommonConstant.SESSION_ID)) is None:
+        return
+    response.delete_cookie(CommonConstant.SESSION_ID)
+    response.delete_cookie(CommonConstant.COOKIE_SIGN)
+    await sys_cache.delete(session_id)

@@ -1,13 +1,12 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, Request, Response
 from fastapi.responses import FileResponse
 
 from wwricu.component.cache import query_cache
-from wwricu.component.database import database_manager, transaction
+from wwricu.component.database import database_manager
 from wwricu.config import app_config
 from wwricu.domain.common import ConfigRO, TrashBinRO, TrashBinVO, UserRO
-from wwricu.domain.constant import CommonConstant, HttpErrorDetail
 from wwricu.domain.enum import ConfigKeyEnum, DatabaseActionEnum, EntityTypeEnum
-from wwricu.service import manage_service, security_service, post_service
+from wwricu.service import manage_service, post_service, security_service, tag_service
 
 manage_api = APIRouter(prefix='/manage', tags=['Manage API'], dependencies=[Depends(security_service.require_admin)])
 
@@ -17,12 +16,15 @@ async def trash_get_all_api() -> list[TrashBinVO]:
     return await manage_service.list_trash()
 
 
-@transaction
 @manage_api.post('/trash/edit', response_model=None)
 async def trash_edit_api(trash_bin: TrashBinRO):
-    await manage_service.process_trash(trash_bin)
-    if trash_bin.type == EntityTypeEnum.BLOG_POST and trash_bin.delete is False:
-        await post_service.update_deleted(trash_bin.id, deleted=False)
+    if trash_bin.type in (EntityTypeEnum.POST_IMAGE, EntityTypeEnum.POST_COVER):
+        await post_service.process_resource_trash(trash_bin)
+        return
+    if trash_bin.type == EntityTypeEnum.BLOG_POST:
+        await post_service.process_trash(trash_bin)
+    else:
+        await tag_service.process_trash(trash_bin)
     await query_cache.delete_all()
 
 
@@ -49,14 +51,15 @@ async def config_set_api(config: ConfigRO):
 @manage_api.get('/config/get', response_model=str | None)
 async def config_get_api(key: ConfigKeyEnum) -> str | None:
     if key in (ConfigKeyEnum.PASSWORD, ConfigKeyEnum.TOTP_SECRET):
-        raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.CONFIG_NOT_ALLOWED)
+        raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE)
     return await manage_service.get_config(key)
 
 
 @manage_api.post('/user', response_model=None)
-async def user_config_api(user: UserRO, request: Request):
-    session_id = request.cookies.get(CommonConstant.SESSION_ID)
-    await manage_service.update_admin_user(user, session_id)
+async def user_config_api(user: UserRO, request: Request, response: Response):
+    await manage_service.update_admin_user(user)
+    if user.username is not None or user.password is not None or user.reset is True:
+        await security_service.logout(request, response)
 
 
 @manage_api.get('/totp/enforce', response_model=str | None)

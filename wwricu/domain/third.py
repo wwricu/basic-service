@@ -12,7 +12,7 @@ class AWSConst:
     S3: Literal['s3'] = 's3'
     APP_CONFIG_DATA: Literal['appconfigdata'] = 'appconfigdata'
     REGION: str = 'us-west-2'
-    AWS_DOMAIN: str = 'amazonaws.com'
+    GET_OBJECT: str = 'get_object'
 
 
 class AWSResponseMetaData(BaseModel):

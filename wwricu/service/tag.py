@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status as http_status
 
 from wwricu.database import common_db, post_db, tag_db
+from wwricu.domain.common import TrashBinRO
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
@@ -9,10 +10,7 @@ from wwricu.domain.tag import TagRO, TagVO, TagQueryDTO, TagUpdateDTO
 
 async def create(tag_create: TagRO) -> TagVO:
     if await tag_db.count(TagQueryDTO(name=tag_create.name, type=tag_create.type)) > 0:
-        raise HTTPException(
-            status_code=http_status.HTTP_409_CONFLICT,
-            detail=f'{tag_create.type} {tag_create.name} already exists'
-        )
+        raise HTTPException(http_status.HTTP_409_CONFLICT, f'{tag_create.type} {tag_create.name} already exists')
     tag = PostTag(name=tag_create.name, type=tag_create.type)
     await common_db.insert(tag)
     return TagVO.model_validate(tag)
@@ -26,7 +24,7 @@ async def update_tag(tag_update: TagRO) -> TagVO:
     if tag.name == tag_update.name:
         return TagVO.model_validate(tag)
     if await tag_db.count(TagQueryDTO(name=tag_update.name, type=tag_update.type)) > 0:
-        raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=f'{tag_update.type} {tag_update.name} already exists')
+        raise HTTPException(http_status.HTTP_409_CONFLICT, f'{tag_update.type} {tag_update.name} already exists')
     tag.name = tag_update.name
     await tag_db.update_selective(tag_update.id, name=tag_update.name)
     return TagVO.model_validate(tag)
@@ -49,18 +47,13 @@ async def update_post_tags(post: BlogPost, tag_update: TagUpdateDTO):
     await tag_db.update_tag_post_count(bef_tag_ids, aft_tag_ids)
 
 
-async def update_tag_count(post: BlogPost, increment: int = 1):
-    post_tags = await get_post_tags(post)
-    await tag_db.increase_post_tag_count([tag.id for tag in post_tags], increment)
-
-
 async def get_post_tags(post: BlogPost) -> list[PostTag]:
     tag_ids = await tag_db.find_tag_ids_by_post_id(post.id)
     return await tag_db.find_by_criteria(TagQueryDTO(tag_ids=tag_ids, type=TagTypeEnum.POST_TAG))
 
 
 async def update_post_category(post: BlogPost, count_update: TagUpdateDTO):
-    if count_update.category_id != count_update.category_id:
+    if post.category_id != count_update.category_id:
         category = await tag_db.find_category(category_id=count_update.category_id)
         await post_db.update_selective(post.id, category_id=category.id if category else None)
 
@@ -78,3 +71,10 @@ async def get_posts_category(post_list: list[BlogPost]) -> dict[int, PostTag]:
     categories = await tag_db.find_by_criteria(TagQueryDTO(tag_ids=category_ids, type=TagTypeEnum.POST_CAT))
     category_dict = {cat.id: cat for cat in categories}
     return {post.id: tag for post in post_list if (tag := category_dict.get(post.category_id))}
+
+
+async def process_trash(trash_bin: TrashBinRO):
+    if trash_bin.delete:
+        await common_db.hard_delete(PostTag, trash_bin.id)
+    else:
+        await common_db.recover(PostTag, trash_bin.id)

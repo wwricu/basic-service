@@ -1,5 +1,4 @@
 import base64
-import datetime
 import re
 
 import bcrypt
@@ -7,12 +6,10 @@ import pyotp
 from fastapi import HTTPException, status as http_status
 
 from wwricu.component.cache import sys_cache
-from wwricu.config import app_config
-from wwricu.database import common_db, conf_db, post_db, tag_db
-from wwricu.domain.common import TrashBinRO, TrashBinVO, UserRO
+from wwricu.database import conf_db, post_db, tag_db, res_db
+from wwricu.domain.common import TrashBinVO, UserRO
 from wwricu.domain.constant import HttpErrorDetail
-from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, EntityTypeEnum, PostStatusEnum, TagTypeEnum
-from wwricu.domain.entity import BlogPost, PostTag
+from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, EntityTypeEnum, TagTypeEnum, PostResourceTypeEnum
 from wwricu.domain.post import PostQueryDTO
 from wwricu.domain.tag import TagQueryDTO
 
@@ -39,40 +36,35 @@ async def get_config(key: ConfigKeyEnum) -> str | None:
 
 
 async def list_trash() -> list[TrashBinVO]:
-    deadline = datetime.datetime.now() - datetime.timedelta(days=app_config.trash_expire_day)
-
     deleted_post = [TrashBinVO(
         id=post.id,
         name=post.title,
+        info=post.preview,
         type=EntityTypeEnum.BLOG_POST,
-        status=PostStatusEnum(post.status),
         delete_time=post.update_time
-    ) for post in await post_db.find_by_criteria(PostQueryDTO(deadline=deadline, deleted=True))]
+    ) for post in await post_db.find_by_criteria(PostQueryDTO(deleted=True))]
 
     deleted_tag = [TrashBinVO(
         id=tag.id,
         name=tag.name,
         type=EntityTypeEnum.POST_TAG if tag.type == TagTypeEnum.POST_TAG else EntityTypeEnum.POST_CAT,
         delete_time=tag.update_time
-    ) for tag in await tag_db.find_by_criteria(TagQueryDTO(deleted=True, deadline=deadline))]
+    ) for tag in await tag_db.find_by_criteria(TagQueryDTO(deleted=True))]
 
-    result = deleted_post + deleted_tag
+    deleted_res = [TrashBinVO(
+        id=res.id,
+        name=res.name,
+        info=res.url,
+        type=EntityTypeEnum.POST_IMAGE if res.type == PostResourceTypeEnum.IMAGE else EntityTypeEnum.POST_COVER,
+        delete_time=res.update_time
+    ) for res in await res_db.find_deleted()]
+
+    result = deleted_post + deleted_tag + deleted_res
     result.sort(key=lambda item: item.delete_time, reverse=True)
     return result
 
 
-async def process_trash(trash_bin: TrashBinRO):
-    entity = {
-        EntityTypeEnum.BLOG_POST: BlogPost,
-        EntityTypeEnum.POST_TAG: PostTag,
-        EntityTypeEnum.POST_CAT: PostTag,
-    }.get(trash_bin.type)
-    if entity is None:
-        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.UNKNOWN_ENTITY_TYPE)
-    await common_db.entity_trash(entity, trash_bin.id, hard_delete=trash_bin.delete)
-
-
-async def update_admin_user(user: UserRO, session_id: str | None):
+async def update_admin_user(user: UserRO):
     if user.username is not None:
         if len(user.username) < 4 or not bool(re.match('^[a-zA-Z][a-zA-Z0-9_-]*$', user.username)):
             raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE, detail='Invalid username')
@@ -87,9 +79,6 @@ async def update_admin_user(user: UserRO, session_id: str | None):
     if user.reset:
         await delete_config([ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD])
 
-    if user.username is not None or user.password is not None or user.reset is True:
-        await sys_cache.delete(session_id)
-
 
 async def enforce_totp(enforce: bool) -> str | None:
     if not enforce:
@@ -102,8 +91,7 @@ async def enforce_totp(enforce: bool) -> str | None:
 
 async def confirm_totp(totp: str):
     if (secret := await get_config(ConfigKeyEnum.TOTP_SECRET)) is None:
-        raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.NO_TOTP_SECRET)
-    totp_client = pyotp.TOTP(secret)
-    if not totp_client.verify(totp, valid_window=1):
+        raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE)
+    if not pyotp.TOTP(secret).verify(totp, valid_window=1):
         raise HTTPException(status_code=http_status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
     await set_config(ConfigKeyEnum.TOTP_ENFORCE, str(True))

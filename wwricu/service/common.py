@@ -1,4 +1,3 @@
-import datetime
 import time
 from contextlib import asynccontextmanager
 
@@ -9,9 +8,7 @@ from loguru import logger as log
 
 from wwricu.component.cache import sys_cache, LocalCache
 from wwricu.component.database import database_manager
-from wwricu.component.storage import oss_public
-from wwricu.config import app_config
-from wwricu.database import post_db, res_db, tag_db
+from wwricu.database import post_db, tag_db
 from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum
 from wwricu.domain.post import PostQueryDTO
 from wwricu.domain.tag import TagQueryDTO
@@ -21,9 +18,8 @@ from wwricu.domain.tag import TagQueryDTO
 async def lifespan(app: FastAPI):
     scheduler = AsyncIOScheduler()
     try:
-        scheduler.add_job(purge_expired_entities, trigger=CronTrigger(day_of_week=0, hour=5))
-        scheduler.add_job(cleanup_orphan_resources, trigger=CronTrigger(day_of_week=0, hour=4))
         scheduler.add_job(database_manager.backup, trigger=CronTrigger(day_of_week=0, hour=3))
+        scheduler.add_job(tag_db.delete_unlink_relation, trigger=CronTrigger(day_of_week=0, hour=4))
         scheduler.start()
 
         await sys_cache.set(CacheKeyEnum.STARTUP_TIMESTAMP, int(time.time()), 0)
@@ -46,22 +42,3 @@ async def reset_sys_config():
     await sys_cache.set(CacheKeyEnum.POST_COUNT, post_count, 0)
     await sys_cache.set(CacheKeyEnum.CATEGORY_COUNT, category_count, 0)
     await sys_cache.set(CacheKeyEnum.TAG_COUNT, tag_count, 0)
-
-
-async def purge_expired_entities():
-    log.info('hard deleting expired entities')
-    deadline = datetime.datetime.now() - datetime.timedelta(days=app_config.trash_expire_day)
-    await post_db.delete_before(deadline)
-    await tag_db.delete_tag_before(deadline)
-
-
-async def cleanup_orphan_resources():
-    """
-    Mark post resources deleted when all related posts are hard deleted.
-    Post soft deleted ->
-    Post expired, post hard deleted, relation hard deleted ->
-    All relations hard deleted, resource hard deleted, oss file deleted;
-    """
-    log.info('start cleaning post resources')
-    deleted_resources = await res_db.cleanup_unlinked_resources()
-    await oss_public.batch_delete([resource.key for resource in deleted_resources])

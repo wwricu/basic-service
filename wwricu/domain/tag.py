@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Annotated
 
 from pydantic import StringConstraints, Field
@@ -24,7 +23,6 @@ class TagQueryDTO(BaseModel):
     name: str | None = None
     type: TagTypeEnum | None = None
     deleted: bool | None = False
-    deadline: datetime | None = None
     page_index: int | None = None
     page_size: int | None = None
 

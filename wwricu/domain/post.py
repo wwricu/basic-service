@@ -56,4 +56,3 @@ class PostQueryDTO(BaseModel):
     status: PostStatusEnum | None = None
     page_index: int | None = None
     page_size: int | None = None
-    deadline: datetime | None = None

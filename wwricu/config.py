@@ -57,6 +57,7 @@ class SecurityConfig(BaseModel):
 class Config(BaseSettings):
     encoding: str = 'utf-8'
     trash_expire_day: int = 30
+    max_upload_size: int = 10 * 1024 * 1024
 
     storage: StorageConfig
     database: DatabaseConfig
@@ -65,6 +66,7 @@ class Config(BaseSettings):
 
 class EnvironmentVariable(BaseSettings):
     ENV: EnvironmentEnum = EnvironmentEnum.LOCAL
+    RESOURCE_HOSTNAME: str = 'res.wwr.icu'
     ROOT_PATH: str = '/'
     LOG_PATH: str = 'logs'
     CONFIG_FILE: str = 'config.json'
@@ -81,7 +83,7 @@ def init_log():
 
     log_path = env.LOG_PATH
     os.makedirs(log_path, exist_ok=True)
-    log.add(f'{log_path}/server.log', level=logging.NOTSET, rotation='10 MB', retention=10, backtrace=False)
+    log.add(f'{log_path}/server.log', level=logging.DEBUG, rotation='10 MB', retention=10, backtrace=False)
     log.add(
         f'{log_path}/access.log',
         level=logging.NOTSET,

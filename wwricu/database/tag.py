@@ -1,5 +1,4 @@
 from collections import defaultdict
-from datetime import datetime
 
 from sqlalchemy import select, update, func, case, delete, desc, Select
 
@@ -19,8 +18,6 @@ async def build_criteria(query: TagQueryDTO) -> Select:
         stmt = stmt.where(PostTag.id.in_(query.tag_ids))
     if query.name is not None:
         stmt = stmt.where(PostTag.name == query.name)
-    if query.deadline is not None:
-        stmt = stmt.where(PostTag.update_time > query.deadline)
     return stmt
 
 
@@ -81,22 +78,6 @@ async def find_tags_by_posts(post_list: list[BlogPost]) -> dict[int, list[PostTa
     return result
 
 
-async def delete_tag_before(deadline: datetime):
-    deleted_tags = select(PostTag.id).where(
-        PostTag.deleted == True).where(
-        PostTag.type == TagTypeEnum.POST_TAG).where(
-        PostTag.update_time < deadline
-    )
-    tag_stmt = delete(EntityRelation).where(
-        EntityRelation.type == RelationTypeEnum.POST_TAG).where(
-        EntityRelation.dst_id.in_(deleted_tags)
-    )
-    stmt = delete(PostTag).where(PostTag.deleted == True).where(PostTag.update_time < deadline)
-    async with get_session() as s:
-        await s.execute(tag_stmt)
-        await s.execute(stmt)
-
-
 async def find_category(category_id: int | None = None, name: str | None = None) -> PostTag | None:
     if category_id is None and name is None:
         return None
@@ -108,17 +89,6 @@ async def find_category(category_id: int | None = None, name: str | None = None)
     if len(tags := await find_by_criteria(query)) > 1:
         raise ValueError
     return tags[0] if tags else None
-
-
-async def update_category_count(post: BlogPost, increment: int = 1):
-    stmt = update(PostTag).where(
-        PostTag.id == post.category_id).where(
-        PostTag.deleted == False).where(
-        PostTag.type == TagTypeEnum.POST_CAT).values(
-        count=PostTag.count + increment
-    )
-    async with get_session() as s:
-        await s.execute(stmt)
 
 
 async def update_category_post_count(prev_category_id: int | None, post_category_id: int | None):
@@ -161,3 +131,11 @@ async def find_tag_ids_by_post_id(post_id: int) -> list[int]:
     )
     async with get_session() as s:
         return list((await s.scalars(stmt)).all())
+
+
+async def delete_unlink_relation():
+    post_query = ~select(BlogPost.id).where(BlogPost.id == EntityRelation.src_id).exists()
+    tag_query = ~select(PostTag.id).where(PostTag.id == EntityRelation.dst_id).exists()
+    stmt = delete(EntityRelation).where(post_query | tag_query)
+    async with get_session() as s:
+        await s.execute(stmt)

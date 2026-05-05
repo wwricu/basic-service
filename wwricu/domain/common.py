@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel as PydanticBaseModel, ConfigDict, Field
 
-from wwricu.domain.enum import ConfigKeyEnum, PostStatusEnum, EntityTypeEnum
+from wwricu.domain.enum import ConfigKeyEnum, EntityTypeEnum
 
 
 class BaseModel(PydanticBaseModel):
@@ -57,8 +57,8 @@ class TrashBinRO(BaseModel):
 class TrashBinVO(BaseModel):
     id: int
     name: str
+    info: str | None = None
     type: EntityTypeEnum
-    status: PostStatusEnum | None = None
     delete_time: datetime
 
 
