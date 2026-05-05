@@ -10,10 +10,7 @@ from wwricu.domain.tag import TagRO, TagVO, TagQueryDTO, TagUpdateDTO
 
 async def create(tag_create: TagRO) -> TagVO:
     if await tag_db.count(TagQueryDTO(name=tag_create.name, type=tag_create.type)) > 0:
-        raise HTTPException(
-            status_code=http_status.HTTP_409_CONFLICT,
-            detail=f'{tag_create.type} {tag_create.name} already exists'
-        )
+        raise HTTPException(http_status.HTTP_409_CONFLICT, f'{tag_create.type} {tag_create.name} already exists')
     tag = PostTag(name=tag_create.name, type=tag_create.type)
     await common_db.insert(tag)
     return TagVO.model_validate(tag)
@@ -48,11 +45,6 @@ async def update_post_tags(post: BlogPost, tag_update: TagUpdateDTO):
     if tag_update.status == PostStatusEnum.PUBLISHED:
         aft_tag_ids = update_tag_ids
     await tag_db.update_tag_post_count(bef_tag_ids, aft_tag_ids)
-
-
-async def update_tag_count(post: BlogPost, increment: int = 1):
-    post_tags = await get_post_tags(post)
-    await tag_db.increase_post_tag_count([tag.id for tag in post_tags], increment)
 
 
 async def get_post_tags(post: BlogPost) -> list[PostTag]:

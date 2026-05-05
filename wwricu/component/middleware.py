@@ -40,7 +40,4 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
 
 
 real_ip:ContextVar[str] = ContextVar('real_ip', default='')
-middlewares = [
-    Middleware(PerformanceMiddleware),
-    Middleware(ExceptionMiddleware)
-]
+middlewares = [Middleware(PerformanceMiddleware), Middleware(ExceptionMiddleware)]

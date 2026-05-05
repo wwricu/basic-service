@@ -1,6 +1,6 @@
 import secrets
 
-from fastapi import APIRouter, Depends, Form, UploadFile
+from fastapi import APIRouter, Depends, Form, UploadFile, HTTPException, status as http_status
 
 from wwricu.component.cache import query_cache, post_cache
 from wwricu.database import common_db, post_db
@@ -51,10 +51,12 @@ async def update_post_status_api(post_id: int, status: PostStatusEnum):
 
 
 @post_api.get('/delete/{post_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=None)
-async def delete_post_api(post_id: int):
-    await post_service.update_deleted(post_id, deleted=True)
-    await post_cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
-    await query_cache.delete_all()
+async def delete_post_draft_api(post_id: int):
+    if (post := await post_db.find_by_id(post_id)) is None:
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND)
+    if post.status == PostStatusEnum.PUBLISHED:
+        raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST)
+    await post_db.update_selective(post_id, deleted=True)
 
 
 @post_api.post('/upload', response_model=FileUploadVO)

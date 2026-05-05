@@ -64,7 +64,7 @@ async def list_trash() -> list[TrashBinVO]:
     return result
 
 
-async def update_admin_user(user: UserRO, session_id: str | None):
+async def update_admin_user(user: UserRO):
     if user.username is not None:
         if len(user.username) < 4 or not bool(re.match('^[a-zA-Z][a-zA-Z0-9_-]*$', user.username)):
             raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE, detail='Invalid username')
@@ -79,9 +79,6 @@ async def update_admin_user(user: UserRO, session_id: str | None):
     if user.reset:
         await delete_config([ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD])
 
-    if user.username is not None or user.password is not None or user.reset is True:
-        await sys_cache.delete(session_id)
-
 
 async def enforce_totp(enforce: bool) -> str | None:
     if not enforce:
@@ -95,7 +92,6 @@ async def enforce_totp(enforce: bool) -> str | None:
 async def confirm_totp(totp: str):
     if (secret := await get_config(ConfigKeyEnum.TOTP_SECRET)) is None:
         raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE)
-    totp_client = pyotp.TOTP(secret)
-    if not totp_client.verify(totp, valid_window=1):
+    if not pyotp.TOTP(secret).verify(totp, valid_window=1):
         raise HTTPException(status_code=http_status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
     await set_config(ConfigKeyEnum.TOTP_ENFORCE, str(True))

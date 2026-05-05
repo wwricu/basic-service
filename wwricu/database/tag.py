@@ -91,17 +91,6 @@ async def find_category(category_id: int | None = None, name: str | None = None)
     return tags[0] if tags else None
 
 
-async def update_category_count(post: BlogPost, increment: int = 1):
-    stmt = update(PostTag).where(
-        PostTag.id == post.category_id).where(
-        PostTag.deleted == False).where(
-        PostTag.type == TagTypeEnum.POST_CAT).values(
-        count=PostTag.count + increment
-    )
-    async with get_session() as s:
-        await s.execute(stmt)
-
-
 async def update_category_post_count(prev_category_id: int | None, post_category_id: int | None):
     stmt = update(PostTag).where(
         PostTag.deleted == False).where(

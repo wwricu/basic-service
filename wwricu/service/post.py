@@ -14,7 +14,7 @@ from wwricu.domain.entity import BlogPost, PostResource
 from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum
 from wwricu.domain.post import PostDetailVO, PostQueryDTO, PostRequestRO, PostResourceVO, PostUpdateRO
 from wwricu.domain.tag import TagVO, TagUpdateDTO
-from wwricu.service.tag import get_post_tags, update_tag_count, update_post_tags, update_post_category, get_posts_category
+from wwricu.service.tag import get_post_tags, update_post_tags, update_post_category, get_posts_category
 
 
 async def build_query(post: PostRequestRO, *, public: bool = False) -> PostQueryDTO:
@@ -131,26 +131,6 @@ async def update_status(post_id: int, status: PostStatusEnum):
     await post_db.update_selective(blog_post.id, status=tag_update.status)
 
 
-@transaction
-async def update_deleted(post_id: int, deleted: bool = True):
-    if (post := await post_db.find_by_id(post_id)) is None:
-        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
-    if post.deleted == deleted:
-        return
-    if deleted is True and post.status == PostStatusEnum.PUBLISHED:
-        raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE)
-    if not deleted:
-        await post_db.update_selective(post_id, deleted=False)
-    if (post := await post_db.find_by_id(post_id)) is None:
-        return
-    delta = -1 if deleted else 1
-    if post.status == PostStatusEnum.PUBLISHED:
-        await tag_db.update_category_count(post, delta)
-        await update_tag_count(post, delta)
-    if deleted:
-        await post_db.update_selective(post.id, deleted=True)
-
-
 async def upload_file(file: UploadFile, post_id: int, file_type: PostResourceTypeEnum) -> FileUploadVO:
     if (post := await post_db.find_by_id(post_id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
@@ -172,7 +152,7 @@ async def process_trash(trash_bin: TrashBinRO):
         await res_db.delete_by_keys([res.key for res in resources])
         await common_db.hard_delete(BlogPost, trash_bin.id)
     else:
-        await update_deleted(trash_bin.id, deleted=False)
+        await post_db.update_selective(trash_bin.id, deleted=False)
 
 
 async def process_resource_trash(trash_bin: TrashBinRO):
