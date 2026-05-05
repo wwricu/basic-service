@@ -57,6 +57,7 @@ class SecurityConfig(BaseModel):
 class Config(BaseSettings):
     encoding: str = 'utf-8'
     trash_expire_day: int = 30
+    max_upload_size: int = 10 * 1024 * 1024
 
     storage: StorageConfig
     database: DatabaseConfig

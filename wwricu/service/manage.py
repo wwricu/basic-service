@@ -60,7 +60,7 @@ async def list_trash() -> list[TrashBinVO]:
         info=res.url,
         type=EntityTypeEnum.POST_IMAGE if res.type == PostResourceTypeEnum.IMAGE else EntityTypeEnum.POST_COVER,
         delete_time=res.update_time
-    ) for res in await res_db.find_deleted_resource()]
+    ) for res in await res_db.find_deleted()]
 
     result = deleted_post + deleted_tag + deleted_res
     result.sort(key=lambda item: item.delete_time, reverse=True)
@@ -81,7 +81,8 @@ async def process_trash(trash_bin: TrashBinRO):
 
     if trash_bin.type == EntityTypeEnum.BLOG_POST:
         if trash_bin.delete:
-            await res_db.delete_post_resources(trash_bin.id)
+            resources = await res_db.find_by_post_id(trash_bin.id)
+            await res_db.delete_by_keys([res.key for res in resources])
         else:
             await update_deleted(trash_bin.id, deleted=False)
     await common_db.entity_trash(entity, trash_bin.id, hard_delete=trash_bin.delete)

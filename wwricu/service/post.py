@@ -6,6 +6,7 @@ from loguru import logger as log
 
 from wwricu.component.database import transaction
 from wwricu.component.storage import oss_public
+from wwricu.config import app_config
 from wwricu.database import common_db, post_db, tag_db, res_db
 from wwricu.domain.common import FileUploadVO, PageVO
 from wwricu.domain.constant import HttpErrorDetail, CommonConstant
@@ -85,12 +86,16 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
     if (post := await post_db.find_by_id(new_post.id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
 
-    covers = await res_db.find_post_covers(post.id)
-    bef_keys = await get_resource_keys(post.content) | {cover.key for cover in covers if cover.id != new_post.cover_id}
-    aft_keys = await get_resource_keys(new_post.content)
+    resources = await res_db.find_by_post_id(post.id)
+    bef_keys = {res.key for res in resources if res.id != new_post.cover_id}
+    aft_keys = set()
+    for img in BeautifulSoup(new_post.content, CommonConstant.HTML_PARSER).find_all(CommonConstant.IMG_TAG):
+        src = img.get(CommonConstant.SRC_PROP)
+        if isinstance(src, str) and (key := oss_public.get_key_from_url(src)):
+            aft_keys.add(key)
 
     if delete_keys := list(bef_keys - aft_keys):
-        await res_db.delete_resources(delete_keys)
+        await res_db.delete_by_keys(delete_keys)
         log.info(f'delete resource {delete_keys}')
 
     tag_update = TagUpdateDTO(category_id=new_post.category_id, tag_id_list=new_post.tag_id_list, status=new_post.status)
@@ -149,18 +154,12 @@ async def update_deleted(post_id: int, deleted: bool = True):
 async def upload_file(file: UploadFile, post_id: int, file_type: PostResourceTypeEnum) -> FileUploadVO:
     if (post := await post_db.find_by_id(post_id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=HttpErrorDetail.POST_NOT_FOUND)
+    if file.size is None or file.size > app_config.max_upload_size:
+        raise HTTPException(http_status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
+
     key = f'post/{post_id}/{file_type}_{uuid.uuid4().hex}'
     url = await oss_public.put(key, await file.read())
     resource = PostResource(name=file.filename, key=key, type=file_type, post_id=post.id, url=url)
     await common_db.insert(resource)
+    log.info(f'upload file {file.filename} to {post_id=} {file.size=} {url=}')
     return FileUploadVO(id=resource.id, name=file.filename, key=key, location=url)
-
-
-async def get_resource_keys(content: str) -> set[str]:
-    soup = BeautifulSoup(content, CommonConstant.HTML_PARSER)
-    keys = set()
-    for img in soup.find_all(CommonConstant.IMG_TAG):
-        src = img.get(CommonConstant.SRC_PROP)
-        if isinstance(src, str) and (key := oss_public.get_key_from_url(src)):
-            keys.add(key)
-    return keys

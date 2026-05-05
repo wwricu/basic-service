@@ -26,7 +26,7 @@ async def update_tag(tag_update: TagRO) -> TagVO:
     if tag.name == tag_update.name:
         return TagVO.model_validate(tag)
     if await tag_db.count(TagQueryDTO(name=tag_update.name, type=tag_update.type)) > 0:
-        raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=f'{tag_update.type} {tag_update.name} already exists')
+        raise HTTPException(http_status.HTTP_409_CONFLICT, f'{tag_update.type} {tag_update.name} already exists')
     tag.name = tag_update.name
     await tag_db.update_selective(tag_update.id, name=tag_update.name)
     return TagVO.model_validate(tag)

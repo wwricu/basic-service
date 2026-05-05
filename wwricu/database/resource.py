@@ -13,16 +13,16 @@ async def find_by_id(resource_id: int, resource_type: PostResourceTypeEnum | Non
         return await s.scalar(stmt)
 
 
-async def delete_resources(keys: list[str]):
+async def delete_by_keys(keys: list[str]):
     stmt = update(PostResource).where(PostResource.key.in_(keys)).values(deleted=True)
     async with get_session() as s:
         await s.execute(stmt)
 
 
-async def delete_post_resources(post_id: int):
-    stmt = update(PostResource).where(PostResource.post_id == post_id).values(deleted=True)
+async def find_by_post_id(post_id: int) -> list[PostResource]:
+    stmt = select(PostResource).where(PostResource.post_id == post_id).where(PostResource.deleted == False)
     async with get_session() as s:
-        await s.execute(stmt)
+        return list((await s.scalars(stmt)).all())
 
 
 async def find_posts_cover(post_list: list[BlogPost]) -> dict[int, PostResource]:
@@ -40,13 +40,7 @@ async def find_posts_cover(post_list: list[BlogPost]) -> dict[int, PostResource]
     return {post_id: cover for cover, post_id in result.all()}
 
 
-async def find_deleted_resource() -> list[PostResource]:
+async def find_deleted() -> list[PostResource]:
     stmt = select(PostResource).where(PostResource.deleted == True)
-    async with get_session() as s:
-        return list((await s.scalars(stmt)).all())
-
-
-async def find_post_covers(post_id: int) -> list[PostResource]:
-    stmt = select(PostResource).where(PostResource.post_id == post_id).where(PostResource.deleted == False)
     async with get_session() as s:
         return list((await s.scalars(stmt)).all())

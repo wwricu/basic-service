@@ -15,6 +15,10 @@ class AWSS3Storage:
     bucket: str
     s3_client: S3Client
 
+    @property
+    def resource_api(self) -> str:
+        return f'https://{env.RESOURCE_HOSTNAME}/image/'
+
     def __init__(self, s3_client: S3Client, bucket: str):
         self.bucket = bucket
         self.s3_client = s3_client
@@ -29,7 +33,7 @@ class AWSS3Storage:
     def sync_put(self, key: str, data: bytes) -> str:
         response = self.s3_client.put_object(Bucket=self.bucket, Key=key, Body=data)
         AWSResponseBase.model_validate(response).check()
-        return f'https://{env.RESOURCE_HOSTNAME}/image/{key}'
+        return f'{self.resource_api}{key}'
 
     def sync_delete(self, key: str):
         response = self.s3_client.delete_object(Bucket=self.bucket, Key=key)
@@ -77,11 +81,10 @@ class AWSS3Storage:
         )
 
     def get_key_from_url(self, url: str) -> str | None:
-        bucket = f'/{self.bucket}/'
-        if not url or bucket not in url:
+        if not url or not url.startswith(self.resource_api):
             return None
         url = url.strip()
-        return url[url.find(bucket) + len(bucket):]
+        return url.removeprefix(self.resource_api)
 
     async def get(self, key: str) -> bytes:
         return await asyncio.to_thread(self.sync_get, key)
