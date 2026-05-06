@@ -10,11 +10,10 @@ from wwricu.config import app_config
 from wwricu.database import common_db, post_db, tag_db, res_db
 from wwricu.domain.common import FileUploadVO, PageVO, TrashBinRO
 from wwricu.domain.constant import HttpErrorDetail, CommonConstant
-from wwricu.domain.entity import BlogPost, PostResource
-from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum
+from wwricu.domain.entity import BlogPost, PostResource, PostTag, EntityRelation
+from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum, TagTypeEnum, RelationTypeEnum
 from wwricu.domain.post import PostDetailVO, PostQueryDTO, PostRequestRO, PostResourceVO, PostUpdateRO
-from wwricu.domain.tag import TagVO, TagUpdateDTO
-from wwricu.service.tag import get_post_tags, update_post_tags, update_post_category, get_posts_category
+from wwricu.domain.tag import TagVO, TagUpdateDTO, TagQueryDTO
 
 
 async def build_query(post: PostRequestRO, *, public: bool = False) -> PostQueryDTO:
@@ -44,7 +43,7 @@ async def get_detail(blog_post: BlogPost | None) -> PostDetailVO:
     if blog_post is None:
         raise ValueError
     category = await tag_db.find_category(category_id=blog_post.category_id)
-    tags = await get_post_tags(blog_post)
+    tags = await get_tags(blog_post)
     cover = await res_db.find_by_id(blog_post.cover_id, PostResourceTypeEnum.COVER_IMAGE)
     post_detail = PostDetailVO.model_validate(blog_post)
     post_detail.tag_list = list(map(TagVO.model_validate, tags))
@@ -58,7 +57,7 @@ async def get_detail(blog_post: BlogPost | None) -> PostDetailVO:
 
 async def get_preview(post_list: list[BlogPost]) -> list[PostDetailVO]:
     """Generate post preview from BlogPost list"""
-    categories = await get_posts_category(post_list)
+    categories = await batch_get_category(post_list)
     tags = await tag_db.find_tags_by_posts(post_list)
     covers = await res_db.find_posts_cover(post_list)
 
@@ -99,8 +98,8 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
         log.info(f'delete resource {delete_keys}')
 
     tag_update = TagUpdateDTO(category_id=new_post.category_id, tag_id_list=new_post.tag_id_list, status=new_post.status)
-    await update_post_category(post, tag_update)
-    await update_post_tags(post, tag_update)
+    await update_category(post, tag_update)
+    await update_tags(post, tag_update)
     await post_db.update_selective(
         new_post.id,
         title=new_post.title,
@@ -122,13 +121,56 @@ async def update_status(post_id: int, status: PostStatusEnum):
 
     tag_update = TagUpdateDTO(
         category_id=blog_post.category_id,
-        tag_id_list=await tag_db.find_tag_ids_by_post_id(blog_post.id),
+        tag_id_list=await tag_db.find_ids_by_post_id(blog_post.id),
         status=status
     )
 
-    await update_post_category(blog_post, tag_update)
-    await update_post_tags(blog_post, tag_update)
+    await update_category(blog_post, tag_update)
+    await update_tags(blog_post, tag_update)
     await post_db.update_selective(blog_post.id, status=tag_update.status)
+
+
+async def update_tags(post: BlogPost, tag_update: TagUpdateDTO):
+    tags = await tag_db.find_by_criteria(TagQueryDTO(tag_ids=tag_update.tag_id_list, type=TagTypeEnum.POST_TAG))
+    tag_ids, update_tag_ids = {tag.id for tag in await get_tags(post)}, set(tag_update.tag_id_list)
+
+    if tag_ids != update_tag_ids:
+        await post_db.delete_tags(post.id)
+        relations = [EntityRelation(src_id=post.id, dst_id=t.id, type=RelationTypeEnum.POST_TAG) for t in tags]
+        await common_db.insert_all(relations)
+
+    bef_tag_ids, aft_tag_ids = set(), set()
+    if post.status == PostStatusEnum.PUBLISHED:
+        bef_tag_ids = tag_ids
+    if tag_update.status == PostStatusEnum.PUBLISHED:
+        aft_tag_ids = update_tag_ids
+    await tag_db.update_tag_post_count(bef_tag_ids, aft_tag_ids)
+
+
+async def get_tags(post: BlogPost) -> list[PostTag]:
+    tag_ids = await tag_db.find_ids_by_post_id(post.id)
+    return await tag_db.find_by_criteria(TagQueryDTO(tag_ids=tag_ids, type=TagTypeEnum.POST_TAG))
+
+
+async def update_category(post: BlogPost, count_update: TagUpdateDTO):
+    if post.category_id != count_update.category_id:
+        category = await tag_db.find_category(category_id=count_update.category_id)
+        await post_db.update_selective(post.id, category_id=category.id if category else None)
+
+    bef_category_id, aft_category_id = None, None
+    if post.status == PostStatusEnum.PUBLISHED:
+        bef_category_id = post.category_id
+    if count_update.status == PostStatusEnum.PUBLISHED:
+        aft_category_id = count_update.category_id
+    await tag_db.update_category_post_count(bef_category_id, aft_category_id)
+
+
+async def batch_get_category(post_list: list[BlogPost]) -> dict[int, PostTag]:
+    if not (category_ids := [post.category_id for post in post_list if post.category_id]):
+        return {}
+    categories = await tag_db.find_by_criteria(TagQueryDTO(tag_ids=category_ids, type=TagTypeEnum.POST_CAT))
+    category_dict = {cat.id: cat for cat in categories}
+    return {post.id: tag for post in post_list if (tag := category_dict.get(post.category_id))}
 
 
 async def upload_file(file: UploadFile, post_id: int, file_type: PostResourceTypeEnum) -> FileUploadVO:

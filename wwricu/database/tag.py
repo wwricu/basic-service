@@ -53,12 +53,6 @@ async def update_tag_post_count(prev_tag_ids: set[int], post_tag_ids: set[int]):
         await s.execute(stmt)
 
 
-async def increase_post_tag_count(post_tag_ids: list[int], increment: int):
-    stmt = update(PostTag).where(PostTag.id.in_(post_tag_ids)).values(count=PostTag.count + increment)
-    async with get_session() as s:
-        await s.execute(stmt)
-
-
 async def find_tags_by_posts(post_list: list[BlogPost]) -> dict[int, list[PostTag]]:
     if not post_list:
         return {}
@@ -76,6 +70,30 @@ async def find_tags_by_posts(post_list: list[BlogPost]) -> dict[int, list[PostTa
     for post_tag, post_id in query_result:
         result[post_id].append(post_tag)
     return result
+
+
+async def update_selective(tag_id: int, **kwargs):
+    stmt = update(PostTag).where(PostTag.id == tag_id).where(PostTag.deleted == False).values(**kwargs)
+    async with get_session() as s:
+        await s.execute(stmt)
+
+
+async def find_ids_by_post_id(post_id: int) -> list[int]:
+    stmt = select(EntityRelation.dst_id).where(
+        EntityRelation.type == RelationTypeEnum.POST_TAG).where(
+        EntityRelation.deleted == False).where(
+        EntityRelation.src_id == post_id
+    )
+    async with get_session() as s:
+        return list((await s.scalars(stmt)).all())
+
+
+async def delete_unlink_relation():
+    post_query = ~select(BlogPost.id).where(BlogPost.id == EntityRelation.src_id).exists()
+    tag_query = ~select(PostTag.id).where(PostTag.id == EntityRelation.dst_id).exists()
+    stmt = delete(EntityRelation).where(post_query | tag_query)
+    async with get_session() as s:
+        await s.execute(stmt)
 
 
 async def find_category(category_id: int | None = None, name: str | None = None) -> PostTag | None:
@@ -102,40 +120,5 @@ async def update_category_post_count(prev_category_id: int | None, post_category
             else_=PostTag.count
         )
     )
-    async with get_session() as s:
-        await s.execute(stmt)
-
-
-async def update_selective(tag_id: int, **kwargs):
-    stmt = update(PostTag).where(PostTag.id == tag_id).where(PostTag.deleted == False).values(**kwargs)
-    async with get_session() as s:
-        await s.execute(stmt)
-
-
-async def delete_post_tags(post_id: int):
-    stmt = update(EntityRelation).where(
-        EntityRelation.type == RelationTypeEnum.POST_TAG).where(
-        EntityRelation.deleted == False).where(
-        EntityRelation.src_id == post_id).values(
-        deleted=True
-    )
-    async with get_session() as s:
-        await s.execute(stmt)
-
-
-async def find_tag_ids_by_post_id(post_id: int) -> list[int]:
-    stmt = select(EntityRelation.dst_id).where(
-        EntityRelation.type == RelationTypeEnum.POST_TAG).where(
-        EntityRelation.deleted == False).where(
-        EntityRelation.src_id == post_id
-    )
-    async with get_session() as s:
-        return list((await s.scalars(stmt)).all())
-
-
-async def delete_unlink_relation():
-    post_query = ~select(BlogPost.id).where(BlogPost.id == EntityRelation.src_id).exists()
-    tag_query = ~select(PostTag.id).where(PostTag.id == EntityRelation.dst_id).exists()
-    stmt = delete(EntityRelation).where(post_query | tag_query)
     async with get_session() as s:
         await s.execute(stmt)
