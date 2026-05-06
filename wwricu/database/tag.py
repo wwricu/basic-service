@@ -38,14 +38,11 @@ async def count(query: TagQueryDTO) -> int:
         return await s.scalar(count_stmt) or 0
 
 
-async def update_tag_post_count(prev_tag_ids: set[int], post_tag_ids: set[int]):
-    stmt = update(PostTag).where(
-        PostTag.deleted == False).where(
-        PostTag.type == TagTypeEnum.POST_TAG).where(
-        PostTag.id.in_(prev_tag_ids | post_tag_ids)).values(
+async def update_post_count(bef_tag_ids: set[int], aft_tag_ids: set[int], tag_type: TagTypeEnum):
+    stmt = update(PostTag).where(PostTag.type == tag_type).where(PostTag.id.in_(bef_tag_ids | aft_tag_ids)).values(
         count=case(
-            (PostTag.id.in_(prev_tag_ids - post_tag_ids), PostTag.count - 1),
-            (PostTag.id.in_(post_tag_ids - prev_tag_ids), PostTag.count + 1),
+            (PostTag.id.in_(bef_tag_ids - aft_tag_ids), PostTag.count - 1),
+            (PostTag.id.in_(aft_tag_ids - bef_tag_ids), PostTag.count + 1),
             else_=PostTag.count
         )
     )
@@ -107,18 +104,3 @@ async def find_category(category_id: int | None = None, name: str | None = None)
     if len(tags := await find_by_criteria(query)) > 1:
         raise ValueError
     return tags[0] if tags else None
-
-
-async def update_category_post_count(prev_category_id: int | None, post_category_id: int | None):
-    stmt = update(PostTag).where(
-        PostTag.deleted == False).where(
-        PostTag.type == TagTypeEnum.POST_CAT).where(
-        PostTag.id.in_((prev_category_id, post_category_id))).values(
-        count=case(
-            (PostTag.id == prev_category_id, PostTag.count - 1),
-            (PostTag.id == post_category_id, PostTag.count + 1),
-            else_=PostTag.count
-        )
-    )
-    async with get_session() as s:
-        await s.execute(stmt)
