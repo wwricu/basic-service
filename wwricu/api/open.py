@@ -9,9 +9,9 @@ from wwricu.domain.constant import HttpErrorDetail, TimeConstant
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, TagTypeEnum
 from wwricu.domain.post import PostDetailVO, PostRequestRO
 from wwricu.domain.tag import TagVO, TagQueryDTO
-from wwricu.service import manage_service, post_service, security_service
+from wwricu.service import manage_service, post_service
 
-open_api = APIRouter(prefix='/open',  tags=['Open API'], dependencies=[Depends(security_service.open_limiter)])
+open_api = APIRouter(prefix='/open',  tags=['Open API'])
 
 
 @open_api.post('/post/all', response_model=PageVO[PostDetailVO])
