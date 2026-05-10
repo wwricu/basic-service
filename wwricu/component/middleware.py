@@ -8,7 +8,7 @@ from fastapi.middleware import Middleware
 from loguru import logger as log
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
-from wwricu.domain.constant import CommonConstant, HttpHeader
+from wwricu.domain.constant import CommonConst, HttpHeader
 
 
 class ExceptionMiddleware(BaseHTTPMiddleware):
@@ -22,7 +22,7 @@ class ExceptionMiddleware(BaseHTTPMiddleware):
             if __debug__:
                 raise
             log.exception(f'{request.method} {request.url.path} {e}')
-            return JSONResponse(CommonConstant.COMMON_ERROR, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return JSONResponse(CommonConst.COMMON_ERROR, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class PerformanceMiddleware(BaseHTTPMiddleware):

@@ -65,7 +65,7 @@ class AWSS3Storage:
 
             s3_resp = AWSS3ListResponse.model_validate(response)
             if s3_resp.ResponseMetadata.HTTPStatusCode != http_status.HTTP_200_OK:
-                log.warning(f'Failed to list objects: {s3_resp.ResponseMetadata}')
+                log.error(f'Failed to list objects: {s3_resp.ResponseMetadata}')
                 break
 
             yield from s3_resp.Contents
