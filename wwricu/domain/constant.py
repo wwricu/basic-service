@@ -6,11 +6,9 @@ class HttpErrorDetail(StrEnum):
     WRONG_PASSWORD = 'Wrong Username or Password'
     WRONG_TOTP = 'Wrong TOTP'
     NEED_TOTP = 'Please input TOTP'
-    INVALID_VALUE = 'Invalid value'
-    TOO_MANY_REQUESTS = 'Too many requests'
 
 
-class CommonConstant(StrEnum):
+class CommonConst(StrEnum):
     SESSION_ID_2FA = '2fa_session_id'
     SESSION_ID = 'session_id'
     COOKIE_SIGN = 'sign'
@@ -20,9 +18,11 @@ class CommonConstant(StrEnum):
     IMG_TAG = 'img'
     SRC_PROP = 'src'
     HTML_PARSER = 'html.parser'
+    LOGIN_IP_BUCKET = 'login:{ip}'
+    IMAGE_IP_BUCKET = 'image:{ip}'
 
 
-class TimeConstant(IntEnum):
+class TimeConst(IntEnum):
     COOKIE_MAX_AGE = 7 * 24 * 60 * 60
     ONE_DAY_SECONDS = 60 * 60 * 24
     ONE_HOUR_SECONDS = 60 * 60
@@ -33,3 +33,5 @@ class TimeConstant(IntEnum):
 class HttpHeader(StrEnum):
     X_REAL_IP = 'X-Real-IP'
     X_FORWARD_FOR = 'X-Forwarded-For'
+    X_API_KEY_ID = 'X-Api-Key-Id'
+    X_API_KEY = 'X-Api-Key'

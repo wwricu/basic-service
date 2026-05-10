@@ -9,7 +9,7 @@ from wwricu.component.storage import oss_public
 from wwricu.config import app_config
 from wwricu.database import common_db, post_db, tag_db, res_db
 from wwricu.domain.common import FileUploadVO, PageVO, TrashBinRO
-from wwricu.domain.constant import HttpErrorDetail, CommonConstant
+from wwricu.domain.constant import HttpErrorDetail, CommonConst
 from wwricu.domain.entity import BlogPost, PostResource, PostTag, EntityRelation
 from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum, TagTypeEnum, RelationTypeEnum
 from wwricu.domain.post import PostDetailVO, PostQueryDTO, PostRequestRO, PostResourceVO, PostUpdateRO
@@ -88,8 +88,8 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
     resources = await res_db.find_by_post_id(post.id)
     bef_keys = {res.key for res in resources if res.id != new_post.cover_id}
     aft_keys = set()
-    for img in BeautifulSoup(new_post.content, CommonConstant.HTML_PARSER).find_all(CommonConstant.IMG_TAG):
-        src = img.get(CommonConstant.SRC_PROP)
+    for img in BeautifulSoup(new_post.content, CommonConst.HTML_PARSER).find_all(CommonConst.IMG_TAG):
+        src = img.get(CommonConst.SRC_PROP)
         if isinstance(src, str) and (key := oss_public.get_key_from_url(src)):
             aft_keys.add(key)
 

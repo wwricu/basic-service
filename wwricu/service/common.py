@@ -8,6 +8,7 @@ from loguru import logger as log
 
 from wwricu.component.cache import sys_cache, LocalCache
 from wwricu.component.database import database_manager
+from wwricu.config import app_config
 from wwricu.database import post_db, tag_db
 from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum
 from wwricu.domain.post import PostQueryDTO
@@ -23,6 +24,9 @@ async def lifespan(app: FastAPI):
         scheduler.start()
 
         await sys_cache.set(CacheKeyEnum.STARTUP_TIMESTAMP, int(time.time()), 0)
+
+        log.info(f'open api auth to {[app.app_name for app in app_config.security.open_api_auth.values()]}')
+        log.info(f'{app_config.security.login_global_qps=} {app_config.security.login_ip_qps=}')
         log.info(f'{app.title} startup')
         yield
     finally:

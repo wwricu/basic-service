@@ -16,7 +16,7 @@ from wwricu.domain.tag import TagQueryDTO
 
 async def set_config(key: ConfigKeyEnum, value: str):
     if not isinstance(value, str):
-        raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE, detail=HttpErrorDetail.INVALID_VALUE)
+        raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE)
     await conf_db.upsert(key, value)
     await sys_cache.delete(CacheKeyEnum.CONFIG.format(key=key))
 

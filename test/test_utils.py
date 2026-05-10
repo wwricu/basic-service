@@ -1,3 +1,4 @@
+import hashlib
 import secrets
 from random import Random
 
@@ -60,6 +61,15 @@ async def test_reset_count():
     stmt = update(PostTag).where(PostTag.id == subquery.c.id).values(count=subquery.c.category_count)
     async with get_session() as s:
         await s.execute(stmt)
+
+
+@pytest.mark.skip
+@pytest.mark.asyncio
+async def test_generate_api_key():
+    api_key_id = secrets.token_hex(16)
+    api_key = secrets.token_hex(32)
+    api_key_hash = hashlib.sha256(api_key.encode()).hexdigest()
+    print(f'{api_key_id=}:{api_key=}:{api_key_hash=}')
 
 
 client = TestClient(app)
