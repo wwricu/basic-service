@@ -28,7 +28,6 @@ class DatabaseActionEnum(StrEnum):
 
 
 class EnvironmentEnum(StrEnum):
-    LOCAL = 'local'
     DEVELOPMENT = 'dev'
     PRODUCTION = 'prod'
 
@@ -50,7 +49,6 @@ class CacheKeyEnum(StrEnum):
     POST_DETAIL = 'post_cache:{id}'
     ALL_POSTS = 'all_posts:{page_index}:{page_size}:{category}:{tag_list}'
     ALL_TAGS = 'all_tags:{type}'
-    IP_QUOTE = 'ip_quota:{ip}'
     TOKEN_BUCKET = 'token_bucket_id:{name}:{id}'
 
 

@@ -47,7 +47,7 @@ class DatabaseManager:
 
     def init(self):
         if not os.path.exists(self.config.database) and (data := oss_private.sync_get(self.config.database)):
-            log.warning(f'Download database as {self.config.database}')
+            log.info(f'Download database as {self.config.database}')
             with open(self.config.database, mode='wb+') as f:
                 f.write(data)
         self.engine = create_async_engine(self.config.url, echo=__debug__)
@@ -57,7 +57,7 @@ class DatabaseManager:
     async def backup(self):
         if __debug__ or not os.path.exists(self.config.database):
             return
-        log.warning(f'Backup database {self.config.database}')
+        log.info(f'Backup database {self.config.database}')
         async with await open_file(self.config.database, mode='rb') as f:
             # PRICED call on each restart and every week
             await oss_private.put(self.config.database, await f.read())

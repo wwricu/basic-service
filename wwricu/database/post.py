@@ -64,6 +64,17 @@ async def count(query: PostQueryDTO) -> int:
         return await s.scalar(count_stmt) or 0
 
 
+async def delete_tags(post_id: int):
+    stmt = update(EntityRelation).where(
+        EntityRelation.type == RelationTypeEnum.POST_TAG).where(
+        EntityRelation.deleted == False).where(
+        EntityRelation.src_id == post_id).values(
+        deleted=True
+    )
+    async with get_session() as s:
+        await s.execute(stmt)
+
+
 async def build_criteria(query: PostQueryDTO) -> Select:
     stmt = select(BlogPost).options(defer(BlogPost.content, raiseload=True))
     if query.status is not None:

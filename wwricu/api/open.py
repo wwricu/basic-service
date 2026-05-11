@@ -1,20 +1,18 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from fastapi.responses import RedirectResponse
 
-from wwricu.component.cache import sys_cache, query_cache, post_cache, image_cache
-from wwricu.component.storage import oss_public
+from wwricu.component.cache import sys_cache, query_cache, post_cache
 from wwricu.database import post_db, tag_db
 from wwricu.domain.common import AboutPageVO, PageVO
-from wwricu.domain.constant import HttpErrorDetail, TimeConstant
+from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, TagTypeEnum
 from wwricu.domain.post import PostDetailVO, PostRequestRO
 from wwricu.domain.tag import TagVO, TagQueryDTO
 from wwricu.service import manage_service, post_service, security_service
 
-open_api = APIRouter(prefix='/open',  tags=['Open API'], dependencies=[Depends(security_service.open_limiter)])
+open_api = APIRouter(prefix='/open',  tags=['Open API'])
 
 
-@open_api.post('/post/all', response_model=PageVO[PostDetailVO])
+@open_api.post('/post/all', response_model=PageVO[PostDetailVO], dependencies=[Depends(security_service.open_limiter)])
 async def open_get_posts_api(post: PostRequestRO) -> PageVO[PostDetailVO]:
     cache_key = CacheKeyEnum.ALL_POSTS.format(
         page_index=post.page_index,
@@ -60,12 +58,3 @@ async def open_get_about_api() -> AboutPageVO:
         tag_count=await sys_cache.get(CacheKeyEnum.TAG_COUNT) or 0,
         startup_timestamp=await sys_cache.get(CacheKeyEnum.STARTUP_TIMESTAMP) or 0
     )
-
-
-@open_api.get('/image/{key:path}')
-async def image_api(key: str):
-    if url := await image_cache.get(key):
-        return RedirectResponse(url)
-    url = oss_public.generate_presigned_url(key, expires=TimeConstant.ONE_DAY_SECONDS)
-    await image_cache.set(key, url, second=TimeConstant.ONE_DAY_SECONDS - TimeConstant.ONE_HOUR_SECONDS)
-    return RedirectResponse(url)

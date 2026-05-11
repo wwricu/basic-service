@@ -22,7 +22,7 @@ async def get_tags_api(get_tag: TagRequestRO) -> list[TagVO]:
 
 @tag_api.post('/update', response_model=TagVO)
 async def update_tag_api(tag_update: TagRO) -> TagVO:
-    response = await tag_service.update_tag(tag_update)
+    response = await tag_service.update(tag_update)
     await query_cache.delete_all()
     return response
 
