@@ -40,6 +40,7 @@ class SecurityConfig(BaseModel):
     login_ip_qps: float = 0
     login_global_qps: float = 0
     image_ip_qps: float = 0
+    open_ip_qps: float = 0
 
 
 class Config(BaseSettings):

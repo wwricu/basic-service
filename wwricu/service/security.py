@@ -37,6 +37,12 @@ async def image_limiter():
         raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS)
 
 
+async def open_limiter():
+    if not await rate_limiter.allow(CommonConst.OPEN_IP_BUCKET.format(ip=real_ip.get()), app_config.security.open_ip_qps):
+        log.warning(f'{real_ip.get()} exceeded open rate limit')
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS)
+
+
 async def authenticate(login_request: LoginRO, request: Request, response: Response) -> LoginVO:
     session_id = uuid.uuid4().hex
     session_2fa_id = request.cookies.get(CommonConst.SESSION_ID_2FA)

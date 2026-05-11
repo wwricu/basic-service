@@ -20,6 +20,7 @@ class CommonConst(StrEnum):
     HTML_PARSER = 'html.parser'
     LOGIN_IP_BUCKET = 'login:{ip}'
     IMAGE_IP_BUCKET = 'image:{ip}'
+    OPEN_IP_BUCKET = 'open:{ip}'
 
 
 class TimeConst(IntEnum):
