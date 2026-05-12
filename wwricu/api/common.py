@@ -1,11 +1,9 @@
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Request, Response, status, HTTPException
 from fastapi.responses import RedirectResponse
 
-from wwricu.component.cache import image_cache
-from wwricu.component.storage import oss_public
 from wwricu.domain.common import LoginRO, LoginVO
-from wwricu.domain.constant import TimeConst
-from wwricu.service import security_service
+from wwricu.domain.enum import PostStatusEnum
+from wwricu.service import common_service, post_service, security_service
 
 common_api = APIRouter(tags=['Common API'])
 
@@ -25,10 +23,10 @@ async def info_api():
     return
 
 
-@common_api.get('/image/{key:path}', dependencies=[Depends(security_service.image_limiter)])
-async def image_api(key: str):
-    if url := await image_cache.get(key):
-        return RedirectResponse(url)
-    url = oss_public.generate_presigned_url(key, expires=TimeConst.ONE_DAY_SECONDS)
-    await image_cache.set(key, url, second=TimeConst.ONE_DAY_SECONDS - TimeConst.ONE_HOUR_SECONDS)
+@common_api.get('/image/post/{post_id}/{key}', dependencies=[Depends(security_service.image_limiter)])
+async def image_api(post_id: int, key: str, is_admin: bool = Depends(security_service.is_admin)):
+    if not is_admin and await post_service.get_status(post_id) != PostStatusEnum.PUBLISHED:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+
+    url = await common_service.get_image_url(f'post/{post_id}/{key}')
     return RedirectResponse(url)

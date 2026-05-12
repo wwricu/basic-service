@@ -30,7 +30,7 @@ async def open_get_posts_api(post: PostRequestRO) -> PageVO[PostDetailVO]:
 
 @open_api.get('/post/detail/{post_id}', response_model=PostDetailVO)
 async def open_get_post_api(post_id: int) -> PostDetailVO:
-    cache_key = CacheKeyEnum.POST_DETAIL.format(id=post_id)
+    cache_key = CacheKeyEnum.POST.format(id=post_id)
     if cached_post := await post_cache.get(cache_key):
         return await post_service.get_detail(cached_post)
     if (post := await post_db.find_published(post_id)) is None:

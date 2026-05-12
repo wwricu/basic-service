@@ -76,13 +76,18 @@ async def authenticate(login_request: LoginRO, request: Request, response: Respo
 
 
 async def require_admin(request: Request, response: Response):
+    if not await is_admin(request, response):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
+
+async def is_admin(request: Request, response: Response) -> bool:
     if __debug__:
-        return
+        return True
 
     session_id = request.cookies.get(CommonConst.SESSION_ID)
     cookie_sign = request.cookies.get(CommonConst.COOKIE_SIGN)
     if session_id is None or cookie_sign is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        return False
 
     if (
         not isinstance(issue_time := await sys_cache.get(session_id), int) or
@@ -91,11 +96,12 @@ async def require_admin(request: Request, response: Response):
         hmac_sign(session_id) != cookie_sign
     ):
         log.warning(f'Unauthorized access to {request.url.path}')
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        return False
 
     if issue_time + TimeConst.ONE_DAY_SECONDS < int(time.time()):
         log.info(f'{session_id} renew')
         await login(session_id, response)
+    return True
 
 
 def hmac_sign(plain: str) -> str:
