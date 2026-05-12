@@ -17,7 +17,6 @@ from wwricu.domain.third import AWSConst, AWSAppConfigSessionResponse, AWSAppCon
 class StorageConfig(BaseModel):
     region: str
     bucket: str
-    private_bucket: str
 
 
 class DatabaseConfig(BaseModel):

@@ -28,8 +28,3 @@ class TimeConst(IntEnum):
     ONE_DAY_SECONDS = 60 * 60 * 24
     TOTP_EXPIRATION = 300
     CACHE_EXPIRATION = 600
-
-
-class HttpHeader(StrEnum):
-    X_REAL_IP = 'X-Real-IP'
-    X_FORWARD_FOR = 'X-Forwarded-For'
