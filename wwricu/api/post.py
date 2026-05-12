@@ -2,7 +2,7 @@ import secrets
 
 from fastapi import APIRouter, Depends, Form, UploadFile, HTTPException, status as http_status
 
-from wwricu.component.cache import query_cache, post_cache
+from wwricu.component.cache import query_cache, post_cache, post_status_cache
 from wwricu.database import common_db, post_db
 from wwricu.domain.common import FileUploadVO, PageVO
 from wwricu.domain.entity import BlogPost
@@ -15,9 +15,7 @@ post_api = APIRouter(prefix='/post', tags=['Post Management'], dependencies=[Dep
 
 @post_api.get('/create', response_model=PostDetailVO)
 async def create_post_api() -> PostDetailVO:
-    while await post_db.find_by_id(post_id := 1_000_000_000 + secrets.randbelow(9_000_000_000)):
-        pass
-    blog_post = BlogPost(id=post_id, status=PostStatusEnum.DRAFT)
+    blog_post = BlogPost(id=1_000_000_000 + secrets.randbelow(9_000_000_000), status=PostStatusEnum.DRAFT)
     await common_db.insert(blog_post)
     return PostDetailVO.model_validate(blog_post)
 
@@ -38,7 +36,7 @@ async def get_post(post_id: int) -> PostDetailVO | None:
 @post_api.post('/update', dependencies=[Depends(common_service.reset_sys_config)], response_model=PostDetailVO)
 async def update_post_api(post_update: PostUpdateRO) -> PostDetailVO:
     detail = await post_service.update(post_update)
-    await post_cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_update.id))
+    await post_cache.delete(CacheKeyEnum.POST.format(id=post_update.id))
     await query_cache.delete_all()
     return detail
 
@@ -46,7 +44,8 @@ async def update_post_api(post_update: PostUpdateRO) -> PostDetailVO:
 @post_api.get('/status/{post_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=None)
 async def update_post_status_api(post_id: int, status: PostStatusEnum):
     await post_service.update_status(post_id, status=status)
-    await post_cache.delete(CacheKeyEnum.POST_DETAIL.format(id=post_id))
+    await post_status_cache.delete(CacheKeyEnum.POST.format(id=post_id))
+    await post_cache.delete(CacheKeyEnum.POST.format(id=post_id))
     await query_cache.delete_all()
 
 

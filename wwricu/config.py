@@ -104,8 +104,8 @@ def init_config() -> Config:
     aws_app_config = AWSAppConfigConfigResponse.model_validate(response)
     aws_app_config.check()
 
-    content = aws_app_config.Configuration.read().decode()
-    aws_app_config.Configuration.close()
+    with aws_app_config.Configuration:
+        content = aws_app_config.Configuration.read().decode()
 
     config_file.parent.mkdir(parents=True, exist_ok=True)
     with config_file.open('wt+') as f:

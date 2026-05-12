@@ -8,7 +8,7 @@ from anyio import open_file
 from loguru import logger as log
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session, async_sessionmaker, create_async_engine, AsyncEngine
 
-from wwricu.component.storage import oss_private
+from wwricu.component.storage import storage
 from wwricu.config import app_config, DatabaseConfig
 
 
@@ -46,7 +46,7 @@ class DatabaseManager:
         self.init()
 
     def init(self):
-        if not os.path.exists(self.config.database) and (data := oss_private.sync_get(self.config.database)):
+        if not os.path.exists(self.config.database) and (data := storage.sync_get(self.config.database)):
             log.info(f'Download database as {self.config.database}')
             with open(self.config.database, mode='wb+') as f:
                 f.write(data)
@@ -60,7 +60,7 @@ class DatabaseManager:
         log.info(f'Backup database {self.config.database}')
         async with await open_file(self.config.database, mode='rb') as f:
             # PRICED call on each restart and every week
-            await oss_private.put(self.config.database, await f.read())
+            await storage.put(self.config.database, await f.read())
         log.info('Backup database success')
 
     async def restore(self):

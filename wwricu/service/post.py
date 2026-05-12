@@ -4,14 +4,15 @@ from bs4 import BeautifulSoup
 from fastapi import HTTPException, UploadFile, status as http_status
 from loguru import logger as log
 
+from wwricu.component.cache import post_status_cache
 from wwricu.component.database import transaction
-from wwricu.component.storage import oss_public
+from wwricu.component.storage import storage
 from wwricu.config import app_config
 from wwricu.database import common_db, post_db, tag_db, res_db
 from wwricu.domain.common import FileUploadVO, PageVO, TrashBinRO
-from wwricu.domain.constant import HttpErrorDetail, CommonConst
+from wwricu.domain.constant import HttpErrorDetail, CommonConst, TimeConst
 from wwricu.domain.entity import BlogPost, PostResource, PostTag, EntityRelation
-from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum, TagTypeEnum, RelationTypeEnum
+from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum, TagTypeEnum, RelationTypeEnum, CacheKeyEnum
 from wwricu.domain.post import PostDetailVO, PostQueryDTO, PostRequestRO, PostResourceVO, PostUpdateRO
 from wwricu.domain.tag import TagVO, TagUpdateDTO, TagQueryDTO
 
@@ -90,7 +91,7 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
     aft_keys = set()
     for img in BeautifulSoup(new_post.content, CommonConst.HTML_PARSER).find_all(CommonConst.IMG_TAG):
         src = img.get(CommonConst.SRC_PROP)
-        if isinstance(src, str) and (key := oss_public.get_key_from_url(src)):
+        if isinstance(src, str) and (key := storage.get_key_from_url(src)):
             aft_keys.add(key)
 
     if delete_keys := list(bef_keys - aft_keys):
@@ -180,7 +181,7 @@ async def upload_file(file: UploadFile, post_id: int, file_type: PostResourceTyp
         raise HTTPException(http_status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
 
     key = f'post/{post_id}/{file_type}_{uuid.uuid4().hex}'
-    url = await oss_public.put(key, await file.read())
+    url = await storage.put(key, await file.read())
     resource = PostResource(name=file.filename, key=key, type=file_type, post_id=post.id, url=url)
     await common_db.insert(resource)
     log.info(f'upload file {file.filename} to {post_id=} {file.size=} {url=}')
@@ -205,5 +206,15 @@ async def process_resource_trash(trash_bin: TrashBinRO):
     await common_db.hard_delete(PostResource, trash_bin.id)
 
     if resource:
-        await oss_public.delete(resource.key)
+        await storage.delete(resource.key)
         log.info(f'delete resource {resource.key}')
+
+
+async def get_status(post_id: int) -> PostStatusEnum:
+    if post_status := await post_status_cache.get(CacheKeyEnum.POST.format(id=post_id)):
+        return post_status
+    if (post := await post_db.find_by_id(post_id)) is None:
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND)
+    post_status = PostStatusEnum(post.status)
+    await post_status_cache.set(CacheKeyEnum.POST.format(id=post_id), post_status, TimeConst.ONE_DAY_SECONDS)
+    return post_status
