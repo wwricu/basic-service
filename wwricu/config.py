@@ -1,16 +1,15 @@
 import logging
 import os
 import sys
-import uuid
 from pathlib import Path
 
 import boto3
 from dotenv import load_dotenv
 from loguru import logger as log
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 
-from wwricu.domain.constant import CommonConstant
+from wwricu.domain.constant import CommonConst
 from wwricu.domain.enum import EnvironmentEnum
 from wwricu.domain.third import AWSConst, AWSAppConfigSessionResponse, AWSAppConfigConfigResponse
 
@@ -34,29 +33,18 @@ class DatabaseConfig(BaseModel):
         return f'{self.driver}://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}'
 
 
-class Throttle(BaseModel):
-    name: str = Field(default_factory=lambda: uuid.uuid4().hex)
-    enable: bool = True
-    qps: float
-    capacity: float
-
-
-class ThrottleConfig(BaseModel):
-    login_ip: Throttle = Throttle(qps=1, capacity=5)
-    login_global: Throttle = Throttle(qps=10, capacity=50)
-    open_ip: Throttle = Throttle(qps=20, capacity=100)
-
-
 class SecurityConfig(BaseModel):
     username: str
     password: str
     secret_key: str
-    throttle: ThrottleConfig = ThrottleConfig()
+    login_ip_qps: float = 0
+    login_global_qps: float = 0
+    image_ip_qps: float = 0
+    open_ip_qps: float = 0
 
 
 class Config(BaseSettings):
     encoding: str = 'utf-8'
-    trash_expire_day: int = 30
     max_upload_size: int = 10 * 1024 * 1024
 
     storage: StorageConfig
@@ -65,7 +53,7 @@ class Config(BaseSettings):
 
 
 class EnvironmentVariable(BaseSettings):
-    ENV: EnvironmentEnum = EnvironmentEnum.LOCAL
+    ENV: EnvironmentEnum = EnvironmentEnum.DEVELOPMENT
     RESOURCE_HOSTNAME: str = 'res.wwr.icu'
     ROOT_PATH: str = '/'
     LOG_PATH: str = 'logs'
@@ -81,11 +69,11 @@ def init_log():
         log.add(sys.stdout, level=logging.NOTSET, backtrace=False)
         log.warning('APP RUNNING ON DEBUG MODE')
 
-    log_path = env.LOG_PATH
-    os.makedirs(log_path, exist_ok=True)
-    log.add(f'{log_path}/server.log', level=logging.DEBUG, rotation='10 MB', retention=10, backtrace=False)
+    os.makedirs(env.LOG_PATH, exist_ok=True)
+    log.add(f'{env.LOG_PATH}/error.log', level=logging.ERROR, rotation='1 MB', retention=10, backtrace=False)
+    log.add(f'{env.LOG_PATH}/server.log', level=logging.DEBUG, rotation='10 MB', retention=10, backtrace=False)
     log.add(
-        f'{log_path}/access.log',
+        f'{env.LOG_PATH}/access.log',
         level=logging.NOTSET,
         filter=lambda record: record.get('level').no < logging.DEBUG,
         rotation='20 MB',
@@ -101,10 +89,10 @@ def init_config() -> Config:
         with config_file.open() as f:
             return Config.model_validate_json(f.read())
 
-    log.warning(f'Getting config from {AWSConst.APP_CONFIG_DATA}')
+    log.info(f'Getting config from {AWSConst.APP_CONFIG_DATA}')
     app_config_data_client = boto3.client(AWSConst.APP_CONFIG_DATA, region_name=AWSConst.REGION)
     response = app_config_data_client.start_configuration_session(
-        ApplicationIdentifier=CommonConstant.APP_NAME,
+        ApplicationIdentifier=CommonConst.APP_NAME,
         EnvironmentIdentifier=EnvironmentEnum(env.ENV),
         ConfigurationProfileIdentifier=config_file.name
     )

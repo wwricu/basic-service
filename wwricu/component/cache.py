@@ -7,7 +7,7 @@ from typing import Protocol, Any
 
 from loguru import logger as log
 
-from wwricu.domain.constant import TimeConstant
+from wwricu.domain.constant import TimeConst
 
 
 class LocalCache:
@@ -52,7 +52,7 @@ class LocalCache:
         self.data.move_to_end(key)
         return self.data[key]
 
-    async def set(self, key: str | None, value: Any, second: int = TimeConstant.CACHE_EXPIRATION):
+    async def set(self, key: str | None, value: Any, second: int = TimeConst.CACHE_EXPIRATION):
         if not isinstance(key, str):
             raise KeyError(key)
 
@@ -119,7 +119,7 @@ class LocalCache:
 class Cache(Protocol):
     async def get(self, key: str | None) -> Any:...
 
-    async def set(self, key: str | None, value: Any, second: int = TimeConstant.CACHE_EXPIRATION):...
+    async def set(self, key: str | None, value: Any, second: int = TimeConst.CACHE_EXPIRATION):...
 
     async def delete(self, key: str | None):...
 
@@ -131,5 +131,6 @@ class Cache(Protocol):
 sys_cache: Cache = LocalCache(name='sys', persist=True)
 query_cache: Cache = LocalCache(name='query')
 post_cache: Cache = LocalCache(name='post')
+post_status_cache: Cache = LocalCache(name='post_status')
 image_cache: Cache = LocalCache(name='image', max_size=10000)
 bucket_cache = LocalCache(name='bucket', max_size=100000)

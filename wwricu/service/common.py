@@ -6,9 +6,12 @@ from apscheduler.triggers.cron import CronTrigger
 from fastapi import FastAPI
 from loguru import logger as log
 
-from wwricu.component.cache import sys_cache, LocalCache
+from wwricu.component.cache import sys_cache, LocalCache, image_cache
 from wwricu.component.database import database_manager
+from wwricu.component.storage import oss_public
+from wwricu.config import app_config
 from wwricu.database import post_db, tag_db
+from wwricu.domain.constant import TimeConst
 from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum
 from wwricu.domain.post import PostQueryDTO
 from wwricu.domain.tag import TagQueryDTO
@@ -23,6 +26,11 @@ async def lifespan(app: FastAPI):
         scheduler.start()
 
         await sys_cache.set(CacheKeyEnum.STARTUP_TIMESTAMP, int(time.time()), 0)
+
+        log.info(f'{app_config.security.login_global_qps=}')
+        log.info(f'{app_config.security.login_ip_qps=}')
+        log.info(f'{app_config.security.image_ip_qps=}')
+        log.info(f'{app_config.security.open_ip_qps=}')
         log.info(f'{app.title} startup')
         yield
     finally:
@@ -42,3 +50,11 @@ async def reset_sys_config():
     await sys_cache.set(CacheKeyEnum.POST_COUNT, post_count, 0)
     await sys_cache.set(CacheKeyEnum.CATEGORY_COUNT, category_count, 0)
     await sys_cache.set(CacheKeyEnum.TAG_COUNT, tag_count, 0)
+
+
+async def get_image_url(key: str) -> str:
+    if url := await image_cache.get(key):
+        return url
+    url = oss_public.generate_presigned_url(key, expires=2 * TimeConst.ONE_DAY_SECONDS)
+    await image_cache.set(key, url, second=TimeConst.ONE_DAY_SECONDS)
+    return url

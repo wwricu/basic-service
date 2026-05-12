@@ -14,7 +14,6 @@ class PostStatusEnum(StrEnum):
 class PostResourceTypeEnum(StrEnum):
     IMAGE = 'image'
     COVER_IMAGE = 'cover'
-    COMMON = 'common'
 
 
 class RelationTypeEnum(StrEnum):
@@ -28,7 +27,6 @@ class DatabaseActionEnum(StrEnum):
 
 
 class EnvironmentEnum(StrEnum):
-    LOCAL = 'local'
     DEVELOPMENT = 'dev'
     PRODUCTION = 'prod'
 
@@ -46,12 +44,11 @@ class CacheKeyEnum(StrEnum):
     CATEGORY_COUNT = 'category_count'
     TAG_COUNT = 'tag_count'
     STARTUP_TIMESTAMP = 'startup_timestamp'
-    CONFIG = 'config_cache:{key}'
-    POST_DETAIL = 'post_cache:{id}'
+    CONFIG = 'config:{key}'
+    POST = 'post:{id}'
     ALL_POSTS = 'all_posts:{page_index}:{page_size}:{category}:{tag_list}'
     ALL_TAGS = 'all_tags:{type}'
-    IP_QUOTE = 'ip_quota:{ip}'
-    TOKEN_BUCKET = 'token_bucket_id:{name}:{id}'
+    TOKEN_BUCKET = 'token_bucket:{name}:{id}'
 
 
 class EntityTypeEnum(StrEnum):
