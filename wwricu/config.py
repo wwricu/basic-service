@@ -25,7 +25,7 @@ class DatabaseConfig(BaseModel):
     password: str = ''
     host: str = ''
     port: int = 0
-    database: str = ''
+    database: str
 
     @property
     def url(self):
@@ -43,7 +43,6 @@ class SecurityConfig(BaseModel):
 
 
 class Config(BaseSettings):
-    encoding: str = 'utf-8'
     max_upload_size: int = 10 * 1024 * 1024
 
     storage: StorageConfig

@@ -105,7 +105,7 @@ async def is_admin(request: Request, response: Response) -> bool:
 
 
 def hmac_sign(plain: str) -> str:
-    return hmac.new(base64.b64decode(app_config.security.secret_key), plain.encode(app_config.encoding), hashlib.sha256).hexdigest()
+    return hmac.new(base64.b64decode(app_config.security.secret_key), plain.encode(), hashlib.sha256).hexdigest()
 
 
 async def login(session_id: str, response: Response):
