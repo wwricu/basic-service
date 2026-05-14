@@ -180,7 +180,7 @@ async def upload_file(file: UploadFile, post_id: int, file_type: PostResourceTyp
     if file.size is None or file.size > app_config.max_upload_size:
         raise HTTPException(http_status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
 
-    key = f'post/{post_id}/{file_type}_{uuid.uuid4().hex}'
+    key = f'post/{post_id}/{uuid.uuid4().hex}'
     url = await storage.put(key, await file.read())
     resource = PostResource(name=file.filename, key=key, type=file_type, post_id=post.id, url=url)
     await common_db.insert(resource)

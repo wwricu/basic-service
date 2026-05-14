@@ -16,7 +16,7 @@ from wwricu.domain.tag import TagQueryDTO
 
 async def set_config(key: ConfigKeyEnum, value: str):
     if not isinstance(value, str):
-        raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE)
+        raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST)
     await conf_db.upsert(key, value)
     await sys_cache.delete(CacheKeyEnum.CONFIG.format(key=key))
 
@@ -66,13 +66,13 @@ async def list_trash() -> list[TrashBinVO]:
 
 async def update_admin_user(user: UserRO):
     if user.username is not None:
-        if len(user.username) < 4 or not bool(re.match('^[a-zA-Z][a-zA-Z0-9_-]*$', user.username)):
-            raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE, detail='Invalid username')
+        if len(user.username) < 4 or not bool(re.match('^[a-zA-Z][a-zA-Z0-9_]*$', user.username)):
+            raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail='Invalid username')
         await set_config(ConfigKeyEnum.USERNAME, user.username)
 
     if user.password is not None:
         if len(user.password) < 8 or user.password.isalnum():
-            raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE, detail='Invalid password')
+            raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail='Invalid password')
         credential = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt())
         await set_config(ConfigKeyEnum.PASSWORD, base64.b64encode(credential).decode())
 
@@ -91,7 +91,7 @@ async def enforce_totp(enforce: bool) -> str | None:
 
 async def confirm_totp(totp: str):
     if (secret := await get_config(ConfigKeyEnum.TOTP_SECRET)) is None:
-        raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE)
+        raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST)
     if not pyotp.TOTP(secret).verify(totp, valid_window=1):
         raise HTTPException(status_code=http_status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
     await set_config(ConfigKeyEnum.TOTP_ENFORCE, str(True))

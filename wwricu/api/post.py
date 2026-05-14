@@ -54,7 +54,7 @@ async def delete_post_draft_api(post_id: int):
     if (post := await post_db.find_by_id(post_id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND)
     if post.status == PostStatusEnum.PUBLISHED:
-        raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST)
+        raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN)
     await post_db.update_selective(post_id, deleted=True)
 
 
