@@ -15,7 +15,7 @@ from loguru import logger as log
 import wwricu.service.manage as manage_service
 from wwricu.component.cache import sys_cache
 from wwricu.component.middleware import real_ip
-from wwricu.component.token_bucket import rate_limiter
+from wwricu.component.token_bucket import default_bucket, login_ip_bucket
 from wwricu.config import app_config
 from wwricu.domain.common import LoginRO, LoginVO
 from wwricu.domain.constant import CommonConst, HttpErrorDetail, TimeConst
@@ -23,22 +23,21 @@ from wwricu.domain.enum import ConfigKeyEnum
 
 
 async def login_limiter():
-    if not await rate_limiter.allow(CommonConst.LOGIN_IP_BUCKET.format(ip=real_ip.get()), app_config.security.login_ip_qps):
+    if not await login_ip_bucket.cost(real_ip.get(), app_config.security.login_ip_span / app_config.security.login_ip_times):
         log.warning(f'{real_ip.get()} exceeded login rate limit')
         raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS)
-    if not await rate_limiter.allow(CommonConst.GLOBAL_TOKEN_BUCKET_ID, app_config.security.login_global_qps):
-        log.warning('login exceeded global rate limit')
-        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS)
+    yield
+    await login_ip_bucket.reset(real_ip.get())
 
 
 async def image_limiter():
-    if not await rate_limiter.allow(CommonConst.IMAGE_IP_BUCKET.format(ip=real_ip.get()), app_config.security.image_ip_qps):
+    if not await default_bucket.allow(CommonConst.IMAGE_IP_BUCKET.format(ip=real_ip.get()), app_config.security.image_ip_qps):
         log.warning(f'{real_ip.get()} exceeded image rate limit')
         raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS)
 
 
 async def open_limiter():
-    if not await rate_limiter.allow(CommonConst.OPEN_IP_BUCKET.format(ip=real_ip.get()), app_config.security.open_ip_qps):
+    if not await default_bucket.allow(CommonConst.OPEN_IP_BUCKET.format(ip=real_ip.get()), app_config.security.open_ip_qps):
         log.warning(f'{real_ip.get()} exceeded open rate limit')
         raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS)
 
@@ -55,6 +54,7 @@ async def authenticate(login_request: LoginRO, request: Request, response: Respo
         response.delete_cookie(CommonConst.SESSION_ID_2FA)
     elif session_2fa_id and enforce and secret and login_request.totp and await sys_cache.get(session_2fa_id):
         if not pyotp.TOTP(secret).verify(login_request.totp, valid_window=1):
+            log.warning(f'{login_request.username} wrong totp')
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
         await sys_cache.delete(session_2fa_id)
         response.delete_cookie(CommonConst.SESSION_ID_2FA)

@@ -3,12 +3,12 @@ import uuid
 
 import pytest
 
-from wwricu.component.token_bucket import TokenBucketLimiter
+from wwricu.component.token_bucket import TokenBucket
 
 
 @pytest.mark.asyncio
 async def test_token_bucket_refill():
-    limiter = TokenBucketLimiter(name='test', capacity=5, qps=10.0)
+    limiter = TokenBucket(name='test', capacity=5, qps=10.0)
     ip = uuid.uuid4().hex[:8]
     for _ in range(5):
         assert await limiter.allow(ip)

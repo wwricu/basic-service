@@ -6,7 +6,7 @@ from pathlib import Path
 import boto3
 from dotenv import load_dotenv
 from loguru import logger as log
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
 
 from wwricu.domain.constant import CommonConst
@@ -36,8 +36,8 @@ class SecurityConfig(BaseModel):
     username: str
     password: str
     secret_key: str
-    login_ip_qps: float = 0
-    login_global_qps: float = 0
+    login_ip_times: int = Field(3, gt=0)
+    login_ip_span: float = Field(1800.0, gt=0)
     image_ip_qps: float = 0
     open_ip_qps: float = 0
 

@@ -14,11 +14,9 @@ class CommonConst(StrEnum):
     COOKIE_SIGN = 'sign'
     APP_NAME = 'wwr.icu'
     COMMON_ERROR = 'Internal Server Error'
-    GLOBAL_TOKEN_BUCKET_ID = 'global'
     IMG_TAG = 'img'
     SRC_PROP = 'src'
     HTML_PARSER = 'html.parser'
-    LOGIN_IP_BUCKET = 'login:{ip}'
     IMAGE_IP_BUCKET = 'image:{ip}'
     OPEN_IP_BUCKET = 'open:{ip}'
 

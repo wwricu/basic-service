@@ -27,8 +27,8 @@ async def lifespan(app: FastAPI):
 
         await sys_cache.set(CacheKeyEnum.STARTUP_TIMESTAMP, int(time.time()), 0)
 
-        log.info(f'{app_config.security.login_global_qps=}')
-        log.info(f'{app_config.security.login_ip_qps=}')
+        log.info(f'{app_config.security.login_ip_times=}')
+        log.info(f'{app_config.security.login_ip_span=}')
         log.info(f'{app_config.security.image_ip_qps=}')
         log.info(f'{app_config.security.open_ip_qps=}')
         log.info(f'{app.title} startup')
