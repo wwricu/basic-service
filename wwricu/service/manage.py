@@ -66,7 +66,7 @@ async def list_trash() -> list[TrashBinVO]:
 
 async def update_admin_user(user: UserRO):
     if user.username is not None:
-        if len(user.username) < 4 or not bool(re.match('^[a-zA-Z][a-zA-Z0-9_]*$', user.username)):
+        if len(user.username) < 4 or not re.match('^[a-zA-Z][a-zA-Z0-9_]*$', user.username):
             raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail='Invalid username')
         await set_config(ConfigKeyEnum.USERNAME, user.username)
 

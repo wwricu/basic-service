@@ -56,9 +56,6 @@ class LocalCache:
         if not isinstance(key, str):
             raise KeyError(key)
 
-        if LocalCache.heartbeat is None or LocalCache.heartbeat.done():
-            LocalCache.heartbeat = asyncio.create_task(LocalCache.clean())
-
         if second > 0:
             self.expiration[key] = int(time.time()) + second
         self.data[key] = value
@@ -79,19 +76,16 @@ class LocalCache:
         self.expiration.clear()
 
     async def close(self):
-        LocalCache.all_caches.pop(self.name, None)
-        if len(LocalCache.all_caches) == 0 and LocalCache.heartbeat and not LocalCache.heartbeat.done():
-            LocalCache.heartbeat.cancel()
-            try:
-                await LocalCache.heartbeat
-            except asyncio.CancelledError:
-                pass
         if not self.persist:
             return
         with shelve.open(self.name) as shv:
             shv.clear()
             shv[self.name] = (self.data, self.expiration)
             log.info(f'{len(self.data)} cache entries dumped')
+
+    @classmethod
+    def init(cls):
+        cls.heartbeat = asyncio.create_task(cls.clean())
 
     @classmethod
     async def clean(cls):
@@ -109,7 +103,8 @@ class LocalCache:
 
     @classmethod
     async def shutdown(cls):
-        for cache in list(cls.all_caches.values()):
+        cls.heartbeat.cancel()
+        for cache in cls.all_caches.values():
             try:
                 await cache.close()
             except Exception as e:

@@ -21,6 +21,7 @@ from wwricu.domain.tag import TagQueryDTO
 async def lifespan(app: FastAPI):
     scheduler = AsyncIOScheduler()
     try:
+        LocalCache.init()
         scheduler.add_job(database_manager.backup, trigger=CronTrigger(day_of_week=0, hour=3))
         scheduler.add_job(tag_db.delete_unlink_relation, trigger=CronTrigger(day_of_week=0, hour=4))
         scheduler.start()
