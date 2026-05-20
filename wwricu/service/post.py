@@ -1,5 +1,6 @@
 import uuid
 
+import jieba
 from bs4 import BeautifulSoup
 from fastapi import HTTPException, UploadFile, status as http_status
 from loguru import logger as log
@@ -89,7 +90,8 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
     resources = await res_db.find_by_post_id(post.id)
     bef_keys = {res.key for res in resources if res.id != new_post.cover_id}
     aft_keys = set()
-    for img in BeautifulSoup(new_post.content, CommonConst.HTML_PARSER).find_all(CommonConst.IMG_TAG):
+    soup = BeautifulSoup(new_post.content, CommonConst.HTML_PARSER)
+    for img in soup.find_all(CommonConst.IMG_TAG):
         src = img.get(CommonConst.SRC_PROP)
         if isinstance(src, str) and (key := storage.get_key_from_url(src)):
             aft_keys.add(key)
@@ -105,6 +107,7 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
         new_post.id,
         title=new_post.title,
         content=new_post.content,
+        search_content=" ".join(jieba.cut_for_search(soup.get_text(separator=' ', strip=True))),
         preview=new_post.preview,
         cover_id=new_post.cover_id,
         status=new_post.status,

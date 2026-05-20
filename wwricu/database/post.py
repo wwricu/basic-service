@@ -1,14 +1,16 @@
-from sqlalchemy import select, update, func, desc, Select
+import jieba
+from sqlalchemy import select, update, func, desc, Select, literal_column
 from sqlalchemy.orm import defer
 
 from wwricu.component.database import get_session
-from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
+from wwricu.domain.entity import BlogPost, EntityRelation, PostTag, PostSearch
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
 from wwricu.domain.post import PostQueryDTO
 
 
 async def find_by_id(post_id: int) -> BlogPost | None:
     stmt = select(BlogPost).where(BlogPost.id == post_id).where(BlogPost.deleted == False)
+    stmt = stmt.options(defer(BlogPost.search_content, raiseload=True))
     async with get_session() as s:
         return await s.scalar(stmt)
 
@@ -37,7 +39,8 @@ async def update_selective(post_id: int, **kwargs):
 
 
 async def find_published(post_id: int) -> BlogPost | None:
-    stmt = select(BlogPost).where(
+    stmt = select(BlogPost).options(
+        defer(BlogPost.search_content, raiseload=True)).where(
         BlogPost.id == post_id).where(
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED
@@ -75,8 +78,28 @@ async def delete_tags(post_id: int):
         await s.execute(stmt)
 
 
+async def search(keyword: str, limit: int = 10) -> list[BlogPost]:
+    if not keyword or not keyword.strip():
+        return []
+
+    stmt = select(BlogPost).options(
+        defer(BlogPost.search_content, raiseload=True)).join(
+        PostSearch, BlogPost.id == PostSearch.rowid).where(
+        BlogPost.deleted == False).where(
+        BlogPost.status == PostStatusEnum.PUBLISHED).where(
+        PostSearch.search_content.match(" ".join(jieba.cut(keyword)))).order_by(
+        func.bm25(literal_column(PostSearch.__tablename__))
+    ).limit(limit)
+
+    async with get_session() as session:
+        return list((await session.scalars(stmt)).all())
+
+
 async def build_criteria(query: PostQueryDTO) -> Select:
-    stmt = select(BlogPost).options(defer(BlogPost.content, raiseload=True))
+    stmt = select(BlogPost).options(
+        defer(BlogPost.content, raiseload=True),
+        defer(BlogPost.search_content, raiseload=True)
+    )
     if query.status is not None:
         stmt = stmt.where(BlogPost.status == query.status.value)
     if query.deleted is not None:

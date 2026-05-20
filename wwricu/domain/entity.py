@@ -6,7 +6,12 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum
 
 
-class Base(DeclarativeBase):
+
+class AbstractBase(DeclarativeBase):
+    __abstract__ = True
+
+
+class Base(AbstractBase):
     __abstract__ = True
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -23,6 +28,7 @@ class BlogPost(Base):
     title: Mapped[str] = mapped_column(String, default='', index=True)
     cover_id: Mapped[int] = mapped_column(Integer, nullable=True)
     content: Mapped[str] = mapped_column(TEXT, default='')
+    search_content: Mapped[str] = mapped_column(TEXT, default='')
     preview: Mapped[str] = mapped_column(TEXT, default='')
     status: Mapped[str] = mapped_column(String, default=PostStatusEnum.DRAFT.value, index=True)
     category_id: Mapped[int] = mapped_column(Integer, nullable=True, index=True)
@@ -62,3 +68,12 @@ class SysConfig(Base):
     __tablename__ = 'wwr_sys_config'
     key: Mapped[str] = mapped_column(String, unique=True)
     value: Mapped[str] = mapped_column(TEXT, nullable=True)
+
+
+class PostSearch(AbstractBase):
+    __tablename__ = "post_search"
+
+    rowid: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title: Mapped[str] = mapped_column(String)
+    preview: Mapped[str] = mapped_column(TEXT)
+    search_content: Mapped[str] = mapped_column(TEXT)

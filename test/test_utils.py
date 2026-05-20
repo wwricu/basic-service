@@ -1,11 +1,14 @@
 import secrets
 from random import Random
 
+import jieba
 import pytest
+from bs4 import BeautifulSoup
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select, update, func
 
 from wwricu.component.database import get_session
+from wwricu.domain.constant import CommonConst
 from wwricu.domain.entity import Base, BlogPost, EntityRelation, PostResource, PostTag
 from wwricu.domain.enum import TagTypeEnum, RelationTypeEnum, PostStatusEnum
 from wwricu.main import app
@@ -60,6 +63,21 @@ async def test_reset_count():
     stmt = update(PostTag).where(PostTag.id == subquery.c.id).values(count=subquery.c.category_count)
     async with get_session() as s:
         await s.execute(stmt)
+
+
+@pytest.mark.asyncio
+async def test_refresh_post_search():
+    stmt = select(BlogPost)
+    async with get_session() as s:
+        posts = await s.scalars(stmt)
+
+    async with get_session() as s:
+        for post in posts:
+            soup = BeautifulSoup(post.content, CommonConst.HTML_PARSER)
+            plain = soup.get_text(separator=' ', strip=True)
+            search_content = " ".join(jieba.cut_for_search(plain))
+            update_stmt = update(BlogPost).where(BlogPost.id == post.id).values(search_content=search_content)
+            await s.execute(update_stmt)
 
 
 client = TestClient(app)
