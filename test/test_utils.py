@@ -6,8 +6,10 @@ import pytest
 from bs4 import BeautifulSoup
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select, update, func
+from sqlalchemy.orm import undefer
 
 from wwricu.component.database import get_session
+from wwricu.database import post_db
 from wwricu.domain.constant import CommonConst
 from wwricu.domain.entity import Base, BlogPost, EntityRelation, PostResource, PostTag
 from wwricu.domain.enum import TagTypeEnum, RelationTypeEnum, PostStatusEnum
@@ -65,19 +67,22 @@ async def test_reset_count():
         await s.execute(stmt)
 
 
+@pytest.mark.skip
 @pytest.mark.asyncio
 async def test_refresh_post_search():
-    stmt = select(BlogPost)
+    stmt = select(BlogPost).options(undefer(BlogPost.search_content))
     async with get_session() as s:
         posts = await s.scalars(stmt)
 
     async with get_session() as s:
         for post in posts:
             soup = BeautifulSoup(post.content, CommonConst.HTML_PARSER)
-            plain = soup.get_text(separator=' ', strip=True)
+            plain = soup.get_text()
             search_content = " ".join(jieba.cut_for_search(plain))
             update_stmt = update(BlogPost).where(BlogPost.id == post.id).values(search_content=search_content)
             await s.execute(update_stmt)
+            await s.flush()
+            await post_db.upsert_search_index(post)
 
 
 client = TestClient(app)

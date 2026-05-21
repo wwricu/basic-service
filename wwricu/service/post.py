@@ -14,7 +14,7 @@ from wwricu.domain.common import FileUploadVO, PageVO, TrashBinRO
 from wwricu.domain.constant import HttpErrorDetail, CommonConst, TimeConst
 from wwricu.domain.entity import BlogPost, PostResource, PostTag, EntityRelation
 from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum, TagTypeEnum, RelationTypeEnum, CacheKeyEnum
-from wwricu.domain.post import PostDetailVO, PostQueryDTO, PostRequestRO, PostResourceVO, PostUpdateRO
+from wwricu.domain.post import PostDetailVO, PostQueryDTO, PostRequestRO, PostResourceVO, PostUpdateRO, PostSearchRO
 from wwricu.domain.tag import TagVO, TagUpdateDTO, TagQueryDTO
 
 
@@ -107,7 +107,7 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
         new_post.id,
         title=new_post.title,
         content=new_post.content,
-        search_content=" ".join(jieba.cut_for_search(soup.get_text(separator=' ', strip=True))),
+        search_content=" ".join(jieba.cut_for_search(soup.get_text())),
         preview=new_post.preview,
         cover_id=new_post.cover_id,
         status=new_post.status,
@@ -115,6 +115,7 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
     )
 
     post = await post_db.find_by_id(new_post.id)
+    await post_db.upsert_search_index(post)
     return await get_detail(post)
 
 
@@ -221,3 +222,13 @@ async def get_status(post_id: int) -> PostStatusEnum:
     post_status = PostStatusEnum(post.status)
     await post_status_cache.set(CacheKeyEnum.POST.format(id=post_id), post_status, TimeConst.ONE_DAY_SECONDS)
     return post_status
+
+
+async def search(post_search: PostSearchRO) -> PageVO[PostDetailVO]:
+    posts = await post_db.search(post_search.keyword, post_search.page_index, post_search.page_size)
+    return PageVO[PostDetailVO](
+        page_size=post_search.page_size,
+        page_index=post_search.page_index,
+        count=await post_db.search_count(post_search.keyword),
+        data=await get_preview(posts)
+    )

@@ -7,13 +7,20 @@ from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum
 from wwricu.domain.tag import TagVO
 
 
-class PostRequestRO(BaseModel):
-    page_index: int = 1
-    page_size: int = 10
+class PageRequestRO(BaseModel):
+    page_index: int
+    page_size: int
+
+
+class PostRequestRO(PageRequestRO):
     tag_list: list[str] | None = None
     category: str | None = None
     status: PostStatusEnum | None = None
     deleted: bool = False
+
+
+class PostSearchRO(PageRequestRO):
+    keyword: str
 
 
 class PostUpdateRO(BaseModel):

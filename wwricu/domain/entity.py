@@ -28,7 +28,7 @@ class BlogPost(Base):
     title: Mapped[str] = mapped_column(String, default='', index=True)
     cover_id: Mapped[int] = mapped_column(Integer, nullable=True)
     content: Mapped[str] = mapped_column(TEXT, default='')
-    search_content: Mapped[str] = mapped_column(TEXT, default='')
+    search_content: Mapped[str] = mapped_column(TEXT,  default='', deferred=True, deferred_raiseload=True)
     preview: Mapped[str] = mapped_column(TEXT, default='')
     status: Mapped[str] = mapped_column(String, default=PostStatusEnum.DRAFT.value, index=True)
     category_id: Mapped[int] = mapped_column(Integer, nullable=True, index=True)

@@ -1,5 +1,5 @@
 import jieba
-from sqlalchemy import select, update, func, desc, Select, literal_column
+from sqlalchemy import select, update, func, desc, Select, literal_column, delete
 from sqlalchemy.orm import defer
 
 from wwricu.component.database import get_session
@@ -10,7 +10,6 @@ from wwricu.domain.post import PostQueryDTO
 
 async def find_by_id(post_id: int) -> BlogPost | None:
     stmt = select(BlogPost).where(BlogPost.id == post_id).where(BlogPost.deleted == False)
-    stmt = stmt.options(defer(BlogPost.search_content, raiseload=True))
     async with get_session() as s:
         return await s.scalar(stmt)
 
@@ -39,8 +38,7 @@ async def update_selective(post_id: int, **kwargs):
 
 
 async def find_published(post_id: int) -> BlogPost | None:
-    stmt = select(BlogPost).options(
-        defer(BlogPost.search_content, raiseload=True)).where(
+    stmt = select(BlogPost).where(
         BlogPost.id == post_id).where(
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED
@@ -61,10 +59,7 @@ async def find_by_criteria(query: PostQueryDTO) -> list[BlogPost]:
 
 
 async def count(query: PostQueryDTO) -> int:
-    stmt = await build_criteria(query)
-    count_stmt = select(func.count()).select_from(stmt.subquery())
-    async with get_session() as s:
-        return await s.scalar(count_stmt) or 0
+    return await count_by_stmt(await build_criteria(query))
 
 
 async def delete_tags(post_id: int):
@@ -78,28 +73,54 @@ async def delete_tags(post_id: int):
         await s.execute(stmt)
 
 
-async def search(keyword: str, limit: int = 10) -> list[BlogPost]:
+async def upsert_search_index(post: BlogPost | None):
+    if not post:
+        return
+    async with get_session() as s:
+        await s.execute(delete(PostSearch).where(PostSearch.rowid == post.id))
+        s.add(PostSearch(
+            rowid=post.id,
+            title=post.title,
+            preview=post.preview,
+            search_content=post.search_content,
+        ))
+
+
+async def search_count(keyword: str) -> int:
+    return await count_by_stmt(await build_search_criteria(keyword))
+
+
+async def search(keyword: str, page_index: int = 1, page_size: int = 10) -> list[BlogPost]:
     if not keyword or not keyword.strip():
         return []
 
-    stmt = select(BlogPost).options(
-        defer(BlogPost.search_content, raiseload=True)).join(
-        PostSearch, BlogPost.id == PostSearch.rowid).where(
-        BlogPost.deleted == False).where(
-        BlogPost.status == PostStatusEnum.PUBLISHED).where(
-        PostSearch.search_content.match(" ".join(jieba.cut(keyword)))).order_by(
-        func.bm25(literal_column(PostSearch.__tablename__))
-    ).limit(limit)
+    stmt = await build_search_criteria(keyword)
+    if page_size and page_size > 0 and page_index and page_index > 0:
+        page_size = min(page_size, 100)
+        stmt = stmt.offset((page_index - 1) * page_size).limit(page_size)
 
     async with get_session() as session:
         return list((await session.scalars(stmt)).all())
 
 
-async def build_criteria(query: PostQueryDTO) -> Select:
-    stmt = select(BlogPost).options(
-        defer(BlogPost.content, raiseload=True),
-        defer(BlogPost.search_content, raiseload=True)
+async def count_by_stmt(stmt: Select) -> int:
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    async with get_session() as s:
+        return await s.scalar(count_stmt) or 0
+
+
+async def build_search_criteria(keyword: str) -> Select:
+    return select(BlogPost).join(
+        PostSearch, BlogPost.id == PostSearch.rowid).where(
+        BlogPost.deleted == False).where(
+        BlogPost.status == PostStatusEnum.PUBLISHED).where(
+        PostSearch.search_content.match(" ".join(jieba.cut(keyword)))).order_by(
+        func.bm25(literal_column(PostSearch.__tablename__))
     )
+
+
+async def build_criteria(query: PostQueryDTO) -> Select:
+    stmt = select(BlogPost).options(defer(BlogPost.content, raiseload=True))
     if query.status is not None:
         stmt = stmt.where(BlogPost.status == query.status.value)
     if query.deleted is not None:

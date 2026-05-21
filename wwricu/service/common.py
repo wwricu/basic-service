@@ -1,6 +1,7 @@
 import time
 from contextlib import asynccontextmanager
 
+import jieba
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from fastapi import FastAPI
@@ -22,6 +23,7 @@ async def lifespan(app: FastAPI):
     scheduler = AsyncIOScheduler()
     try:
         LocalCache.init()
+        jieba.initialize()
         scheduler.add_job(database_manager.backup, trigger=CronTrigger(day_of_week=0, hour=3))
         scheduler.add_job(tag_db.delete_unlink_relation, trigger=CronTrigger(day_of_week=0, hour=4))
         scheduler.start()
