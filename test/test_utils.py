@@ -82,7 +82,7 @@ async def test_refresh_post_search():
             update_stmt = update(BlogPost).where(BlogPost.id == post.id).values(search_content=search_content)
             await s.execute(update_stmt)
             await s.flush()
-            await post_db.upsert_search_index(post)
+            await post_db.upsert_search_index(post.id, post.title, post.content, search_content)
 
 
 client = TestClient(app)

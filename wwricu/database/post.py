@@ -73,20 +73,20 @@ async def delete_tags(post_id: int):
         await s.execute(stmt)
 
 
-async def upsert_search_index(post: BlogPost | None):
-    if not post:
-        return
+async def upsert_search_index(post_id: int, title: str, preview: str, search_content: str):
     async with get_session() as s:
-        await s.execute(delete(PostSearch).where(PostSearch.rowid == post.id))
+        await s.execute(delete(PostSearch).where(PostSearch.rowid == post_id))
         s.add(PostSearch(
-            rowid=post.id,
-            title=post.title,
-            preview=post.preview,
-            search_content=post.search_content,
+            rowid=post_id,
+            title=title,
+            preview=preview,
+            search_content=search_content,
         ))
 
 
 async def search_count(keyword: str) -> int:
+    if not keyword or not keyword.strip():
+        return 0
     return await count_by_stmt(await build_search_criteria(keyword))
 
 
@@ -95,6 +95,8 @@ async def search(keyword: str, page_index: int = 1, page_size: int = 10) -> list
         return []
 
     stmt = await build_search_criteria(keyword)
+    stmt = stmt.order_by(func.bm25(literal_column(PostSearch.__tablename__)))
+
     if page_size and page_size > 0 and page_index and page_index > 0:
         page_size = min(page_size, 100)
         stmt = stmt.offset((page_index - 1) * page_size).limit(page_size)
@@ -110,12 +112,12 @@ async def count_by_stmt(stmt: Select) -> int:
 
 
 async def build_search_criteria(keyword: str) -> Select:
-    return select(BlogPost).join(
+    fts_query = ' '.join(f'"{t.replace('"', '"' * 2)}"' for t in jieba.cut(keyword) if t.strip())
+    return select(BlogPost).options(defer(BlogPost.content, raiseload=True)).join(
         PostSearch, BlogPost.id == PostSearch.rowid).where(
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED).where(
-        PostSearch.search_content.match(" ".join(jieba.cut(keyword)))).order_by(
-        func.bm25(literal_column(PostSearch.__tablename__))
+        PostSearch.search_content.match(fts_query)
     )
 
 
