@@ -3,7 +3,7 @@ from sqlalchemy import select, update, func, desc, Select, literal_column, delet
 from sqlalchemy.orm import defer
 
 from wwricu.component.database import get_session
-from wwricu.domain.entity import BlogPost, EntityRelation, PostTag, PostSearch
+from wwricu.domain.entity import BlogPost, EntityRelation, PostTag, BlogPostSearch
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
 from wwricu.domain.post import PostQueryDTO
 
@@ -75,8 +75,8 @@ async def delete_tags(post_id: int):
 
 async def upsert_search_index(post_id: int, title: str, preview: str, search_content: str):
     async with get_session() as s:
-        await s.execute(delete(PostSearch).where(PostSearch.rowid == post_id))
-        s.add(PostSearch(
+        await s.execute(delete(BlogPostSearch).where(BlogPostSearch.rowid == post_id))
+        s.add(BlogPostSearch(
             rowid=post_id,
             title=title,
             preview=preview,
@@ -95,7 +95,7 @@ async def search(keyword: str, page_index: int = 1, page_size: int = 10) -> list
         return []
 
     stmt = await build_search_criteria(keyword)
-    stmt = stmt.order_by(func.bm25(literal_column(PostSearch.__tablename__)))
+    stmt = stmt.order_by(func.bm25(literal_column(BlogPostSearch.__tablename__)))
 
     if page_size and page_size > 0 and page_index and page_index > 0:
         page_size = min(page_size, 100)
@@ -114,10 +114,10 @@ async def count_by_stmt(stmt: Select) -> int:
 async def build_search_criteria(keyword: str) -> Select:
     fts_query = ' '.join(f'"{t.replace('"', '"' * 2)}"' for t in jieba.cut(keyword) if t.strip())
     return select(BlogPost).options(defer(BlogPost.content, raiseload=True)).join(
-        PostSearch, BlogPost.id == PostSearch.rowid).where(
+        BlogPostSearch, BlogPost.id == BlogPostSearch.rowid).where(
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED).where(
-        PostSearch.search_content.match(fts_query)
+        BlogPostSearch.search_content.match(fts_query)
     )
 
 

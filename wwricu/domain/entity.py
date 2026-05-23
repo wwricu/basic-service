@@ -70,8 +70,8 @@ class SysConfig(Base):
     value: Mapped[str] = mapped_column(TEXT, nullable=True)
 
 
-class PostSearch(AbstractBase):
-    __tablename__ = "post_search"
+class BlogPostSearch(AbstractBase):
+    __tablename__ = 'blog_post_search'
 
     rowid: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String)
