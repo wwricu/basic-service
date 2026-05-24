@@ -30,8 +30,8 @@ class TokenBucket:
     async def cost(self, bucket_id: str, cost: float | int) -> bool:
         now = time.time()
         key = CacheKeyEnum.TOKEN_BUCKET.format(name=self.name, id=bucket_id)
-        state = await self.cache.get(key)
-        if not isinstance(state, TokenBucketState):
+
+        if (state := await self.cache.get(key)) is None:
             state = TokenBucketState(tokens=self.capacity, updated_at=now)
 
         tokens = min(self.capacity, state.tokens + max(0.0, now - state.updated_at) * self.speed)

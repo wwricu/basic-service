@@ -7,7 +7,10 @@ from typing import Protocol, Any
 
 from loguru import logger as log
 
+from wwricu.domain.common import TokenBucketState
 from wwricu.domain.constant import TimeConst
+from wwricu.domain.entity import BlogPost
+from wwricu.domain.enum import PostStatusEnum
 
 
 class LocalCache:
@@ -111,10 +114,10 @@ class LocalCache:
                 log.error(f'Failed to close cache {cache.name} {e}')
 
 
-class Cache(Protocol):
-    async def get(self, key: str | None) -> Any:...
+class Cache[T](Protocol):
+    async def get(self, key: str | None) -> T | None:...
 
-    async def set(self, key: str | None, value: Any, second: int = TimeConst.CACHE_EXPIRATION):...
+    async def set(self, key: str | None, value: T, second: int = TimeConst.CACHE_EXPIRATION):...
 
     async def delete(self, key: str | None):...
 
@@ -123,9 +126,9 @@ class Cache(Protocol):
     async def close(self):...
 
 
-sys_cache: Cache = LocalCache(name='sys', persist=True)
-query_cache: Cache = LocalCache(name='query')
-post_cache: Cache = LocalCache(name='post')
-post_status_cache: Cache = LocalCache(name='post_status')
-image_cache: Cache = LocalCache(name='image', max_size=10000)
-bucket_cache = LocalCache(name='bucket', max_size=100000)
+sys_cache: Cache[Any] = LocalCache(name='sys', persist=True)
+query_cache: Cache[Any] = LocalCache(name='query')
+post_cache: Cache[BlogPost] = LocalCache(name='post')
+post_status_cache: Cache[PostStatusEnum] = LocalCache(name='post_status')
+image_cache: Cache[str] = LocalCache(name='image', max_size=10000)
+bucket_cache: Cache[TokenBucketState] = LocalCache(name='bucket', max_size=100000)
