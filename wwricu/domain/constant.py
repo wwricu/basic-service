@@ -13,7 +13,6 @@ class CommonConst(StrEnum):
     SESSION_ID = 'session_id'
     COOKIE_SIGN = 'sign'
     APP_NAME = 'wwr.icu'
-    COMMON_ERROR = 'Internal Server Error'
     IMG_TAG = 'img'
     SRC_PROP = 'src'
     HTML_PARSER = 'html.parser'
