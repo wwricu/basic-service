@@ -95,7 +95,7 @@ async def search(keyword: str, page_index: int = 1, page_size: int = 10) -> list
         return []
 
     stmt = await build_search_criteria(keyword)
-    stmt = stmt.order_by(func.bm25(literal_column(BlogPostSearch.__tablename__)))
+    stmt = stmt.order_by(func.bm25(literal_column(BlogPostSearch.__tablename__), 10.0, 5.0, 1.0))
 
     if page_size and page_size > 0 and page_index and page_index > 0:
         page_size = min(page_size, 100)
@@ -117,7 +117,7 @@ async def build_search_criteria(keyword: str) -> Select:
         BlogPostSearch, BlogPost.id == BlogPostSearch.rowid).where(
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED).where(
-        BlogPostSearch.search_content.match(fts_query)
+        literal_column(BlogPostSearch.__tablename__).match(fts_query)
     )
 
 
