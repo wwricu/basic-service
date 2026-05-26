@@ -112,7 +112,7 @@ async def count_by_stmt(stmt: Select) -> int:
 
 
 async def build_search_criteria(keyword: str) -> Select:
-    fts_query = ' '.join(f'"{t.replace('"', '"' * 2)}"' for t in jieba.cut(keyword) if t.strip())
+    fts_query = ' '.join(f'{t}*' for t in jieba.cut(keyword) if t.strip())
     return select(BlogPost).options(defer(BlogPost.content, raiseload=True)).join(
         BlogPostSearch, BlogPost.id == BlogPostSearch.rowid).where(
         BlogPost.deleted == False).where(
