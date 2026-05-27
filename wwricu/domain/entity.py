@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Integer, String, TEXT, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, query_expression
 
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum
 
@@ -28,10 +28,11 @@ class BlogPost(Base):
     title: Mapped[str] = mapped_column(String, default='', index=True)
     cover_id: Mapped[int] = mapped_column(Integer, nullable=True)
     content: Mapped[str] = mapped_column(TEXT, default='')
-    search_content: Mapped[str] = mapped_column(TEXT,  default='', deferred=True, deferred_raiseload=True)
+    raw_content: Mapped[str] = mapped_column(TEXT,  default='', deferred=True, deferred_raiseload=True)
     preview: Mapped[str] = mapped_column(TEXT, default='')
     status: Mapped[str] = mapped_column(String, default=PostStatusEnum.DRAFT.value, index=True)
     category_id: Mapped[int] = mapped_column(Integer, nullable=True, index=True)
+    snippet: Mapped[str | None] = query_expression()
 
 
 class PostTag(Base):
@@ -71,9 +72,9 @@ class SysConfig(Base):
 
 
 class BlogPostSearch(AbstractBase):
-    __tablename__ = 'blog_post_search'
+    __tablename__ = 'wwr_blog_post_search'
 
     rowid: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String)
     preview: Mapped[str] = mapped_column(TEXT)
-    search_content: Mapped[str] = mapped_column(TEXT)
+    raw_content: Mapped[str] = mapped_column(TEXT)

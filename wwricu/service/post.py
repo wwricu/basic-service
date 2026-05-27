@@ -1,6 +1,5 @@
 import uuid
 
-import jieba
 from bs4 import BeautifulSoup
 from fastapi import HTTPException, UploadFile, status as http_status
 from loguru import logger as log
@@ -100,16 +99,18 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
         await res_db.delete_by_keys(delete_keys)
         log.info(f'delete resource {delete_keys}')
 
-    search_content = ' '.join(jieba.cut_for_search(soup.get_text()))
-
     tag_update = TagUpdateDTO(category_id=new_post.category_id, tag_id_list=new_post.tag_id_list, status=new_post.status)
     await update_category(post, tag_update)
     await update_tags(post, tag_update)
+
+    for tag in soup.find_all(['script', 'style', 'pre']):
+        tag.decompose()
+    raw_content = ' '.join(soup.get_text().split())
     await post_db.update_selective(
         new_post.id,
         title=new_post.title,
         content=new_post.content,
-        search_content=search_content,
+        raw_content=raw_content,
         preview=new_post.preview,
         cover_id=new_post.cover_id,
         status=new_post.status,
@@ -117,7 +118,7 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
     )
 
     post = await post_db.find_by_id(new_post.id)
-    await post_db.upsert_search_index(new_post.id, new_post.title, new_post.preview, search_content)
+    await post_db.upsert_search_index(new_post.id, new_post.title, new_post.preview, raw_content)
     return await get_detail(post)
 
 

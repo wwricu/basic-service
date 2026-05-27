@@ -1,6 +1,5 @@
 import time
 
-import jieba
 import pytest
 
 from wwricu.database import post_db
@@ -8,11 +7,11 @@ from wwricu.database import post_db
 
 @pytest.mark.asyncio
 async def test_post_search():
-    jieba.initialize()
     b = time.time()
     kw = 'Test'
-    result = await post_db.search(kw)
+    posts = await post_db.search(kw)
     count = await post_db.search_count(kw)
-    print([res.title for res in result])
+    for post in posts:
+        print(post.id, post.title, '|', post.snippet)
     print(count)
     print(time.time() - b)

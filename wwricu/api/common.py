@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Request, Response, status, HTTPException
 from fastapi.responses import RedirectResponse
+from loguru import logger as log
 
 from wwricu.domain.common import LoginRO, LoginVO
 from wwricu.domain.enum import PostStatusEnum
@@ -26,6 +27,7 @@ async def info_api():
 @common_api.get('/image/post/{post_id}/{key}', dependencies=[Depends(security_service.image_limiter)])
 async def image_api(post_id: int, key: str, is_admin: bool = Depends(security_service.is_admin)):
     if not is_admin and await post_service.get_status(post_id) != PostStatusEnum.PUBLISHED:
+        log.warning(f'{post_id=} {key=}')
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
     url = await common_service.get_image_url(f'post/{post_id}/{key}')

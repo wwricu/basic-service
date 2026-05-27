@@ -1,6 +1,5 @@
-import jieba
 from sqlalchemy import select, update, func, desc, Select, literal_column, delete
-from sqlalchemy.orm import defer
+from sqlalchemy.orm import defer, with_expression
 
 from wwricu.component.database import get_session
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag, BlogPostSearch
@@ -73,14 +72,14 @@ async def delete_tags(post_id: int):
         await s.execute(stmt)
 
 
-async def upsert_search_index(post_id: int, title: str, preview: str, search_content: str):
+async def upsert_search_index(post_id: int, title: str, preview: str, raw_content: str):
     async with get_session() as s:
         await s.execute(delete(BlogPostSearch).where(BlogPostSearch.rowid == post_id))
         s.add(BlogPostSearch(
             rowid=post_id,
             title=title,
             preview=preview,
-            search_content=search_content,
+            raw_content=raw_content,
         ))
 
 
@@ -94,7 +93,8 @@ async def search(keyword: str, page_index: int = 1, page_size: int = 10) -> list
     if not keyword or not keyword.strip():
         return []
 
-    stmt = await build_search_criteria(keyword)
+    snippet_expr = func.snippet(literal_column(BlogPostSearch.__tablename__), 2, '', '', '', 32)
+    stmt = (await build_search_criteria(keyword)).options(with_expression(BlogPost.snippet, snippet_expr))
     stmt = stmt.order_by(func.bm25(literal_column(BlogPostSearch.__tablename__), 10.0, 5.0, 1.0))
 
     if page_size and page_size > 0 and page_index and page_index > 0:
@@ -112,12 +112,11 @@ async def count_by_stmt(stmt: Select) -> int:
 
 
 async def build_search_criteria(keyword: str) -> Select:
-    fts_query = ' '.join(f'{t}*' for t in jieba.cut(keyword) if t.strip())
     return select(BlogPost).options(defer(BlogPost.content, raiseload=True)).join(
         BlogPostSearch, BlogPost.id == BlogPostSearch.rowid).where(
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED).where(
-        literal_column(BlogPostSearch.__tablename__).match(fts_query)
+        literal_column(BlogPostSearch.__tablename__).match(keyword)
     )
 
 

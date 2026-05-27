@@ -1,7 +1,6 @@
 import secrets
 from random import Random
 
-import jieba
 import pytest
 from bs4 import BeautifulSoup
 from fastapi.testclient import TestClient
@@ -70,19 +69,20 @@ async def test_reset_count():
 @pytest.mark.skip
 @pytest.mark.asyncio
 async def test_refresh_post_search():
-    stmt = select(BlogPost).options(undefer(BlogPost.search_content))
+    stmt = select(BlogPost).options(undefer(BlogPost.raw_content))
     async with get_session() as s:
         posts = await s.scalars(stmt)
 
     async with get_session() as s:
         for post in posts:
             soup = BeautifulSoup(post.content, CommonConst.HTML_PARSER)
-            plain = soup.get_text()
-            search_content = " ".join(jieba.cut_for_search(plain))
-            update_stmt = update(BlogPost).where(BlogPost.id == post.id).values(search_content=search_content)
+            for tag in soup.find_all(['script', 'style', 'pre']):
+                tag.decompose()
+            plain = ' '.join(soup.get_text().split())
+            update_stmt = update(BlogPost).where(BlogPost.id == post.id).values(raw_content=plain)
             await s.execute(update_stmt)
             await s.flush()
-            await post_db.upsert_search_index(post.id, post.title, post.content, search_content)
+            await post_db.upsert_search_index(post.id, post.title, post.preview, plain)
 
 
 client = TestClient(app)
