@@ -49,6 +49,8 @@ class PostDetailVO(BaseModel):
     cover: PostResourceVO | None = None
     preview: str = ''
     content: str = ''
+    snippet: str | None = None
+    tags: list[TagVO] | None = None
     tag_list: list[TagVO] = Field(default_factory=list)
     category: TagVO | None = None
     status: PostStatusEnum | None = None
