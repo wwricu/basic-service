@@ -58,6 +58,8 @@ class DatabaseManager:
         if __debug__ or not os.path.exists(self.config.database):
             return
         log.info(f'Backup database {self.config.database}')
+        async with self.engine.connect() as conn, conn.begin():
+            await conn.exec_driver_sql('VACUUM')
         async with await open_file(self.config.database, mode='rb') as f:
             # PRICED call on each restart and every week
             await storage.put(self.config.database, await f.read())
