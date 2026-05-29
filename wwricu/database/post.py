@@ -87,7 +87,7 @@ async def search(keyword: str) -> list[BlogPost]:
     if not keyword or not keyword.strip():
         return []
 
-    snippet_expr = func.snippet(literal_column(BlogPostSearch.__tablename__), 2, '', '', '', 32)
+    snippet_expr = func.snippet(literal_column(BlogPostSearch.__tablename__), 2, '', '', '…', 32)
     stmt = select(BlogPost).options(
 defer(BlogPost.content, raiseload=True),
         with_expression(BlogPost.snippet, snippet_expr),
