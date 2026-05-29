@@ -1,11 +1,11 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, Query, status, Depends
 
 from wwricu.component.cache import sys_cache, query_cache, post_cache
 from wwricu.database import post_db, tag_db
 from wwricu.domain.common import AboutPageVO, PageVO
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, TagTypeEnum
-from wwricu.domain.post import PostDetailVO, PostRequestRO, PostSearchRO
+from wwricu.domain.post import PostDetailVO, PostRequestRO, PostSearchVO
 from wwricu.domain.tag import TagVO, TagQueryDTO
 from wwricu.service import manage_service, post_service, security_service
 
@@ -28,9 +28,9 @@ async def open_get_posts_api(post_request: PostRequestRO) -> PageVO[PostDetailVO
     return response
 
 
-@open_api.post('/post/search', response_model=PageVO[PostDetailVO], dependencies=[Depends(security_service.open_limiter)])
-async def open_search_posts_api(post_search: PostSearchRO) -> PageVO[PostDetailVO]:
-    return await post_service.search(post_search)
+@open_api.get('/post/search', response_model=list[PostSearchVO], dependencies=[Depends(security_service.open_limiter)])
+async def open_search_posts_api(keyword: str = Query(min_length=1, max_length=128)) -> list[PostSearchVO]:
+    return await post_service.search(keyword)
 
 
 @open_api.get('/post/detail/{post_id}', response_model=PostDetailVO)

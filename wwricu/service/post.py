@@ -13,7 +13,7 @@ from wwricu.domain.common import FileUploadVO, PageVO, TrashBinRO
 from wwricu.domain.constant import HttpErrorDetail, CommonConst, TimeConst
 from wwricu.domain.entity import BlogPost, PostResource, PostTag, EntityRelation
 from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum, TagTypeEnum, RelationTypeEnum, CacheKeyEnum
-from wwricu.domain.post import PostDetailVO, PostQueryDTO, PostRequestRO, PostResourceVO, PostUpdateRO, PostSearchRO
+from wwricu.domain.post import PostDetailVO, PostQueryDTO, PostRequestRO, PostResourceVO, PostSearchVO, PostUpdateRO
 from wwricu.domain.tag import TagVO, TagUpdateDTO, TagQueryDTO
 
 
@@ -67,7 +67,6 @@ async def get_preview(post_list: list[BlogPost]) -> list[PostDetailVO]:
             id=post.id,
             title=post.title,
             preview=post.preview,
-            snippet=post.snippet,
             tag_list=[TagVO.model_validate(tag) for tag in tags.get(post.id, [])],
             create_time=post.create_time,
             update_time=post.update_time
@@ -227,11 +226,7 @@ async def get_status(post_id: int) -> PostStatusEnum:
     return post_status
 
 
-async def search(post_search: PostSearchRO) -> PageVO[PostDetailVO]:
-    posts = await post_db.search(post_search.keyword, post_search.page_index, post_search.page_size)
-    return PageVO[PostDetailVO](
-        page_size=post_search.page_size,
-        page_index=post_search.page_index,
-        count=await post_db.search_count(post_search.keyword),
-        data=await get_preview(posts)
-    )
+async def search(keyword: str) -> list[PostSearchVO]:
+    posts = await post_db.search(keyword)
+    details = await get_preview(posts)
+    return [PostSearchVO(**detail.model_dump(), snippet=post.snippet) for post, detail in zip(posts, details)]

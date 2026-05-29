@@ -83,23 +83,20 @@ async def upsert_search_index(post_id: int, title: str, preview: str, raw_conten
         ))
 
 
-async def search_count(keyword: str) -> int:
-    if not keyword or not keyword.strip():
-        return 0
-    return await count_by_stmt(await build_search_criteria(keyword))
-
-
-async def search(keyword: str, page_index: int = 1, page_size: int = 10) -> list[BlogPost]:
+async def search(keyword: str) -> list[BlogPost]:
     if not keyword or not keyword.strip():
         return []
 
     snippet_expr = func.snippet(literal_column(BlogPostSearch.__tablename__), 2, '', '', '', 32)
-    stmt = (await build_search_criteria(keyword)).options(with_expression(BlogPost.snippet, snippet_expr))
-    stmt = stmt.order_by(func.bm25(literal_column(BlogPostSearch.__tablename__), 10.0, 5.0, 1.0))
-
-    if page_size and page_size > 0 and page_index and page_index > 0:
-        page_size = min(page_size, 100)
-        stmt = stmt.offset((page_index - 1) * page_size).limit(page_size)
+    stmt = select(BlogPost).options(
+defer(BlogPost.content, raiseload=True),
+        with_expression(BlogPost.snippet, snippet_expr),
+    ).join(
+        BlogPostSearch, BlogPost.id == BlogPostSearch.rowid).where(
+        BlogPost.deleted == False).where(
+        BlogPost.status == PostStatusEnum.PUBLISHED).where(
+        literal_column(BlogPostSearch.__tablename__).match(keyword)
+    ).order_by(func.bm25(literal_column(BlogPostSearch.__tablename__), 10.0, 5.0, 1.0)).limit(30)
 
     async with get_session() as session:
         return list((await session.scalars(stmt)).all())
@@ -109,15 +106,6 @@ async def count_by_stmt(stmt: Select) -> int:
     count_stmt = select(func.count()).select_from(stmt.subquery())
     async with get_session() as s:
         return await s.scalar(count_stmt) or 0
-
-
-async def build_search_criteria(keyword: str) -> Select:
-    return select(BlogPost).options(defer(BlogPost.content, raiseload=True)).join(
-        BlogPostSearch, BlogPost.id == BlogPostSearch.rowid).where(
-        BlogPost.deleted == False).where(
-        BlogPost.status == PostStatusEnum.PUBLISHED).where(
-        literal_column(BlogPostSearch.__tablename__).match(keyword)
-    )
 
 
 async def build_criteria(query: PostQueryDTO) -> Select:

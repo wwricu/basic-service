@@ -19,10 +19,6 @@ class PostRequestRO(PageRequestRO):
     deleted: bool = False
 
 
-class PostSearchRO(PageRequestRO):
-    keyword: str
-
-
 class PostUpdateRO(BaseModel):
     """All not null fields are mandatory"""
     id: int
@@ -49,13 +45,16 @@ class PostDetailVO(BaseModel):
     cover: PostResourceVO | None = None
     preview: str = ''
     content: str = ''
-    snippet: str | None = None
     tags: list[TagVO] | None = None
     tag_list: list[TagVO] = Field(default_factory=list)
     category: TagVO | None = None
     status: PostStatusEnum | None = None
     create_time: datetime | None = None
     update_time: datetime | None = None
+
+
+class PostSearchVO(PostDetailVO):
+    snippet: str | None = None
 
 
 class PostQueryDTO(BaseModel):
