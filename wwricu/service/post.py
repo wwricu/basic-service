@@ -13,7 +13,7 @@ from wwricu.domain.common import FileUploadVO, PageVO, TrashBinRO
 from wwricu.domain.constant import HttpErrorDetail, CommonConst, TimeConst
 from wwricu.domain.entity import BlogPost, PostResource, PostTag, EntityRelation
 from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum, TagTypeEnum, RelationTypeEnum, CacheKeyEnum
-from wwricu.domain.post import PostDetailVO, PostQueryDTO, PostRequestRO, PostResourceVO, PostSearchVO, PostUpdateRO
+from wwricu.domain.post import PostDetailVO, PostPreviewVO, PostQueryDTO, PostRequestRO, PostResourceVO, PostSearchVO, PostUpdateRO
 from wwricu.domain.tag import TagVO, TagUpdateDTO, TagQueryDTO
 
 
@@ -30,9 +30,9 @@ async def build_query(post: PostRequestRO, *, public: bool = False) -> PostQuery
     return query
 
 
-async def list_by_query(query: PostQueryDTO) -> PageVO[PostDetailVO]:
+async def list_by_query(query: PostQueryDTO) -> PageVO[PostPreviewVO]:
     posts = await post_db.find_by_criteria(query)
-    return PageVO[PostDetailVO](
+    return PageVO[PostPreviewVO](
         page_size=query.page_size,
         page_index=query.page_index,
         count=await post_db.count(query),
@@ -56,14 +56,14 @@ async def get_detail(blog_post: BlogPost | None) -> PostDetailVO:
     return post_detail
 
 
-async def get_preview(post_list: list[BlogPost]) -> list[PostDetailVO]:
+async def get_preview(post_list: list[BlogPost]) -> list[PostPreviewVO]:
     """Generate post preview from BlogPost list"""
     categories = await batch_get_category(post_list)
     tags = await tag_db.find_tags_by_posts(post_list)
     covers = await res_db.find_posts_cover(post_list)
 
-    def generator(post: BlogPost) -> PostDetailVO:
-        detail = PostDetailVO(
+    def generator(post: BlogPost) -> PostPreviewVO:
+        detail = PostPreviewVO(
             id=post.id,
             title=post.title,
             preview=post.preview,

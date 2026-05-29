@@ -39,12 +39,11 @@ class PostResourceVO(BaseModel):
     type: PostResourceTypeEnum
 
 
-class PostDetailVO(BaseModel):
+class PostPreviewVO(BaseModel):
     id: int
     title: str | None = None
     cover: PostResourceVO | None = None
     preview: str = ''
-    content: str = ''
     tags: list[TagVO] | None = None
     tag_list: list[TagVO] = Field(default_factory=list)
     category: TagVO | None = None
@@ -53,7 +52,11 @@ class PostDetailVO(BaseModel):
     update_time: datetime | None = None
 
 
-class PostSearchVO(PostDetailVO):
+class PostDetailVO(PostPreviewVO):
+    content: str = ''
+
+
+class PostSearchVO(PostPreviewVO):
     snippet: str | None = None
 
 

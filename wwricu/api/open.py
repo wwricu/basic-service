@@ -5,15 +5,15 @@ from wwricu.database import post_db, tag_db
 from wwricu.domain.common import AboutPageVO, PageVO
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, TagTypeEnum
-from wwricu.domain.post import PostDetailVO, PostRequestRO, PostSearchVO
+from wwricu.domain.post import PostDetailVO, PostPreviewVO, PostRequestRO, PostSearchVO
 from wwricu.domain.tag import TagVO, TagQueryDTO
 from wwricu.service import manage_service, post_service, security_service
 
 open_api = APIRouter(prefix='/open',  tags=['Open API'])
 
 
-@open_api.post('/post/all', response_model=PageVO[PostDetailVO], dependencies=[Depends(security_service.open_limiter)])
-async def open_get_posts_api(post_request: PostRequestRO) -> PageVO[PostDetailVO]:
+@open_api.post('/post/all', response_model=PageVO[PostPreviewVO], dependencies=[Depends(security_service.open_limiter)])
+async def open_get_posts_api(post_request: PostRequestRO) -> PageVO[PostPreviewVO]:
     cache_key = CacheKeyEnum.ALL_POSTS.format(
         page_index=post_request.page_index,
         page_size=post_request.page_size,
