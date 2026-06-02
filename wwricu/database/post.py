@@ -1,7 +1,8 @@
-from sqlalchemy import select, update, func, desc, Select, literal_column, delete
+from sqlalchemy import select, update, func, desc, Select, literal_column, delete, case, null
 from sqlalchemy.orm import defer, with_expression
 
 from wwricu.component.database import get_session
+from wwricu.domain.constant import CommonConst
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag, BlogPostSearch
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
 from wwricu.domain.post import PostQueryDTO
@@ -87,16 +88,22 @@ async def search(keyword: str) -> list[BlogPost]:
     if not keyword or not keyword.strip():
         return []
 
-    snippet_expr = func.snippet(literal_column(BlogPostSearch.__tablename__), 2, '', '', '…', 32)
+    table = literal_column(BlogPostSearch.__tablename__)
+    raw_snippet = func.snippet(table, 2, CommonConst.SNIPPET_OPEN, CommonConst.SNIPPET_CLOSE, '…', 32)
+    snippet_expr = case(
+        (raw_snippet.like(f'%{CommonConst.SNIPPET_OPEN}%'),
+         func.replace(func.replace(raw_snippet, CommonConst.SNIPPET_OPEN, ''), CommonConst.SNIPPET_CLOSE, '')),
+        else_=null(),
+    )
     stmt = select(BlogPost).options(
-defer(BlogPost.content, raiseload=True),
+        defer(BlogPost.content, raiseload=True),
         with_expression(BlogPost.snippet, snippet_expr),
     ).join(
         BlogPostSearch, BlogPost.id == BlogPostSearch.rowid).where(
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED).where(
-        literal_column(BlogPostSearch.__tablename__).match(keyword)
-    ).order_by(func.bm25(literal_column(BlogPostSearch.__tablename__), 10.0, 5.0, 1.0)).limit(30)
+        table.match(keyword)
+    ).order_by(func.bm25(table, 10.0, 5.0, 1.0)).limit(30)
 
     async with get_session() as session:
         return list((await session.scalars(stmt)).all())
