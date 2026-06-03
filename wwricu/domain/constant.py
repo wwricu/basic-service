@@ -18,8 +18,7 @@ class CommonConst(StrEnum):
     HTML_PARSER = 'html.parser'
     IMAGE_IP_BUCKET = 'image:{ip}'
     OPEN_IP_BUCKET = 'open:{ip}'
-    SNIPPET_OPEN = '\x02'
-    SNIPPET_CLOSE = '\x03'
+    SNIPPET_MARKER = '\x01'
 
 
 class TimeConst(IntEnum):

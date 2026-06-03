@@ -1,4 +1,4 @@
-from sqlalchemy import select, update, func, desc, Select, literal_column, delete, case, null
+from sqlalchemy import select, update, func, desc, Select, literal_column, delete
 from sqlalchemy.orm import defer, with_expression
 
 from wwricu.component.database import get_session
@@ -89,12 +89,7 @@ async def search(keyword: str) -> list[BlogPost]:
         return []
 
     table = literal_column(BlogPostSearch.__tablename__)
-    raw_snippet = func.snippet(table, 2, CommonConst.SNIPPET_OPEN, CommonConst.SNIPPET_CLOSE, '…', 32)
-    snippet_expr = case(
-        (raw_snippet.like(f'%{CommonConst.SNIPPET_OPEN}%'),
-         func.replace(func.replace(raw_snippet, CommonConst.SNIPPET_OPEN, ''), CommonConst.SNIPPET_CLOSE, '')),
-        else_=null(),
-    )
+    snippet_expr = func.snippet(table, 2, CommonConst.SNIPPET_MARKER, CommonConst.SNIPPET_MARKER, '…', 32)
     stmt = select(BlogPost).options(
         defer(BlogPost.content, raiseload=True),
         with_expression(BlogPost.snippet, snippet_expr),
@@ -106,7 +101,10 @@ async def search(keyword: str) -> list[BlogPost]:
     ).order_by(func.bm25(table, 10.0, 5.0, 1.0)).limit(30)
 
     async with get_session() as session:
-        return list((await session.scalars(stmt)).all())
+        posts = list((await session.scalars(stmt)).all())
+    for p in posts:
+        p.snippet = p.snippet.replace(CommonConst.SNIPPET_MARKER, '') if p.snippet and CommonConst.SNIPPET_MARKER in p.snippet else None
+    return posts
 
 
 async def count_by_stmt(stmt: Select) -> int:
