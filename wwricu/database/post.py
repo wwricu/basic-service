@@ -1,4 +1,4 @@
-from sqlalchemy import select, update, func, desc, Select, literal_column, delete
+from sqlalchemy import select, update, func, desc, Select, literal_column, delete, ColumnClause
 from sqlalchemy.orm import defer, with_expression
 
 from wwricu.component.database import get_session
@@ -73,14 +73,14 @@ async def delete_tags(post_id: int):
         await s.execute(stmt)
 
 
-async def upsert_search_index(post_id: int, title: str, preview: str, raw_content: str):
+async def upsert_search_index(post_id: int, title: str, preview: str, search_content: str):
     async with get_session() as s:
-        await s.execute(delete(BlogPostSearch).where(BlogPostSearch.rowid == post_id))
+        await s.execute(delete(BlogPostSearch).where(BlogPostSearch.id == post_id))
         s.add(BlogPostSearch(
-            rowid=post_id,
+            id=post_id,
             title=title,
             preview=preview,
-            raw_content=raw_content,
+            search_content=search_content
         ))
 
 
@@ -88,13 +88,13 @@ async def search(keyword: str) -> list[BlogPost]:
     if not keyword or not keyword.strip():
         return []
 
-    table = literal_column(BlogPostSearch.__tablename__)
-    snippet_expr = func.snippet(table, 2, CommonConst.SNIPPET_MARKER, CommonConst.SNIPPET_MARKER, '…', 32)
+    table: ColumnClause = literal_column(BlogPostSearch.__tablename__)
+    snippet_expr = func.snippet(table, 3, CommonConst.MARK_BEGIN, CommonConst.MARK_END, '…', 32)
     stmt = select(BlogPost).options(
         defer(BlogPost.content, raiseload=True),
         with_expression(BlogPost.snippet, snippet_expr),
     ).join(
-        BlogPostSearch, BlogPost.id == BlogPostSearch.rowid).where(
+        BlogPostSearch, BlogPost.id == BlogPostSearch.id).where(
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED).where(
         table.match(keyword)
@@ -103,7 +103,10 @@ async def search(keyword: str) -> list[BlogPost]:
     async with get_session() as session:
         posts = list((await session.scalars(stmt)).all())
     for p in posts:
-        p.snippet = p.snippet.replace(CommonConst.SNIPPET_MARKER, '') if p.snippet and CommonConst.SNIPPET_MARKER in p.snippet else None
+        if p.snippet and CommonConst.MARK_BEGIN not in p.snippet:
+            p.snippet = ''
+        if p.snippet:
+            p.snippet = p.snippet.replace(CommonConst.TOKEN_SEPARATOR, '')
     return posts
 
 

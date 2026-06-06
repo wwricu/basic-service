@@ -1,11 +1,11 @@
 import secrets
 from random import Random
 
+import jieba
 import pytest
 from bs4 import BeautifulSoup
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select, update, func
-from sqlalchemy.orm import undefer
 
 from wwricu.component.database import get_session
 from wwricu.database import post_db
@@ -69,20 +69,20 @@ async def test_reset_count():
 @pytest.mark.skip
 @pytest.mark.asyncio
 async def test_refresh_post_search():
-    stmt = select(BlogPost).options(undefer(BlogPost.raw_content))
     async with get_session() as s:
-        posts = await s.scalars(stmt)
+        posts = await s.scalars(select(BlogPost))
 
-    async with get_session() as s:
-        for post in posts:
-            soup = BeautifulSoup(post.content, CommonConst.HTML_PARSER)
-            for tag in soup.find_all(['script', 'style', 'pre']):
-                tag.decompose()
-            plain = ' '.join(soup.get_text().split())
-            update_stmt = update(BlogPost).where(BlogPost.id == post.id).values(raw_content=plain)
-            await s.execute(update_stmt)
-            await s.flush()
-            await post_db.upsert_search_index(post.id, post.title, post.preview, plain)
+    for post in posts:
+        soup = BeautifulSoup(post.content, CommonConst.HTML_PARSER)
+        for tag in soup.find_all(['script', 'style', 'pre']):
+            tag.decompose()
+        raw_content = ' '.join(soup.get_text().split())
+        await post_db.upsert_search_index(
+            post.id,
+            CommonConst.TOKEN_SEPARATOR.join([w.strip() for w in jieba.cut_for_search(post.title) if w.strip()]),
+            CommonConst.TOKEN_SEPARATOR.join([w.strip() for w in jieba.cut_for_search(post.preview) if w.strip()]),
+            CommonConst.TOKEN_SEPARATOR.join(jieba.cut_for_search(raw_content))
+        )
 
 
 client = TestClient(app)

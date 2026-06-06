@@ -1,5 +1,7 @@
+import re
 import uuid
 
+import jieba
 from bs4 import BeautifulSoup
 from fastapi import HTTPException, UploadFile, status as http_status
 from loguru import logger as log
@@ -104,20 +106,24 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
 
     for tag in soup.find_all(['script', 'style', 'pre']):
         tag.decompose()
-    raw_content = ' '.join(soup.get_text().split())
+
     await post_db.update_selective(
         new_post.id,
         title=new_post.title,
         content=new_post.content,
-        raw_content=raw_content,
         preview=new_post.preview,
         cover_id=new_post.cover_id,
         status=new_post.status,
         category_id=new_post.category_id
     )
+    await post_db.upsert_search_index(
+        new_post.id,
+        CommonConst.TOKEN_SEPARATOR.join([t.strip() for t in jieba.cut_for_search(new_post.title) if t.strip()]),
+        CommonConst.TOKEN_SEPARATOR.join([t.strip() for t in jieba.cut_for_search(new_post.preview) if t.strip()]),
+        CommonConst.TOKEN_SEPARATOR.join(jieba.cut_for_search(' '.join(soup.get_text().split())))
+    )
 
     post = await post_db.find_by_id(new_post.id)
-    await post_db.upsert_search_index(new_post.id, new_post.title, new_post.preview, raw_content)
     return await get_detail(post)
 
 
@@ -227,6 +233,14 @@ async def get_status(post_id: int) -> PostStatusEnum:
 
 
 async def search(keyword: str) -> list[PostSearchVO]:
-    posts = await post_db.search(keyword)
+    if not keyword or not keyword.strip():
+        return []
+    keyword = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9\s]', ' ', keyword).strip()
+    words = [seg for part in keyword.split() for seg in jieba.cut(part) if seg.strip()]
+    if not words:
+        return []
+    keyword = ' OR '.join(words)
+
+    posts = await post_db.search(' '.join(jieba.cut(keyword)))
     details = await get_preview(posts)
     return [PostSearchVO(**detail.model_dump(), snippet=post.snippet) for post, detail in zip(posts, details)]
