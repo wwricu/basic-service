@@ -12,6 +12,7 @@ dependencies = [
     'boto3~=1.43.0',
     "boto3-stubs[appconfig,s3]~=1.43.0",
     'fastapi[standard]==0.136.1',
+    "jieba==0.42.1",
     'loguru==0.7.3',
     'pyotp==2.9.0',
     "sqlalchemy==2.0.49",
