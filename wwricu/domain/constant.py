@@ -13,14 +13,14 @@ class CommonConst(StrEnum):
     SESSION_ID = 'session_id'
     COOKIE_SIGN = 'sign'
     APP_NAME = 'wwr.icu'
-    COMMON_ERROR = 'Internal Server Error'
-    GLOBAL_TOKEN_BUCKET_ID = 'global'
     IMG_TAG = 'img'
     SRC_PROP = 'src'
     HTML_PARSER = 'html.parser'
-    LOGIN_IP_BUCKET = 'login:{ip}'
     IMAGE_IP_BUCKET = 'image:{ip}'
     OPEN_IP_BUCKET = 'open:{ip}'
+    TOKEN_SEPARATOR = '\x01'
+    MARK_BEGIN = '<mark>'
+    MARK_END = '</mark>'
 
 
 class TimeConst(IntEnum):
@@ -28,8 +28,3 @@ class TimeConst(IntEnum):
     ONE_DAY_SECONDS = 60 * 60 * 24
     TOTP_EXPIRATION = 300
     CACHE_EXPIRATION = 600
-
-
-class HttpHeader(StrEnum):
-    X_REAL_IP = 'X-Real-IP'
-    X_FORWARD_FOR = 'X-Forwarded-For'

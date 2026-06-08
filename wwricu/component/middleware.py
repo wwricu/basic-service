@@ -8,8 +8,6 @@ from fastapi.middleware import Middleware
 from loguru import logger as log
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
-from wwricu.domain.constant import CommonConst, HttpHeader
-
 
 class ExceptionMiddleware(BaseHTTPMiddleware):
     @override
@@ -22,18 +20,14 @@ class ExceptionMiddleware(BaseHTTPMiddleware):
             if __debug__:
                 raise
             log.exception(f'{request.method} {request.url.path} {e}')
-            return JSONResponse(CommonConst.COMMON_ERROR, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return JSONResponse(None, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class PerformanceMiddleware(BaseHTTPMiddleware):
     @override
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         b = time.time()
-        real_ip.set((
-            request.headers.get(HttpHeader.X_REAL_IP) or
-            request.headers.get(HttpHeader.X_FORWARD_FOR, '').split(',')[0].strip() or
-            (request.client.host if request.client else '')
-        ).split(':')[0])
+        real_ip.set((request.headers.get('X-Forwarded-For', '').split(',')[0].strip() or ''))
         response = await call_next(request)
         log.trace(f'{real_ip.get()} | {request.method} {request.url.path} {response.status_code} {int((time.time() - b) * 1000)} ms')
         return response

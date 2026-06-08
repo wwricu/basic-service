@@ -39,6 +39,8 @@ async def count(query: TagQueryDTO) -> int:
 
 
 async def update_post_count(bef_tag_ids: set[int], aft_tag_ids: set[int], tag_type: TagTypeEnum):
+    if bef_tag_ids == aft_tag_ids:
+        return
     stmt = update(PostTag).where(PostTag.type == tag_type).where(PostTag.id.in_(bef_tag_ids | aft_tag_ids)).values(
         count=case(
             (PostTag.id.in_(bef_tag_ids - aft_tag_ids), PostTag.count - 1),

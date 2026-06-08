@@ -1,11 +1,15 @@
 import secrets
 from random import Random
 
+import jieba
 import pytest
+from bs4 import BeautifulSoup
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select, update, func
 
 from wwricu.component.database import get_session
+from wwricu.database import post_db
+from wwricu.domain.constant import CommonConst
 from wwricu.domain.entity import Base, BlogPost, EntityRelation, PostResource, PostTag
 from wwricu.domain.enum import TagTypeEnum, RelationTypeEnum, PostStatusEnum
 from wwricu.main import app
@@ -60,6 +64,25 @@ async def test_reset_count():
     stmt = update(PostTag).where(PostTag.id == subquery.c.id).values(count=subquery.c.category_count)
     async with get_session() as s:
         await s.execute(stmt)
+
+
+@pytest.mark.skip
+@pytest.mark.asyncio
+async def test_refresh_post_search():
+    async with get_session() as s:
+        posts = await s.scalars(select(BlogPost))
+
+    for post in posts:
+        soup = BeautifulSoup(post.content, CommonConst.HTML_PARSER)
+        for tag in soup.find_all(['script', 'style', 'pre']):
+            tag.decompose()
+        raw_content = ' '.join(soup.get_text().split())
+        await post_db.upsert_search_index(
+            post.id,
+            CommonConst.TOKEN_SEPARATOR.join([w.strip() for w in jieba.cut_for_search(post.title) if w.strip()]),
+            CommonConst.TOKEN_SEPARATOR.join([w.strip() for w in jieba.cut_for_search(post.preview) if w.strip()]),
+            CommonConst.TOKEN_SEPARATOR.join(jieba.cut_for_search(raw_content))
+        )
 
 
 client = TestClient(app)

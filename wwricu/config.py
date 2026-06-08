@@ -6,7 +6,7 @@ from pathlib import Path
 import boto3
 from dotenv import load_dotenv
 from loguru import logger as log
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
 
 from wwricu.domain.constant import CommonConst
@@ -17,7 +17,6 @@ from wwricu.domain.third import AWSConst, AWSAppConfigSessionResponse, AWSAppCon
 class StorageConfig(BaseModel):
     region: str
     bucket: str
-    private_bucket: str
 
 
 class DatabaseConfig(BaseModel):
@@ -26,7 +25,7 @@ class DatabaseConfig(BaseModel):
     password: str = ''
     host: str = ''
     port: int = 0
-    database: str = ''
+    database: str
 
     @property
     def url(self):
@@ -37,14 +36,13 @@ class SecurityConfig(BaseModel):
     username: str
     password: str
     secret_key: str
-    login_ip_qps: float = 0
-    login_global_qps: float = 0
+    login_ip_times: int = Field(3, gt=0)
+    login_ip_span: float = Field(1800.0, gt=0)
     image_ip_qps: float = 0
     open_ip_qps: float = 0
 
 
 class Config(BaseSettings):
-    encoding: str = 'utf-8'
     max_upload_size: int = 10 * 1024 * 1024
 
     storage: StorageConfig
@@ -104,8 +102,8 @@ def init_config() -> Config:
     aws_app_config = AWSAppConfigConfigResponse.model_validate(response)
     aws_app_config.check()
 
-    content = aws_app_config.Configuration.read().decode()
-    aws_app_config.Configuration.close()
+    with aws_app_config.Configuration:
+        content = aws_app_config.Configuration.read().decode()
 
     config_file.parent.mkdir(parents=True, exist_ok=True)
     with config_file.open('wt+') as f:
