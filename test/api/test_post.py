@@ -7,7 +7,7 @@ from test.api.utils import create_post
 from test.test_utils import client
 from wwricu.domain.common import PageVO
 from wwricu.domain.enum import PostStatusEnum, TagTypeEnum
-from wwricu.domain.post import PostDetailVO
+from wwricu.domain.post import PostDetailVO, PostPreviewVO
 from wwricu.domain.tag import TagVO
 
 
@@ -24,9 +24,9 @@ def test_create_post():
 def test_get_all_posts_with_status_filter():
     response = client.post('/post/all', json={'status': PostStatusEnum.DRAFT})
     assert response.status_code == status.HTTP_200_OK
-    page = PageVO[PostDetailVO].model_validate(response.json())
+    page = PageVO[PostPreviewVO].model_validate(response.json())
     for post_data in page.data:
-        post = PostDetailVO.model_validate(post_data)
+        post = PostPreviewVO.model_validate(post_data)
         assert post.status == PostStatusEnum.DRAFT
 
 
@@ -36,8 +36,8 @@ def test_get_all_posts_with_deleted_filter():
         client.get(f'/post/delete/{post.id}')
         response = client.post('/post/all', json={'deleted': True})
         assert response.status_code == status.HTTP_200_OK
-        page = PageVO[PostDetailVO].model_validate(response.json())
-        deleted_ids = [PostDetailVO.model_validate(p).id for p in page.data]
+        page = PageVO[PostPreviewVO].model_validate(response.json())
+        deleted_ids = [PostPreviewVO.model_validate(p).id for p in page.data]
         assert post.id in deleted_ids
     finally:
         pass
@@ -132,8 +132,8 @@ def test_delete_post():
     delete_response = client.get(f'/post/delete/{post.id}')
     assert delete_response.status_code == status.HTTP_200_OK
     list_response = client.post('/post/all', json={'deleted': False})
-    page = PageVO[PostDetailVO].model_validate(list_response.json())
-    active_ids = [PostDetailVO.model_validate(p).id for p in page.data]
+    page = PageVO[PostPreviewVO].model_validate(list_response.json())
+    active_ids = [PostPreviewVO.model_validate(p).id for p in page.data]
     assert post.id not in active_ids
 
 
@@ -166,8 +166,8 @@ def test_post_lifecycle():
 
         open_response = client.post('/open/post/all', json={})
         assert open_response.status_code == status.HTTP_200_OK
-        page = PageVO[PostDetailVO].model_validate(open_response.json())
-        post_ids = [PostDetailVO.model_validate(p).id for p in page.data]
+        page = PageVO[PostPreviewVO].model_validate(open_response.json())
+        post_ids = [PostPreviewVO.model_validate(p).id for p in page.data]
         assert post.id in post_ids
 
         open_detail = client.get(f'/open/post/detail/{post.id}')
@@ -176,8 +176,8 @@ def test_post_lifecycle():
         client.get(f'/post/delete/{post.id}')
 
         open_response = client.post('/open/post/all', json={})
-        page = PageVO[PostDetailVO].model_validate(open_response.json())
-        post_ids = [PostDetailVO.model_validate(p).id for p in page.data]
+        page = PageVO[PostPreviewVO].model_validate(open_response.json())
+        post_ids = [PostPreviewVO.model_validate(p).id for p in page.data]
         assert post.id not in post_ids
 
         detail_response = client.get(f'/post/detail/{post.id}')

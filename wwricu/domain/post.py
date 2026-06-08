@@ -7,9 +7,12 @@ from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum
 from wwricu.domain.tag import TagVO
 
 
-class PostRequestRO(BaseModel):
-    page_index: int = 1
-    page_size: int = 10
+class PageRequestRO(BaseModel):
+    page_index: int
+    page_size: int
+
+
+class PostRequestRO(PageRequestRO):
     tag_list: list[str] | None = None
     category: str | None = None
     status: PostStatusEnum | None = None
@@ -36,17 +39,25 @@ class PostResourceVO(BaseModel):
     type: PostResourceTypeEnum
 
 
-class PostDetailVO(BaseModel):
+class PostPreviewVO(BaseModel):
     id: int
     title: str | None = None
     cover: PostResourceVO | None = None
     preview: str = ''
-    content: str = ''
+    tags: list[TagVO] | None = None
     tag_list: list[TagVO] = Field(default_factory=list)
     category: TagVO | None = None
     status: PostStatusEnum | None = None
     create_time: datetime | None = None
     update_time: datetime | None = None
+
+
+class PostDetailVO(PostPreviewVO):
+    content: str = ''
+
+
+class PostSearchVO(PostPreviewVO):
+    snippet: str | None = None
 
 
 class PostQueryDTO(BaseModel):

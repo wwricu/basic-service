@@ -7,7 +7,7 @@ from wwricu.database import common_db, post_db
 from wwricu.domain.common import FileUploadVO, PageVO
 from wwricu.domain.entity import BlogPost
 from wwricu.domain.enum import PostStatusEnum, CacheKeyEnum, PostResourceTypeEnum
-from wwricu.domain.post import PostDetailVO, PostRequestRO, PostUpdateRO
+from wwricu.domain.post import PostDetailVO, PostPreviewVO, PostRequestRO, PostUpdateRO
 from wwricu.service import common_service, post_service, security_service
 
 post_api = APIRouter(prefix='/post', tags=['Post Management'], dependencies=[Depends(security_service.require_admin)])
@@ -15,15 +15,13 @@ post_api = APIRouter(prefix='/post', tags=['Post Management'], dependencies=[Dep
 
 @post_api.get('/create', response_model=PostDetailVO)
 async def create_post_api() -> PostDetailVO:
-    while await post_db.find_by_id(post_id := 1_000_000_000 + secrets.randbelow(9_000_000_000)):
-        pass
-    blog_post = BlogPost(id=post_id, status=PostStatusEnum.DRAFT)
+    blog_post = BlogPost(id=1_000_000_000 + secrets.randbelow(9_000_000_000), status=PostStatusEnum.DRAFT)
     await common_db.insert(blog_post)
     return PostDetailVO.model_validate(blog_post)
 
 
-@post_api.post('/all', response_model=PageVO[PostDetailVO])
-async def get_posts(post: PostRequestRO) -> PageVO[PostDetailVO]:
+@post_api.post('/all', response_model=PageVO[PostPreviewVO])
+async def get_posts(post: PostRequestRO) -> PageVO[PostPreviewVO]:
     query = await post_service.build_query(post)
     return await post_service.list_by_query(query)
 
@@ -56,7 +54,7 @@ async def delete_post_draft_api(post_id: int):
     if (post := await post_db.find_by_id(post_id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND)
     if post.status == PostStatusEnum.PUBLISHED:
-        raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST)
+        raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN)
     await post_db.update_selective(post_id, deleted=True)
 
 

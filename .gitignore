@@ -1,7 +1,7 @@
 .idea
 .venv
 .vscode
-config.json
+*config.json
 build
 dist
 wheels

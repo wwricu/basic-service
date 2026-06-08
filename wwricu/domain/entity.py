@@ -1,12 +1,17 @@
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Integer, String, TEXT, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, query_expression
 
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum
 
 
-class Base(DeclarativeBase):
+
+class AbstractBase(DeclarativeBase):
+    __abstract__ = True
+
+
+class Base(AbstractBase):
     __abstract__ = True
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -26,6 +31,7 @@ class BlogPost(Base):
     preview: Mapped[str] = mapped_column(TEXT, default='')
     status: Mapped[str] = mapped_column(String, default=PostStatusEnum.DRAFT.value, index=True)
     category_id: Mapped[int] = mapped_column(Integer, nullable=True, index=True)
+    snippet: Mapped[str | None] = query_expression()
 
 
 class PostTag(Base):
@@ -62,3 +68,12 @@ class SysConfig(Base):
     __tablename__ = 'wwr_sys_config'
     key: Mapped[str] = mapped_column(String, unique=True)
     value: Mapped[str] = mapped_column(TEXT, nullable=True)
+
+
+class BlogPostSearch(AbstractBase):
+    __tablename__ = 'wwr_blog_post_search'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title: Mapped[str] = mapped_column(String)
+    preview: Mapped[str] = mapped_column(TEXT)
+    search_content: Mapped[str] = mapped_column(TEXT)

@@ -1,8 +1,9 @@
-from sqlalchemy import select, update, func, desc, Select
-from sqlalchemy.orm import defer
+from sqlalchemy import select, update, func, desc, Select, literal_column, delete, ColumnClause
+from sqlalchemy.orm import defer, with_expression
 
 from wwricu.component.database import get_session
-from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
+from wwricu.domain.constant import CommonConst
+from wwricu.domain.entity import BlogPost, EntityRelation, PostTag, BlogPostSearch
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
 from wwricu.domain.post import PostQueryDTO
 
@@ -58,10 +59,7 @@ async def find_by_criteria(query: PostQueryDTO) -> list[BlogPost]:
 
 
 async def count(query: PostQueryDTO) -> int:
-    stmt = await build_criteria(query)
-    count_stmt = select(func.count()).select_from(stmt.subquery())
-    async with get_session() as s:
-        return await s.scalar(count_stmt) or 0
+    return await count_by_stmt(await build_criteria(query))
 
 
 async def delete_tags(post_id: int):
@@ -73,6 +71,49 @@ async def delete_tags(post_id: int):
     )
     async with get_session() as s:
         await s.execute(stmt)
+
+
+async def upsert_search_index(post_id: int, title: str, preview: str, search_content: str):
+    async with get_session() as s:
+        await s.execute(delete(BlogPostSearch).where(BlogPostSearch.id == post_id))
+        s.add(BlogPostSearch(
+            id=post_id,
+            title=title,
+            preview=preview,
+            search_content=search_content
+        ))
+
+
+async def search(keyword: str) -> list[BlogPost]:
+    if not keyword or not keyword.strip():
+        return []
+
+    table: ColumnClause = literal_column(BlogPostSearch.__tablename__)
+    snippet_expr = func.snippet(table, 3, CommonConst.MARK_BEGIN, CommonConst.MARK_END, '…', 32)
+    stmt = select(BlogPost).options(
+        defer(BlogPost.content, raiseload=True),
+        with_expression(BlogPost.snippet, snippet_expr),
+    ).join(
+        BlogPostSearch, BlogPost.id == BlogPostSearch.id).where(
+        BlogPost.deleted == False).where(
+        BlogPost.status == PostStatusEnum.PUBLISHED).where(
+        table.match(keyword)
+    ).order_by(func.bm25(table, 10.0, 5.0, 1.0)).limit(30)
+
+    async with get_session() as session:
+        posts = list((await session.scalars(stmt)).all())
+    for p in posts:
+        if p.snippet and CommonConst.MARK_BEGIN not in p.snippet:
+            p.snippet = ''
+        if p.snippet:
+            p.snippet = p.snippet.replace(CommonConst.TOKEN_SEPARATOR, '')
+    return posts
+
+
+async def count_by_stmt(stmt: Select) -> int:
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    async with get_session() as s:
+        return await s.scalar(count_stmt) or 0
 
 
 async def build_criteria(query: PostQueryDTO) -> Select:

@@ -5,7 +5,7 @@ from test.api.utils import cleanup_post_and_tags, create_published_post_with_tag
 from test.test_utils import client
 from wwricu.domain.common import AboutPageVO, PageVO
 from wwricu.domain.enum import TagTypeEnum
-from wwricu.domain.post import PostDetailVO
+from wwricu.domain.post import PostDetailVO, PostPreviewVO
 from wwricu.domain.tag import TagVO
 
 
@@ -23,13 +23,13 @@ def test_open_get_posts():
     assert response.status_code == status.HTTP_200_OK
     page = PageVO.model_validate(response.json())
     for post in page.data:
-        PostDetailVO.model_validate(post)
+        PostPreviewVO.model_validate(post)
 
 
 def test_open_get_posts_pagination():
     response = client.post('/open/post/all', json={'page_index': 1, 'page_size': 5})
     assert response.status_code == status.HTTP_200_OK
-    page = PageVO[PostDetailVO].model_validate(response.json())
+    page = PageVO[PostPreviewVO].model_validate(response.json())
     assert page.page_index == 1
     assert page.page_size == 5
     assert page.count >= 0
@@ -67,8 +67,8 @@ def test_open_get_posts_with_tag_filter():
         assert test_tag is not None
         response = client.post('/open/post/all', json={'tag_list': [test_tag.name]})
         assert response.status_code == status.HTTP_200_OK
-        page = PageVO[PostDetailVO].model_validate(response.json())
-        post_ids = [PostDetailVO.model_validate(p).id for p in page.data]
+        page = PageVO[PostPreviewVO].model_validate(response.json())
+        post_ids = [PostPreviewVO.model_validate(p).id for p in page.data]
         assert post_id in post_ids
     finally:
         cleanup_post_and_tags(post_id, tag_id, category_id)
@@ -83,8 +83,8 @@ def test_open_get_posts_with_category_filter():
         assert test_cat is not None
         response = client.post('/open/post/all', json={'category': test_cat.name})
         assert response.status_code == status.HTTP_200_OK
-        page = PageVO[PostDetailVO].model_validate(response.json())
-        post_ids = [PostDetailVO.model_validate(p).id for p in page.data]
+        page = PageVO[PostPreviewVO].model_validate(response.json())
+        post_ids = [PostPreviewVO.model_validate(p).id for p in page.data]
         assert post_id in post_ids
     finally:
         cleanup_post_and_tags(post_id, tag_id, category_id)

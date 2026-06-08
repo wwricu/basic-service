@@ -1,19 +1,21 @@
+import re
 import uuid
 
+import jieba
 from bs4 import BeautifulSoup
 from fastapi import HTTPException, UploadFile, status as http_status
 from loguru import logger as log
 
 from wwricu.component.cache import post_status_cache
 from wwricu.component.database import transaction
-from wwricu.component.storage import oss_public
+from wwricu.component.storage import storage
 from wwricu.config import app_config
 from wwricu.database import common_db, post_db, tag_db, res_db
 from wwricu.domain.common import FileUploadVO, PageVO, TrashBinRO
 from wwricu.domain.constant import HttpErrorDetail, CommonConst, TimeConst
 from wwricu.domain.entity import BlogPost, PostResource, PostTag, EntityRelation
 from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum, TagTypeEnum, RelationTypeEnum, CacheKeyEnum
-from wwricu.domain.post import PostDetailVO, PostQueryDTO, PostRequestRO, PostResourceVO, PostUpdateRO
+from wwricu.domain.post import PostDetailVO, PostPreviewVO, PostQueryDTO, PostRequestRO, PostResourceVO, PostSearchVO, PostUpdateRO
 from wwricu.domain.tag import TagVO, TagUpdateDTO, TagQueryDTO
 
 
@@ -30,9 +32,9 @@ async def build_query(post: PostRequestRO, *, public: bool = False) -> PostQuery
     return query
 
 
-async def list_by_query(query: PostQueryDTO) -> PageVO[PostDetailVO]:
+async def list_by_query(query: PostQueryDTO) -> PageVO[PostPreviewVO]:
     posts = await post_db.find_by_criteria(query)
-    return PageVO[PostDetailVO](
+    return PageVO[PostPreviewVO](
         page_size=query.page_size,
         page_index=query.page_index,
         count=await post_db.count(query),
@@ -56,19 +58,18 @@ async def get_detail(blog_post: BlogPost | None) -> PostDetailVO:
     return post_detail
 
 
-async def get_preview(post_list: list[BlogPost]) -> list[PostDetailVO]:
+async def get_preview(post_list: list[BlogPost]) -> list[PostPreviewVO]:
     """Generate post preview from BlogPost list"""
     categories = await batch_get_category(post_list)
     tags = await tag_db.find_tags_by_posts(post_list)
     covers = await res_db.find_posts_cover(post_list)
 
-    def generator(post: BlogPost) -> PostDetailVO:
-        detail = PostDetailVO(
+    def generator(post: BlogPost) -> PostPreviewVO:
+        detail = PostPreviewVO(
             id=post.id,
             title=post.title,
             preview=post.preview,
             tag_list=[TagVO.model_validate(tag) for tag in tags.get(post.id, [])],
-            status=PostStatusEnum(post.status),
             create_time=post.create_time,
             update_time=post.update_time
         )
@@ -89,9 +90,10 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
     resources = await res_db.find_by_post_id(post.id)
     bef_keys = {res.key for res in resources if res.id != new_post.cover_id}
     aft_keys = set()
-    for img in BeautifulSoup(new_post.content, CommonConst.HTML_PARSER).find_all(CommonConst.IMG_TAG):
+    soup = BeautifulSoup(new_post.content, CommonConst.HTML_PARSER)
+    for img in soup.find_all(CommonConst.IMG_TAG):
         src = img.get(CommonConst.SRC_PROP)
-        if isinstance(src, str) and (key := oss_public.get_key_from_url(src)):
+        if isinstance(src, str) and (key := storage.get_key_from_url(src)):
             aft_keys.add(key)
 
     if delete_keys := list(bef_keys - aft_keys):
@@ -101,6 +103,10 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
     tag_update = TagUpdateDTO(category_id=new_post.category_id, tag_id_list=new_post.tag_id_list, status=new_post.status)
     await update_category(post, tag_update)
     await update_tags(post, tag_update)
+
+    for tag in soup.find_all(['script', 'style', 'pre']):
+        tag.decompose()
+
     await post_db.update_selective(
         new_post.id,
         title=new_post.title,
@@ -109,6 +115,12 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
         cover_id=new_post.cover_id,
         status=new_post.status,
         category_id=new_post.category_id
+    )
+    await post_db.upsert_search_index(
+        new_post.id,
+        CommonConst.TOKEN_SEPARATOR.join([t.strip() for t in jieba.cut_for_search(new_post.title) if t.strip()]),
+        CommonConst.TOKEN_SEPARATOR.join([t.strip() for t in jieba.cut_for_search(new_post.preview) if t.strip()]),
+        CommonConst.TOKEN_SEPARATOR.join(jieba.cut_for_search(' '.join(soup.get_text().split())))
     )
 
     post = await post_db.find_by_id(new_post.id)
@@ -180,8 +192,8 @@ async def upload_file(file: UploadFile, post_id: int, file_type: PostResourceTyp
     if file.size is None or file.size > app_config.max_upload_size:
         raise HTTPException(http_status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
 
-    key = f'post/{post_id}/{file_type}_{uuid.uuid4().hex}'
-    url = await oss_public.put(key, await file.read())
+    key = f'post/{post_id}/{uuid.uuid4().hex}'
+    url = await storage.put(key, await file.read())
     resource = PostResource(name=file.filename, key=key, type=file_type, post_id=post.id, url=url)
     await common_db.insert(resource)
     log.info(f'upload file {file.filename} to {post_id=} {file.size=} {url=}')
@@ -206,7 +218,7 @@ async def process_resource_trash(trash_bin: TrashBinRO):
     await common_db.hard_delete(PostResource, trash_bin.id)
 
     if resource:
-        await oss_public.delete(resource.key)
+        await storage.delete(resource.key)
         log.info(f'delete resource {resource.key}')
 
 
@@ -218,3 +230,17 @@ async def get_status(post_id: int) -> PostStatusEnum:
     post_status = PostStatusEnum(post.status)
     await post_status_cache.set(CacheKeyEnum.POST.format(id=post_id), post_status, TimeConst.ONE_DAY_SECONDS)
     return post_status
+
+
+async def search(keyword: str) -> list[PostSearchVO]:
+    if not keyword or not keyword.strip():
+        return []
+    keyword = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9\s]', ' ', keyword).strip()
+    words = [seg for part in keyword.split() for seg in jieba.cut(part) if seg.strip()]
+    if not words:
+        return []
+    keyword = ' OR '.join(words)
+
+    posts = await post_db.search(' '.join(jieba.cut(keyword)))
+    details = await get_preview(posts)
+    return [PostSearchVO(**detail.model_dump(), snippet=post.snippet) for post, detail in zip(posts, details)]

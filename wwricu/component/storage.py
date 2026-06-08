@@ -28,7 +28,8 @@ class AWSS3Storage:
         response = self.s3_client.get_object(Bucket=self.bucket, Key=key)
         s3_resp = AWSS3Response.model_validate(response)
         s3_resp.check()
-        return s3_resp.Body.read()
+        with s3_resp.Body:
+            return s3_resp.Body.read()
 
     def sync_put(self, key: str, data: bytes) -> str:
         response = self.s3_client.put_object(Bucket=self.bucket, Key=key, Body=data)
@@ -97,5 +98,4 @@ class AWSS3Storage:
 
 
 aws_s3_client = boto3.client(AWSConst.S3, region_name=AWSConst.REGION)
-oss_public = AWSS3Storage(aws_s3_client, app_config.storage.bucket)
-oss_private = AWSS3Storage(aws_s3_client, app_config.storage.private_bucket)
+storage = AWSS3Storage(aws_s3_client, app_config.storage.bucket)
