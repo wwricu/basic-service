@@ -70,6 +70,7 @@ async def get_preview(post_list: list[BlogPost]) -> list[PostPreviewVO]:
             title=post.title,
             preview=post.preview,
             tag_list=[TagVO.model_validate(tag) for tag in tags.get(post.id, [])],
+            status=PostStatusEnum(post.status),
             create_time=post.create_time,
             update_time=post.update_time
         )
