@@ -2,7 +2,6 @@ import time
 
 import pytest
 
-from wwricu.component.database import database_manager
 from wwricu.database import post_db
 
 

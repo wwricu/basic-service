@@ -52,11 +52,15 @@ class Config(BaseSettings):
 
 class EnvironmentVariable(BaseSettings):
     ENV: EnvironmentEnum = EnvironmentEnum.DEVELOPMENT
-    RESOURCE_HOSTNAME: str = 'res.wwr.icu'
+    BASE_DOMAIN: str = 'wwr.icu'
     ROOT_PATH: str = '/'
     LOG_PATH: str = 'logs'
     CONFIG_FILE: str = 'config.json'
     VERSION: str = '0.0.1'
+
+    @property
+    def resource_domain(self):
+        return f'res.{self.BASE_DOMAIN}'
 
 
 def init_log():
