@@ -14,11 +14,3 @@ async def test_post_search():
     for post in posts:
         print(post.id, post.title, '|', post.snippet)
     print(time.time() - b)
-
-
-@pytest.mark.asyncio
-async def test_database_vacuum():
-    b = time.time()
-    async with database_manager.engine.connect() as conn, conn.begin():
-        await conn.exec_driver_sql('VACUUM')
-    print(time.time() - b)
