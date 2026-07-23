@@ -42,6 +42,9 @@ async def database_api(action: DatabaseActionEnum, background_task: BackgroundTa
 
 @manage_api.post('/config/set', response_model=None)
 async def config_set_api(config: ConfigRO):
+    # These keys shall be set via their dedicated apis
+    if config.key in (ConfigKeyEnum.PASSWORD, ConfigKeyEnum.TOTP_SECRET):
+        raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE)
     if config.value is None:
         await manage_service.delete_config([config.key])
         return
