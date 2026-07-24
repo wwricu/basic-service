@@ -16,7 +16,7 @@ import wwricu.service.manage as manage_service
 from wwricu.component.cache import sys_cache
 from wwricu.component.middleware import real_ip
 from wwricu.component.token_bucket import default_bucket, login_ip_bucket
-from wwricu.config import app_config
+from wwricu.config import app_config, env
 from wwricu.domain.common import LoginRO, LoginVO
 from wwricu.domain.constant import CommonConst, HttpErrorDetail, TimeConst
 from wwricu.domain.enum import ConfigKeyEnum
@@ -110,8 +110,9 @@ def hmac_sign(plain: str) -> str:
 
 async def login(session_id: str, response: Response):
     await sys_cache.set(session_id, int(time.time()), TimeConst.COOKIE_MAX_AGE)
-    response.set_cookie(CommonConst.SESSION_ID, session_id, TimeConst.COOKIE_MAX_AGE, secure=True, httponly=True, samesite='lax')
-    response.set_cookie(CommonConst.COOKIE_SIGN, hmac_sign(session_id), TimeConst.COOKIE_MAX_AGE, secure=True, httponly=True, samesite='lax')
+    kwargs = dict(domain=env.BASE_DOMAIN, secure=True, httponly=True, samesite='lax')
+    response.set_cookie(CommonConst.SESSION_ID, session_id, TimeConst.COOKIE_MAX_AGE, **kwargs)
+    response.set_cookie(CommonConst.COOKIE_SIGN, hmac_sign(session_id), TimeConst.COOKIE_MAX_AGE, **kwargs)
 
 
 def throttle(concurrent: int, timeout: float):
@@ -145,6 +146,6 @@ async def verify_credentials(request: LoginRO) -> bool:
 async def logout(request: Request, response: Response):
     if (session_id := request.cookies.get(CommonConst.SESSION_ID)) is None:
         return
-    response.delete_cookie(CommonConst.SESSION_ID)
-    response.delete_cookie(CommonConst.COOKIE_SIGN)
+    response.delete_cookie(CommonConst.SESSION_ID, domain=env.BASE_DOMAIN)
+    response.delete_cookie(CommonConst.COOKIE_SIGN, domain=env.BASE_DOMAIN)
     await sys_cache.delete(session_id)

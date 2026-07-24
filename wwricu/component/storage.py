@@ -17,7 +17,7 @@ class AWSS3Storage:
 
     @property
     def resource_api(self) -> str:
-        return f'https://{env.RESOURCE_HOSTNAME}/image/'
+        return f'https://{env.resource_domain}/image/'
 
     def __init__(self, s3_client: S3Client, bucket: str):
         self.bucket = bucket
