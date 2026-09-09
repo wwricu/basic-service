@@ -1,6 +1,8 @@
 import contextlib
 import functools
 import os
+import sqlite3
+import uuid
 from asyncio import current_task
 from typing import AsyncGenerator, cast, Callable
 
@@ -58,14 +60,18 @@ class DatabaseManager:
         if __debug__ or not os.path.exists(self.config.database):
             return
         log.info(f'Backup database {self.config.database}')
-        await self.engine.dispose()
-        async with self.engine.connect() as conn:
-            await conn.exec_driver_sql('VACUUM')
-        async with await open_file(self.config.database, mode='rb') as f:
-            # PRICED call on each restart and every week
-            await storage.put(self.config.database, await f.read())
-        self.init()
-        log.info('Backup database success')
+
+        backup_path = uuid.uuid4().hex
+        with sqlite3.connect(self.config.database) as source, sqlite3.connect(backup_path) as backup:
+            source.backup(backup)
+
+        try:
+            async with await open_file(backup_path, mode='rb') as f:
+                # PRICED call on each restart and every week
+                await storage.put(self.config.database, await f.read())
+                log.info('Backup database success')
+        finally:
+            os.remove(backup_path)
 
     async def restore(self):
         await self.engine.dispose()

@@ -85,6 +85,7 @@ def init_log():
 
 def init_config() -> Config:
     log.info(f'env={env.ENV}')
+    log.info(f'{sys.version=}')
     config_file = Path(env.CONFIG_FILE)
     if config_file.exists() and config_file.is_file():
         log.info(f'Getting config from {config_file.absolute()}')

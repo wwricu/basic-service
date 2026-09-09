@@ -1,21 +1,21 @@
 [project]
 name = 'wwricu'
 description = 'wwr.icu api service'
-requires-python = '>=3.12'
+requires-python = '>=3.13'
 dynamic = ['version']
 
 dependencies = [
     'aiosqlite==0.22.1',
-    'apscheduler==3.11.2',
+    "apscheduler==3.11.3",
     'bcrypt==5.0.0',
-    "beautifulsoup4==4.14.3",
+    "beautifulsoup4==4.15.0",
     'boto3~=1.43.0',
     "boto3-stubs[appconfig,s3]~=1.43.0",
-    'fastapi[standard]==0.136.3',
+    "fastapi[standard]==0.141.1",
     "jieba==0.42.1",
     'loguru==0.7.3',
-    'pyotp==2.9.0',
-    "sqlalchemy==2.0.50",
+    "pyotp==2.10.0",
+    "sqlalchemy==2.0.52",
 ]
 
 [tool.setuptools.dynamic]
