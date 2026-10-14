@@ -57,3 +57,9 @@ class EntityTypeEnum(StrEnum):
     POST_CAT = 'Category'
     POST_IMAGE = 'Image'
     POST_COVER = 'Cover'
+
+
+class TaskStatusEnum(StrEnum):
+    RUNNING = 'running'
+    SUCCESS = 'success'
+    FAILED = 'failed'

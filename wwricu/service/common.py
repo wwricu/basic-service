@@ -16,6 +16,7 @@ from wwricu.domain.constant import TimeConst
 from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum
 from wwricu.domain.post import PostQueryDTO
 from wwricu.domain.tag import TagQueryDTO
+import wwricu.task  # noqa: F401  触发任务装饰器注册
 
 
 @asynccontextmanager
