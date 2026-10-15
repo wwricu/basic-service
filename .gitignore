@@ -1,21 +1,35 @@
+# editor / local env
 .idea
-.venv
 .vscode
-*config.json
-build
-dist
+.venv
+.env
+.env.local
+
+# secrets: the app config holds the password hash, session secret key and open-api keys
+/config.json
+*_config.json
+
+# python backend leftovers
 wheels
-wwricu.egg-info
-**/conf
+*.egg-info
 **/__pycache__
 *.py[oc]
 *.iml
-*.sqlite3
 *.pkl
+
+# node app
+node_modules/
+.react-router/
+build
+dist
+
+# runtime data
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+logs/
 *.dir
 *.dat
 *.bak
 *.log
 *.zip
-.env.local
-.env

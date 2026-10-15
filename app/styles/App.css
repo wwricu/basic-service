@@ -1,0 +1,66 @@
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+}
+
+.ant-upload {
+  width: 400px !important;
+  height: 200px !important;
+}
+
+@media (max-width: 640px) {
+  .max-sm-flex-wrap {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 1024px) {
+  .max-lg\:hidden {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lg\:hidden {
+    display: none;
+  }
+}
+
+/**
+ * Make ck-editor take all its parent's vertical space, also only editable zone scrollable with toolbar fixed
+ * <ck-editor>
+ *   <ck-editor__top/>
+ *   <ck-editor__main>
+ *     <ck-editor__editable/>
+ *   </ck-editor__main>
+ * </ck-editor>
+ *
+*/
+.ck-editor {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.ck-editor__main {
+  flex: 1 !important;
+  overflow-y: auto !important;
+}
+
+.ck-editor__editable_inline {
+    height: 100% !important;
+}
