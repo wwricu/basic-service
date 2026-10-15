@@ -193,8 +193,10 @@ const cases = [
   form('/api/post/upload', { file: '@file', post_id: '1', file_type: 'image' }),
 ];
 
-const PY = 'http://127.0.0.1:8000';
-const RR = 'http://localhost:5199';
+// Point RR_BASE at `react-router-serve` to compare the legacy service with a production
+// build instead of the dev server.
+const PY = process.env.PY_BASE ?? 'http://127.0.0.1:8000';
+const RR = process.env.RR_BASE ?? 'http://localhost:5199';
 
 let failures = 0;
 for (const entry of cases) {
