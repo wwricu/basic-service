@@ -41,10 +41,10 @@ class FileUploadVO(BaseModel):
 
 
 class AboutPageVO(BaseModel):
-    content: str | None = None
-    post_count: int | None = 0
-    category_count: int | None = 0
-    tag_count: int | None = 0
+    content: str
+    post_count: int
+    category_count: int
+    tag_count: int
     startup_timestamp: int | None = None
 
 

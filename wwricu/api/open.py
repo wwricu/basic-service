@@ -57,9 +57,9 @@ async def open_get_tags_api(tag_type: TagTypeEnum) -> list[TagVO]:
 @open_api.get('/about', response_model=AboutPageVO)
 async def open_get_about_api() -> AboutPageVO:
     return AboutPageVO(
-        content=await manage_service.get_config(ConfigKeyEnum.ABOUT_CONTENT),
+        content=await manage_service.get_config(ConfigKeyEnum.ABOUT_CONTENT) or '',
         post_count=await sys_cache.get(CacheKeyEnum.POST_COUNT) or 0,
         category_count=await sys_cache.get(CacheKeyEnum.CATEGORY_COUNT) or 0,
         tag_count=await sys_cache.get(CacheKeyEnum.TAG_COUNT) or 0,
-        startup_timestamp=await sys_cache.get(CacheKeyEnum.STARTUP_TIMESTAMP) or 0
+        startup_timestamp=await sys_cache.get(CacheKeyEnum.STARTUP_TIMESTAMP)
     )
