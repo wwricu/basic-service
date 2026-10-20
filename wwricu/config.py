@@ -38,8 +38,6 @@ class SecurityConfig(BaseModel):
     secret_key: str
     login_ip_times: int = Field(3, gt=0)
     login_ip_span: float = Field(1800.0, gt=0)
-    image_ip_qps: float = 0
-    open_ip_qps: float = 0
 
 
 class Config(BaseSettings):

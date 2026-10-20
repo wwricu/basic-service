@@ -44,5 +44,4 @@ class TokenBucket:
         await self.cache.delete(CacheKeyEnum.TOKEN_BUCKET.format(name=self.name, id=bucket_id))
 
 
-image_bucket = TokenBucket(name='default', speed=100.0, capacity=150.0)
 login_ip_bucket = TokenBucket(name='login', speed=1.0, capacity=app_config.security.login_ip_span)

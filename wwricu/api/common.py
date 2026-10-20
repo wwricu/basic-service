@@ -24,7 +24,7 @@ async def info_api():
     return
 
 
-@common_api.get('/image/post/{post_id}/{key}', dependencies=[Depends(security_service.image_limiter)])
+@common_api.get('/image/post/{post_id}/{key}')
 async def image_api(post_id: int, key: str, is_admin: bool = Depends(security_service.is_admin)):
     if not is_admin and await post_service.get_status(post_id) != PostStatusEnum.PUBLISHED:
         log.warning(f'{post_id=} {key=}')
