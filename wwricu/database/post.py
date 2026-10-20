@@ -1,9 +1,8 @@
-from sqlalchemy import select, update, func, desc, Select, literal_column, delete, ColumnClause
-from sqlalchemy.orm import defer, with_expression
+from sqlalchemy import ColumnClause, Select, delete, desc, func, literal_column, select, update
+from sqlalchemy.orm import defer
 
 from wwricu.component.database import get_session
-from wwricu.domain.constant import CommonConst
-from wwricu.domain.entity import BlogPost, EntityRelation, PostTag, BlogPostSearch
+from wwricu.domain.entity import BlogPost, BlogPostSearch, EntityRelation, PostTag
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
 from wwricu.domain.post import PostQueryDTO
 
@@ -84,30 +83,20 @@ async def upsert_search_index(post_id: int, title: str, preview: str, search_con
         ))
 
 
-async def search(keyword: str) -> list[BlogPost]:
-    if not keyword or not keyword.strip():
+async def search(match: str) -> list[BlogPost]:
+    if not match:
         return []
 
     table: ColumnClause = literal_column(BlogPostSearch.__tablename__)
-    snippet_expr = func.snippet(table, 3, CommonConst.MARK_BEGIN, CommonConst.MARK_END, '…', 32)
-    stmt = select(BlogPost).options(
-        defer(BlogPost.content, raiseload=True),
-        with_expression(BlogPost.snippet, snippet_expr),
-    ).join(
+    stmt = select(BlogPost).join(
         BlogPostSearch, BlogPost.id == BlogPostSearch.id).where(
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED).where(
-        table.match(keyword)
+        table.match(match)
     ).order_by(func.bm25(table, 10.0, 5.0, 1.0)).limit(30)
 
     async with get_session() as session:
-        posts = list((await session.scalars(stmt)).all())
-    for p in posts:
-        if p.snippet and CommonConst.MARK_BEGIN not in p.snippet:
-            p.snippet = ''
-        if p.snippet:
-            p.snippet = p.snippet.replace(CommonConst.TOKEN_SEPARATOR, '')
-    return posts
+        return list((await session.scalars(stmt)).all())
 
 
 async def count_by_stmt(stmt: Select) -> int:

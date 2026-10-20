@@ -4,7 +4,6 @@ import time
 import pytest
 
 
-
 async def sync_func() -> None:
     time.sleep(1)
 

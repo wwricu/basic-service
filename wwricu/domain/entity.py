@@ -1,10 +1,9 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Integer, String, TEXT, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, query_expression
+from sqlalchemy import TEXT, Boolean, DateTime, Integer, String, func
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum
-
 
 
 class AbstractBase(DeclarativeBase):
@@ -31,7 +30,6 @@ class BlogPost(Base):
     preview: Mapped[str] = mapped_column(TEXT, default='')
     status: Mapped[str] = mapped_column(String, default=PostStatusEnum.DRAFT.value, index=True)
     category_id: Mapped[int] = mapped_column(Integer, nullable=True, index=True)
-    snippet: Mapped[str | None] = query_expression()
 
 
 class PostTag(Base):
