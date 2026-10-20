@@ -16,8 +16,6 @@ class CommonConst(StrEnum):
     IMG_TAG = 'img'
     SRC_PROP = 'src'
     HTML_PARSER = 'html.parser'
-    IMAGE_IP_BUCKET = 'image:{ip}'
-    OPEN_IP_BUCKET = 'open:{ip}'
     TOKEN_SEPARATOR = '\x01'
     MARK_BEGIN = '<mark>'
     MARK_END = '</mark>'

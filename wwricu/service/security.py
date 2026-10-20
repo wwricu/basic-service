@@ -15,7 +15,7 @@ from loguru import logger as log
 import wwricu.service.manage as manage_service
 from wwricu.component.cache import sys_cache
 from wwricu.component.middleware import real_ip
-from wwricu.component.token_bucket import default_bucket, login_ip_bucket
+from wwricu.component.token_bucket import image_bucket, login_ip_bucket
 from wwricu.config import app_config, env
 from wwricu.domain.common import LoginRO, LoginVO
 from wwricu.domain.constant import CommonConst, HttpErrorDetail, TimeConst
@@ -31,14 +31,8 @@ async def login_limiter():
 
 
 async def image_limiter():
-    if not await default_bucket.allow(CommonConst.IMAGE_IP_BUCKET.format(ip=real_ip.get()), app_config.security.image_ip_qps):
+    if not await image_bucket.allow(real_ip.get(), app_config.security.image_ip_qps):
         log.warning(f'{real_ip.get()} exceeded image rate limit')
-        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS)
-
-
-async def open_limiter():
-    if not await default_bucket.allow(CommonConst.OPEN_IP_BUCKET.format(ip=real_ip.get()), app_config.security.open_ip_qps):
-        log.warning(f'{real_ip.get()} exceeded open rate limit')
         raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS)
 
 
