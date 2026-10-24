@@ -93,14 +93,14 @@ def init_config() -> Config:
         with config_file.open() as f:
             return Config.model_validate_json(f.read())
 
-    log.info(f'Getting config from Cloudflare KV key={config_file}')
+    log.info(f'Getting config from Cloudflare KV key={config_file.name}')
     if not (env.CF_ACCOUNT_ID and env.CF_KV_NAMESPACE_ID and env.CF_KV_API_TOKEN):
         raise RuntimeError('Cloudflare KV credentials are not configured')
 
     client = cloudflare.Cloudflare(api_token=env.CF_KV_API_TOKEN)
     try:
         content = client.kv.namespaces.values.get(
-            str(config_file),
+            config_file.name,
             account_id=env.CF_ACCOUNT_ID,
             namespace_id=env.CF_KV_NAMESPACE_ID,
         ).read().decode()
