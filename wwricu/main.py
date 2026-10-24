@@ -12,7 +12,6 @@ app = FastAPI(
     lifespan=lifespan,
     middleware=middlewares,
     version=env.VERSION,
-    root_path=env.ROOT_PATH,
     docs_url=None,
     redoc_url=None,
     debug=__debug__

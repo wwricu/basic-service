@@ -50,7 +50,6 @@ class Config(BaseSettings):
 class EnvironmentVariable(BaseSettings):
     ENV: EnvironmentEnum = EnvironmentEnum.DEVELOPMENT
     BASE_DOMAIN: str = 'wwr.icu'
-    ROOT_PATH: str = '/'
     LOG_PATH: str = 'logs'
     CONFIG_FILE: str = 'config.json'
     VERSION: str = '0.0.1'
