@@ -8,15 +8,15 @@ from pydantic import ConfigDict
 from wwricu.domain.common import BaseModel
 
 
-class AWSConst:
-    S3: Literal['s3'] = 's3'
-    APP_CONFIG_DATA: Literal['appconfigdata'] = 'appconfigdata'
-    REGION: str = 'us-west-2'
+class CloudflareConst:
+    R2: Literal['s3'] = 's3'
+    R2_REGION: str = 'auto'
+    R2_ENDPOINT: str = 'https://{account_id}.r2.cloudflarestorage.com'
     GET_OBJECT: str = 'get_object'
 
 
 class AWSResponseMetaData(BaseModel):
-    RequestId: str
+    RequestId: str = ''  # Cloudflare R2 omits RequestId in ResponseMetadata on some operations
     HTTPStatusCode: int
     HTTPHeaders: dict
     HostId: str | None = None  # S3
@@ -56,17 +56,3 @@ class AWSS3ListResponse(AWSResponseBase):
     EncodingType: str
     KeyCount: int
     NextContinuationToken: str | None = None
-
-
-class AWSAppConfigSessionResponse(AWSResponseBase):
-    InitialConfigurationToken: str
-
-
-class AWSAppConfigConfigResponse(AWSResponseBase):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    NextPollConfigurationToken: str
-    NextPollIntervalInSeconds: int
-    ContentType: str
-    VersionLabel: str | None = None
-    Configuration: StreamingBody

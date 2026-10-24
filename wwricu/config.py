@@ -3,20 +3,19 @@ import os
 import sys
 from pathlib import Path
 
-import boto3
+import cloudflare
 from dotenv import load_dotenv
 from loguru import logger as log
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
 
-from wwricu.domain.constant import CommonConst
 from wwricu.domain.enum import EnvironmentEnum
-from wwricu.domain.third import AWSConst, AWSAppConfigSessionResponse, AWSAppConfigConfigResponse
 
 
 class StorageConfig(BaseModel):
-    region: str
     bucket: str
+    access_key_id: str = ''
+    secret_access_key: str = ''
 
 
 class DatabaseConfig(BaseModel):
@@ -56,6 +55,10 @@ class EnvironmentVariable(BaseSettings):
     CONFIG_FILE: str = 'config.json'
     VERSION: str = '0.0.1'
 
+    CF_ACCOUNT_ID: str = ''
+    CF_KV_NAMESPACE_ID: str = ''
+    CF_KV_API_TOKEN: str = ''
+
     @property
     def resource_domain(self):
         return f'res.{self.BASE_DOMAIN}'
@@ -90,23 +93,20 @@ def init_config() -> Config:
         with config_file.open() as f:
             return Config.model_validate_json(f.read())
 
-    log.info(f'Getting config from {AWSConst.APP_CONFIG_DATA}')
-    app_config_data_client = boto3.client(AWSConst.APP_CONFIG_DATA, region_name=AWSConst.REGION)
-    response = app_config_data_client.start_configuration_session(
-        ApplicationIdentifier=CommonConst.APP_NAME,
-        EnvironmentIdentifier=EnvironmentEnum(env.ENV),
-        ConfigurationProfileIdentifier=config_file.name
-    )
-    aws_session = AWSAppConfigSessionResponse.model_validate(response)
-    aws_session.check()
+    log.info(f'Getting config from Cloudflare KV key={config_file}')
+    if not (env.CF_ACCOUNT_ID and env.CF_KV_NAMESPACE_ID and env.CF_KV_API_TOKEN):
+        raise RuntimeError('Cloudflare KV credentials are not configured')
 
-    # PRICED call on each deployment
-    response = app_config_data_client.get_latest_configuration(ConfigurationToken=aws_session.InitialConfigurationToken)
-    aws_app_config = AWSAppConfigConfigResponse.model_validate(response)
-    aws_app_config.check()
-
-    with aws_app_config.Configuration:
-        content = aws_app_config.Configuration.read().decode()
+    client = cloudflare.Cloudflare(api_token=env.CF_KV_API_TOKEN)
+    try:
+        content = client.kv.namespaces.values.get(
+            str(config_file),
+            account_id=env.CF_ACCOUNT_ID,
+            namespace_id=env.CF_KV_NAMESPACE_ID,
+        ).read().decode()
+    except cloudflare.APIStatusError:
+        log.error('Failed to get config from Cloudflare KV')
+        raise
 
     config_file.parent.mkdir(parents=True, exist_ok=True)
     with config_file.open('wt+') as f:

@@ -7,11 +7,11 @@ from loguru import logger as log
 from mypy_boto3_s3 import S3Client
 from mypy_boto3_s3.type_defs import DeleteTypeDef, ObjectIdentifierTypeDef
 
-from wwricu.config import app_config, env
-from wwricu.domain.third import AWSConst, AWSS3ListResponse, AWSS3Object, AWSS3Response, AWSResponseBase
+from wwricu.config import StorageConfig, app_config, env
+from wwricu.domain.third import AWSS3ListResponse, AWSS3Object, AWSS3Response, AWSResponseBase, CloudflareConst
 
 
-class AWSS3Storage:
+class R2Storage:
     bucket: str
     s3_client: S3Client
 
@@ -19,9 +19,17 @@ class AWSS3Storage:
     def resource_api(self) -> str:
         return f'https://{env.resource_domain}/image/'
 
-    def __init__(self, s3_client: S3Client, bucket: str):
-        self.bucket = bucket
-        self.s3_client = s3_client
+    def __init__(self, config: StorageConfig):
+        self.bucket = config.bucket
+        # Cloudflare R2 speaks the S3 protocol, so boto3 needs the account-scoped R2 endpoint explicitly.
+        # Credentials are read from the config file (StorageConfig) and injected straight into the client.
+        self.s3_client = boto3.client(
+            CloudflareConst.R2,
+            endpoint_url=(CloudflareConst.R2_ENDPOINT.format(account_id=env.CF_ACCOUNT_ID)),
+            region_name=CloudflareConst.R2_REGION,
+            aws_access_key_id=config.access_key_id or None,
+            aws_secret_access_key=config.secret_access_key or None,
+        )
 
     def sync_get(self, key: str) -> bytes:
         # If S3 object_name was not specified, use file_name
@@ -76,7 +84,7 @@ class AWSS3Storage:
 
     def generate_presigned_url(self, key: str, expires: int) -> str:
         return self.s3_client.generate_presigned_url(
-            AWSConst.GET_OBJECT,
+            CloudflareConst.GET_OBJECT,
             Params=dict(Bucket=self.bucket, Key=key),
             ExpiresIn=expires
         )
@@ -97,5 +105,4 @@ class AWSS3Storage:
         await asyncio.to_thread(self.sync_delete, key)
 
 
-aws_s3_client = boto3.client(AWSConst.S3, region_name=AWSConst.REGION)
-storage = AWSS3Storage(aws_s3_client, app_config.storage.bucket)
+storage = R2Storage(app_config.storage)
