@@ -1,11 +1,9 @@
 import asyncio
 import base64
-import functools
 import hashlib
 import hmac
 import time
 import uuid
-from collections.abc import Callable
 
 import bcrypt
 import pyotp
@@ -103,24 +101,6 @@ async def login(session_id: str, response: Response):
     response.set_cookie(CommonConst.COOKIE_SIGN, hmac_sign(session_id), TimeConst.COOKIE_MAX_AGE, **kwargs)
 
 
-def throttle(concurrent: int, timeout: float):
-    sem = asyncio.Semaphore(concurrent)
-    def decorator(func: Callable) -> Callable:
-        @functools.wraps(func)
-        async def wrapper(*args, **kwargs):
-            try:
-                await asyncio.wait_for(sem.acquire(), timeout=timeout)
-            except asyncio.TimeoutError:
-                raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS)
-            try:
-                return await func(*args, **kwargs)
-            finally:
-                sem.release()
-        return wrapper
-    return decorator
-
-
-@throttle(concurrent=1, timeout=2.0)
 async def verify_credentials(request: LoginRO) -> bool:
     username = await manage_service.get_config(ConfigKeyEnum.USERNAME)
     password = await manage_service.get_config(ConfigKeyEnum.PASSWORD)
