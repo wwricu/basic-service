@@ -10,7 +10,7 @@ from wwricu.domain.enum import PostStatusEnum, CacheKeyEnum, PostResourceTypeEnu
 from wwricu.domain.post import PostDetailVO, PostPreviewVO, PostRequestRO, PostUpdateRO
 from wwricu.service import common_service, post_service, security_service
 
-post_api = APIRouter(prefix='/post', tags=['Post Management'], dependencies=[Depends(security_service.require_admin)])
+post_api = APIRouter(prefix='/admin/post', tags=['Post Management'], dependencies=[Depends(security_service.require_admin)])
 
 
 @post_api.get('/create', response_model=PostDetailVO)

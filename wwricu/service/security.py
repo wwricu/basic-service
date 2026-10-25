@@ -61,6 +61,11 @@ async def authenticate(login_request: LoginRO, request: Request, response: Respo
     return LoginVO()
 
 
+async def require_internal_token(request: Request):
+    if env.ADMIN_API_TOKEN and request.headers.get(CommonConst.ADMIN_TOKEN_HEADER) != env.ADMIN_API_TOKEN:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+
 async def require_admin(request: Request, response: Response):
     if not await is_admin(request, response):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)

@@ -1,7 +1,7 @@
 FROM python:3.13-slim
 
 ARG VERSION
-ENV PYTHONOPTIMIZE=1 ROOT_PATH=/api ENV=dev CONFIG_FILE=/etc/basic-service/config.json VERSION=${VERSION}
+ENV PYTHONOPTIMIZE=1 ENV=dev CONFIG_FILE=/etc/basic-service/config.json VERSION=${VERSION}
 WORKDIR /data
 
 ADD https://github.com/wwricu/basic-service/releases/download/snapshot/wwricu-${VERSION}-py3-none-any.whl .

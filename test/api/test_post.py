@@ -18,11 +18,11 @@ def test_create_post():
         assert post.id is not None
         assert post.status == PostStatusEnum.DRAFT
     finally:
-        client.get(f'/post/delete/{post.id}')
+        client.get(f'/admin/post/delete/{post.id}')
 
 
 def test_get_all_posts_with_status_filter():
-    response = client.post('/post/all', json={'status': PostStatusEnum.DRAFT})
+    response = client.post('/admin/post/all', json={'status': PostStatusEnum.DRAFT})
     assert response.status_code == status.HTTP_200_OK
     page = PageVO[PostPreviewVO].model_validate(response.json())
     for post_data in page.data:
@@ -33,8 +33,8 @@ def test_get_all_posts_with_status_filter():
 def test_get_all_posts_with_deleted_filter():
     post = create_post()
     try:
-        client.get(f'/post/delete/{post.id}')
-        response = client.post('/post/all', json={'deleted': True})
+        client.get(f'/admin/post/delete/{post.id}')
+        response = client.post('/admin/post/all', json={'deleted': True})
         assert response.status_code == status.HTTP_200_OK
         page = PageVO[PostPreviewVO].model_validate(response.json())
         deleted_ids = [PostPreviewVO.model_validate(p).id for p in page.data]
@@ -46,28 +46,28 @@ def test_get_all_posts_with_deleted_filter():
 def test_get_post_detail():
     post = create_post()
     try:
-        response = client.get(f'/post/detail/{post.id}')
+        response = client.get(f'/admin/post/detail/{post.id}')
         log.info(response.json())
         assert response.status_code == status.HTTP_200_OK
         detail = PostDetailVO.model_validate(response.json())
         assert detail.id == post.id
     finally:
-        client.get(f'/post/delete/{post.id}')
+        client.get(f'/admin/post/delete/{post.id}')
 
 
 def test_get_deleted_post_detail():
     post = create_post()
-    client.get(f'/post/delete/{post.id}')
-    response = client.get(f'/post/detail/{post.id}')
+    client.get(f'/admin/post/delete/{post.id}')
+    response = client.get(f'/admin/post/detail/{post.id}')
     assert response.status_code == status.HTTP_200_OK
     assert response.json() is None
 
 
 def test_update_post_with_tags_and_category():
     post = create_post()
-    tag_response = client.post('/tag/create', json={'name': f'update_test_{uuid.uuid4().hex[:8]}', 'type': TagTypeEnum.POST_TAG})
+    tag_response = client.post('/admin/tag/create', json={'name': f'update_test_{uuid.uuid4().hex[:8]}', 'type': TagTypeEnum.POST_TAG})
     tag = TagVO.model_validate(tag_response.json())
-    cat_response = client.post('/tag/create', json={'name': f'update_cat_{uuid.uuid4().hex[:8]}', 'type': TagTypeEnum.POST_CAT})
+    cat_response = client.post('/admin/tag/create', json={'name': f'update_cat_{uuid.uuid4().hex[:8]}', 'type': TagTypeEnum.POST_CAT})
     category = TagVO.model_validate(cat_response.json())
     try:
         update_data = {
@@ -79,9 +79,9 @@ def test_update_post_with_tags_and_category():
             'tag_id_list': [tag.id],
             'category_id': category.id
         }
-        response = client.post('/post/update', json=update_data)
+        response = client.post('/admin/post/update', json=update_data)
         assert response.status_code == status.HTTP_200_OK
-        detail_response = client.get(f'/post/detail/{post.id}')
+        detail_response = client.get(f'/admin/post/detail/{post.id}')
         updated = PostDetailVO.model_validate(detail_response.json())
         assert updated.title == 'Post With Tags'
         assert len(updated.tag_list) == 1
@@ -89,9 +89,9 @@ def test_update_post_with_tags_and_category():
         assert updated.category is not None
         assert updated.category.id == category.id
     finally:
-        client.get(f'/post/delete/{post.id}')
-        client.get(f'/tag/delete/{tag.id}')
-        client.get(f'/tag/delete/{category.id}')
+        client.get(f'/admin/post/delete/{post.id}')
+        client.get(f'/admin/tag/delete/{tag.id}')
+        client.get(f'/admin/tag/delete/{category.id}')
 
 
 def test_update_post_not_found():
@@ -103,7 +103,7 @@ def test_update_post_not_found():
         'content': 'content',
         'tag_id_list': []
     }
-    response = client.post('/post/update', json=update_data)
+    response = client.post('/admin/post/update', json=update_data)
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
@@ -111,27 +111,27 @@ def test_update_post_status():
     post = create_post()
     try:
         assert post.status == PostStatusEnum.DRAFT
-        response = client.get(f'/post/status/{post.id}?status=published')
+        response = client.get(f'/admin/post/status/{post.id}?status=published')
         log.info(response.json())
         assert response.status_code == status.HTTP_200_OK
-        detail_response = client.get(f'/post/detail/{post.id}')
+        detail_response = client.get(f'/admin/post/detail/{post.id}')
         updated = PostDetailVO.model_validate(detail_response.json())
         assert updated.status == PostStatusEnum.PUBLISHED
 
-        response = client.get(f'/post/status/{post.id}?status=draft')
+        response = client.get(f'/admin/post/status/{post.id}?status=draft')
         assert response.status_code == status.HTTP_200_OK
-        detail_response = client.get(f'/post/detail/{post.id}')
+        detail_response = client.get(f'/admin/post/detail/{post.id}')
         updated = PostDetailVO.model_validate(detail_response.json())
         assert updated.status == PostStatusEnum.DRAFT
     finally:
-        client.get(f'/post/delete/{post.id}')
+        client.get(f'/admin/post/delete/{post.id}')
 
 
 def test_delete_post():
     post = create_post()
-    delete_response = client.get(f'/post/delete/{post.id}')
+    delete_response = client.get(f'/admin/post/delete/{post.id}')
     assert delete_response.status_code == status.HTTP_200_OK
-    list_response = client.post('/post/all', json={'deleted': False})
+    list_response = client.post('/admin/post/all', json={'deleted': False})
     page = PageVO[PostPreviewVO].model_validate(list_response.json())
     active_ids = [PostPreviewVO.model_validate(p).id for p in page.data]
     assert post.id not in active_ids
@@ -139,14 +139,14 @@ def test_delete_post():
 
 def test_post_lifecycle():
     post = create_post()
-    tag_response = client.post('/tag/create', json={'name': f'lifecycle_tag_{uuid.uuid4().hex[:8]}', 'type': TagTypeEnum.POST_TAG})
+    tag_response = client.post('/admin/tag/create', json={'name': f'lifecycle_tag_{uuid.uuid4().hex[:8]}', 'type': TagTypeEnum.POST_TAG})
     tag = TagVO.model_validate(tag_response.json())
-    cat_response = client.post('/tag/create', json={'name': f'lifecycle_cat_{uuid.uuid4().hex[:8]}', 'type': TagTypeEnum.POST_CAT})
+    cat_response = client.post('/admin/tag/create', json={'name': f'lifecycle_cat_{uuid.uuid4().hex[:8]}', 'type': TagTypeEnum.POST_CAT})
     category = TagVO.model_validate(cat_response.json())
     try:
         assert post.status == PostStatusEnum.DRAFT
 
-        detail_response = client.get(f'/post/detail/{post.id}')
+        detail_response = client.get(f'/admin/post/detail/{post.id}')
         assert detail_response.status_code == status.HTTP_200_OK
 
         open_response = client.get(f'/open/post/detail/{post.id}')
@@ -161,7 +161,7 @@ def test_post_lifecycle():
             'tag_id_list': [tag.id],
             'category_id': category.id
         }
-        update_response = client.post('/post/update', json=update_data)
+        update_response = client.post('/admin/post/update', json=update_data)
         assert update_response.status_code == status.HTTP_200_OK
 
         open_response = client.post('/open/post/all', json={})
@@ -173,16 +173,16 @@ def test_post_lifecycle():
         open_detail = client.get(f'/open/post/detail/{post.id}')
         assert open_detail.status_code == status.HTTP_200_OK
 
-        client.get(f'/post/delete/{post.id}')
+        client.get(f'/admin/post/delete/{post.id}')
 
         open_response = client.post('/open/post/all', json={})
         page = PageVO[PostPreviewVO].model_validate(open_response.json())
         post_ids = [PostPreviewVO.model_validate(p).id for p in page.data]
         assert post.id not in post_ids
 
-        detail_response = client.get(f'/post/detail/{post.id}')
+        detail_response = client.get(f'/admin/post/detail/{post.id}')
         assert detail_response.json() is None
     finally:
-        client.get(f'/post/delete/{post.id}')
-        client.get(f'/tag/delete/{tag.id}')
-        client.get(f'/tag/delete/{category.id}')
+        client.get(f'/admin/post/delete/{post.id}')
+        client.get(f'/admin/tag/delete/{tag.id}')
+        client.get(f'/admin/tag/delete/{category.id}')

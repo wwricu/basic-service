@@ -6,7 +6,8 @@ from wwricu.domain.common import LoginRO, LoginVO
 from wwricu.domain.enum import PostStatusEnum
 from wwricu.service import common_service, post_service, security_service
 
-common_api = APIRouter(tags=['Common API'])
+common_api = APIRouter(prefix='/admin', tags=['Common API'])
+image_api = APIRouter(tags=['Image API'])
 
 
 @common_api.post('/login', dependencies=[Depends(security_service.login_limiter)], response_model=LoginVO)
@@ -24,8 +25,8 @@ async def info_api():
     return
 
 
-@common_api.get('/image/post/{post_id}/{key}')
-async def image_api(post_id: int, key: str, is_admin: bool = Depends(security_service.is_admin)):
+@image_api.get('/image/post/{post_id}/{key}')
+async def post_image_api(post_id: int, key: str, is_admin: bool = Depends(security_service.is_admin)):
     if not is_admin and await post_service.get_status(post_id) != PostStatusEnum.PUBLISHED:
         log.warning(f'{post_id=} {key=}')
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)

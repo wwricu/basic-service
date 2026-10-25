@@ -55,6 +55,9 @@ class EnvironmentVariable(BaseSettings):
     CONFIG_FILE: str = 'config.json'
     VERSION: str = '0.0.1'
 
+    # Set only where Caddy terminates the edge: the /admin surface is refused until it matches.
+    ADMIN_API_TOKEN: str = ''
+
     CF_ACCOUNT_ID: str = ''
     CF_KV_NAMESPACE_ID: str = ''
     CF_KV_API_TOKEN: str = ''

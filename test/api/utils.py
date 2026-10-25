@@ -9,26 +9,26 @@ from wwricu.domain.tag import TagVO
 
 
 def set_password(password: str):
-    response = client.post('/manage/user', json={'password': password})
+    response = client.post('/admin/manage/user', json={'password': password})
     assert response.status_code == status.HTTP_200_OK
 
 
 def reset_credentials():
-    response = client.post('/manage/user', json={'reset': True})
+    response = client.post('/admin/manage/user', json={'reset': True})
     assert response.status_code == status.HTTP_200_OK
 
 
 def create_post() -> PostDetailVO:
-    response = client.get('/post/create')
+    response = client.get('/admin/post/create')
     assert response.status_code == status.HTTP_200_OK
     return PostDetailVO.model_validate(response.json())
 
 
 def create_published_post() -> PostDetailVO:
     post = create_post()
-    tag_response = client.post('/tag/create', json={'name': f'post_test_{uuid.uuid4().hex[:8]}', 'type': TagTypeEnum.POST_TAG})
+    tag_response = client.post('/admin/tag/create', json={'name': f'post_test_{uuid.uuid4().hex[:8]}', 'type': TagTypeEnum.POST_TAG})
     tag = TagVO.model_validate(tag_response.json())
-    cat_response = client.post('/tag/create', json={'name': f'post_test_cat_{uuid.uuid4().hex[:8]}', 'type': TagTypeEnum.POST_CAT})
+    cat_response = client.post('/admin/tag/create', json={'name': f'post_test_cat_{uuid.uuid4().hex[:8]}', 'type': TagTypeEnum.POST_CAT})
     category = TagVO.model_validate(cat_response.json())
     update_data = {
         'id': post.id,
@@ -39,43 +39,43 @@ def create_published_post() -> PostDetailVO:
         'tag_id_list': [tag.id],
         'category_id': category.id
     }
-    response = client.post('/post/update', json=update_data)
+    response = client.post('/admin/post/update', json=update_data)
     assert response.status_code == status.HTTP_200_OK
     return PostDetailVO.model_validate(response.json())
 
 
 def create_post_and_delete() -> int:
-    create_response = client.get('/post/create')
+    create_response = client.get('/admin/post/create')
     post = PostDetailVO.model_validate(create_response.json())
-    client.get(f'/post/delete/{post.id}')
+    client.get(f'/admin/post/delete/{post.id}')
     return post.id
 
 
 def create_tag(name: str | None = None, tag_type: TagTypeEnum = TagTypeEnum.POST_TAG) -> TagVO:
     tag_name = name or f'test_{tag_type}_{uuid.uuid4().hex[:8]}'
-    response = client.post('/tag/create', json={'name': tag_name, 'type': tag_type})
+    response = client.post('/admin/tag/create', json={'name': tag_name, 'type': tag_type})
     assert response.status_code == status.HTTP_200_OK
     return TagVO.model_validate(response.json())
 
 
 def delete_tag(tag_id: int):
-    client.get(f'/tag/delete/{tag_id}')
+    client.get(f'/admin/tag/delete/{tag_id}')
 
 
 def create_tag_and_delete() -> int:
-    tag_response = client.post('/tag/create', json={'name': f'trash_test_{uuid.uuid4().hex[:8]}', 'type': TagTypeEnum.POST_TAG})
+    tag_response = client.post('/admin/tag/create', json={'name': f'trash_test_{uuid.uuid4().hex[:8]}', 'type': TagTypeEnum.POST_TAG})
     tag = TagVO.model_validate(tag_response.json())
-    client.get(f'/tag/delete/{tag.id}')
+    client.get(f'/admin/tag/delete/{tag.id}')
     return tag.id
 
 
 def create_published_post_with_tag() -> tuple[int, int, int]:
     uid = uuid.uuid4().hex[:8]
-    create_tag_response = client.post('/tag/create', json={'name': f'open_tag_{uid}', 'type': TagTypeEnum.POST_TAG})
+    create_tag_response = client.post('/admin/tag/create', json={'name': f'open_tag_{uid}', 'type': TagTypeEnum.POST_TAG})
     tag = TagVO.model_validate(create_tag_response.json())
-    create_cat_response = client.post('/tag/create', json={'name': f'open_cat_{uid}', 'type': TagTypeEnum.POST_CAT})
+    create_cat_response = client.post('/admin/tag/create', json={'name': f'open_cat_{uid}', 'type': TagTypeEnum.POST_CAT})
     category = TagVO.model_validate(create_cat_response.json())
-    create_post_response = client.get('/post/create')
+    create_post_response = client.get('/admin/post/create')
     post = PostDetailVO.model_validate(create_post_response.json())
     update_data = {
         'id': post.id,
@@ -86,11 +86,11 @@ def create_published_post_with_tag() -> tuple[int, int, int]:
         'tag_id_list': [tag.id],
         'category_id': category.id
     }
-    client.post('/post/update', json=update_data)
+    client.post('/admin/post/update', json=update_data)
     return post.id, tag.id, category.id
 
 
 def cleanup_post_and_tags(post_id: int, tag_id: int, category_id: int):
-    client.get(f'/post/delete/{post_id}')
-    client.get(f'/tag/delete/{tag_id}')
-    client.get(f'/tag/delete/{category_id}')
+    client.get(f'/admin/post/delete/{post_id}')
+    client.get(f'/admin/tag/delete/{tag_id}')
+    client.get(f'/admin/tag/delete/{category_id}')

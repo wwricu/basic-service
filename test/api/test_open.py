@@ -41,13 +41,13 @@ def test_open_get_post_detail_not_found():
 
 
 def test_open_get_post_detail_draft_not_found():
-    create_response = client.get('/post/create')
+    create_response = client.get('/admin/post/create')
     post = PostDetailVO.model_validate(create_response.json())
     try:
         response = client.get(f'/open/post/detail/{post.id}')
         assert response.status_code == status.HTTP_404_NOT_FOUND
     finally:
-        client.get(f'/post/delete/{post.id}')
+        client.get(f'/admin/post/delete/{post.id}')
 
 
 def test_open_get_tags():
