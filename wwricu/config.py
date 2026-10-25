@@ -3,13 +3,14 @@ import os
 import sys
 from pathlib import Path
 
-import cloudflare
+import httpx2
 from dotenv import load_dotenv
 from loguru import logger as log
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
 
 from wwricu.domain.enum import EnvironmentEnum
+from wwricu.domain.third import CloudflareConst
 
 
 class StorageConfig(BaseModel):
@@ -96,14 +97,16 @@ def init_config() -> Config:
     if not (env.CF_ACCOUNT_ID and env.CF_KV_NAMESPACE_ID and env.CF_KV_API_TOKEN):
         raise RuntimeError('Cloudflare KV credentials are not configured')
 
-    client = cloudflare.Cloudflare(api_token=env.CF_KV_API_TOKEN)
+    url = CloudflareConst.KV_ENDPOINT.format(
+        account_id=env.CF_ACCOUNT_ID,
+        namespace_id=env.CF_KV_NAMESPACE_ID,
+        key=config_file.name,
+    )
     try:
-        content = client.kv.namespaces.values.get(
-            config_file.name,
-            account_id=env.CF_ACCOUNT_ID,
-            namespace_id=env.CF_KV_NAMESPACE_ID,
-        ).read().decode()
-    except cloudflare.APIStatusError:
+        response = httpx2.get(url, headers={'Authorization': f'Bearer {env.CF_KV_API_TOKEN}'})
+        response.raise_for_status()
+        content = response.text
+    except httpx2.HTTPError:
         log.error('Failed to get config from Cloudflare KV')
         raise
 
