@@ -105,9 +105,6 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
     await update_category(post, tag_update)
     await update_tags(post, tag_update)
 
-    for tag in soup.find_all(['script', 'style', 'pre']):
-        tag.decompose()
-
     await post_db.update_selective(
         new_post.id,
         title=new_post.title,
@@ -121,7 +118,7 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
         new_post.id,
         segment(new_post.title),
         segment(new_post.preview),
-        segment(' '.join(soup.get_text().split()))
+        segment(extract_text(new_post.content))
     )
 
     post = await post_db.find_by_id(new_post.id)
