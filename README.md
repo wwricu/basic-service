@@ -41,10 +41,9 @@ or see [Deploy Actions Repo](https://github.com/wwricu/deploy/actions/workflows/
 | LOG_PATH              | Path                            | logs        | logs                           |
 | ROOT_PATH             | The root path app is running on | /           | /api                           |
 | CONFIG_FILE           | Config file path                | config.json | /etc/basic-service/config.json |
-| ADMIN_API_TOKEN       | Secret the edge must present on `/admin/*`; empty means no check (local dev) | '' | N/A |
 
 ## Route groups
 
 `/open/*` and `/image/*` need nothing but a URL. Everything else lives under `/admin/*` and is
-refused with 404 unless `X-Internal-Token` matches `ADMIN_API_TOKEN` - only Caddy sets that header,
-see [wwricu/deploy](https://github.com/wwricu/deploy/caddy/Caddyfile).
+decided by the session cookie in `is_admin`. The edge decides which group a visitor may reach at
+all - see [wwricu/deploy](https://github.com/wwricu/deploy).
