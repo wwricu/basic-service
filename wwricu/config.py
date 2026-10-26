@@ -6,7 +6,7 @@ from pathlib import Path
 import httpx2
 from dotenv import load_dotenv
 from loguru import logger as log
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 
 from wwricu.domain.enum import EnvironmentEnum
@@ -36,8 +36,6 @@ class SecurityConfig(BaseModel):
     username: str
     password: str
     secret_key: str
-    login_ip_times: int = Field(3, gt=0)
-    login_ip_span: float = Field(1800.0, gt=0)
 
 
 class Config(BaseSettings):

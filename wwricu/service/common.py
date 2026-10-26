@@ -9,7 +9,6 @@ from loguru import logger as log
 from wwricu.component.cache import LocalCache, image_cache, sys_cache
 from wwricu.component.database import database_manager
 from wwricu.component.storage import storage
-from wwricu.config import app_config
 from wwricu.database import post_db, tag_db
 from wwricu.domain.constant import TimeConst
 from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum
@@ -28,7 +27,6 @@ async def lifespan(app: FastAPI):
 
         await sys_cache.set(CacheKeyEnum.STARTUP_TIMESTAMP, int(time.time()), 0)
 
-        log.info(f'allow {app_config.security.login_ip_times} logins in {app_config.security.login_ip_span} seconds')
         log.info(f'{app.title} startup')
         yield
     finally:

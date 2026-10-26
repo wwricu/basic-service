@@ -48,7 +48,6 @@ class CacheKeyEnum(StrEnum):
     POST = 'post:{id}'
     ALL_POSTS = 'all_posts:{page_index}:{page_size}:{category}:{tag_list}'
     ALL_TAGS = 'all_tags:{type}'
-    TOKEN_BUCKET = 'token_bucket:{name}:{id}'
 
 
 class EntityTypeEnum(StrEnum):

@@ -64,8 +64,3 @@ class TrashBinVO(BaseModel):
 
 class LoginVO(BaseModel):
     detail: str | None = None
-
-
-class TokenBucketState(BaseModel):
-    tokens: float
-    updated_at: float

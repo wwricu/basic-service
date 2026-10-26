@@ -12,20 +12,10 @@ from loguru import logger as log
 
 import wwricu.service.manage as manage_service
 from wwricu.component.cache import sys_cache
-from wwricu.component.middleware import real_ip
-from wwricu.component.token_bucket import login_ip_bucket
 from wwricu.config import app_config, env
 from wwricu.domain.common import LoginRO, LoginVO
 from wwricu.domain.constant import CommonConst, HttpErrorDetail, TimeConst
 from wwricu.domain.enum import ConfigKeyEnum
-
-
-async def login_limiter():
-    if not await login_ip_bucket.cost(real_ip.get(), app_config.security.login_ip_span / app_config.security.login_ip_times):
-        log.warning(f'{real_ip.get()} exceeded login rate limit')
-        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS)
-    yield
-    await login_ip_bucket.reset(real_ip.get())
 
 
 async def authenticate(login_request: LoginRO, request: Request, response: Response) -> LoginVO:
