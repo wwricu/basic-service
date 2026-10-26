@@ -62,8 +62,8 @@ class DatabaseManager:
         log.info(f'Backup database {self.config.database}')
 
         backup_path = uuid.uuid4().hex
-        with sqlite3.connect(self.config.database) as source, sqlite3.connect(backup_path) as backup:
-            source.backup(backup)
+        with contextlib.closing(sqlite3.connect(self.config.database)) as source:
+            source.execute('VACUUM INTO ?', (backup_path,))
 
         try:
             async with await open_file(backup_path, mode='rb') as f:
