@@ -18,7 +18,7 @@ def test_open_get_about():
 
 
 def test_open_get_posts():
-    response = client.post('/open/post/all', json={})
+    response = client.post('/open/post/all', json={'page_index': 1, 'page_size': 10})
     log.info(response.json())
     assert response.status_code == status.HTTP_200_OK
     page = PageVO.model_validate(response.json())
@@ -65,7 +65,7 @@ def test_open_get_posts_with_tag_filter():
         tags = [TagVO.model_validate(t) for t in tag_response.json()]
         test_tag = next((t for t in tags if t.id == tag_id), None)
         assert test_tag is not None
-        response = client.post('/open/post/all', json={'tag_list': [test_tag.name]})
+        response = client.post('/open/post/all', json={'tag_list': [test_tag.name], 'page_index': 1, 'page_size': 10})
         assert response.status_code == status.HTTP_200_OK
         page = PageVO[PostPreviewVO].model_validate(response.json())
         post_ids = [PostPreviewVO.model_validate(p).id for p in page.data]
@@ -81,7 +81,7 @@ def test_open_get_posts_with_category_filter():
         cats = [TagVO.model_validate(t) for t in cat_response.json()]
         test_cat = next((c for c in cats if c.id == category_id), None)
         assert test_cat is not None
-        response = client.post('/open/post/all', json={'category': test_cat.name})
+        response = client.post('/open/post/all', json={'category': test_cat.name, 'page_index': 1, 'page_size': 10})
         assert response.status_code == status.HTTP_200_OK
         page = PageVO[PostPreviewVO].model_validate(response.json())
         post_ids = [PostPreviewVO.model_validate(p).id for p in page.data]

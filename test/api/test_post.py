@@ -22,7 +22,7 @@ def test_create_post():
 
 
 def test_get_all_posts_with_status_filter():
-    response = client.post('/admin/post/all', json={'status': PostStatusEnum.DRAFT})
+    response = client.post('/admin/post/all', json={'status': PostStatusEnum.DRAFT, 'page_index': 1, 'page_size': 10})
     assert response.status_code == status.HTTP_200_OK
     page = PageVO[PostPreviewVO].model_validate(response.json())
     for post_data in page.data:
@@ -34,7 +34,7 @@ def test_get_all_posts_with_deleted_filter():
     post = create_post()
     try:
         client.get(f'/admin/post/delete/{post.id}')
-        response = client.post('/admin/post/all', json={'deleted': True})
+        response = client.post('/admin/post/all', json={'deleted': True, 'page_index': 1, 'page_size': 10})
         assert response.status_code == status.HTTP_200_OK
         page = PageVO[PostPreviewVO].model_validate(response.json())
         deleted_ids = [PostPreviewVO.model_validate(p).id for p in page.data]
@@ -131,7 +131,7 @@ def test_delete_post():
     post = create_post()
     delete_response = client.get(f'/admin/post/delete/{post.id}')
     assert delete_response.status_code == status.HTTP_200_OK
-    list_response = client.post('/admin/post/all', json={'deleted': False})
+    list_response = client.post('/admin/post/all', json={'deleted': False, 'page_index': 1, 'page_size': 10})
     page = PageVO[PostPreviewVO].model_validate(list_response.json())
     active_ids = [PostPreviewVO.model_validate(p).id for p in page.data]
     assert post.id not in active_ids
@@ -164,7 +164,7 @@ def test_post_lifecycle():
         update_response = client.post('/admin/post/update', json=update_data)
         assert update_response.status_code == status.HTTP_200_OK
 
-        open_response = client.post('/open/post/all', json={})
+        open_response = client.post('/open/post/all', json={'page_index': 1, 'page_size': 10})
         assert open_response.status_code == status.HTTP_200_OK
         page = PageVO[PostPreviewVO].model_validate(open_response.json())
         post_ids = [PostPreviewVO.model_validate(p).id for p in page.data]
@@ -175,7 +175,7 @@ def test_post_lifecycle():
 
         client.get(f'/admin/post/delete/{post.id}')
 
-        open_response = client.post('/open/post/all', json={})
+        open_response = client.post('/open/post/all', json={'page_index': 1, 'page_size': 10})
         page = PageVO[PostPreviewVO].model_validate(open_response.json())
         post_ids = [PostPreviewVO.model_validate(p).id for p in page.data]
         assert post.id not in post_ids

@@ -31,5 +31,8 @@ async def post_image_api(post_id: int, key: str, is_admin: bool = Depends(securi
         log.warning(f'{post_id=} {key=}')
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-    url = await common_service.get_image_url(f'post/{post_id}/{key}')
-    return RedirectResponse(url, headers={'Cache-Control': 'private, max-age=21600'})
+    return RedirectResponse(
+        url=await common_service.get_image_url(f'post/{post_id}/{key}'),
+        status_code=status.HTTP_302_FOUND,
+        headers={'Cache-Control': 'public, max-age=1800, s-maxage=1200, must-revalidate'},
+    )

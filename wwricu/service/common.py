@@ -53,6 +53,6 @@ async def reset_sys_config():
 async def get_image_url(key: str) -> str:
     if url := await image_cache.get(key):
         return url
-    url = storage.generate_presigned_url(key, expires=TimeConst.ONE_DAY_SECONDS)
+    url = storage.generate_presigned_url(key, expires=2 * TimeConst.ONE_HOUR_SECONDS)
     await image_cache.set(key, url, second=TimeConst.ONE_HOUR_SECONDS)
     return url
