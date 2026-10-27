@@ -5,16 +5,16 @@ requires-python = '>=3.13'
 dynamic = ['version']
 
 dependencies = [
-    'aiosqlite==0.22.1',
-    "apscheduler==3.11.3",
-    'bcrypt==5.0.0',
-    "beautifulsoup4==4.15.0",
+    'aiosqlite~=0.22.1',
+    "apscheduler~=3.11.3",
+    'bcrypt~=5.0.0',
+    "beautifulsoup4~=4.15.0",
     'boto3==1.43.118',
     "boto3-stubs[s3]==1.43.118",
     "fastapi[standard-no-fastapi-cloud-cli]==0.162.0",
-    'loguru==0.7.3',
-    "pyotp==2.10.0",
-    "sqlalchemy[asyncio]==2.1.6",
+    'loguru~=0.7.3',
+    "pyotp~=2.10.0",
+    "sqlalchemy[asyncio]~=2.1.6",
 ]
 
 [tool.setuptools.dynamic]
