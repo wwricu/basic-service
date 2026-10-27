@@ -34,13 +34,13 @@ def test_post_lifecycle():
         assert client.get(f'/open/post/detail/{post.id}').status_code == status.HTTP_200_OK
 
         # a published post has to be revoked before it can be trashed, exactly as the admin list offers it
-        assert client.get(f'/admin/post/delete/{post.id}').status_code == status.HTTP_403_FORBIDDEN
+        assert client.delete(f'/admin/post/delete/{post.id}').status_code == status.HTTP_403_FORBIDDEN
 
-        assert client.get(f'/admin/post/status/{post.id}?status={PostStatusEnum.DRAFT}').status_code == status.HTTP_200_OK
+        assert client.post(f'/admin/post/status/{post.id}', json={'status': PostStatusEnum.DRAFT}).status_code == status.HTTP_200_OK
         assert post.id not in public_post_ids()
         assert client.get(f'/open/post/detail/{post.id}').status_code == status.HTTP_404_NOT_FOUND
 
-        assert client.get(f'/admin/post/delete/{post.id}').status_code == status.HTTP_200_OK
+        assert client.delete(f'/admin/post/delete/{post.id}').status_code == status.HTTP_200_OK
         assert client.get(f'/admin/post/detail/{post.id}').json() is None
     finally:
         cleanup_post_and_tags(post.id, tag.id, category.id)

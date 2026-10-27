@@ -10,14 +10,14 @@ from wwricu.domain.tag import TagVO
 
 
 def create_post() -> PostDetailVO:
-    response = client.get('/admin/post/create')
+    response = client.post('/admin/post/create')
     assert response.status_code == status.HTTP_200_OK
     return PostDetailVO.model_validate(response.json())
 
 
 def create_post_and_delete() -> int:
     post = create_post()
-    client.get(f'/admin/post/delete/{post.id}')
+    client.delete(f'/admin/post/delete/{post.id}')
     return post.id
 
 
@@ -29,7 +29,7 @@ def create_tag(name: str | None = None, tag_type: TagTypeEnum = TagTypeEnum.POST
 
 
 def delete_tag(tag_id: int):
-    client.get(f'/admin/tag/delete/{tag_id}')
+    client.delete(f'/admin/tag/delete/{tag_id}')
 
 
 def public_post_ids() -> list[int]:
@@ -58,7 +58,7 @@ def create_published_post(title: str = 'Open API Test Post') -> tuple[int, int, 
 
 def cleanup_post_and_tags(post_id: int, tag_id: int, category_id: int):
     # /admin/post/delete refuses a published post, so revoke first or the post stays live in the database.
-    client.get(f'/admin/post/status/{post_id}?status={PostStatusEnum.DRAFT}')
-    client.get(f'/admin/post/delete/{post_id}')
+    client.post(f'/admin/post/status/{post_id}', json={'status': PostStatusEnum.DRAFT})
+    client.delete(f'/admin/post/delete/{post_id}')
     delete_tag(tag_id)
     delete_tag(category_id)

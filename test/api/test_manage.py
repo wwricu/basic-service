@@ -29,7 +29,7 @@ def test_trash_recover_and_hard_delete():
     assert client.get(f'/admin/post/detail/{post_id}').json() is not None
     assert post_id not in _trashed_post_ids()
 
-    client.get(f'/admin/post/delete/{post_id}')
+    client.delete(f'/admin/post/delete/{post_id}')
     hard_delete = client.post('/admin/manage/trash/edit', json={'id': post_id, 'type': EntityTypeEnum.BLOG_POST, 'delete': True})
     assert hard_delete.status_code == status.HTTP_200_OK
     assert client.get(f'/admin/post/detail/{post_id}').json() is None

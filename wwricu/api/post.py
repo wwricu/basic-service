@@ -1,6 +1,6 @@
 import secrets
 
-from fastapi import APIRouter, Depends, Form, UploadFile, HTTPException, status as http_status
+from fastapi import APIRouter, Body, Depends, Form, UploadFile, HTTPException, status as http_status
 
 from wwricu.component.cache import query_cache, post_cache, post_status_cache
 from wwricu.database import common_db, post_db
@@ -13,7 +13,7 @@ from wwricu.service import common_service, post_service, security_service
 post_api = APIRouter(prefix='/admin/post', tags=['Post Management'], dependencies=[Depends(security_service.require_admin)])
 
 
-@post_api.get('/create', response_model=PostDetailVO)
+@post_api.post('/create', response_model=PostDetailVO)
 async def create_post_api() -> PostDetailVO:
     blog_post = BlogPost(id=1_000_000_000 + secrets.randbelow(9_000_000_000), status=PostStatusEnum.DRAFT)
     await common_db.insert(blog_post)
@@ -41,15 +41,15 @@ async def update_post_api(post_update: PostUpdateRO) -> PostDetailVO:
     return detail
 
 
-@post_api.get('/status/{post_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=None)
-async def update_post_status_api(post_id: int, status: PostStatusEnum):
+@post_api.post('/status/{post_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=None)
+async def update_post_status_api(post_id: int, status: PostStatusEnum = Body(embed=True)):
     await post_service.update_status(post_id, status=status)
     await post_status_cache.delete(CacheKeyEnum.POST.format(id=post_id))
     await post_cache.delete(CacheKeyEnum.POST.format(id=post_id))
     await query_cache.delete_all()
 
 
-@post_api.get('/delete/{post_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=None)
+@post_api.delete('/delete/{post_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=None)
 async def delete_post_draft_api(post_id: int):
     if (post := await post_db.find_by_id(post_id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND)

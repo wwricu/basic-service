@@ -27,7 +27,7 @@ async def update_tag_api(tag_update: TagRO) -> TagVO:
     return response
 
 
-@tag_api.get('/delete/{tag_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=None)
+@tag_api.delete('/delete/{tag_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=None)
 async def delete_tag_api(tag_id: int):
     await tag_db.update_selective(tag_id, deleted=True)
     await query_cache.delete_all()
