@@ -29,7 +29,7 @@ $ docker run \
     -p 8000:8000 -d wwricu/basic-service:latest
 ```
 
-or see [Deploy Actions Repo](https://github.com/wwricu/deploy/actions/workflows/dev_service.yml)
+or see [Deploy Actions Repo](https://github.com/wwricu/deploy/actions/workflows/deploy_service.yml)
 
 ## Environment variables
 
