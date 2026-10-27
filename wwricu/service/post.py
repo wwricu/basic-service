@@ -205,7 +205,7 @@ async def process_trash(trash_bin: TrashBinRO):
         await res_db.delete_by_keys([res.key for res in resources])
         await common_db.hard_delete(BlogPost, trash_bin.id)
     else:
-        await post_db.update_selective(trash_bin.id, deleted=False)
+        await common_db.recover(BlogPost, trash_bin.id)
 
 
 async def process_resource_trash(trash_bin: TrashBinRO):
