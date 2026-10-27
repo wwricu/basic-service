@@ -2,29 +2,27 @@ import contextlib
 import functools
 import os
 import sqlite3
-import uuid
+import sys
 from asyncio import current_task
 from typing import AsyncGenerator, cast, Callable
 
-from anyio import open_file
 from loguru import logger as log
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session, async_sessionmaker, create_async_engine, AsyncEngine
 
-from wwricu.component.storage import storage
-from wwricu.config import app_config, DatabaseConfig
+from wwricu.config import app_config
 
 
 @contextlib.asynccontextmanager
 async def get_session_manager() -> AsyncGenerator[AsyncSession, None]:
-    current_session: AsyncSession = database_manager.scoped_session()
+    current_session: AsyncSession = this.scoped_session()
     if current_session.is_active and current_session.in_transaction():
         yield current_session
     else:
         try:
-            async with database_manager.scoped_session.begin():
-                yield database_manager.scoped_session()
+            async with this.scoped_session.begin():
+                yield this.scoped_session()
         finally:
-            await database_manager.scoped_session.remove()
+            await this.scoped_session.remove()
 
 
 def get_session() -> contextlib.AbstractAsyncContextManager[AsyncSession]:
@@ -39,49 +37,27 @@ def transaction(func: Callable) -> Callable:
     return wrapper
 
 
-class DatabaseManager:
-    engine: AsyncEngine
-    scoped_session: async_scoped_session
-
-    def __init__(self, config: DatabaseConfig):
-        self.config = config
-        self.init()
-
-    def init(self):
-        if not os.path.exists(self.config.database) and (data := storage.sync_get(self.config.database)):
-            log.info(f'Download database as {self.config.database}')
-            with open(self.config.database, mode='wb+') as f:
-                f.write(data)
-        self.engine = create_async_engine(self.config.url, echo=__debug__)
-        session_maker = async_sessionmaker(bind=self.engine, expire_on_commit=False)
-        self.scoped_session = async_scoped_session(session_maker, scopefunc=current_task)
-
-    async def backup(self):
-        if __debug__ or not os.path.exists(self.config.database):
-            return
-        log.info(f'Backup database {self.config.database}')
-
-        backup_path = uuid.uuid4().hex
-        with contextlib.closing(sqlite3.connect(self.config.database)) as source:
-            source.execute('VACUUM INTO ?', (backup_path,))
-
-        try:
-            async with await open_file(backup_path, mode='rb') as f:
-                # PRICED call on each restart and every week
-                await storage.put(self.config.database, await f.read())
-                log.info('Backup database success')
-        finally:
-            os.remove(backup_path)
-
-    async def restore(self):
-        await self.engine.dispose()
-        os.remove(self.config.database)
-        self.init()
-        log.info('Restore database success')
-
-    async def close(self):
-        await self.engine.dispose()
-        await self.backup()
+async def init():
+    if not os.path.exists(app_config.database.name):
+        raise FileNotFoundError(f'Database file {app_config.database.name} not found')
+    this.engine = create_async_engine(app_config.database.url, echo=__debug__)
+    session_maker = async_sessionmaker(bind=this.engine, expire_on_commit=False)
+    this.scoped_session = async_scoped_session(session_maker, scopefunc=current_task)
 
 
-database_manager = DatabaseManager(app_config.database)
+async def backup(path: str):
+    if os.path.exists(path):
+        raise FileExistsError(f'Backup file {path} already exists')
+    log.info(f'Backup database {app_config.database.name} begin')
+    with contextlib.closing(sqlite3.connect(app_config.database.name)) as source:
+        source.execute('VACUUM INTO ?', (path,))
+    log.info(f'Backup database {app_config.database.name} success')
+
+
+async def close():
+    await this.engine.dispose()
+
+
+engine: AsyncEngine
+scoped_session: async_scoped_session
+this = sys.modules[__name__]

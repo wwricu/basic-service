@@ -25,11 +25,11 @@ class DatabaseConfig(BaseModel):
     password: str = ''
     host: str = ''
     port: int = 0
-    database: str
+    name: str
 
     @property
     def url(self):
-        return f'{self.driver}://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}'
+        return f'{self.driver}://{self.username}:{self.password}@{self.host}:{self.port}/{self.name}'
 
 
 class SecurityConfig(BaseModel):

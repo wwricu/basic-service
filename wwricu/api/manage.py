@@ -2,11 +2,10 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, 
 from fastapi.responses import FileResponse
 
 from wwricu.component.cache import query_cache
-from wwricu.component.database import database_manager
 from wwricu.config import app_config
 from wwricu.domain.common import ConfigRO, TrashBinRO, TrashBinVO, UserRO
 from wwricu.domain.enum import ConfigKeyEnum, DatabaseActionEnum, EntityTypeEnum
-from wwricu.service import manage_service, post_service, security_service, tag_service
+from wwricu.service import common_service, manage_service, post_service, security_service, tag_service
 
 manage_api = APIRouter(prefix='/admin/manage', tags=['Manage API'], dependencies=[Depends(security_service.require_admin)])
 
@@ -32,11 +31,11 @@ async def trash_edit_api(trash_bin: TrashBinRO):
 async def database_api(action: DatabaseActionEnum, background_task: BackgroundTasks):
     match action:
         case DatabaseActionEnum.RESTORE:
-            background_task.add_task(database_manager.restore)
+            background_task.add_task(common_service.restore_database)
         case DatabaseActionEnum.BACKUP:
-            background_task.add_task(database_manager.backup)
+            background_task.add_task(common_service.upload_database)
         case DatabaseActionEnum.DOWNLOAD:
-            return FileResponse(app_config.database.database, filename=app_config.database.database)
+            return FileResponse(app_config.database.name, filename=app_config.database.name)
     return None
 
 

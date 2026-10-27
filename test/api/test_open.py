@@ -103,7 +103,7 @@ def test_open_search_finds_existing_post():
     assert response.status_code == status.HTTP_200_OK
     posts = PageVO[PostPreviewVO].model_validate(response.json()).data
     for post in posts:
-        if (terms := [t for t in tokens(post.title) if len(t) > 2]):
+        if terms := [t for t in tokens(post.title) if len(t) > 2]:
             response = client.get('/open/post/search', params={'keyword': max(terms, key=len)})
             assert response.status_code == status.HTTP_200_OK
             assert post.id in [PostSearchVO.model_validate(hit).id for hit in response.json()], \
@@ -115,7 +115,7 @@ def test_open_search_finds_existing_post():
 def test_search_index_is_keyed_by_post_id():
     # Every live post must be reachable through rowid == post id, and no index row may point at a missing post.
     # A database still on the old fts5(id, ...) schema fails this: its rows carry an auto rowid and a separate id column.
-    with contextlib.closing(sqlite3.connect(app_config.database.database)) as connection:
+    with contextlib.closing(sqlite3.connect(app_config.database.name)) as connection:
         columns = [row[1] for row in connection.execute('pragma table_info(wwr_blog_post_search)')]
         assert columns == ['title', 'preview', 'search_content']
         missing = connection.execute(

@@ -18,9 +18,6 @@ class Base(AbstractBase):
     create_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     update_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=datetime.now())
 
-    def to_dict(self) -> dict:
-        return {key: getattr(self, key) for key in self.__table__.columns.keys()}
-
 
 class BlogPost(Base):
     __tablename__ = 'wwr_blog_post'

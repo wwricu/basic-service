@@ -1,14 +1,22 @@
+import asyncio
+import functools
+import sys
 import time
+import uuid
+from collections.abc import Callable
 from contextlib import asynccontextmanager
+from pathlib import Path
 
+from anyio import open_file
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from fastapi import FastAPI
 from loguru import logger as log
 
+from wwricu.component import database as database_manager
 from wwricu.component.cache import LocalCache, image_cache, sys_cache
-from wwricu.component.database import database_manager
 from wwricu.component.storage import storage
+from wwricu.config import app_config
 from wwricu.database import post_db, tag_db
 from wwricu.domain.constant import TimeConst
 from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum
@@ -20,8 +28,12 @@ from wwricu.domain.tag import TagQueryDTO
 async def lifespan(app: FastAPI):
     scheduler = AsyncIOScheduler()
     try:
+
+        await download_database()
+        await database_manager.init()
         LocalCache.init()
-        scheduler.add_job(database_manager.backup, trigger=CronTrigger(day_of_week=0, hour=3))
+
+        scheduler.add_job(upload_database, trigger=CronTrigger(day_of_week=0, hour=3))
         scheduler.add_job(tag_db.delete_unlink_relation, trigger=CronTrigger(day_of_week=0, hour=4))
         scheduler.start()
 
@@ -31,8 +43,9 @@ async def lifespan(app: FastAPI):
         yield
     finally:
         scheduler.shutdown()
-        await database_manager.close()
         await LocalCache.shutdown()
+        await upload_database()
+        await database_manager.close()
         log.info(f'{app.title} Exit')
         await log.complete()
 
@@ -54,3 +67,53 @@ async def get_image_url(key: str) -> str:
     url = storage.generate_presigned_url(key, expires=2 * TimeConst.ONE_HOUR_SECONDS)
     await image_cache.set(key, url, second=TimeConst.ONE_HOUR_SECONDS)
     return url
+
+
+async def download_database(path: str = app_config.database.name):
+    if Path(path).exists():
+        return
+    if not (data := await storage.get(app_config.database.name)):
+        raise FileNotFoundError(f'Cloud database {app_config.database.name} not found')
+    log.info(f'Download database as {path}')
+    async with await open_file(path, mode='wb+') as f:
+        await f.write(data)
+
+
+def lock_database(func: Callable) -> Callable:
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        async with database_lock:
+            return await func(*args, **kwargs)
+    return wrapper
+
+
+@lock_database
+async def upload_database():
+    if __debug__ or not Path(app_config.database.name).exists():
+        return
+    await database_manager.backup(backup_path := uuid.uuid4().hex)
+    try:
+        async with await open_file(backup_path, mode='rb') as f:
+            await storage.put(app_config.database.name, await f.read())
+            log.info('Upload database backup success')
+    finally:
+        Path(backup_path).unlink(missing_ok=True)
+
+
+@lock_database
+async def restore_database():
+    if __debug__:
+        return
+    file = Path(backup_path := uuid.uuid4().hex)
+    await download_database(backup_path)
+    try:
+        await database_manager.close()
+        file.replace(app_config.database.name)
+        await database_manager.init()
+    except Exception as e:
+        log.error(e)
+        file.unlink(missing_ok=True)
+        sys.exit(1)
+
+
+database_lock = asyncio.Lock()
