@@ -16,7 +16,7 @@ class Base(AbstractBase):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     create_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    update_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=datetime.now())
+    update_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
 
 class BlogPost(Base):
