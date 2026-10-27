@@ -101,7 +101,7 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
         await res_db.delete_by_keys(delete_keys)
         log.info(f'delete resource {delete_keys}')
 
-    tag_update = TagUpdateDTO(category_id=new_post.category_id, tag_id_list=new_post.tag_id_list, status=new_post.status)
+    tag_update = TagUpdateDTO(category_id=new_post.category_id, tag_id_list=new_post.tag_id_list, status=post.status)
     await update_category(post, tag_update)
     await update_tags(post, tag_update)
 
@@ -111,7 +111,6 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
         content=new_post.content,
         preview=new_post.preview,
         cover_id=new_post.cover_id,
-        status=new_post.status,
         category_id=new_post.category_id
     )
     await post_db.upsert_search_index(

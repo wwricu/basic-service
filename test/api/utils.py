@@ -47,11 +47,12 @@ def create_published_post(title: str = 'Open API Test Post') -> tuple[int, int, 
         'id': post.id,
         'title': title,
         'preview': 'Test preview for open API',
-        'status': PostStatusEnum.PUBLISHED,
         'content': 'Test content for open API',
         'tag_id_list': [tag.id],
         'category_id': category.id
     })
+    assert response.status_code == status.HTTP_200_OK
+    response = client.post(f'/admin/post/status/{post.id}', json={'status': PostStatusEnum.PUBLISHED})
     assert response.status_code == status.HTTP_200_OK
     return post.id, tag.id, category.id
 

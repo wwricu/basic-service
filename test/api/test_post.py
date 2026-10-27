@@ -21,15 +21,17 @@ def test_post_lifecycle():
             'id': post.id,
             'title': 'Lifecycle Test Post',
             'preview': 'Lifecycle test preview',
-            'status': PostStatusEnum.PUBLISHED,
             'content': 'Lifecycle test content',
             'tag_id_list': [tag.id],
             'category_id': category.id
         })
         assert response.status_code == status.HTTP_200_OK
         detail = PostDetailVO.model_validate(response.json())
+        assert detail.status == PostStatusEnum.DRAFT
         assert [t.id for t in detail.tag_list] == [tag.id]
         assert detail.category is not None and detail.category.id == category.id
+
+        assert client.post(f'/admin/post/status/{post.id}', json={'status': PostStatusEnum.PUBLISHED}).status_code == status.HTTP_200_OK
         assert post.id in public_post_ids()
         assert client.get(f'/open/post/detail/{post.id}').status_code == status.HTTP_200_OK
 
