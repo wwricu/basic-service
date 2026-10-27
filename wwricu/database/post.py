@@ -93,7 +93,7 @@ async def search(match: str) -> list[BlogPost]:
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED).where(
         table.match(match)
-    ).order_by(func.bm25(table, 10.0, 5.0, 1.0)).limit(30)
+    ).order_by(func.bm25(table, 0, 10.0, 5.0, 1.0)).limit(30)
 
     async with get_session() as session:
         return list((await session.scalars(stmt)).all())
