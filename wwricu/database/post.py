@@ -74,9 +74,9 @@ async def delete_tags(post_id: int):
 
 async def upsert_search_index(post_id: int, title: str, preview: str, search_content: str):
     async with get_session() as s:
-        await s.execute(delete(BlogPostSearch).where(BlogPostSearch.id == post_id))
+        await s.execute(delete(BlogPostSearch).where(BlogPostSearch.rowid == post_id))
         s.add(BlogPostSearch(
-            id=post_id,
+            rowid=post_id,
             title=title,
             preview=preview,
             search_content=search_content
@@ -89,11 +89,11 @@ async def search(match: str) -> list[BlogPost]:
 
     table: ColumnClause = literal_column(BlogPostSearch.__tablename__)
     stmt = select(BlogPost).join(
-        BlogPostSearch, BlogPost.id == BlogPostSearch.id).where(
+        BlogPostSearch, BlogPost.id == BlogPostSearch.rowid).where(
         BlogPost.deleted == False).where(
         BlogPost.status == PostStatusEnum.PUBLISHED).where(
         table.match(match)
-    ).order_by(func.bm25(table, 0, 10.0, 5.0, 1.0)).limit(30)
+    ).order_by(func.bm25(table, 10.0, 5.0, 1.0)).limit(30)
 
     async with get_session() as session:
         return list((await session.scalars(stmt)).all())

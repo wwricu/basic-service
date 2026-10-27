@@ -71,7 +71,8 @@ class SysConfig(Base):
 class BlogPostSearch(AbstractBase):
     __tablename__ = 'wwr_blog_post_search'
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    # FTS5 rows are keyed by rowid; a second id column would be tokenised into the index and matched by queries.
+    rowid: Mapped[int] = mapped_column('rowid', Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String)
     preview: Mapped[str] = mapped_column(TEXT)
     search_content: Mapped[str] = mapped_column(TEXT)

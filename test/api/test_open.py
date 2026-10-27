@@ -1,11 +1,17 @@
+import contextlib
+import sqlite3
+
+import pytest
 from fastapi import status
 from loguru import logger as log
 
 from test.api.utils import cleanup_post_and_tags, create_published_post_with_tag
 from test.test_utils import client
+from wwricu.component.tokenize import tokens
+from wwricu.config import app_config
 from wwricu.domain.common import AboutPageVO, PageVO
 from wwricu.domain.enum import TagTypeEnum
-from wwricu.domain.post import PostDetailVO, PostPreviewVO
+from wwricu.domain.post import PostDetailVO, PostPreviewVO, PostSearchVO
 from wwricu.domain.tag import TagVO
 
 
@@ -88,3 +94,46 @@ def test_open_get_posts_with_category_filter():
         assert post_id in post_ids
     finally:
         cleanup_post_and_tags(post_id, tag_id, category_id)
+
+
+def test_open_search_finds_existing_post():
+    # Probe with a post already in the database so the assertion covers the whole join and
+    # the run leaves no published post behind (the delete endpoint rejects published ones).
+    response = client.post('/open/post/all', json={'page_index': 1, 'page_size': 10})
+    assert response.status_code == status.HTTP_200_OK
+    posts = PageVO[PostPreviewVO].model_validate(response.json()).data
+    for post in posts:
+        if (terms := [t for t in tokens(post.title) if len(t) > 2]):
+            response = client.get('/open/post/search', params={'keyword': max(terms, key=len)})
+            assert response.status_code == status.HTTP_200_OK
+            assert post.id in [PostSearchVO.model_validate(hit).id for hit in response.json()], \
+                f'post {post.id} titled {post.title!r} is not reachable through search'
+            return
+    pytest.skip('no published post with an indexable title to probe')
+
+
+def test_search_index_is_keyed_by_post_id():
+    # Every live post must be reachable through rowid == post id, and no index row may point at a missing post.
+    # A database still on the old fts5(id, ...) schema fails this: its rows carry an auto rowid and a separate id column.
+    with contextlib.closing(sqlite3.connect(app_config.database.database)) as connection:
+        columns = [row[1] for row in connection.execute('pragma table_info(wwr_blog_post_search)')]
+        assert columns == ['title', 'preview', 'search_content']
+        missing = connection.execute(
+            'select count(*) from wwr_blog_post p where p.deleted = 0 and not exists'
+            ' (select 1 from wwr_blog_post_search s where s.rowid = p.id)').fetchone()[0]
+        assert missing == 0
+        orphan = connection.execute(
+            'select count(*) from wwr_blog_post_search s where not exists'
+            ' (select 1 from wwr_blog_post p where p.id = s.rowid)').fetchone()[0]
+        assert orphan == 0
+
+
+def test_open_search_does_not_match_existing_post_id():
+    response = client.post('/open/post/all', json={'page_index': 1, 'page_size': 1})
+    assert response.status_code == status.HTTP_200_OK
+    posts = PageVO[PostPreviewVO].model_validate(response.json()).data
+    if not posts:
+        pytest.skip('no published post to probe')
+    response = client.get('/open/post/search', params={'keyword': str(posts[0].id)})
+    assert response.status_code == status.HTTP_200_OK
+    assert posts[0].id not in [PostSearchVO.model_validate(hit).id for hit in response.json()]
