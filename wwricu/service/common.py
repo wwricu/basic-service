@@ -16,7 +16,7 @@ from loguru import logger as log
 from wwricu.component import database as database_manager
 from wwricu.component.cache import LocalCache, image_cache, sys_cache
 from wwricu.component.storage import storage
-from wwricu.config import app_config
+from wwricu.config import app_config, env
 from wwricu.database import post_db, tag_db
 from wwricu.domain.constant import TimeConst
 from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum
@@ -89,7 +89,7 @@ def lock_database(func: Callable) -> Callable:
 
 @lock_database
 async def upload_database():
-    if __debug__ or not Path(app_config.database.name).exists():
+    if env.is_dev or not Path(app_config.database.name).exists():
         return
     await database_manager.backup(backup_path := uuid.uuid4().hex)
     try:
@@ -102,7 +102,7 @@ async def upload_database():
 
 @lock_database
 async def restore_database():
-    if __debug__:
+    if env.is_dev:
         return
     file = Path(backup_path := uuid.uuid4().hex)
     await download_database(backup_path)

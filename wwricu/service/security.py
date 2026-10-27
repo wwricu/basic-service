@@ -57,7 +57,7 @@ async def require_admin(request: Request, response: Response):
 
 
 async def is_admin(request: Request, response: Response) -> bool:
-    if __debug__:
+    if env.is_dev:
         return True
 
     session_id = request.cookies.get(CommonConst.SESSION_ID)
@@ -86,9 +86,8 @@ def hmac_sign(plain: str) -> str:
 
 async def login(session_id: str, response: Response):
     await sys_cache.set(session_id, int(time.time()), TimeConst.COOKIE_MAX_AGE)
-    kwargs = dict(domain=env.BASE_DOMAIN, secure=True, httponly=True, samesite='strict')
-    response.set_cookie(CommonConst.SESSION_ID, session_id, TimeConst.COOKIE_MAX_AGE, **kwargs)
-    response.set_cookie(CommonConst.COOKIE_SIGN, hmac_sign(session_id), TimeConst.COOKIE_MAX_AGE, **kwargs)
+    response.set_cookie(CommonConst.SESSION_ID, session_id, TimeConst.COOKIE_MAX_AGE, domain=env.BASE_DOMAIN, secure=True, httponly=True, samesite='strict')
+    response.set_cookie(CommonConst.COOKIE_SIGN, hmac_sign(session_id), TimeConst.COOKIE_MAX_AGE, domain=env.BASE_DOMAIN, secure=True, httponly=True, samesite='strict')
 
 
 async def verify_credentials(request: LoginRO) -> bool:

@@ -9,7 +9,7 @@ from typing import AsyncGenerator, cast, Callable
 from loguru import logger as log
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session, async_sessionmaker, create_async_engine, AsyncEngine
 
-from wwricu.config import app_config
+from wwricu.config import app_config, env
 
 
 @contextlib.asynccontextmanager
@@ -40,7 +40,7 @@ def transaction(func: Callable) -> Callable:
 async def init():
     if not os.path.exists(app_config.database.name):
         raise FileNotFoundError(f'Database file {app_config.database.name} not found')
-    this.engine = create_async_engine(app_config.database.url, echo=__debug__)
+    this.engine = create_async_engine(app_config.database.url, echo=env.is_dev)
     session_maker = async_sessionmaker(bind=this.engine, expire_on_commit=False)
     this.scoped_session = async_scoped_session(session_maker, scopefunc=current_task)
 

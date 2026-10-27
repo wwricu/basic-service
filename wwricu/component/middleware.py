@@ -7,6 +7,8 @@ from fastapi.middleware import Middleware
 from loguru import logger as log
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
+from wwricu.config import env
+
 
 class ExceptionMiddleware(BaseHTTPMiddleware):
     @override
@@ -16,7 +18,7 @@ class ExceptionMiddleware(BaseHTTPMiddleware):
         except HTTPException:
             raise
         except Exception as e:
-            if __debug__:
+            if env.is_dev:
                 raise
             log.exception(f'{request.method} {request.url.path} {e}')
             return JSONResponse(None, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)

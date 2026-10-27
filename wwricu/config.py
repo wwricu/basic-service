@@ -47,31 +47,34 @@ class Config(BaseSettings):
 
 
 class EnvironmentVariable(BaseSettings):
+    CF_ACCOUNT_ID: str
+    CF_KV_NAMESPACE_ID: str
+    CF_KV_API_TOKEN: str
+
     ENV: EnvironmentEnum = EnvironmentEnum.DEVELOPMENT
     BASE_DOMAIN: str = 'wwr.icu'
     LOG_PATH: str = 'logs'
-    CONFIG_FILE: str = 'config.json'
-    VERSION: str = '0.0.1'
-
-    CF_ACCOUNT_ID: str = ''
-    CF_KV_NAMESPACE_ID: str = ''
-    CF_KV_API_TOKEN: str = ''
+    CONFIG_FILE: str = 'dev.config.json'
 
     @property
-    def resource_domain(self):
+    def resource_domain(self) -> str:
         return f'res.{self.BASE_DOMAIN}'
+
+    @property
+    def is_dev(self) -> bool:
+        return __debug__ or self.ENV != EnvironmentEnum.PRODUCTION
 
 
 def init_log():
     logging.Logger.manager.loggerDict.clear()
     log.remove()
 
-    if __debug__:
+    if env.is_dev:
         log.add(sys.stdout, level=logging.NOTSET, backtrace=False)
-        log.warning('APP RUNNING ON DEBUG MODE')
+        log.warning('APP RUNNING IN DEV')
 
     os.makedirs(env.LOG_PATH, exist_ok=True)
-    log.add(f'{env.LOG_PATH}/error.log', level=logging.ERROR, rotation='1 MB', retention=10, backtrace=False)
+    log.add(f'{env.LOG_PATH}/audit.log', level=logging.WARNING, rotation='1 MB', retention=10, backtrace=False)
     log.add(f'{env.LOG_PATH}/server.log', level=logging.DEBUG, rotation='10 MB', retention=10, backtrace=False)
     log.add(
         f'{env.LOG_PATH}/access.log',
@@ -83,7 +86,6 @@ def init_log():
 
 
 def init_config() -> Config:
-    log.info(f'env={env.ENV}')
     log.info(f'{sys.version=}')
     config_file = Path(env.CONFIG_FILE)
     if config_file.exists() and config_file.is_file():
@@ -115,6 +117,6 @@ def init_config() -> Config:
 
 
 load_dotenv()
-env = EnvironmentVariable()
+env = EnvironmentVariable.model_validate(os.environ, extra='ignore')
 init_log()
 app_config = init_config()

@@ -11,10 +11,9 @@ app = FastAPI(
     title=CommonConst.APP_NAME,
     lifespan=lifespan,
     middleware=middlewares,
-    version=env.VERSION,
     docs_url=None,
     redoc_url=None,
-    debug=__debug__
+    debug=env.is_dev
 )
 
 app.include_router(api_router)

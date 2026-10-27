@@ -7,6 +7,7 @@ from typing import Protocol, Any
 
 from loguru import logger as log
 
+from wwricu.config import env
 from wwricu.domain.constant import TimeConst
 from wwricu.domain.entity import BlogPost
 from wwricu.domain.enum import PostStatusEnum
@@ -27,7 +28,7 @@ class LocalCache:
         self.name = name
         self.max_size = max_size
         self.heartbeat = None
-        self.persist = persist if not __debug__ else False
+        self.persist = persist and not env.is_dev
 
         if LocalCache.all_caches.get(self.name) is not None:
             raise KeyError(self.name)
