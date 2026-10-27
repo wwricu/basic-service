@@ -43,7 +43,7 @@ async def database_api(action: DatabaseActionEnum, background_task: BackgroundTa
 @manage_api.post('/config/set', response_model=None)
 async def config_set_api(config: ConfigRO):
     # White list, all other keys shall be set via their dedicated apis
-    if config.key not in (ConfigKeyEnum.ABOUT_CONTENT,):
+    if config.key not in ConfigKeyEnum.api_set_white_list():
         raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE)
     if config.value is None:
         await manage_service.delete_config([config.key])
@@ -53,7 +53,7 @@ async def config_set_api(config: ConfigRO):
 
 @manage_api.get('/config/get', response_model=str | None)
 async def config_get_api(key: ConfigKeyEnum) -> str | None:
-    if key in (ConfigKeyEnum.PASSWORD, ConfigKeyEnum.TOTP_SECRET):
+    if key in ConfigKeyEnum.api_get_black_list():
         raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE)
     return await manage_service.get_config(key)
 

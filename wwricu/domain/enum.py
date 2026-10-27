@@ -38,6 +38,14 @@ class ConfigKeyEnum(StrEnum):
     USERNAME = 'username'
     PASSWORD = 'password'
 
+    @classmethod
+    def api_set_white_list(cls) -> tuple:
+        return (cls.ABOUT_CONTENT,)
+
+    @classmethod
+    def api_get_black_list(cls) -> tuple:
+        return ConfigKeyEnum.PASSWORD, ConfigKeyEnum.TOTP_SECRET
+
 
 class CacheKeyEnum(StrEnum):
     POST_COUNT = 'post_count'
