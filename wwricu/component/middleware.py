@@ -1,5 +1,4 @@
 import time
-from contextvars import ContextVar
 from typing import override
 
 from fastapi import HTTPException, status, Request, Response
@@ -27,11 +26,9 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
     @override
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         b = time.time()
-        real_ip.set((request.headers.get('X-Forwarded-For', '').split(',')[0].strip() or ''))
         response = await call_next(request)
-        log.trace(f'{real_ip.get()} | {request.method} {request.url.path} {response.status_code} {int((time.time() - b) * 1000)} ms')
+        log.trace(f'{request.method} {request.url.path} {response.status_code} {int((time.time() - b) * 1000)} ms')
         return response
 
 
-real_ip:ContextVar[str] = ContextVar('real_ip', default='')
 middlewares = [Middleware(PerformanceMiddleware), Middleware(ExceptionMiddleware)]
