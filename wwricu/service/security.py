@@ -43,7 +43,7 @@ async def authenticate(login_request: LoginRO, request: Request, response: Respo
 
     if await manage_service.get_config(ConfigKeyEnum.TOTP_ENFORCE):
         await sys_cache.set(session_id, True, TimeConst.TOTP_EXPIRATION)
-        response.set_cookie(CommonConst.SESSION_ID_2FA, session_id, max_age=TimeConst.TOTP_EXPIRATION, secure=True, httponly=True, samesite='lax')
+        response.set_cookie(CommonConst.SESSION_ID_2FA, session_id, max_age=TimeConst.TOTP_EXPIRATION, secure=True, httponly=True, samesite='strict')
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return LoginVO(detail=HttpErrorDetail.NEED_TOTP)
 
@@ -86,7 +86,7 @@ def hmac_sign(plain: str) -> str:
 
 async def login(session_id: str, response: Response):
     await sys_cache.set(session_id, int(time.time()), TimeConst.COOKIE_MAX_AGE)
-    kwargs = dict(domain=env.BASE_DOMAIN, secure=True, httponly=True, samesite='lax')
+    kwargs = dict(domain=env.BASE_DOMAIN, secure=True, httponly=True, samesite='strict')
     response.set_cookie(CommonConst.SESSION_ID, session_id, TimeConst.COOKIE_MAX_AGE, **kwargs)
     response.set_cookie(CommonConst.COOKIE_SIGN, hmac_sign(session_id), TimeConst.COOKIE_MAX_AGE, **kwargs)
 
