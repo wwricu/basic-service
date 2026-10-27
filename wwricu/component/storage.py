@@ -1,14 +1,10 @@
 import asyncio
-from collections.abc import Generator
 
 import boto3
-from fastapi import status as http_status
-from loguru import logger as log
 from mypy_boto3_s3 import S3Client
-from mypy_boto3_s3.type_defs import DeleteTypeDef, ObjectIdentifierTypeDef
 
 from wwricu.config import StorageConfig, app_config, env
-from wwricu.domain.third import AWSS3ListResponse, AWSS3Object, AWSS3Response, AWSResponseBase, CloudflareConst
+from wwricu.domain.third import AWSS3Response, AWSResponseBase, CloudflareConst
 
 
 class R2Storage:
@@ -47,40 +43,6 @@ class R2Storage:
     def sync_delete(self, key: str):
         response = self.s3_client.delete_object(Bucket=self.bucket, Key=key)
         AWSResponseBase.model_validate(response).check()
-
-    def sync_batch_delete(self, keys: list[str]):
-        if not keys:
-            return
-        response = self.s3_client.delete_objects(
-            Bucket=self.bucket,
-            Delete=DeleteTypeDef(Objects=[ObjectIdentifierTypeDef(Key=key) for key in keys])
-        )
-        AWSResponseBase.model_validate(response).check()
-
-    def sync_list_all(self) -> list[AWSS3Object]:
-        response = self.s3_client.list_objects_v2(Bucket=self.bucket)
-        s3_resp = AWSS3ListResponse.model_validate(response)
-        s3_resp.check()
-        return s3_resp.Contents
-
-    def sync_list_page(self, page_size: int = 100) -> Generator[AWSS3Object, None, None]:
-        continuation_token = None
-        while True:
-            response = self.s3_client.list_objects_v2(
-                Bucket=self.bucket,
-                MaxKeys=page_size,
-                ContinuationToken=continuation_token
-            ) if continuation_token else self.s3_client.list_objects_v2(Bucket=self.bucket, MaxKeys=page_size)
-
-            s3_resp = AWSS3ListResponse.model_validate(response)
-            if s3_resp.ResponseMetadata.HTTPStatusCode != http_status.HTTP_200_OK:
-                log.error(f'Failed to list objects: {s3_resp.ResponseMetadata}')
-                break
-
-            yield from s3_resp.Contents
-            if not s3_resp.IsTruncated:
-                break
-            continuation_token = s3_resp.NextContinuationToken
 
     def generate_presigned_url(self, key: str, expires: int) -> str:
         return self.s3_client.generate_presigned_url(

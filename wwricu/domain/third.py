@@ -38,22 +38,3 @@ class AWSS3Response(AWSResponseBase):
     AcceptRanges: str
     LastModified: datetime
     Body: StreamingBody
-
-
-class AWSS3Object(BaseModel):
-    Key: str
-    LastModified: datetime
-    ETag: str
-    Size: int
-    StorageClass: str
-
-
-class AWSS3ListResponse(AWSResponseBase):
-    IsTruncated: bool
-    Contents: list[AWSS3Object]
-    Name: str
-    Prefix: str
-    MaxKeys: int
-    EncodingType: str
-    KeyCount: int
-    NextContinuationToken: str | None = None
