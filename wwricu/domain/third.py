@@ -12,7 +12,7 @@ class CloudflareConst:
     R2: Literal['s3'] = 's3'
     R2_REGION: str = 'auto'
     R2_ENDPOINT: str = 'https://{account_id}.r2.cloudflarestorage.com'
-    KV_ENDPOINT: str = 'https://api.cloudflare.com/client/v4/accounts/{account_id}/storage/kv/namespaces/{namespace_id}/values/{key}'
+    KV_ENDPOINT: str = 'https://api.cloudflare.com/client/v4/accounts/{account_id}/storage/kv/namespaces/ab3a78fdfc804cbc86e53af6cf96e5e4/values/{key}'
     GET_OBJECT: str = 'get_object'
 
 
