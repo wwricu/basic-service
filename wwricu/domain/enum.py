@@ -38,6 +38,14 @@ class ConfigKeyEnum(StrEnum):
     USERNAME = 'username'
     PASSWORD = 'password'
 
+    @classmethod
+    def api_set_white_list(cls) -> tuple:
+        return (cls.ABOUT_CONTENT,)
+
+    @classmethod
+    def api_get_black_list(cls) -> tuple:
+        return ConfigKeyEnum.PASSWORD, ConfigKeyEnum.TOTP_SECRET
+
 
 class CacheKeyEnum(StrEnum):
     POST_COUNT = 'post_count'
@@ -48,7 +56,6 @@ class CacheKeyEnum(StrEnum):
     POST = 'post:{id}'
     ALL_POSTS = 'all_posts:{page_index}:{page_size}:{category}:{tag_list}'
     ALL_TAGS = 'all_tags:{type}'
-    TOKEN_BUCKET = 'token_bucket:{name}:{id}'
 
 
 class EntityTypeEnum(StrEnum):

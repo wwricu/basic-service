@@ -25,7 +25,6 @@ class PostUpdateRO(BaseModel):
     title: str
     cover_id: int | None = None
     preview: str
-    status: PostStatusEnum
     content: str
     tag_id_list: list[int]
     category_id: int | None = None

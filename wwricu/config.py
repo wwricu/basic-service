@@ -3,20 +3,20 @@ import os
 import sys
 from pathlib import Path
 
-import boto3
+import httpx2
 from dotenv import load_dotenv
 from loguru import logger as log
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 
-from wwricu.domain.constant import CommonConst
 from wwricu.domain.enum import EnvironmentEnum
-from wwricu.domain.third import AWSConst, AWSAppConfigSessionResponse, AWSAppConfigConfigResponse
+from wwricu.domain.third import CloudflareConst
 
 
 class StorageConfig(BaseModel):
-    region: str
     bucket: str
+    access_key_id: str = ''
+    secret_access_key: str = ''
 
 
 class DatabaseConfig(BaseModel):
@@ -25,21 +25,17 @@ class DatabaseConfig(BaseModel):
     password: str = ''
     host: str = ''
     port: int = 0
-    database: str
+    name: str
 
     @property
     def url(self):
-        return f'{self.driver}://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}'
+        return f'{self.driver}://{self.username}:{self.password}@{self.host}:{self.port}/{self.name}'
 
 
 class SecurityConfig(BaseModel):
     username: str
     password: str
     secret_key: str
-    login_ip_times: int = Field(3, gt=0)
-    login_ip_span: float = Field(1800.0, gt=0)
-    image_ip_qps: float = 0
-    open_ip_qps: float = 0
 
 
 class Config(BaseSettings):
@@ -51,28 +47,34 @@ class Config(BaseSettings):
 
 
 class EnvironmentVariable(BaseSettings):
+    CF_ACCOUNT_ID: str
+    CF_KV_NAMESPACE_ID: str
+    CF_KV_API_TOKEN: str
+
     ENV: EnvironmentEnum = EnvironmentEnum.DEVELOPMENT
     BASE_DOMAIN: str = 'wwr.icu'
-    ROOT_PATH: str = '/'
     LOG_PATH: str = 'logs'
-    CONFIG_FILE: str = 'config.json'
-    VERSION: str = '0.0.1'
+    CONFIG_FILE: str = 'dev.config.json'
 
     @property
-    def resource_domain(self):
+    def resource_domain(self) -> str:
         return f'res.{self.BASE_DOMAIN}'
+
+    @property
+    def is_dev(self) -> bool:
+        return __debug__ or self.ENV != EnvironmentEnum.PRODUCTION
 
 
 def init_log():
     logging.Logger.manager.loggerDict.clear()
     log.remove()
 
-    if __debug__:
+    if env.is_dev:
         log.add(sys.stdout, level=logging.NOTSET, backtrace=False)
-        log.warning('APP RUNNING ON DEBUG MODE')
+        log.warning('APP RUNNING IN DEV')
 
     os.makedirs(env.LOG_PATH, exist_ok=True)
-    log.add(f'{env.LOG_PATH}/error.log', level=logging.ERROR, rotation='1 MB', retention=10, backtrace=False)
+    log.add(f'{env.LOG_PATH}/audit.log', level=logging.WARNING, rotation='1 MB', retention=10, backtrace=False)
     log.add(f'{env.LOG_PATH}/server.log', level=logging.DEBUG, rotation='10 MB', retention=10, backtrace=False)
     log.add(
         f'{env.LOG_PATH}/access.log',
@@ -84,7 +86,6 @@ def init_log():
 
 
 def init_config() -> Config:
-    log.info(f'env={env.ENV}')
     log.info(f'{sys.version=}')
     config_file = Path(env.CONFIG_FILE)
     if config_file.exists() and config_file.is_file():
@@ -92,23 +93,22 @@ def init_config() -> Config:
         with config_file.open() as f:
             return Config.model_validate_json(f.read())
 
-    log.info(f'Getting config from {AWSConst.APP_CONFIG_DATA}')
-    app_config_data_client = boto3.client(AWSConst.APP_CONFIG_DATA, region_name=AWSConst.REGION)
-    response = app_config_data_client.start_configuration_session(
-        ApplicationIdentifier=CommonConst.APP_NAME,
-        EnvironmentIdentifier=EnvironmentEnum(env.ENV),
-        ConfigurationProfileIdentifier=config_file.name
+    log.info(f'Getting config from Cloudflare KV key={config_file.name}')
+    if not (env.CF_ACCOUNT_ID and env.CF_KV_NAMESPACE_ID and env.CF_KV_API_TOKEN):
+        raise RuntimeError('Cloudflare KV credentials are not configured')
+
+    url = CloudflareConst.KV_ENDPOINT.format(
+        account_id=env.CF_ACCOUNT_ID,
+        namespace_id=env.CF_KV_NAMESPACE_ID,
+        key=config_file.name,
     )
-    aws_session = AWSAppConfigSessionResponse.model_validate(response)
-    aws_session.check()
-
-    # PRICED call on each deployment
-    response = app_config_data_client.get_latest_configuration(ConfigurationToken=aws_session.InitialConfigurationToken)
-    aws_app_config = AWSAppConfigConfigResponse.model_validate(response)
-    aws_app_config.check()
-
-    with aws_app_config.Configuration:
-        content = aws_app_config.Configuration.read().decode()
+    try:
+        response = httpx2.get(url, headers={'Authorization': f'Bearer {env.CF_KV_API_TOKEN}'})
+        response.raise_for_status()
+        content = response.text
+    except httpx2.HTTPError:
+        log.error('Failed to get config from Cloudflare KV')
+        raise
 
     config_file.parent.mkdir(parents=True, exist_ok=True)
     with config_file.open('wt+') as f:
@@ -117,6 +117,6 @@ def init_config() -> Config:
 
 
 load_dotenv()
-env = EnvironmentVariable()
+env = EnvironmentVariable.model_validate(os.environ, extra='ignore')
 init_log()
 app_config = init_config()

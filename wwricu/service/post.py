@@ -1,22 +1,22 @@
-import re
 import uuid
 
-import jieba
 from bs4 import BeautifulSoup
-from fastapi import HTTPException, UploadFile, status as http_status
+from fastapi import HTTPException, UploadFile
+from fastapi import status as http_status
 from loguru import logger as log
 
 from wwricu.component.cache import post_status_cache
 from wwricu.component.database import transaction
 from wwricu.component.storage import storage
+from wwricu.component.tokenize import build_match, extract_text, highlight, segment
 from wwricu.config import app_config
-from wwricu.database import common_db, post_db, tag_db, res_db
+from wwricu.database import common_db, post_db, res_db, tag_db
 from wwricu.domain.common import FileUploadVO, PageVO, TrashBinRO
-from wwricu.domain.constant import HttpErrorDetail, CommonConst, TimeConst
-from wwricu.domain.entity import BlogPost, PostResource, PostTag, EntityRelation
-from wwricu.domain.enum import PostResourceTypeEnum, PostStatusEnum, TagTypeEnum, RelationTypeEnum, CacheKeyEnum
+from wwricu.domain.constant import CommonConst, HttpErrorDetail, TimeConst
+from wwricu.domain.entity import BlogPost, EntityRelation, PostResource, PostTag
+from wwricu.domain.enum import CacheKeyEnum, PostResourceTypeEnum, PostStatusEnum, RelationTypeEnum, TagTypeEnum
 from wwricu.domain.post import PostDetailVO, PostPreviewVO, PostQueryDTO, PostRequestRO, PostResourceVO, PostSearchVO, PostUpdateRO
-from wwricu.domain.tag import TagVO, TagUpdateDTO, TagQueryDTO
+from wwricu.domain.tag import TagQueryDTO, TagUpdateDTO, TagVO
 
 
 async def build_query(post: PostRequestRO, *, public: bool = False) -> PostQueryDTO:
@@ -101,12 +101,9 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
         await res_db.delete_by_keys(delete_keys)
         log.info(f'delete resource {delete_keys}')
 
-    tag_update = TagUpdateDTO(category_id=new_post.category_id, tag_id_list=new_post.tag_id_list, status=new_post.status)
+    tag_update = TagUpdateDTO(category_id=new_post.category_id, tag_id_list=new_post.tag_id_list, status=post.status)
     await update_category(post, tag_update)
     await update_tags(post, tag_update)
-
-    for tag in soup.find_all(['script', 'style', 'pre']):
-        tag.decompose()
 
     await post_db.update_selective(
         new_post.id,
@@ -114,14 +111,13 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
         content=new_post.content,
         preview=new_post.preview,
         cover_id=new_post.cover_id,
-        status=new_post.status,
         category_id=new_post.category_id
     )
     await post_db.upsert_search_index(
         new_post.id,
-        CommonConst.TOKEN_SEPARATOR.join([t.strip() for t in jieba.cut_for_search(new_post.title) if t.strip()]),
-        CommonConst.TOKEN_SEPARATOR.join([t.strip() for t in jieba.cut_for_search(new_post.preview) if t.strip()]),
-        CommonConst.TOKEN_SEPARATOR.join(jieba.cut_for_search(' '.join(soup.get_text().split())))
+        segment(new_post.title),
+        segment(new_post.preview),
+        segment(extract_text(new_post.content))
     )
 
     post = await post_db.find_by_id(new_post.id)
@@ -208,7 +204,7 @@ async def process_trash(trash_bin: TrashBinRO):
         await res_db.delete_by_keys([res.key for res in resources])
         await common_db.hard_delete(BlogPost, trash_bin.id)
     else:
-        await post_db.update_selective(trash_bin.id, deleted=False)
+        await common_db.recover(BlogPost, trash_bin.id)
 
 
 async def process_resource_trash(trash_bin: TrashBinRO):
@@ -234,14 +230,7 @@ async def get_status(post_id: int) -> PostStatusEnum:
 
 
 async def search(keyword: str) -> list[PostSearchVO]:
-    if not keyword or not keyword.strip():
-        return []
-    keyword = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9\s]', ' ', keyword).strip()
-    words = [seg for part in keyword.split() for seg in jieba.cut(part) if seg.strip()]
-    if not words:
-        return []
-    keyword = ' OR '.join(words)
-
-    posts = await post_db.search(' '.join(jieba.cut(keyword)))
+    posts = await post_db.search(build_match(keyword))
     details = await get_preview(posts)
-    return [PostSearchVO(**detail.model_dump(), snippet=post.snippet) for post, detail in zip(posts, details)]
+    return [PostSearchVO(**detail.model_dump(), snippet=highlight(extract_text(post.content), keyword))
+            for post, detail in zip(posts, details)]
