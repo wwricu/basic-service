@@ -72,6 +72,11 @@ async def delete_tags(post_id: int):
         await s.execute(stmt)
 
 
+async def remove_search_index(post_id: int):
+    async with get_session() as s:
+        await s.execute(delete(BlogPostSearch).where(BlogPostSearch.rowid == post_id))
+
+
 async def upsert_search_index(post_id: int, title: str, preview: str, search_content: str):
     async with get_session() as s:
         await s.execute(delete(BlogPostSearch).where(BlogPostSearch.rowid == post_id))
