@@ -29,7 +29,7 @@ $ docker run \
     -p 8000:8000 -d wwricu/basic-service:latest
 ```
 
-or see [Deploy Actions Repo](https://github.com/wwricu/deploy/actions/workflows/dev_service.yml)
+or see [Deploy Actions Repo](https://github.com/wwricu/deploy/actions/workflows/deploy_service.yml)
 
 ## Environment variables
 
@@ -41,3 +41,9 @@ or see [Deploy Actions Repo](https://github.com/wwricu/deploy/actions/workflows/
 | LOG_PATH              | Path                            | logs        | logs                           |
 | ROOT_PATH             | The root path app is running on | /           | /api                           |
 | CONFIG_FILE           | Config file path                | config.json | /etc/basic-service/config.json |
+
+## Route groups
+
+`/open/*` and `/image/*` need nothing but a URL. Everything else lives under `/admin/*` and is
+decided by the session cookie in `is_admin`. The edge decides which group a visitor may reach at
+all - see [wwricu/deploy](https://github.com/wwricu/deploy).

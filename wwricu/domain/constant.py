@@ -9,22 +9,22 @@ class HttpErrorDetail(StrEnum):
 
 
 class CommonConst(StrEnum):
+    DATABASE_BACKUP_KEY = 'backup.sqlite3'
     SESSION_ID_2FA = '2fa_session_id'
     SESSION_ID = 'session_id'
     COOKIE_SIGN = 'sign'
-    APP_NAME = 'wwr.icu'
     IMG_TAG = 'img'
     SRC_PROP = 'src'
     HTML_PARSER = 'html.parser'
-    IMAGE_IP_BUCKET = 'image:{ip}'
-    OPEN_IP_BUCKET = 'open:{ip}'
     TOKEN_SEPARATOR = '\x01'
     MARK_BEGIN = '<mark>'
     MARK_END = '</mark>'
 
 
 class TimeConst(IntEnum):
-    COOKIE_MAX_AGE = 7 * 24 * 60 * 60
-    ONE_DAY_SECONDS = 60 * 60 * 24
-    TOTP_EXPIRATION = 300
-    CACHE_EXPIRATION = 600
+    ONE_MIN_SECONDS = 60
+    ONE_HOUR_SECONDS = 60 * ONE_MIN_SECONDS
+    ONE_DAY_SECONDS = 24 * ONE_HOUR_SECONDS
+    COOKIE_MAX_AGE = 7 * ONE_DAY_SECONDS
+    TOTP_EXPIRATION = 5 * ONE_MIN_SECONDS
+    CACHE_EXPIRATION = 10 * ONE_MIN_SECONDS

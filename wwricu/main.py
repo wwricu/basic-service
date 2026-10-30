@@ -3,19 +3,16 @@ from fastapi import FastAPI
 from wwricu.api import api_router
 from wwricu.component.middleware import middlewares
 from wwricu.config import env
-from wwricu.domain.constant import CommonConst
 from wwricu.service.common import lifespan
 
 
 app = FastAPI(
-    title=CommonConst.APP_NAME,
+    title=env.BASE_DOMAIN,
     lifespan=lifespan,
     middleware=middlewares,
-    version=env.VERSION,
-    root_path=env.ROOT_PATH,
     docs_url=None,
     redoc_url=None,
-    debug=__debug__
+    debug=env.is_dev
 )
 
 app.include_router(api_router)

@@ -5,7 +5,7 @@ from wwricu.database import tag_db
 from wwricu.domain.tag import TagRO, TagVO, TagRequestRO, TagQueryDTO
 from wwricu.service import common_service, security_service, tag_service
 
-tag_api = APIRouter(prefix='/tag', tags=['Tag api'], dependencies=[Depends(security_service.require_admin)])
+tag_api = APIRouter(prefix='/admin/tag', tags=['Tag api'], dependencies=[Depends(security_service.require_admin)])
 
 
 @tag_api.post('/create', dependencies=[Depends(common_service.reset_sys_config)], response_model=TagVO)
@@ -27,7 +27,7 @@ async def update_tag_api(tag_update: TagRO) -> TagVO:
     return response
 
 
-@tag_api.get('/delete/{tag_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=None)
+@tag_api.delete('/delete/{tag_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=None)
 async def delete_tag_api(tag_id: int):
     await tag_db.update_selective(tag_id, deleted=True)
     await query_cache.delete_all()

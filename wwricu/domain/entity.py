@@ -1,10 +1,9 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Integer, String, TEXT, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, query_expression
+from sqlalchemy import TEXT, Boolean, DateTime, Integer, String, func
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum
-
 
 
 class AbstractBase(DeclarativeBase):
@@ -17,10 +16,7 @@ class Base(AbstractBase):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     create_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    update_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=datetime.now())
-
-    def to_dict(self) -> dict:
-        return {key: getattr(self, key) for key in self.__table__.columns.keys()}
+    update_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
 
 class BlogPost(Base):
@@ -31,7 +27,6 @@ class BlogPost(Base):
     preview: Mapped[str] = mapped_column(TEXT, default='')
     status: Mapped[str] = mapped_column(String, default=PostStatusEnum.DRAFT.value, index=True)
     category_id: Mapped[int] = mapped_column(Integer, nullable=True, index=True)
-    snippet: Mapped[str | None] = query_expression()
 
 
 class PostTag(Base):
@@ -73,7 +68,8 @@ class SysConfig(Base):
 class BlogPostSearch(AbstractBase):
     __tablename__ = 'wwr_blog_post_search'
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    # FTS5 rows are keyed by rowid; a second id column would be tokenised into the index and matched by queries.
+    rowid: Mapped[int] = mapped_column('rowid', Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String)
     preview: Mapped[str] = mapped_column(TEXT)
     search_content: Mapped[str] = mapped_column(TEXT)
