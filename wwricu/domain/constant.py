@@ -9,10 +9,10 @@ class HttpErrorDetail(StrEnum):
 
 
 class CommonConst(StrEnum):
+    DATABASE_BACKUP_KEY = 'backup.sqlite3'
     SESSION_ID_2FA = '2fa_session_id'
     SESSION_ID = 'session_id'
     COOKIE_SIGN = 'sign'
-    APP_NAME = 'wwr.icu'
     IMG_TAG = 'img'
     SRC_PROP = 'src'
     HTML_PARSER = 'html.parser'

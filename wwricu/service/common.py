@@ -18,7 +18,7 @@ from wwricu.component.cache import LocalCache, image_cache, sys_cache
 from wwricu.component.storage import storage
 from wwricu.config import app_config, env
 from wwricu.database import post_db, tag_db
-from wwricu.domain.constant import TimeConst
+from wwricu.domain.constant import CommonConst, TimeConst
 from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum
 from wwricu.domain.post import PostQueryDTO
 from wwricu.domain.tag import TagQueryDTO
@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
         await database_manager.init()
         LocalCache.init()
 
-        scheduler.add_job(upload_database, trigger=CronTrigger(day_of_week=0, hour=3))
+        scheduler.add_job(backup_database, trigger=CronTrigger(day_of_week=0, hour=3))
         scheduler.add_job(tag_db.delete_unlink_relation, trigger=CronTrigger(day_of_week=0, hour=4))
         scheduler.start()
 
@@ -87,15 +87,19 @@ def lock_database(func: Callable) -> Callable:
     return wrapper
 
 
+async def backup_database():
+    await upload_database(CommonConst.DATABASE_BACKUP_KEY)
+
+
 @lock_database
-async def upload_database():
-    if env.is_dev or not Path(app_config.database.name).exists():
+async def upload_database(key: str = app_config.database.name):
+    if env.is_dev:
         return
     await database_manager.backup(backup_path := uuid.uuid4().hex)
     try:
         async with await open_file(backup_path, mode='rb') as f:
-            await storage.put(app_config.database.name, await f.read())
-            log.info('Upload database backup success')
+            await storage.put(key, await f.read())
+            log.info(f'Upload database to {key} success')
     finally:
         Path(backup_path).unlink(missing_ok=True)
 

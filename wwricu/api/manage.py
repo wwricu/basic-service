@@ -38,7 +38,7 @@ async def database_api(background_task: BackgroundTasks, action: DatabaseActionE
         case DatabaseActionEnum.RESTORE:
             background_task.add_task(common_service.restore_database)
         case DatabaseActionEnum.BACKUP:
-            background_task.add_task(common_service.upload_database)
+            background_task.add_task(common_service.backup_database)
         case DatabaseActionEnum.DOWNLOAD:
             raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE)
 
