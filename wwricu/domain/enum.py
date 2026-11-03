@@ -23,7 +23,6 @@ class RelationTypeEnum(StrEnum):
 class DatabaseActionEnum(StrEnum):
     BACKUP = 'backup'
     RESTORE = 'restore'
-    DOWNLOAD = 'download'
 
 
 class EnvironmentEnum(StrEnum):
@@ -37,10 +36,6 @@ class ConfigKeyEnum(StrEnum):
     TOTP_SECRET = 'totp_secret'
     USERNAME = 'username'
     PASSWORD = 'password'
-
-    @classmethod
-    def api_set_white_list(cls) -> tuple:
-        return (cls.ABOUT_CONTENT,)
 
     @classmethod
     def api_get_black_list(cls) -> tuple:

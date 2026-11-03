@@ -1,5 +1,8 @@
+import asyncio
 import base64
 import re
+import time
+from collections.abc import Awaitable, Callable
 
 import bcrypt
 import pyotp
@@ -7,7 +10,7 @@ from fastapi import HTTPException, status as http_status
 
 from wwricu.component.cache import sys_cache
 from wwricu.database import conf_db, post_db, tag_db, res_db
-from wwricu.domain.common import TrashBinVO, UserRO
+from wwricu.domain.common import TrashBinVO
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, EntityTypeEnum, TagTypeEnum, PostResourceTypeEnum
 from wwricu.domain.post import PostQueryDTO
@@ -15,8 +18,6 @@ from wwricu.domain.tag import TagQueryDTO
 
 
 async def set_config(key: ConfigKeyEnum, value: str):
-    if not isinstance(value, str):
-        raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST)
     await conf_db.upsert(key, value)
     await sys_cache.delete(CacheKeyEnum.CONFIG.format(key=key))
 
@@ -64,26 +65,52 @@ async def list_trash() -> list[TrashBinVO]:
     return result
 
 
-async def update_admin_user(user: UserRO):
-    if user.username is not None:
-        if len(user.username) < 4 or not re.match('^[a-zA-Z][a-zA-Z0-9_]*$', user.username):
-            raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail='Invalid username')
-        await set_config(ConfigKeyEnum.USERNAME, user.username)
-
-    if user.password is not None:
-        if len(user.password) < 8 or user.password.isalnum():
-            raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail='Invalid password')
-        credential = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt())
-        await set_config(ConfigKeyEnum.PASSWORD, base64.b64encode(credential).decode())
-
-    if user.reset:
-        await delete_config([ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD])
+async def _as_is(value: str) -> str:
+    return value
 
 
-async def enforce_totp(enforce: bool) -> str | None:
-    if not enforce:
-        await delete_config([ConfigKeyEnum.TOTP_ENFORCE, ConfigKeyEnum.TOTP_SECRET])
-        return None
+async def _validated_username(username: str) -> str:
+    if len(username) < 4 or not re.match('^[a-zA-Z][a-zA-Z0-9_]*$', username):
+        raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail='Invalid username')
+    return username
+
+
+async def _hashed_password(password: str) -> str:
+    if len(password) < 8 or password.isalnum():
+        raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail='Invalid password')
+    credential = await asyncio.to_thread(bcrypt.hashpw, password.encode(), bcrypt.gensalt())
+    return base64.b64encode(credential).decode()
+
+
+# The keys config/set may write, each with the transform its value needs before storage. A key that
+# is not here has no write path through config and is refused; TOTP_ENFORCE is deliberately absent,
+# because enforcing without a fresh scan would lock the admin out behind a code they never saw.
+WRITE_RULES: dict[ConfigKeyEnum, Callable[[str], Awaitable[str]]] = {
+    ConfigKeyEnum.ABOUT_CONTENT: _as_is,
+    ConfigKeyEnum.USERNAME: _validated_username,
+    ConfigKeyEnum.PASSWORD: _hashed_password,
+}
+
+# Rows that hold one logical value split over several keys. A null write deletes the whole group in
+# a single statement, because a half-deleted group is a state nobody can log into to repair.
+AGGREGATE: dict[ConfigKeyEnum, tuple[ConfigKeyEnum, ...]] = {
+    key: group for group in (
+        (ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD),
+        (ConfigKeyEnum.TOTP_ENFORCE, ConfigKeyEnum.TOTP_SECRET),
+    ) for key in group
+}
+
+
+async def write_config(key: ConfigKeyEnum, value: str | None):
+    if value is None:
+        await delete_config(list(AGGREGATE.get(key, (key,))))
+        return
+    if key not in WRITE_RULES:
+        raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE)
+    await set_config(key, await WRITE_RULES[key](value))
+
+
+async def enroll_totp() -> str:
     secret = pyotp.random_base32()
     await set_config(ConfigKeyEnum.TOTP_SECRET, secret)
     return secret
@@ -93,5 +120,9 @@ async def confirm_totp(totp: str):
     if (secret := await get_config(ConfigKeyEnum.TOTP_SECRET)) is None:
         raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST)
     if not pyotp.TOTP(secret).verify(totp, valid_window=1):
-        raise HTTPException(status_code=http_status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
-    await set_config(ConfigKeyEnum.TOTP_ENFORCE, str(True))
+        # 400, not 401: the caller is already authenticated, and the http layer reads a 401 as a dead
+        # session, which would throw the admin out over a typo.
+        raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail=HttpErrorDetail.WRONG_TOTP)
+    # An enabled timestamp, not a flag: readers test `is not None`, and any non-empty string
+    # (including "False") is truthy, so a boolean written as a string could never be turned off.
+    await set_config(ConfigKeyEnum.TOTP_ENFORCE, str(int(time.time())))

@@ -15,12 +15,6 @@ class LoginRO(BaseModel):
     totp: str | None = None
 
 
-class UserRO(BaseModel):
-    username: str | None = None
-    password: str | None = None
-    reset: bool | None = None
-
-
 class ConfigRO(BaseModel):
     key: ConfigKeyEnum
     value: str | None = None
