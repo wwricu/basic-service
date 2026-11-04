@@ -42,6 +42,16 @@ class ConfigKeyEnum(StrEnum):
         return ConfigKeyEnum.PASSWORD, ConfigKeyEnum.TOTP_SECRET
 
 
+class ManageCommandEnum(StrEnum):
+    SET_ABOUT = 'set_about'
+    SET_USERNAME = 'set_username'
+    SET_PASSWORD = 'set_password'
+    RESET_LOGIN = 'reset_login'
+    ENROLL_TOTP = 'enroll_totp'
+    CONFIRM_TOTP = 'confirm_totp'
+    DISABLE_TOTP = 'disable_totp'
+
+
 class CacheKeyEnum(StrEnum):
     POST_COUNT = 'post_count'
     CATEGORY_COUNT = 'category_count'

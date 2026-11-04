@@ -12,7 +12,7 @@ from wwricu.component.cache import sys_cache
 from wwricu.database import conf_db, post_db, tag_db, res_db
 from wwricu.domain.common import TrashBinVO
 from wwricu.domain.constant import HttpErrorDetail
-from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, EntityTypeEnum, TagTypeEnum, PostResourceTypeEnum
+from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, EntityTypeEnum, ManageCommandEnum, TagTypeEnum, PostResourceTypeEnum
 from wwricu.domain.post import PostQueryDTO
 from wwricu.domain.tag import TagQueryDTO
 
@@ -65,55 +65,51 @@ async def list_trash() -> list[TrashBinVO]:
     return result
 
 
-async def _as_is(value: str) -> str:
-    return value
+async def _set_about(value: str) -> None:
+    await set_config(ConfigKeyEnum.ABOUT_CONTENT, value)
 
 
-async def _validated_username(username: str) -> str:
-    if len(username) < 4 or not re.match('^[a-zA-Z][a-zA-Z0-9_]*$', username):
+async def _set_username(value: str) -> None:
+    if len(value) < 4 or not re.match('^[a-zA-Z][a-zA-Z0-9_]*$', value):
         raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail='Invalid username')
-    return username
+    await set_config(ConfigKeyEnum.USERNAME, value)
 
 
-async def _hashed_password(password: str) -> str:
-    if len(password) < 8 or password.isalnum():
+async def _set_password(value: str) -> None:
+    if len(value) < 8 or value.isalnum():
         raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail='Invalid password')
-    credential = await asyncio.to_thread(bcrypt.hashpw, password.encode(), bcrypt.gensalt())
-    return base64.b64encode(credential).decode()
+    credential = await asyncio.to_thread(bcrypt.hashpw, value.encode(), bcrypt.gensalt())
+    await set_config(ConfigKeyEnum.PASSWORD, base64.b64encode(credential).decode())
 
 
-WRITE_RULES: dict[ConfigKeyEnum, Callable[[str], Awaitable[str]]] = {
-    ConfigKeyEnum.ABOUT_CONTENT: _as_is,
-    ConfigKeyEnum.USERNAME: _validated_username,
-    ConfigKeyEnum.PASSWORD: _hashed_password,
-}
-
-AGGREGATE: dict[ConfigKeyEnum, tuple[ConfigKeyEnum, ...]] = {
-    key: group for group in (
-        (ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD),
-        (ConfigKeyEnum.TOTP_ENFORCE, ConfigKeyEnum.TOTP_SECRET),
-    ) for key in group
-}
+async def _reset_login(_: str) -> None:
+    await delete_config([ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD])
 
 
-async def write_config(key: ConfigKeyEnum, value: str | None):
-    if value is None:
-        await delete_config(list(AGGREGATE.get(key, (key,))))
-        return
-    if key not in WRITE_RULES:
-        raise HTTPException(status_code=http_status.HTTP_406_NOT_ACCEPTABLE)
-    await set_config(key, await WRITE_RULES[key](value))
-
-
-async def enroll_totp() -> str:
+async def _enroll_totp(_: str) -> str:
     secret = pyotp.random_base32()
     await set_config(ConfigKeyEnum.TOTP_SECRET, secret)
     return secret
 
 
-async def confirm_totp(totp: str):
+async def _confirm_totp(value: str) -> None:
     if (secret := await get_config(ConfigKeyEnum.TOTP_SECRET)) is None:
         raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST)
-    if not pyotp.TOTP(secret).verify(totp, valid_window=1):
+    if not pyotp.TOTP(secret).verify(value, valid_window=1):
         raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail=HttpErrorDetail.WRONG_TOTP)
     await set_config(ConfigKeyEnum.TOTP_ENFORCE, str(int(time.time())))
+
+
+async def _disable_totp(_: str) -> None:
+    await delete_config([ConfigKeyEnum.TOTP_ENFORCE, ConfigKeyEnum.TOTP_SECRET])
+
+
+MANAGE_COMMANDS: dict[ManageCommandEnum, Callable[[str], Awaitable[str | None]]] = {
+    ManageCommandEnum.SET_ABOUT: _set_about,
+    ManageCommandEnum.SET_USERNAME: _set_username,
+    ManageCommandEnum.SET_PASSWORD: _set_password,
+    ManageCommandEnum.RESET_LOGIN: _reset_login,
+    ManageCommandEnum.ENROLL_TOTP: _enroll_totp,
+    ManageCommandEnum.CONFIRM_TOTP: _confirm_totp,
+    ManageCommandEnum.DISABLE_TOTP: _disable_totp,
+}

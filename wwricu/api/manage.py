@@ -3,8 +3,8 @@ from fastapi.responses import FileResponse
 
 from wwricu.component.cache import query_cache
 from wwricu.config import app_config
-from wwricu.domain.common import ConfigRO, TrashBinRO, TrashBinVO
-from wwricu.domain.enum import ConfigKeyEnum, DatabaseActionEnum, EntityTypeEnum
+from wwricu.domain.common import TrashBinRO, TrashBinVO
+from wwricu.domain.enum import ConfigKeyEnum, DatabaseActionEnum, EntityTypeEnum, ManageCommandEnum
 from wwricu.service import common_service, manage_service, post_service, security_service, tag_service
 
 manage_api = APIRouter(prefix='/admin/manage', tags=['Manage API'], dependencies=[Depends(security_service.require_admin)])
@@ -41,9 +41,9 @@ async def database_api(background_task: BackgroundTasks, action: DatabaseActionE
             background_task.add_task(common_service.backup_database)
 
 
-@manage_api.post('/config/set', response_model=None)
-async def config_set_api(config: ConfigRO):
-    await manage_service.write_config(config.key, config.value)
+@manage_api.post('/command', response_model=str | None)
+async def command_api(command: ManageCommandEnum = Body(embed=True), value: str = Body(embed=True)) -> str | None:
+    return await manage_service.MANAGE_COMMANDS[command](value)
 
 
 @manage_api.get('/config/get', response_model=str | None)
@@ -51,13 +51,3 @@ async def config_get_api(key: ConfigKeyEnum) -> str | None:
     if key in ConfigKeyEnum.api_get_black_list():
         raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE)
     return await manage_service.get_config(key)
-
-
-@manage_api.post('/totp/enroll', response_model=str)
-async def totp_enroll_api() -> str:
-    return await manage_service.enroll_totp()
-
-
-@manage_api.post('/totp/confirm', response_model=None)
-async def totp_enforce_confirm_api(totp: str = Body(embed=True)):
-    await manage_service.confirm_totp(totp)

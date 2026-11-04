@@ -8,20 +8,17 @@ from test.test_utils import client
 from wwricu.config import app_config
 from wwricu.domain.common import TrashBinVO
 from wwricu.domain.constant import HttpErrorDetail
-from wwricu.domain.enum import ConfigKeyEnum, EntityTypeEnum
+from wwricu.domain.enum import ConfigKeyEnum, EntityTypeEnum, ManageCommandEnum
 
 
-def test_config_set_and_get():
+def test_command_set_and_get():
     about = f'/admin/manage/config/get?key={ConfigKeyEnum.ABOUT_CONTENT}'
     original = client.get(about).json()
     try:
-        set_response = client.post('/admin/manage/config/set', json={'key': ConfigKeyEnum.ABOUT_CONTENT, 'value': 'test about content'})
-        assert set_response.status_code == status.HTTP_200_OK
-        get_response = client.get(about)
-        assert get_response.status_code == status.HTTP_200_OK
-        assert get_response.json() == 'test about content'
+        assert _command(ManageCommandEnum.SET_ABOUT, 'test about content').status_code == status.HTTP_200_OK
+        assert client.get(about).json() == 'test about content'
     finally:
-        client.post('/admin/manage/config/set', json={'key': ConfigKeyEnum.ABOUT_CONTENT, 'value': original})
+        _command(ManageCommandEnum.SET_ABOUT, original)
 
 
 def test_trash_recover_and_hard_delete():
@@ -47,66 +44,61 @@ def _trashed_post_ids() -> list[int]:
     return [item.id for item in map(TrashBinVO.model_validate, response.json()) if item.type == EntityTypeEnum.BLOG_POST]
 
 
-def test_config_set_refuses_a_key_without_a_write_rule():
+def test_a_command_outside_the_enum_is_refused():
     _clear_totp()
-    response = client.post('/admin/manage/config/set', json={'key': ConfigKeyEnum.TOTP_SECRET, 'value': 'leak'})
-    assert response.status_code == status.HTTP_406_NOT_ACCEPTABLE
-    assert ConfigKeyEnum.TOTP_SECRET not in _config_keys()
+    response = client.post('/admin/manage/command', json={'command': 'set_totp_secret', 'value': 'leak'})
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+    assert not ({ConfigKeyEnum.TOTP_SECRET, ConfigKeyEnum.TOTP_ENFORCE} & _config_keys())
 
 
-def test_config_set_refuses_a_non_null_totp_enforce():
-    _clear_totp()
-    response = client.post('/admin/manage/config/set', json={'key': ConfigKeyEnum.TOTP_ENFORCE, 'value': '1'})
-    assert response.status_code == status.HTTP_406_NOT_ACCEPTABLE
-    assert ConfigKeyEnum.TOTP_ENFORCE not in _config_keys()
-
-
-def test_a_null_username_deletes_both_login_rows():
-    for key, value in ((ConfigKeyEnum.USERNAME, 'aggregate_user'), (ConfigKeyEnum.PASSWORD, 'Aggregate#12345')):
-        assert client.post('/admin/manage/config/set', json={'key': key, 'value': value}).status_code == status.HTTP_200_OK
+def test_reset_login_deletes_both_rows():
+    assert _command(ManageCommandEnum.SET_USERNAME, 'command_user').status_code == status.HTTP_200_OK
+    assert _command(ManageCommandEnum.SET_PASSWORD, 'Command#12345').status_code == status.HTTP_200_OK
     assert {ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD} <= _config_keys()
 
-    reset = client.post('/admin/manage/config/set', json={'key': ConfigKeyEnum.USERNAME, 'value': None})
-    assert reset.status_code == status.HTTP_200_OK
+    assert _command(ManageCommandEnum.RESET_LOGIN).status_code == status.HTTP_200_OK
     assert not ({ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD} & _config_keys())
 
 
-def test_a_null_totp_enforce_deletes_the_secret_too():
-    assert len(client.post('/admin/manage/totp/enroll').json()) == 32
+def test_disable_totp_deletes_the_secret_too():
+    assert len(_command(ManageCommandEnum.ENROLL_TOTP).json()) == 32
     assert ConfigKeyEnum.TOTP_SECRET in _config_keys()
 
-    disable = client.post('/admin/manage/config/set', json={'key': ConfigKeyEnum.TOTP_ENFORCE, 'value': None})
-    assert disable.status_code == status.HTTP_200_OK
+    assert _command(ManageCommandEnum.DISABLE_TOTP).status_code == status.HTTP_200_OK
     assert not ({ConfigKeyEnum.TOTP_ENFORCE, ConfigKeyEnum.TOTP_SECRET} & _config_keys())
 
 
 def test_a_wrong_totp_code_is_a_bad_request():
-    secret = client.post('/admin/manage/totp/enroll').json()
+    secret = _command(ManageCommandEnum.ENROLL_TOTP).json()
     wrong = (int(pyotp.TOTP(secret).now()) + 1) % 1000000
-    response = client.post('/admin/manage/totp/confirm', json={'totp': f'{wrong:06d}'})
+    response = _command(ManageCommandEnum.CONFIRM_TOTP, f'{wrong:06d}')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json()['detail'] == HttpErrorDetail.WRONG_TOTP
 
-    assert client.post('/admin/manage/totp/confirm', json={'totp': pyotp.TOTP(secret).now()}).status_code == status.HTTP_200_OK
+    assert _command(ManageCommandEnum.CONFIRM_TOTP, pyotp.TOTP(secret).now()).status_code == status.HTTP_200_OK
     assert client.get(f'/admin/manage/config/get?key={ConfigKeyEnum.TOTP_ENFORCE}').json().isdigit()
-    client.post('/admin/manage/config/set', json={'key': ConfigKeyEnum.TOTP_ENFORCE, 'value': None})
+    _command(ManageCommandEnum.DISABLE_TOTP)
 
 
 def test_a_legacy_true_row_still_enforces_totp():
-    client.post('/admin/manage/config/set', json={'key': ConfigKeyEnum.USERNAME, 'value': 'legacy_user'})
-    client.post('/admin/manage/config/set', json={'key': ConfigKeyEnum.PASSWORD, 'value': 'Legacy#12345'})
+    _command(ManageCommandEnum.SET_USERNAME, 'legacy_user')
+    _command(ManageCommandEnum.SET_PASSWORD, 'Legacy#12345')
     _seed_config(ConfigKeyEnum.TOTP_ENFORCE, 'True')
     try:
         response = client.post('/admin/login', json={'username': 'legacy_user', 'password': 'Legacy#12345'})
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
         assert response.json()['detail'] == HttpErrorDetail.NEED_TOTP
     finally:
-        client.post('/admin/manage/config/set', json={'key': ConfigKeyEnum.USERNAME, 'value': None})
-        client.post('/admin/manage/config/set', json={'key': ConfigKeyEnum.TOTP_ENFORCE, 'value': None})
+        _command(ManageCommandEnum.RESET_LOGIN)
+        _command(ManageCommandEnum.DISABLE_TOTP)
 
 
 def _clear_totp():
-    client.post('/admin/manage/config/set', json={'key': ConfigKeyEnum.TOTP_ENFORCE, 'value': None})
+    _command(ManageCommandEnum.DISABLE_TOTP)
+
+
+def _command(command: ManageCommandEnum, value: str = ''):
+    return client.post('/admin/manage/command', json={'command': command, 'value': value})
 
 
 def _config_keys() -> set[ConfigKeyEnum]:

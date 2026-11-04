@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel as PydanticBaseModel, ConfigDict, Field
 
-from wwricu.domain.enum import ConfigKeyEnum, EntityTypeEnum
+from wwricu.domain.enum import EntityTypeEnum
 
 
 class BaseModel(PydanticBaseModel):
@@ -13,11 +13,6 @@ class LoginRO(BaseModel):
     username: str = ''
     password: str = ''
     totp: str | None = None
-
-
-class ConfigRO(BaseModel):
-    key: ConfigKeyEnum
-    value: str | None = None
 
 
 class PageVO[T](BaseModel):
