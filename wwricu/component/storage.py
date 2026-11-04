@@ -2,6 +2,7 @@ import asyncio
 
 import boto3
 from mypy_boto3_s3 import S3Client
+from mypy_boto3_s3.type_defs import CopySourceTypeDef
 
 from wwricu.config import StorageConfig, app_config, env
 from wwricu.domain.third import AWSS3Response, AWSResponseBase, CloudflareConst
@@ -10,6 +11,7 @@ from wwricu.domain.third import AWSS3Response, AWSResponseBase, CloudflareConst
 class R2Storage:
     bucket: str
     s3_client: S3Client
+    trash: str
 
     @property
     def resource_api(self) -> str:
@@ -44,7 +46,13 @@ class R2Storage:
         return await asyncio.to_thread(upload)
 
     async def delete(self, key: str):
-        def remove() -> None:
+        def remove():
+            response = self.s3_client.copy_object(
+                Bucket=self.bucket,
+                CopySource=CopySourceTypeDef(Bucket=self.bucket, Key=key),
+                Key=f'trash/{key}'
+            )
+            AWSResponseBase.model_validate(response).check()
             response = self.s3_client.delete_object(Bucket=self.bucket, Key=key)
             AWSResponseBase.model_validate(response).check()
 
