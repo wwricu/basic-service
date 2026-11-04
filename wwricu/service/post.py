@@ -214,7 +214,8 @@ async def get_status(post_id: int) -> PostStatusEnum:
 
 async def sync_search_index(post_id: int, status: str, title: str, preview: str, content: str):
     if status != PostStatusEnum.PUBLISHED:
-        return await post_db.remove_search_index(post_id)
+        await post_db.remove_search_index(post_id)
+        return
     await post_db.upsert_search_index(post_id, segment(title), segment(preview), segment(extract_text(content)))
 
 

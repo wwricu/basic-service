@@ -115,7 +115,7 @@ def test_disable_totp_deletes_the_secret_too():
 
     assert _command(ManageCommandEnum.DISABLE_TOTP).status_code == status.HTTP_200_OK
     assert not ({ConfigKeyEnum.TOTP_ENFORCE, ConfigKeyEnum.TOTP_SECRET} & _config_keys())
-    assert _read(ManageReadEnum.TOTP_ENFORCED).json() == 'false'
+    assert _read(ManageReadEnum.TOTP_ENFORCED).json() is None
 
 
 def test_a_wrong_totp_code_is_a_bad_request():
@@ -126,7 +126,7 @@ def test_a_wrong_totp_code_is_a_bad_request():
     assert response.json()['detail'] == HttpErrorDetail.WRONG_TOTP
 
     assert _command(ManageCommandEnum.CONFIRM_TOTP, pyotp.TOTP(secret).now()).status_code == status.HTTP_200_OK
-    assert _read(ManageReadEnum.TOTP_ENFORCED).json() == 'true'
+    assert _read(ManageReadEnum.TOTP_ENFORCED).json() is not None
     _command(ManageCommandEnum.DISABLE_TOTP)
 
 
@@ -137,7 +137,7 @@ def test_a_legacy_true_row_still_enforces_totp():
         response = client.post('/admin/login', json={'username': 'legacy_user', 'password': 'Legacy#12345'})
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
         assert response.json()['detail'] == HttpErrorDetail.NEED_TOTP
-        assert _read(ManageReadEnum.TOTP_ENFORCED).json() == 'true'
+        assert _read(ManageReadEnum.TOTP_ENFORCED).json() == 'True'
     finally:
         _command(ManageCommandEnum.RESET_LOGIN)
         _command(ManageCommandEnum.DISABLE_TOTP)
