@@ -113,12 +113,7 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
         cover_id=new_post.cover_id,
         category_id=new_post.category_id
     )
-    await post_db.upsert_search_index(
-        new_post.id,
-        segment(new_post.title),
-        segment(new_post.preview),
-        segment(extract_text(new_post.content))
-    )
+    await sync_search_index(new_post.id, post.status, new_post.title, new_post.preview, new_post.content)
 
     post = await post_db.find_by_id(new_post.id)
     return await get_detail(post)
@@ -138,6 +133,7 @@ async def update_status(post_id: int, status: PostStatusEnum):
     await update_category(blog_post, tag_update)
     await update_tags(blog_post, tag_update)
     await post_db.update_selective(blog_post.id, status=tag_update.status)
+    await sync_search_index(blog_post.id, status, blog_post.title, blog_post.preview, blog_post.content)
 
 
 async def update_tags(post: BlogPost, tag_update: TagUpdateDTO):
@@ -228,6 +224,12 @@ async def get_status(post_id: int) -> PostStatusEnum:
     post_status = PostStatusEnum(post.status)
     await post_status_cache.set(CacheKeyEnum.POST.format(id=post_id), post_status, TimeConst.ONE_DAY_SECONDS)
     return post_status
+
+
+async def sync_search_index(post_id: int, status: str, title: str, preview: str, content: str):
+    if status != PostStatusEnum.PUBLISHED:
+        return await post_db.remove_search_index(post_id)
+    await post_db.upsert_search_index(post_id, segment(title), segment(preview), segment(extract_text(content)))
 
 
 async def search(keyword: str) -> list[PostSearchVO]:
