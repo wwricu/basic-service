@@ -61,11 +61,11 @@ def test_a_read_outside_the_enum_is_refused():
             response = client.get(f'/admin/manage/config/get?key={key}')
             assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     finally:
-        _clear_login()
+        _command(ManageCommandEnum.RESET_LOGIN)
         _command(ManageCommandEnum.DISABLE_TOTP)
 
 
-def test_set_login_writes_and_overwrites_both_rows():
+def test_set_login_overwrites_and_reset_clears_both_rows():
     assert _command(ManageCommandEnum.SET_LOGIN, _login('command_user', 'Command#12345')).status_code == status.HTTP_200_OK
     assert _read(ManageReadEnum.USERNAME).json() == 'command_user'
     assert {ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD} <= _config_keys()
@@ -73,7 +73,9 @@ def test_set_login_writes_and_overwrites_both_rows():
 
     assert _command(ManageCommandEnum.SET_LOGIN, _login('second_user', 'Second#12345')).status_code == status.HTTP_200_OK
     assert _read(ManageReadEnum.USERNAME).json() == 'second_user'
-    _clear_login()
+
+    assert _command(ManageCommandEnum.RESET_LOGIN).status_code == status.HTTP_200_OK
+    assert not ({ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD} & _config_keys())
 
 
 def test_an_invalid_credential_is_a_bad_request():
@@ -137,7 +139,7 @@ def test_a_legacy_true_row_still_enforces_totp():
         assert response.json()['detail'] == HttpErrorDetail.NEED_TOTP
         assert _read(ManageReadEnum.TOTP_ENFORCED).json() == 'true'
     finally:
-        _clear_login()
+        _command(ManageCommandEnum.RESET_LOGIN)
         _command(ManageCommandEnum.DISABLE_TOTP)
 
 
@@ -164,11 +166,6 @@ def _seed_config(key: ConfigKeyEnum, value: str):
             'insert into wwr_sys_config (key, value, deleted) values (?, ?, 0) on conflict (key) do update set value = ?, deleted = 0',
             (key, value, value)
         )
-
-
-def _clear_login():
-    with sqlite3.connect(app_config.database.name) as conn:
-        conn.execute('delete from wwr_sys_config where key in (?, ?)', (ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD))
 
 
 def _login(username: str, password: str) -> str:

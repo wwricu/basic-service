@@ -53,6 +53,7 @@ class ManageCommandEnum(StrEnum):
     SET_SITE_TITLE = 'set_site_title'
     SET_SITE_TAGLINE = 'set_site_tagline'
     SET_LOGIN = 'set_login'
+    RESET_LOGIN = 'reset_login'
     ENROLL_TOTP = 'enroll_totp'
     CONFIRM_TOTP = 'confirm_totp'
     DISABLE_TOTP = 'disable_totp'
