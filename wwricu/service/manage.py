@@ -7,10 +7,12 @@ from collections.abc import Awaitable, Callable
 import bcrypt
 import pyotp
 from fastapi import HTTPException, status as http_status
+from pydantic import ValidationError
 
 from wwricu.component.cache import sys_cache
+from wwricu.component.database import transaction
 from wwricu.database import conf_db, post_db, tag_db, res_db
-from wwricu.domain.common import TrashBinVO
+from wwricu.domain.common import LoginRO, TrashBinVO
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, EntityTypeEnum, ManageCommandEnum, ManageReadEnum, TagTypeEnum, PostResourceTypeEnum
 from wwricu.domain.post import PostQueryDTO
@@ -65,30 +67,28 @@ async def list_trash() -> list[TrashBinVO]:
     return result
 
 
-async def _set_username(value: str) -> None:
-    if len(value) < 4 or not re.match('^[a-zA-Z][a-zA-Z0-9_]*$', value):
+@transaction
+async def set_login(value: str) -> None:
+    try:
+        login = LoginRO.model_validate_json(value)
+    except ValidationError:
+        raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST)
+    if len(login.username) < 4 or not re.match('^[a-zA-Z][a-zA-Z0-9_]*$', login.username):
         raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail='Invalid username')
-    await set_config(ConfigKeyEnum.USERNAME, value)
-
-
-async def _set_password(value: str) -> None:
-    if len(value) < 8 or value.isalnum():
+    if len(login.password) < 8 or login.password.isalnum():
         raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail='Invalid password')
-    credential = await asyncio.to_thread(bcrypt.hashpw, value.encode(), bcrypt.gensalt())
+    credential = await asyncio.to_thread(bcrypt.hashpw, login.password.encode(), bcrypt.gensalt())
+    await set_config(ConfigKeyEnum.USERNAME, login.username)
     await set_config(ConfigKeyEnum.PASSWORD, base64.b64encode(credential).decode())
 
 
-async def _reset_login(_: str) -> None:
-    await delete_config([ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD])
-
-
-async def _enroll_totp(_: str) -> str:
+async def enroll_totp(_: str) -> str:
     secret = pyotp.random_base32()
     await set_config(ConfigKeyEnum.TOTP_SECRET, secret)
     return secret
 
 
-async def _confirm_totp(value: str) -> None:
+async def confirm_totp(value: str) -> None:
     if (secret := await get_config(ConfigKeyEnum.TOTP_SECRET)) is None:
         raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST)
     if not pyotp.TOTP(secret).verify(value, valid_window=1):
@@ -96,31 +96,30 @@ async def _confirm_totp(value: str) -> None:
     await set_config(ConfigKeyEnum.TOTP_ENFORCE, str(int(time.time())))
 
 
-async def _disable_totp(_: str) -> None:
-    await delete_config([ConfigKeyEnum.TOTP_ENFORCE, ConfigKeyEnum.TOTP_SECRET])
+async def write(cmd: ManageCommandEnum, value: str):
+    return await write_commands[cmd](value)
 
 
-MANAGE_COMMANDS: dict[ManageCommandEnum, Callable[[str], Awaitable[str | None]]] = {
+async def read(cmd: ManageReadEnum):
+    return await read_commands[cmd]()
+
+
+write_commands: dict[ManageCommandEnum, Callable[[str], Awaitable[str | None]]] = {
     ManageCommandEnum.SET_ABOUT: lambda value: set_config(ConfigKeyEnum.ABOUT_CONTENT, value),
     ManageCommandEnum.SET_SITE_TITLE: lambda value: set_config(ConfigKeyEnum.SITE_TITLE, value),
     ManageCommandEnum.SET_SITE_TAGLINE: lambda value: set_config(ConfigKeyEnum.SITE_TAGLINE, value),
-    ManageCommandEnum.SET_USERNAME: _set_username,
-    ManageCommandEnum.SET_PASSWORD: _set_password,
-    ManageCommandEnum.RESET_LOGIN: _reset_login,
-    ManageCommandEnum.ENROLL_TOTP: _enroll_totp,
-    ManageCommandEnum.CONFIRM_TOTP: _confirm_totp,
-    ManageCommandEnum.DISABLE_TOTP: _disable_totp,
+    ManageCommandEnum.SET_LOGIN: set_login,
+    ManageCommandEnum.RESET_LOGIN: lambda value: delete_config([ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD]),
+    ManageCommandEnum.ENROLL_TOTP: enroll_totp,
+    ManageCommandEnum.CONFIRM_TOTP: confirm_totp,
+    ManageCommandEnum.DISABLE_TOTP: lambda value: delete_config([ConfigKeyEnum.TOTP_ENFORCE, ConfigKeyEnum.TOTP_SECRET])
 }
 
 
-async def _read_totp_enforced() -> str:
-    return 'true' if (await get_config(ConfigKeyEnum.TOTP_ENFORCE)) is not None else 'false'
-
-
-MANAGE_READS: dict[ManageReadEnum, Callable[[], Awaitable[str | None]]] = {
+read_commands: dict[ManageReadEnum, Callable[[], Awaitable[str | None]]] = {
     ManageReadEnum.ABOUT: lambda: get_config(ConfigKeyEnum.ABOUT_CONTENT),
     ManageReadEnum.SITE_TITLE: lambda: get_config(ConfigKeyEnum.SITE_TITLE),
     ManageReadEnum.SITE_TAGLINE: lambda: get_config(ConfigKeyEnum.SITE_TAGLINE),
     ManageReadEnum.USERNAME: lambda: get_config(ConfigKeyEnum.USERNAME),
-    ManageReadEnum.TOTP_ENFORCED: _read_totp_enforced,
+    ManageReadEnum.TOTP_ENFORCED: lambda: get_config(ConfigKeyEnum.TOTP_ENFORCE)
 }

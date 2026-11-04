@@ -113,12 +113,7 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
         cover_id=new_post.cover_id,
         category_id=new_post.category_id
     )
-    await post_db.upsert_search_index(
-        new_post.id,
-        segment(new_post.title),
-        segment(new_post.preview),
-        segment(extract_text(new_post.content))
-    )
+    await sync_search_index(new_post.id, post.status, new_post.title, new_post.preview, new_post.content)
 
     post = await post_db.find_by_id(new_post.id)
     return await get_detail(post)
@@ -138,6 +133,7 @@ async def update_status(post_id: int, status: PostStatusEnum):
     await update_category(blog_post, tag_update)
     await update_tags(blog_post, tag_update)
     await post_db.update_selective(blog_post.id, status=tag_update.status)
+    await sync_search_index(blog_post.id, status, blog_post.title, blog_post.preview, blog_post.content)
 
 
 async def update_tags(post: BlogPost, tag_update: TagUpdateDTO):
@@ -149,30 +145,16 @@ async def update_tags(post: BlogPost, tag_update: TagUpdateDTO):
         relations = [EntityRelation(src_id=post.id, dst_id=t.id, type=RelationTypeEnum.POST_TAG) for t in tags]
         await common_db.insert_all(relations)
 
-    bef_tag_ids, aft_tag_ids = set(), set()
-    if post.status == PostStatusEnum.PUBLISHED:
-        bef_tag_ids = tag_ids
-    if tag_update.status == PostStatusEnum.PUBLISHED:
-        aft_tag_ids = update_tag_ids
-    await tag_db.update_post_count(bef_tag_ids, aft_tag_ids, TagTypeEnum.POST_TAG)
-
 
 async def get_tags(post: BlogPost) -> list[PostTag]:
     tag_ids = await tag_db.find_ids_by_post_id(post.id)
     return await tag_db.find_by_criteria(TagQueryDTO(tag_ids=tag_ids, type=TagTypeEnum.POST_TAG))
 
 
-async def update_category(post: BlogPost, count_update: TagUpdateDTO):
-    if post.category_id != count_update.category_id:
-        category = await tag_db.find_category(category_id=count_update.category_id)
+async def update_category(post: BlogPost, tag_update: TagUpdateDTO):
+    if post.category_id != tag_update.category_id:
+        category = await tag_db.find_category(category_id=tag_update.category_id)
         await post_db.update_selective(post.id, category_id=category.id if category else None)
-
-    bef_category_id, aft_category_id = set(), set()
-    if post.status == PostStatusEnum.PUBLISHED and post.category_id:
-        bef_category_id.add(post.category_id)
-    if count_update.status == PostStatusEnum.PUBLISHED and count_update.category_id:
-        aft_category_id.add(count_update.category_id)
-    await tag_db.update_post_count(bef_category_id, aft_category_id, TagTypeEnum.POST_CAT)
 
 
 async def batch_get_category(post_list: list[BlogPost]) -> dict[int, PostTag]:
@@ -228,6 +210,13 @@ async def get_status(post_id: int) -> PostStatusEnum:
     post_status = PostStatusEnum(post.status)
     await post_status_cache.set(CacheKeyEnum.POST.format(id=post_id), post_status, TimeConst.ONE_DAY_SECONDS)
     return post_status
+
+
+async def sync_search_index(post_id: int, status: str, title: str, preview: str, content: str):
+    if status != PostStatusEnum.PUBLISHED:
+        await post_db.remove_search_index(post_id)
+        return
+    await post_db.upsert_search_index(post_id, segment(title), segment(preview), segment(extract_text(content)))
 
 
 async def search(keyword: str) -> list[PostSearchVO]:

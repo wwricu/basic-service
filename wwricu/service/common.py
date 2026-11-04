@@ -52,6 +52,7 @@ async def lifespan(app: FastAPI):
 
 
 async def refresh_counts():
+    await tag_db.refresh_tag_counts()
     post_count = await post_db.count(PostQueryDTO(status=PostStatusEnum.PUBLISHED))
     category_count = await tag_db.count(TagQueryDTO(type=TagTypeEnum.POST_CAT))
     tag_count = await tag_db.count(TagQueryDTO(type=TagTypeEnum.POST_TAG))

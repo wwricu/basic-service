@@ -15,7 +15,7 @@ async def trash_get_all_api() -> list[TrashBinVO]:
     return await manage_service.list_trash()
 
 
-@manage_api.post('/trash/edit', response_model=None)
+@manage_api.post('/trash/edit', dependencies=[Depends(common_service.reset_sys_config)], response_model=None)
 async def trash_edit_api(trash_bin: TrashBinRO):
     if trash_bin.type in (EntityTypeEnum.POST_IMAGE, EntityTypeEnum.POST_COVER):
         await post_service.process_resource_trash(trash_bin)
@@ -43,9 +43,9 @@ async def database_api(background_task: BackgroundTasks, action: DatabaseActionE
 
 @manage_api.post('/command', response_model=str | None)
 async def command_api(command: ManageCommandEnum = Body(embed=True), value: str = Body(embed=True)) -> str | None:
-    return await manage_service.MANAGE_COMMANDS[command](value)
+    return await manage_service.write(command, value)
 
 
 @manage_api.get('/config/get', response_model=str | None)
 async def config_get_api(key: ManageReadEnum) -> str | None:
-    return await manage_service.MANAGE_READS[key]()
+    return await manage_service.read(key)
