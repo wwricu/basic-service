@@ -1,10 +1,10 @@
-from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Body, Depends
 from fastapi.responses import FileResponse
 
 from wwricu.component.cache import query_cache
 from wwricu.config import app_config
 from wwricu.domain.common import TrashBinRO, TrashBinVO
-from wwricu.domain.enum import ConfigKeyEnum, DatabaseActionEnum, EntityTypeEnum, ManageCommandEnum
+from wwricu.domain.enum import DatabaseActionEnum, EntityTypeEnum, ManageCommandEnum, ManageReadEnum
 from wwricu.service import common_service, manage_service, post_service, security_service, tag_service
 
 manage_api = APIRouter(prefix='/admin/manage', tags=['Manage API'], dependencies=[Depends(security_service.require_admin)])
@@ -47,7 +47,5 @@ async def command_api(command: ManageCommandEnum = Body(embed=True), value: str 
 
 
 @manage_api.get('/config/get', response_model=str | None)
-async def config_get_api(key: ConfigKeyEnum) -> str | None:
-    if key in ConfigKeyEnum.api_get_black_list():
-        raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE)
-    return await manage_service.get_config(key)
+async def config_get_api(key: ManageReadEnum) -> str | None:
+    return await manage_service.MANAGE_READS[key]()

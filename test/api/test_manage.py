@@ -8,15 +8,14 @@ from test.test_utils import client
 from wwricu.config import app_config
 from wwricu.domain.common import TrashBinVO
 from wwricu.domain.constant import HttpErrorDetail
-from wwricu.domain.enum import ConfigKeyEnum, EntityTypeEnum, ManageCommandEnum
+from wwricu.domain.enum import ConfigKeyEnum, EntityTypeEnum, ManageCommandEnum, ManageReadEnum
 
 
 def test_command_set_and_get():
-    about = f'/admin/manage/config/get?key={ConfigKeyEnum.ABOUT_CONTENT}'
-    original = client.get(about).json()
+    original = _read(ManageReadEnum.ABOUT).json()
     try:
         assert _command(ManageCommandEnum.SET_ABOUT, 'test about content').status_code == status.HTTP_200_OK
-        assert client.get(about).json() == 'test about content'
+        assert _read(ManageReadEnum.ABOUT).json() == 'test about content'
     finally:
         _command(ManageCommandEnum.SET_ABOUT, original)
 
@@ -51,6 +50,18 @@ def test_a_command_outside_the_enum_is_refused():
     assert not ({ConfigKeyEnum.TOTP_SECRET, ConfigKeyEnum.TOTP_ENFORCE} & _config_keys())
 
 
+def test_a_read_outside_the_enum_is_refused():
+    _seed_config(ConfigKeyEnum.PASSWORD, 'secret')
+    _seed_config(ConfigKeyEnum.TOTP_SECRET, 'secret')
+    try:
+        for key in ('password', 'totp_secret', 'totp_enforce'):
+            response = client.get(f'/admin/manage/config/get?key={key}')
+            assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+    finally:
+        _command(ManageCommandEnum.RESET_LOGIN)
+        _command(ManageCommandEnum.DISABLE_TOTP)
+
+
 def test_reset_login_deletes_both_rows():
     assert _command(ManageCommandEnum.SET_USERNAME, 'command_user').status_code == status.HTTP_200_OK
     assert _command(ManageCommandEnum.SET_PASSWORD, 'Command#12345').status_code == status.HTTP_200_OK
@@ -66,6 +77,7 @@ def test_disable_totp_deletes_the_secret_too():
 
     assert _command(ManageCommandEnum.DISABLE_TOTP).status_code == status.HTTP_200_OK
     assert not ({ConfigKeyEnum.TOTP_ENFORCE, ConfigKeyEnum.TOTP_SECRET} & _config_keys())
+    assert _read(ManageReadEnum.TOTP_ENFORCED).json() == 'false'
 
 
 def test_a_wrong_totp_code_is_a_bad_request():
@@ -76,7 +88,7 @@ def test_a_wrong_totp_code_is_a_bad_request():
     assert response.json()['detail'] == HttpErrorDetail.WRONG_TOTP
 
     assert _command(ManageCommandEnum.CONFIRM_TOTP, pyotp.TOTP(secret).now()).status_code == status.HTTP_200_OK
-    assert client.get(f'/admin/manage/config/get?key={ConfigKeyEnum.TOTP_ENFORCE}').json().isdigit()
+    assert _read(ManageReadEnum.TOTP_ENFORCED).json() == 'true'
     _command(ManageCommandEnum.DISABLE_TOTP)
 
 
@@ -88,9 +100,14 @@ def test_a_legacy_true_row_still_enforces_totp():
         response = client.post('/admin/login', json={'username': 'legacy_user', 'password': 'Legacy#12345'})
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
         assert response.json()['detail'] == HttpErrorDetail.NEED_TOTP
+        assert _read(ManageReadEnum.TOTP_ENFORCED).json() == 'true'
     finally:
         _command(ManageCommandEnum.RESET_LOGIN)
         _command(ManageCommandEnum.DISABLE_TOTP)
+
+
+def _read(key: ManageReadEnum):
+    return client.get(f'/admin/manage/config/get?key={key}')
 
 
 def _clear_totp():

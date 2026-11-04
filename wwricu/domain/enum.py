@@ -37,9 +37,11 @@ class ConfigKeyEnum(StrEnum):
     USERNAME = 'username'
     PASSWORD = 'password'
 
-    @classmethod
-    def api_get_black_list(cls) -> tuple:
-        return ConfigKeyEnum.PASSWORD, ConfigKeyEnum.TOTP_SECRET
+
+class ManageReadEnum(StrEnum):
+    ABOUT = 'about'
+    USERNAME = 'username'
+    TOTP_ENFORCED = 'totp_enforced'
 
 
 class ManageCommandEnum(StrEnum):

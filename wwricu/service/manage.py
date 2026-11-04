@@ -12,7 +12,7 @@ from wwricu.component.cache import sys_cache
 from wwricu.database import conf_db, post_db, tag_db, res_db
 from wwricu.domain.common import TrashBinVO
 from wwricu.domain.constant import HttpErrorDetail
-from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, EntityTypeEnum, ManageCommandEnum, TagTypeEnum, PostResourceTypeEnum
+from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, EntityTypeEnum, ManageCommandEnum, ManageReadEnum, TagTypeEnum, PostResourceTypeEnum
 from wwricu.domain.post import PostQueryDTO
 from wwricu.domain.tag import TagQueryDTO
 
@@ -65,10 +65,6 @@ async def list_trash() -> list[TrashBinVO]:
     return result
 
 
-async def _set_about(value: str) -> None:
-    await set_config(ConfigKeyEnum.ABOUT_CONTENT, value)
-
-
 async def _set_username(value: str) -> None:
     if len(value) < 4 or not re.match('^[a-zA-Z][a-zA-Z0-9_]*$', value):
         raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail='Invalid username')
@@ -105,11 +101,22 @@ async def _disable_totp(_: str) -> None:
 
 
 MANAGE_COMMANDS: dict[ManageCommandEnum, Callable[[str], Awaitable[str | None]]] = {
-    ManageCommandEnum.SET_ABOUT: _set_about,
+    ManageCommandEnum.SET_ABOUT: lambda value: set_config(ConfigKeyEnum.ABOUT_CONTENT, value),
     ManageCommandEnum.SET_USERNAME: _set_username,
     ManageCommandEnum.SET_PASSWORD: _set_password,
     ManageCommandEnum.RESET_LOGIN: _reset_login,
     ManageCommandEnum.ENROLL_TOTP: _enroll_totp,
     ManageCommandEnum.CONFIRM_TOTP: _confirm_totp,
     ManageCommandEnum.DISABLE_TOTP: _disable_totp,
+}
+
+
+async def _read_totp_enforced() -> str:
+    return 'true' if (await get_config(ConfigKeyEnum.TOTP_ENFORCE)) is not None else 'false'
+
+
+MANAGE_READS: dict[ManageReadEnum, Callable[[], Awaitable[str | None]]] = {
+    ManageReadEnum.ABOUT: lambda: get_config(ConfigKeyEnum.ABOUT_CONTENT),
+    ManageReadEnum.USERNAME: lambda: get_config(ConfigKeyEnum.USERNAME),
+    ManageReadEnum.TOTP_ENFORCED: _read_totp_enforced,
 }
