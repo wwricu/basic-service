@@ -102,6 +102,8 @@ async def _disable_totp(_: str) -> None:
 
 MANAGE_COMMANDS: dict[ManageCommandEnum, Callable[[str], Awaitable[str | None]]] = {
     ManageCommandEnum.SET_ABOUT: lambda value: set_config(ConfigKeyEnum.ABOUT_CONTENT, value),
+    ManageCommandEnum.SET_SITE_TITLE: lambda value: set_config(ConfigKeyEnum.SITE_TITLE, value),
+    ManageCommandEnum.SET_SITE_TAGLINE: lambda value: set_config(ConfigKeyEnum.SITE_TAGLINE, value),
     ManageCommandEnum.SET_USERNAME: _set_username,
     ManageCommandEnum.SET_PASSWORD: _set_password,
     ManageCommandEnum.RESET_LOGIN: _reset_login,
@@ -117,6 +119,8 @@ async def _read_totp_enforced() -> str:
 
 MANAGE_READS: dict[ManageReadEnum, Callable[[], Awaitable[str | None]]] = {
     ManageReadEnum.ABOUT: lambda: get_config(ConfigKeyEnum.ABOUT_CONTENT),
+    ManageReadEnum.SITE_TITLE: lambda: get_config(ConfigKeyEnum.SITE_TITLE),
+    ManageReadEnum.SITE_TAGLINE: lambda: get_config(ConfigKeyEnum.SITE_TAGLINE),
     ManageReadEnum.USERNAME: lambda: get_config(ConfigKeyEnum.USERNAME),
     ManageReadEnum.TOTP_ENFORCED: _read_totp_enforced,
 }

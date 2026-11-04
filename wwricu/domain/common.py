@@ -29,7 +29,9 @@ class FileUploadVO(BaseModel):
     location: str
 
 
-class AboutPageVO(BaseModel):
+class SiteVO(BaseModel):
+    title: str
+    tagline: str
     content: str
     post_count: int
     category_count: int
