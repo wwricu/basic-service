@@ -145,30 +145,16 @@ async def update_tags(post: BlogPost, tag_update: TagUpdateDTO):
         relations = [EntityRelation(src_id=post.id, dst_id=t.id, type=RelationTypeEnum.POST_TAG) for t in tags]
         await common_db.insert_all(relations)
 
-    bef_tag_ids, aft_tag_ids = set(), set()
-    if post.status == PostStatusEnum.PUBLISHED:
-        bef_tag_ids = tag_ids
-    if tag_update.status == PostStatusEnum.PUBLISHED:
-        aft_tag_ids = update_tag_ids
-    await tag_db.update_post_count(bef_tag_ids, aft_tag_ids, TagTypeEnum.POST_TAG)
-
 
 async def get_tags(post: BlogPost) -> list[PostTag]:
     tag_ids = await tag_db.find_ids_by_post_id(post.id)
     return await tag_db.find_by_criteria(TagQueryDTO(tag_ids=tag_ids, type=TagTypeEnum.POST_TAG))
 
 
-async def update_category(post: BlogPost, count_update: TagUpdateDTO):
-    if post.category_id != count_update.category_id:
-        category = await tag_db.find_category(category_id=count_update.category_id)
+async def update_category(post: BlogPost, tag_update: TagUpdateDTO):
+    if post.category_id != tag_update.category_id:
+        category = await tag_db.find_category(category_id=tag_update.category_id)
         await post_db.update_selective(post.id, category_id=category.id if category else None)
-
-    bef_category_id, aft_category_id = set(), set()
-    if post.status == PostStatusEnum.PUBLISHED and post.category_id:
-        bef_category_id.add(post.category_id)
-    if count_update.status == PostStatusEnum.PUBLISHED and count_update.category_id:
-        aft_category_id.add(count_update.category_id)
-    await tag_db.update_post_count(bef_category_id, aft_category_id, TagTypeEnum.POST_CAT)
 
 
 async def batch_get_category(post_list: list[BlogPost]) -> dict[int, PostTag]:

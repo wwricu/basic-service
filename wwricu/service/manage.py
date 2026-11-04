@@ -100,31 +100,29 @@ async def read_totp_enforced() -> str:
     return 'true' if (await get_config(ConfigKeyEnum.TOTP_ENFORCE)) is not None else 'false'
 
 
-
-async def manage_run_command(cmd: ManageCommandEnum, value: str):
-    return await MANAGE_COMMANDS[cmd](value)
-
-
-async def manage_read_config(cmd: ManageReadEnum):
-    return await MANAGE_READS[cmd]()
+async def write(cmd: ManageCommandEnum, value: str):
+    return await write_commands[cmd](value)
 
 
-MANAGE_COMMANDS: dict[ManageCommandEnum, Callable[[str], Awaitable[str | None]]] = {
+async def read(cmd: ManageReadEnum):
+    return await read_commands[cmd]()
+
+
+write_commands: dict[ManageCommandEnum, Callable[[str], Awaitable[str | None]]] = {
     ManageCommandEnum.SET_ABOUT: lambda value: set_config(ConfigKeyEnum.ABOUT_CONTENT, value),
     ManageCommandEnum.SET_SITE_TITLE: lambda value: set_config(ConfigKeyEnum.SITE_TITLE, value),
     ManageCommandEnum.SET_SITE_TAGLINE: lambda value: set_config(ConfigKeyEnum.SITE_TAGLINE, value),
     ManageCommandEnum.SET_LOGIN: set_login,
     ManageCommandEnum.ENROLL_TOTP: enroll_totp,
     ManageCommandEnum.CONFIRM_TOTP: confirm_totp,
-    ManageCommandEnum.DISABLE_TOTP: lambda value: delete_config([ConfigKeyEnum.TOTP_ENFORCE, ConfigKeyEnum.TOTP_SECRET]),
+    ManageCommandEnum.DISABLE_TOTP: lambda value: delete_config([ConfigKeyEnum.TOTP_ENFORCE, ConfigKeyEnum.TOTP_SECRET])
 }
 
 
-
-MANAGE_READS: dict[ManageReadEnum, Callable[[], Awaitable[str | None]]] = {
+read_commands: dict[ManageReadEnum, Callable[[], Awaitable[str | None]]] = {
     ManageReadEnum.ABOUT: lambda: get_config(ConfigKeyEnum.ABOUT_CONTENT),
     ManageReadEnum.SITE_TITLE: lambda: get_config(ConfigKeyEnum.SITE_TITLE),
     ManageReadEnum.SITE_TAGLINE: lambda: get_config(ConfigKeyEnum.SITE_TAGLINE),
     ManageReadEnum.USERNAME: lambda: get_config(ConfigKeyEnum.USERNAME),
-    ManageReadEnum.TOTP_ENFORCED: read_totp_enforced,
+    ManageReadEnum.TOTP_ENFORCED: read_totp_enforced
 }
