@@ -2,6 +2,7 @@ from sqlalchemy import ColumnClause, Select, delete, desc, func, literal_column,
 from sqlalchemy.orm import defer
 
 from wwricu.component.database import get_session
+from wwricu.component.tokenize import extract_text, segment
 from wwricu.domain.entity import BlogPost, BlogPostSearch, EntityRelation, PostTag
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
 from wwricu.domain.post import PostQueryDTO
@@ -77,14 +78,14 @@ async def remove_search_index(post_id: int):
         await s.execute(delete(BlogPostSearch).where(BlogPostSearch.rowid == post_id))
 
 
-async def upsert_search_index(post_id: int, title: str, preview: str, search_content: str):
+async def upsert_search_index(post: BlogPost):
     async with get_session() as s:
-        await s.execute(delete(BlogPostSearch).where(BlogPostSearch.rowid == post_id))
+        await s.execute(delete(BlogPostSearch).where(BlogPostSearch.rowid == post.id))
         s.add(BlogPostSearch(
-            rowid=post_id,
-            title=title,
-            preview=preview,
-            search_content=search_content
+            rowid=post.id,
+            title=segment(post.title),
+            preview=segment(post.preview),
+            search_content=segment(extract_text(post.content))
         ))
 
 
