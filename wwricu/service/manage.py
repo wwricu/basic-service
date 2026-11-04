@@ -82,17 +82,12 @@ async def _hashed_password(password: str) -> str:
     return base64.b64encode(credential).decode()
 
 
-# The keys config/set may write, each with the transform its value needs before storage. A key that
-# is not here has no write path through config and is refused; TOTP_ENFORCE is deliberately absent,
-# because enforcing without a fresh scan would lock the admin out behind a code they never saw.
 WRITE_RULES: dict[ConfigKeyEnum, Callable[[str], Awaitable[str]]] = {
     ConfigKeyEnum.ABOUT_CONTENT: _as_is,
     ConfigKeyEnum.USERNAME: _validated_username,
     ConfigKeyEnum.PASSWORD: _hashed_password,
 }
 
-# Rows that hold one logical value split over several keys. A null write deletes the whole group in
-# a single statement, because a half-deleted group is a state nobody can log into to repair.
 AGGREGATE: dict[ConfigKeyEnum, tuple[ConfigKeyEnum, ...]] = {
     key: group for group in (
         (ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD),
@@ -120,9 +115,5 @@ async def confirm_totp(totp: str):
     if (secret := await get_config(ConfigKeyEnum.TOTP_SECRET)) is None:
         raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST)
     if not pyotp.TOTP(secret).verify(totp, valid_window=1):
-        # 400, not 401: the caller is already authenticated, and the http layer reads a 401 as a dead
-        # session, which would throw the admin out over a typo.
         raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail=HttpErrorDetail.WRONG_TOTP)
-    # An enabled timestamp, not a flag: readers test `is not None`, and any non-empty string
-    # (including "False") is truthy, so a boolean written as a string could never be turned off.
     await set_config(ConfigKeyEnum.TOTP_ENFORCE, str(int(time.time())))

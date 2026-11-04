@@ -68,7 +68,6 @@ def test_a_null_username_deletes_both_login_rows():
 
     reset = client.post('/admin/manage/config/set', json={'key': ConfigKeyEnum.USERNAME, 'value': None})
     assert reset.status_code == status.HTTP_200_OK
-    # only the username was nulled, and the password row went with it in the same statement
     assert not ({ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD} & _config_keys())
 
 
@@ -94,8 +93,6 @@ def test_a_wrong_totp_code_is_a_bad_request():
 
 
 def test_a_legacy_true_row_still_enforces_totp():
-    # Rows written before the timestamp format hold "True"; the readers test `is not None`, so an
-    # old row has to keep enforcing without a migration.
     client.post('/admin/manage/config/set', json={'key': ConfigKeyEnum.USERNAME, 'value': 'legacy_user'})
     client.post('/admin/manage/config/set', json={'key': ConfigKeyEnum.PASSWORD, 'value': 'Legacy#12345'})
     _seed_config(ConfigKeyEnum.TOTP_ENFORCE, 'True')
@@ -109,8 +106,6 @@ def test_a_legacy_true_row_still_enforces_totp():
 
 
 def _clear_totp():
-    # The aggregate delete is the only way to drop a secret, and it leaves the assertions independent
-    # of whatever a previous run left behind.
     client.post('/admin/manage/config/set', json={'key': ConfigKeyEnum.TOTP_ENFORCE, 'value': None})
 
 
@@ -120,7 +115,6 @@ def _config_keys() -> set[ConfigKeyEnum]:
 
 
 def _seed_config(key: ConfigKeyEnum, value: str):
-    # Bypasses the api on purpose: no endpoint may write this value any more.
     with sqlite3.connect(app_config.database.name) as conn:
         conn.execute(
             'insert into wwr_sys_config (key, value, deleted) values (?, ?, 0) on conflict (key) do update set value = ?, deleted = 0',
