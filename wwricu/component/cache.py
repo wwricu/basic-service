@@ -3,7 +3,7 @@ import asyncio
 import shelve
 import time
 from collections import OrderedDict
-from typing import Protocol, Any
+from typing import Any, ClassVar, Protocol
 
 from loguru import logger as log
 
@@ -22,7 +22,7 @@ class LocalCache:
     expiration: dict[str, int]
 
     heartbeat: asyncio.Task | None = None
-    all_caches: dict[str, LocalCache] = {}
+    all_caches: ClassVar[dict[str, LocalCache]] = {}
 
     def __init__(self, name: str, max_size: int = 10000, persist: bool = False):
         self.name = name
