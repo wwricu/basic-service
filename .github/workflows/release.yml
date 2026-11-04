@@ -17,13 +17,13 @@ jobs:
           python-version: '3.13'
       - id: build
         run: |
-          echo version=$(cat version.txt) >> $GITHUB_ENV
-          echo version=$(cat version.txt) >> $GITHUB_OUTPUT
+          version=$(date -u +%Y%m%d.%H%M%S).${GITHUB_SHA:0:7}
+          echo version=$version >> $GITHUB_OUTPUT
           pip install uv
           uv build
       - uses: softprops/action-gh-release@v2.2.2
         with:
-          tag_name: ${{ env.version }}
+          tag_name: ${{ steps.build.outputs.version }}
           files: dist/*
       - uses: actions/attest-build-provenance@v1
         with:

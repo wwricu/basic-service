@@ -38,6 +38,7 @@ async def lifespan(app: FastAPI):
         scheduler.start()
 
         await sys_cache.set(CacheKeyEnum.STARTUP_TIMESTAMP, int(time.time()), 0)
+        await refresh_counts()
 
         log.info(f'{app.title} startup')
         yield
@@ -50,8 +51,7 @@ async def lifespan(app: FastAPI):
         await log.complete()
 
 
-async def reset_sys_config():
-    yield
+async def refresh_counts():
     post_count = await post_db.count(PostQueryDTO(status=PostStatusEnum.PUBLISHED))
     category_count = await tag_db.count(TagQueryDTO(type=TagTypeEnum.POST_CAT))
     tag_count = await tag_db.count(TagQueryDTO(type=TagTypeEnum.POST_TAG))
@@ -59,6 +59,11 @@ async def reset_sys_config():
     await sys_cache.set(CacheKeyEnum.POST_COUNT, post_count, 0)
     await sys_cache.set(CacheKeyEnum.CATEGORY_COUNT, category_count, 0)
     await sys_cache.set(CacheKeyEnum.TAG_COUNT, tag_count, 0)
+
+
+async def reset_sys_config():
+    yield
+    await refresh_counts()
 
 
 async def get_image_url(key: str) -> str:
@@ -114,6 +119,7 @@ async def restore_database():
         await database_manager.close()
         file.replace(app_config.database.name)
         await database_manager.init()
+        await refresh_counts()
     except Exception as e:
         log.error(e)
         file.unlink(missing_ok=True)

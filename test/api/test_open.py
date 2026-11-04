@@ -4,7 +4,7 @@ from fastapi import status
 
 from test.api.utils import cleanup_post_and_tags, create_published_post, public_post_ids
 from test.test_utils import client
-from wwricu.domain.common import AboutPageVO, PageVO
+from wwricu.domain.common import SiteVO, PageVO
 from wwricu.domain.enum import TagTypeEnum
 from wwricu.domain.post import PostPreviewVO, PostSearchVO
 from wwricu.domain.tag import TagVO
@@ -13,7 +13,7 @@ from wwricu.domain.tag import TagVO
 def test_open_get_about():
     response = client.get('/open/about')
     assert response.status_code == status.HTTP_200_OK
-    assert isinstance(AboutPageVO.model_validate(response.json()).content, (str, type(None)))
+    assert isinstance(SiteVO.model_validate(response.json()).content, (str, type(None)))
 
 
 def test_open_post_list_and_detail():

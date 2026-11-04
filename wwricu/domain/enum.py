@@ -23,7 +23,6 @@ class RelationTypeEnum(StrEnum):
 class DatabaseActionEnum(StrEnum):
     BACKUP = 'backup'
     RESTORE = 'restore'
-    DOWNLOAD = 'download'
 
 
 class EnvironmentEnum(StrEnum):
@@ -33,18 +32,32 @@ class EnvironmentEnum(StrEnum):
 
 class ConfigKeyEnum(StrEnum):
     ABOUT_CONTENT = 'about_content'
+    SITE_TITLE = 'site_title'
+    SITE_TAGLINE = 'site_tagline'
     TOTP_ENFORCE = 'totp_enforce'
     TOTP_SECRET = 'totp_secret'
     USERNAME = 'username'
     PASSWORD = 'password'
 
-    @classmethod
-    def api_set_white_list(cls) -> tuple:
-        return (cls.ABOUT_CONTENT,)
 
-    @classmethod
-    def api_get_black_list(cls) -> tuple:
-        return ConfigKeyEnum.PASSWORD, ConfigKeyEnum.TOTP_SECRET
+class ManageReadEnum(StrEnum):
+    ABOUT = 'about'
+    SITE_TITLE = 'site_title'
+    SITE_TAGLINE = 'site_tagline'
+    USERNAME = 'username'
+    TOTP_ENFORCED = 'totp_enforced'
+
+
+class ManageCommandEnum(StrEnum):
+    SET_ABOUT = 'set_about'
+    SET_SITE_TITLE = 'set_site_title'
+    SET_SITE_TAGLINE = 'set_site_tagline'
+    SET_USERNAME = 'set_username'
+    SET_PASSWORD = 'set_password'
+    RESET_LOGIN = 'reset_login'
+    ENROLL_TOTP = 'enroll_totp'
+    CONFIRM_TOTP = 'confirm_totp'
+    DISABLE_TOTP = 'disable_totp'
 
 
 class CacheKeyEnum(StrEnum):
