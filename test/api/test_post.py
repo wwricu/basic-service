@@ -1,14 +1,11 @@
-import sqlite3
 import uuid
 
 from fastapi import status
 
 from test.api.utils import cleanup_post_and_tags, create_post, create_published_post, create_tag, public_post_ids
 from test.test_utils import client
-from wwricu.component.tokenize import segment
-from wwricu.config import app_config
 from wwricu.domain.common import PageVO
-from wwricu.domain.enum import ManageCommandEnum, PostStatusEnum, TagTypeEnum
+from wwricu.domain.enum import PostStatusEnum, TagTypeEnum
 from wwricu.domain.post import PostDetailVO, PostPreviewVO, PostSearchVO
 
 
