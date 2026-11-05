@@ -14,7 +14,7 @@ from wwricu.component.database import transaction
 from wwricu.database import conf_db, post_db, tag_db, res_db
 from wwricu.domain.common import LoginRO, TrashBinVO
 from wwricu.domain.constant import HttpErrorDetail
-from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, EntityTypeEnum, ManageCommandEnum, ManageReadEnum, TagTypeEnum, PostResourceTypeEnum
+from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, EntityTypeEnum, ManageCommandEnum, TagTypeEnum, PostResourceTypeEnum
 from wwricu.domain.post import PostQueryDTO
 from wwricu.domain.tag import TagQueryDTO
 
@@ -105,8 +105,10 @@ async def write(cmd: ManageCommandEnum, value: str):
     return await write_commands[cmd](value)
 
 
-async def read(cmd: ManageReadEnum):
-    return await read_commands[cmd]()
+async def read(key: ConfigKeyEnum) -> str | None:
+    if key not in readable_config:
+        raise HTTPException(status_code=http_status.HTTP_403_FORBIDDEN)
+    return await get_config(key)
 
 
 write_commands: dict[ManageCommandEnum, Callable[[str], Awaitable[str | None]]] = {
@@ -122,10 +124,7 @@ write_commands: dict[ManageCommandEnum, Callable[[str], Awaitable[str | None]]] 
 }
 
 
-read_commands: dict[ManageReadEnum, Callable[[], Awaitable[str | None]]] = {
-    ManageReadEnum.ABOUT: lambda: get_config(ConfigKeyEnum.ABOUT_CONTENT),
-    ManageReadEnum.SITE_TITLE: lambda: get_config(ConfigKeyEnum.SITE_TITLE),
-    ManageReadEnum.SITE_TAGLINE: lambda: get_config(ConfigKeyEnum.SITE_TAGLINE),
-    ManageReadEnum.USERNAME: lambda: get_config(ConfigKeyEnum.USERNAME),
-    ManageReadEnum.TOTP_ENFORCED: lambda: get_config(ConfigKeyEnum.TOTP_ENFORCE)
+readable_config: set[ConfigKeyEnum] = {
+    ConfigKeyEnum.ABOUT_CONTENT, ConfigKeyEnum.SITE_TITLE, ConfigKeyEnum.SITE_TAGLINE,
+    ConfigKeyEnum.USERNAME, ConfigKeyEnum.TOTP_ENFORCE
 }

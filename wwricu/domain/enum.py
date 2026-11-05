@@ -40,14 +40,6 @@ class ConfigKeyEnum(StrEnum):
     PASSWORD = 'password'
 
 
-class ManageReadEnum(StrEnum):
-    ABOUT = 'about'
-    SITE_TITLE = 'site_title'
-    SITE_TAGLINE = 'site_tagline'
-    USERNAME = 'username'
-    TOTP_ENFORCED = 'totp_enforced'
-
-
 class ManageCommandEnum(StrEnum):
     SET_ABOUT = 'set_about'
     SET_SITE_TITLE = 'set_site_title'
