@@ -1,10 +1,12 @@
+import uuid
+
 from fastapi import status
 
-from test.api.utils import cleanup_post_and_tags, create_post, create_tag, public_post_ids
+from test.api.utils import cleanup_post_and_tags, create_post, create_published_post, create_tag, public_post_ids
 from test.test_utils import client
 from wwricu.domain.common import PageVO
 from wwricu.domain.enum import PostStatusEnum, TagTypeEnum
-from wwricu.domain.post import PostDetailVO, PostPreviewVO
+from wwricu.domain.post import PostDetailVO, PostPreviewVO, PostSearchVO
 
 
 def test_post_lifecycle():
@@ -46,3 +48,30 @@ def test_post_lifecycle():
         assert client.get(f'/admin/post/detail/{post.id}').json() is None
     finally:
         cleanup_post_and_tags(post.id, tag.id, category.id)
+
+
+def test_search_index_follows_post_status():
+    keyword = f'Indexprobe{uuid.uuid4().hex[:8]}'
+    draft = create_post()
+    post_id, tag_id, category_id = create_published_post(keyword)
+    try:
+        response = client.post('/admin/post/update', json={
+            'id': draft.id, 'title': keyword, 'preview': keyword, 'content': keyword, 'tag_id_list': []
+        })
+        assert response.status_code == status.HTTP_200_OK
+        assert search_ids(keyword) == [post_id]
+
+        assert client.post(f'/admin/post/status/{post_id}', json={'status': PostStatusEnum.DRAFT}).status_code == status.HTTP_200_OK
+        assert search_ids(keyword) == []
+
+        assert client.post(f'/admin/post/status/{post_id}', json={'status': PostStatusEnum.PUBLISHED}).status_code == status.HTTP_200_OK
+        assert search_ids(keyword) == [post_id]
+    finally:
+        cleanup_post_and_tags(post_id, tag_id, category_id)
+        client.delete(f'/admin/post/delete/{draft.id}')
+
+
+def search_ids(keyword: str) -> list[int]:
+    response = client.get('/open/post/search', params={'keyword': keyword})
+    assert response.status_code == status.HTTP_200_OK
+    return [PostSearchVO.model_validate(hit).id for hit in response.json()]

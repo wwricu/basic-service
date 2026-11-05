@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 from wwricu.component.cache import sys_cache, query_cache, post_cache
 from wwricu.database import post_db, tag_db
-from wwricu.domain.common import AboutPageVO, PageVO
+from wwricu.domain.common import SiteVO, PageVO
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, TagTypeEnum
 from wwricu.domain.post import PostDetailVO, PostPreviewVO, PostRequestRO, PostSearchVO
@@ -54,9 +54,11 @@ async def open_get_tags_api(tag_type: TagTypeEnum) -> list[TagVO]:
     return response
 
 
-@open_api.get('/about', response_model=AboutPageVO)
-async def open_get_about_api() -> AboutPageVO:
-    return AboutPageVO(
+@open_api.get('/about', response_model=SiteVO)
+async def open_get_about_api() -> SiteVO:
+    return SiteVO(
+        title=await manage_service.get_config(ConfigKeyEnum.SITE_TITLE) or '',
+        tagline=await manage_service.get_config(ConfigKeyEnum.SITE_TAGLINE) or '',
         content=await manage_service.get_config(ConfigKeyEnum.ABOUT_CONTENT) or '',
         post_count=await sys_cache.get(CacheKeyEnum.POST_COUNT) or 0,
         category_count=await sys_cache.get(CacheKeyEnum.CATEGORY_COUNT) or 0,

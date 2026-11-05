@@ -48,6 +48,8 @@ async def init():
 async def backup(path: str):
     if os.path.exists(path):
         raise FileExistsError(f'Backup file {path} already exists')
+    if not os.path.exists(app_config.database.name):
+        raise FileNotFoundError(f'Database file {app_config.database.name} not found')
     log.info(f'Backup database {app_config.database.name} begin')
     with contextlib.closing(sqlite3.connect(app_config.database.name)) as source:
         source.execute('VACUUM INTO ?', (path,))

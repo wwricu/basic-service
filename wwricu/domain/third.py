@@ -12,7 +12,7 @@ class CloudflareConst:
     R2: Literal['s3'] = 's3'
     R2_REGION: str = 'auto'
     R2_ENDPOINT: str = 'https://{account_id}.r2.cloudflarestorage.com'
-    KV_ENDPOINT: str = 'https://api.cloudflare.com/client/v4/accounts/{account_id}/storage/kv/namespaces/{namespace_id}/values/{key}'
+    KV_ENDPOINT: str = 'https://api.cloudflare.com/client/v4/accounts/{account_id}/storage/kv/namespaces/ab3a78fdfc804cbc86e53af6cf96e5e4/values/{key}'
     GET_OBJECT: str = 'get_object'
 
 
@@ -38,22 +38,3 @@ class AWSS3Response(AWSResponseBase):
     AcceptRanges: str
     LastModified: datetime
     Body: StreamingBody
-
-
-class AWSS3Object(BaseModel):
-    Key: str
-    LastModified: datetime
-    ETag: str
-    Size: int
-    StorageClass: str
-
-
-class AWSS3ListResponse(AWSResponseBase):
-    IsTruncated: bool
-    Contents: list[AWSS3Object]
-    Name: str
-    Prefix: str
-    MaxKeys: int
-    EncodingType: str
-    KeyCount: int
-    NextContinuationToken: str | None = None
