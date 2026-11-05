@@ -17,7 +17,6 @@ from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, EntityTypeEnum, ManageCommandEnum, ManageReadEnum, TagTypeEnum, PostResourceTypeEnum
 from wwricu.domain.post import PostQueryDTO
 from wwricu.domain.tag import TagQueryDTO
-from wwricu.service.post import rebuild_search_index
 
 
 async def set_config(key: ConfigKeyEnum, value: str):
@@ -95,6 +94,11 @@ async def confirm_totp(value: str) -> None:
     if not pyotp.TOTP(secret).verify(value, valid_window=1):
         raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail=HttpErrorDetail.WRONG_TOTP)
     await set_config(ConfigKeyEnum.TOTP_ENFORCE, str(int(time.time())))
+
+
+async def rebuild_search_index():
+    for post in await post_db.find_by_criteria(PostQueryDTO(deleted=None, defer=False)):
+        await post_db.sync_search_index(post)
 
 
 async def write(cmd: ManageCommandEnum, value: str):

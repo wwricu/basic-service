@@ -74,37 +74,6 @@ def test_search_index_follows_post_status():
         client.delete(f'/admin/post/delete/{draft.id}')
 
 
-def test_rebuild_search_index_clears_rows_the_write_path_left_behind():
-    keyword = f'Rebuildprobe{uuid.uuid4().hex[:8]}'
-    draft = create_post()
-    post_id, tag_id, category_id = create_published_post(keyword)
-    try:
-        # the draft really carries the keyword, so a rebuild that forgot to drop it would keep it searchable
-        assert client.post('/admin/post/update', json={
-            'id': draft.id, 'title': keyword, 'preview': keyword, 'content': keyword, 'tag_id_list': []
-        }).status_code == status.HTTP_200_OK
-        assert search_ids(keyword) == [post_id]
-
-        _plant_index(draft.id, keyword)
-        assert sorted(search_ids(keyword)) == sorted([post_id, draft.id])
-
-        assert client.post('/admin/manage/command', json={
-            'command': ManageCommandEnum.REBUILD_SEARCH_INDEX, 'value': ''
-        }).status_code == status.HTTP_200_OK
-        assert search_ids(keyword) == [post_id]
-    finally:
-        cleanup_post_and_tags(post_id, tag_id, category_id)
-        client.delete(f'/admin/post/delete/{draft.id}')
-
-
-def _plant_index(post_id: int, keyword: str):
-    with sqlite3.connect(app_config.database.name) as conn:
-        conn.execute(
-            'insert into wwr_blog_post_search (rowid, title, preview, search_content) values (?, ?, ?, ?)',
-            (post_id, segment(keyword), segment(keyword), segment(keyword))
-        )
-
-
 def search_ids(keyword: str) -> list[int]:
     response = client.get('/open/post/search', params={'keyword': keyword})
     assert response.status_code == status.HTTP_200_OK

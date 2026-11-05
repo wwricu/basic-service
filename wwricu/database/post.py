@@ -1,7 +1,7 @@
 from sqlalchemy import ColumnClause, Select, delete, desc, func, literal_column, select, update
 from sqlalchemy.orm import defer
 
-from wwricu.component.database import get_session
+from wwricu.component.database import get_session, transaction
 from wwricu.component.tokenize import extract_text, segment
 from wwricu.domain.entity import BlogPost, BlogPostSearch, EntityRelation, PostTag
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
@@ -78,9 +78,12 @@ async def remove_search_index(post_id: int):
         await s.execute(delete(BlogPostSearch).where(BlogPostSearch.rowid == post_id))
 
 
-async def upsert_search_index(post: BlogPost):
+@transaction
+async def sync_search_index(post: BlogPost):
+    await remove_search_index(post.id)
+    if post.status != PostStatusEnum.PUBLISHED:
+        return
     async with get_session() as s:
-        await s.execute(delete(BlogPostSearch).where(BlogPostSearch.rowid == post.id))
         s.add(BlogPostSearch(
             rowid=post.id,
             title=segment(post.title),
@@ -110,7 +113,9 @@ async def count_by_stmt(stmt: Select) -> int:
 
 
 async def build_criteria(query: PostQueryDTO) -> Select:
-    stmt = select(BlogPost).options(defer(BlogPost.content, raiseload=True))
+    stmt = select(BlogPost)
+    if query.defer:
+        stmt = stmt.options(defer(BlogPost.content, raiseload=True))
     if query.status is not None:
         stmt = stmt.where(BlogPost.status == query.status.value)
     if query.deleted is not None:

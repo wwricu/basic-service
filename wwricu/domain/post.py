@@ -60,6 +60,7 @@ class PostSearchVO(PostPreviewVO):
 
 class PostQueryDTO(BaseModel):
     post_ids: list[int] | None = None
+    defer: bool = True
     category_id: int | None = None
     deleted: bool | None = False
     status: PostStatusEnum | None = None
