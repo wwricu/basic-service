@@ -125,6 +125,9 @@ write_commands: dict[ManageCommandEnum, Callable[[str], Awaitable[str | None]]] 
 
 
 readable_config: set[ConfigKeyEnum] = {
-    ConfigKeyEnum.ABOUT_CONTENT, ConfigKeyEnum.SITE_TITLE, ConfigKeyEnum.SITE_TAGLINE,
-    ConfigKeyEnum.USERNAME, ConfigKeyEnum.TOTP_ENFORCE
+    ConfigKeyEnum.ABOUT_CONTENT,
+    ConfigKeyEnum.SITE_TITLE,
+    ConfigKeyEnum.SITE_TAGLINE,
+    ConfigKeyEnum.USERNAME,
+    ConfigKeyEnum.TOTP_ENFORCE
 }
