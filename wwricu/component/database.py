@@ -4,16 +4,23 @@ import os
 import sqlite3
 import sys
 from asyncio import current_task
-from typing import AsyncGenerator, cast, Callable
+from collections.abc import AsyncGenerator, Callable
+from typing import cast
 
 from loguru import logger as log
-from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session, async_sessionmaker, create_async_engine, AsyncEngine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_scoped_session,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from wwricu.config import app_config, env
 
 
 @contextlib.asynccontextmanager
-async def get_session_manager() -> AsyncGenerator[AsyncSession, None]:
+async def get_session_manager() -> AsyncGenerator[AsyncSession]:
     current_session: AsyncSession = this.scoped_session()
     if current_session.is_active and current_session.in_transaction():
         yield current_session

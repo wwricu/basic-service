@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from sqlalchemy import select, update, func, delete, desc, Select
+from sqlalchemy import Select, delete, desc, func, select, update
 
 from wwricu.component.database import get_session
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag

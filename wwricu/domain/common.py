@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from pydantic import BaseModel as PydanticBaseModel, ConfigDict, Field
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import ConfigDict, Field
 
 from wwricu.domain.enum import EntityTypeEnum
 

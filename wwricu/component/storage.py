@@ -5,7 +5,7 @@ from mypy_boto3_s3 import S3Client
 from mypy_boto3_s3.type_defs import CopySourceTypeDef
 
 from wwricu.config import StorageConfig, app_config, env
-from wwricu.domain.third import AWSS3Response, AWSResponseBase, CloudflareConst
+from wwricu.domain.third import AWSResponseBase, AWSS3Response, CloudflareConst
 
 
 class R2Storage:

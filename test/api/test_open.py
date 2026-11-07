@@ -4,7 +4,7 @@ from fastapi import status
 
 from test.api.utils import cleanup_post_and_tags, create_published_post, public_post_ids
 from test.test_utils import client
-from wwricu.domain.common import SiteVO, PageVO
+from wwricu.domain.common import PageVO, SiteVO
 from wwricu.domain.enum import TagTypeEnum
 from wwricu.domain.post import PostPreviewVO, PostSearchVO
 from wwricu.domain.tag import TagVO

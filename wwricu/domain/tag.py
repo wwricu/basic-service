@@ -1,9 +1,9 @@
 from typing import Annotated
 
-from pydantic import StringConstraints, Field
+from pydantic import Field, StringConstraints
 
 from wwricu.domain.common import BaseModel
-from wwricu.domain.enum import TagTypeEnum, PostStatusEnum
+from wwricu.domain.enum import PostStatusEnum, TagTypeEnum
 
 
 class TagRO(BaseModel):

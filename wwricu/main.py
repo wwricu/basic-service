@@ -5,7 +5,6 @@ from wwricu.component.middleware import middlewares
 from wwricu.config import env
 from wwricu.service.common import lifespan
 
-
 app = FastAPI(
     title=env.BASE_DOMAIN,
     lifespan=lifespan,

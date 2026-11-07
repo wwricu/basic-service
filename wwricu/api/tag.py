@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from wwricu.component.cache import query_cache
 from wwricu.database import tag_db
-from wwricu.domain.tag import TagRO, TagVO, TagRequestRO, TagQueryDTO
+from wwricu.domain.tag import TagQueryDTO, TagRequestRO, TagRO, TagVO
 from wwricu.service import common_service, security_service, tag_service
 
 tag_api = APIRouter(prefix='/admin/tag', tags=['Tag api'], dependencies=[Depends(security_service.require_admin)])
