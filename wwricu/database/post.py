@@ -99,6 +99,8 @@ async def search(match: str) -> list[BlogPost]:
     table: ColumnClause = literal_column(BlogPostSearch.__tablename__)
     stmt = select(BlogPost).join(
         BlogPostSearch, BlogPost.id == BlogPostSearch.rowid).where(
+        BlogPost.deleted == False).where(
+        BlogPost.status == PostStatusEnum.PUBLISHED).where(
         table.match(match)
     ).order_by(func.bm25(table, 10.0, 5.0, 1.0)).limit(30)
 
