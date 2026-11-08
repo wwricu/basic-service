@@ -37,7 +37,6 @@ class SiteVO(BaseModel):
     post_count: int
     category_count: int
     tag_count: int
-    startup_timestamp: int | None = None
 
 
 class TrashBinRO(BaseModel):

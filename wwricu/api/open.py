@@ -62,6 +62,5 @@ async def open_get_about_api() -> SiteVO:
         content=await manage_service.get_config(ConfigKeyEnum.ABOUT_CONTENT) or '',
         post_count=await sys_cache.get(CacheKeyEnum.POST_COUNT) or 0,
         category_count=await sys_cache.get(CacheKeyEnum.CATEGORY_COUNT) or 0,
-        tag_count=await sys_cache.get(CacheKeyEnum.TAG_COUNT) or 0,
-        startup_timestamp=await sys_cache.get(CacheKeyEnum.STARTUP_TIMESTAMP)
+        tag_count=await sys_cache.get(CacheKeyEnum.TAG_COUNT) or 0
     )

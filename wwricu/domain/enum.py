@@ -56,7 +56,6 @@ class CacheKeyEnum(StrEnum):
     POST_COUNT = 'post_count'
     CATEGORY_COUNT = 'category_count'
     TAG_COUNT = 'tag_count'
-    STARTUP_TIMESTAMP = 'startup_timestamp'
     CONFIG = 'config:{key}'
     POST = 'post:{id}'
     ALL_POSTS = 'all_posts:{page_index}:{page_size}:{category}:{tag_list}'
