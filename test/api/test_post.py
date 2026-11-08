@@ -1,11 +1,14 @@
+import sqlite3
 import uuid
 
 from fastapi import status
 
 from test.api.utils import cleanup_post_and_tags, create_post, create_published_post, create_tag, public_post_ids
 from test.test_utils import client
+from wwricu.component.tokenize import segment
+from wwricu.config import app_config
 from wwricu.domain.common import PageVO
-from wwricu.domain.enum import PostStatusEnum, TagTypeEnum
+from wwricu.domain.enum import ManageCommandEnum, PostStatusEnum, TagTypeEnum
 from wwricu.domain.post import PostDetailVO, PostPreviewVO, PostSearchVO
 
 
@@ -69,6 +72,49 @@ def test_search_index_follows_post_status():
     finally:
         cleanup_post_and_tags(post_id, tag_id, category_id)
         client.delete(f'/admin/post/delete/{draft.id}')
+
+
+def test_rebuild_search_index_clears_rows_the_write_path_left_behind():
+    keyword = f'Rebuildprobe{uuid.uuid4().hex[:8]}'
+    draft = create_post()
+    trashed = create_post()
+    assert client.delete(f'/admin/post/delete/{trashed.id}').status_code == status.HTTP_200_OK
+    post_id, tag_id, category_id = create_published_post(keyword)
+    try:
+        # the draft really carries the keyword, so a rebuild that re-indexed drafts would leave it in the table
+        assert client.post('/admin/post/update', json={
+            'id': draft.id, 'title': keyword, 'preview': keyword, 'content': keyword, 'tag_id_list': []
+        }).status_code == status.HTTP_200_OK
+        assert search_ids(keyword) == [post_id]
+
+        _plant_index(draft.id, keyword)
+        _plant_index(trashed.id, keyword)
+        # /open/post/search filters on post status, so leftover rows are only observable in the index table
+        assert _index_rowids(keyword) == sorted([post_id, draft.id, trashed.id])
+
+        assert client.post('/admin/manage/command', json={
+            'command': ManageCommandEnum.REBUILD_SEARCH_INDEX, 'value': ''
+        }).status_code == status.HTTP_200_OK
+        assert _index_rowids(keyword) == [post_id]
+        assert search_ids(keyword) == [post_id]
+    finally:
+        cleanup_post_and_tags(post_id, tag_id, category_id)
+        client.delete(f'/admin/post/delete/{draft.id}')
+
+
+def _plant_index(post_id: int, keyword: str):
+    with sqlite3.connect(app_config.database.name) as conn:
+        conn.execute(
+            'insert into wwr_blog_post_search (rowid, title, preview, search_content) values (?, ?, ?, ?)',
+            (post_id, segment(keyword), segment(keyword), segment(keyword))
+        )
+
+
+def _index_rowids(keyword: str) -> list[int]:
+    with sqlite3.connect(app_config.database.name) as conn:
+        return [row[0] for row in conn.execute(
+            'select rowid from wwr_blog_post_search where title = ? order by rowid', (segment(keyword),)
+        )]
 
 
 def search_ids(keyword: str) -> list[int]:
