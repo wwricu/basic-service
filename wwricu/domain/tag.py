@@ -31,7 +31,7 @@ class TagVO(BaseModel):
     id: int
     name: str
     type: TagTypeEnum
-    count: int | None = None
+    count: int = 0
 
 
 class TagUpdateDTO(BaseModel):

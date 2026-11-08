@@ -33,6 +33,7 @@ async def build_query(post: PostRequestRO, *, public: bool = False) -> PostQuery
 
 
 async def list_by_query(query: PostQueryDTO) -> PageVO[PostPreviewVO]:
+    assert query.page_index is not None and query.page_size is not None
     posts = await post_db.find_by_criteria(query)
     return PageVO[PostPreviewVO](
         page_size=query.page_size,

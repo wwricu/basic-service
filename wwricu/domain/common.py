@@ -17,8 +17,8 @@ class LoginRO(BaseModel):
 
 
 class PageVO[T](BaseModel):
-    page_index: int | None
-    page_size: int | None
+    page_index: int
+    page_size: int
     count: int
     data: list[T] = Field(default_factory=list)
 

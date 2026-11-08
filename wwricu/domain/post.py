@@ -40,14 +40,14 @@ class PostResourceVO(BaseModel):
 
 class PostPreviewVO(BaseModel):
     id: int
-    title: str | None = None
+    title: str
     cover: PostResourceVO | None = None
     preview: str = ''
     tag_list: list[TagVO] = Field(default_factory=list)
     category: TagVO | None = None
     status: PostStatusEnum | None = None
-    create_time: datetime | None = None
-    update_time: datetime | None = None
+    create_time: datetime
+    update_time: datetime
 
 
 class PostDetailVO(PostPreviewVO):
