@@ -1,6 +1,10 @@
+import uuid
+from pathlib import Path
+
 from fastapi import APIRouter, BackgroundTasks, Body, Depends
 from fastapi.responses import FileResponse
 
+from wwricu.component import database as database_manager
 from wwricu.component.cache import query_cache
 from wwricu.config import app_config
 from wwricu.domain.common import TrashBinRO, TrashBinVO
@@ -28,8 +32,10 @@ async def trash_edit_api(trash_bin: TrashBinRO):
 
 
 @manage_api.get('/database', response_model=None)
-async def database_download_api():
-    return FileResponse(app_config.database.name, filename=app_config.database.name)
+async def database_download_api(background_task: BackgroundTasks):
+    await database_manager.backup(snapshot := uuid.uuid4().hex)
+    background_task.add_task(Path(snapshot).unlink, missing_ok=True)
+    return FileResponse(snapshot, filename=app_config.database.name)
 
 
 @manage_api.post('/database', response_model=None)
