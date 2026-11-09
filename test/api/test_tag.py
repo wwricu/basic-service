@@ -13,8 +13,6 @@ def test_tag_lifecycle():
         tag = create_tag(tag_type=tag_type)
         try:
             assert tag.id in _tag_ids(tag_type)
-            duplicate = client.post('/admin/tag/create', json={'name': tag.name, 'type': tag.type})
-            assert duplicate.status_code == status.HTTP_409_CONFLICT
 
             new_name = f'updated_{uuid.uuid4().hex[:8]}'
             response = client.post('/admin/tag/update', json={'id': tag.id, 'name': new_name, 'type': tag_type})

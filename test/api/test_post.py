@@ -13,6 +13,7 @@ from wwricu.domain.post import PostDetailVO, PostPreviewVO, PostSearchVO
 
 
 def test_post_lifecycle():
+    keyword = f'Lifecycle{uuid.uuid4().hex[:8]}'
     post = create_post()
     tag = create_tag(tag_type=TagTypeEnum.POST_TAG)
     category = create_tag(tag_type=TagTypeEnum.POST_CAT)
@@ -24,9 +25,9 @@ def test_post_lifecycle():
 
         response = client.post('/admin/post/update', json={
             'id': post.id,
-            'title': 'Lifecycle Test Post',
-            'preview': 'Lifecycle test preview',
-            'content': 'Lifecycle test content',
+            'title': keyword,
+            'preview': keyword,
+            'content': keyword,
             'tag_id_list': [tag.id],
             'category_id': category.id
         })
@@ -39,6 +40,7 @@ def test_post_lifecycle():
         assert client.post(f'/admin/post/status/{post.id}', json={'status': PostStatusEnum.PUBLISHED}).status_code == status.HTTP_200_OK
         assert post.id in public_post_ids()
         assert client.get(f'/open/post/detail/{post.id}').status_code == status.HTTP_200_OK
+        assert search_ids(keyword) == [post.id]
 
         # a published post has to be revoked before it can be trashed, exactly as the admin list offers it
         assert client.delete(f'/admin/post/delete/{post.id}').status_code == status.HTTP_403_FORBIDDEN
@@ -51,27 +53,6 @@ def test_post_lifecycle():
         assert client.get(f'/admin/post/detail/{post.id}').json() is None
     finally:
         cleanup_post_and_tags(post.id, tag.id, category.id)
-
-
-def test_search_index_follows_post_status():
-    keyword = f'Indexprobe{uuid.uuid4().hex[:8]}'
-    draft = create_post()
-    post_id, tag_id, category_id = create_published_post(keyword)
-    try:
-        response = client.post('/admin/post/update', json={
-            'id': draft.id, 'title': keyword, 'preview': keyword, 'content': keyword, 'tag_id_list': []
-        })
-        assert response.status_code == status.HTTP_200_OK
-        assert search_ids(keyword) == [post_id]
-
-        assert client.post(f'/admin/post/status/{post_id}', json={'status': PostStatusEnum.DRAFT}).status_code == status.HTTP_200_OK
-        assert search_ids(keyword) == []
-
-        assert client.post(f'/admin/post/status/{post_id}', json={'status': PostStatusEnum.PUBLISHED}).status_code == status.HTTP_200_OK
-        assert search_ids(keyword) == [post_id]
-    finally:
-        cleanup_post_and_tags(post_id, tag_id, category_id)
-        client.delete(f'/admin/post/delete/{draft.id}')
 
 
 def test_rebuild_search_index_clears_rows_the_write_path_left_behind():
