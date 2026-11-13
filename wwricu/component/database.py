@@ -47,7 +47,7 @@ def transaction(func: Callable) -> Callable:
 async def init():
     if not os.path.exists(app_config.database.name):
         raise FileNotFoundError(f'Database file {app_config.database.name} not found')
-    this.engine = create_async_engine(app_config.database.url, echo=env.is_dev)
+    this.engine = create_async_engine(app_config.database.url, echo=env.is_dev, pool_size=1, max_overflow=0)
     session_maker = async_sessionmaker(bind=this.engine, expire_on_commit=False)
     this.scoped_session = async_scoped_session(session_maker, scopefunc=current_task)
 

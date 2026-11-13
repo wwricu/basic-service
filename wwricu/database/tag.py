@@ -24,9 +24,6 @@ async def build_criteria(query: TagQueryDTO) -> Select:
 async def find_by_criteria(query: TagQueryDTO) -> list[PostTag]:
     stmt = await build_criteria(query)
     stmt = stmt.order_by(desc(PostTag.create_time))
-    if query.page_size and query.page_size > 0 and query.page_index and query.page_index > 0:
-        query.page_size = min(query.page_size, 100)
-        stmt = stmt.limit(query.page_size).offset((query.page_index - 1) * query.page_size)
     async with get_session() as s:
         return list((await s.scalars(stmt)).all())
 

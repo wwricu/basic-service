@@ -13,8 +13,6 @@ class TagRO(BaseModel):
 
 
 class TagRequestRO(BaseModel):
-    page_size: int | None = 0
-    page_index: int | None = 0
     type: TagTypeEnum | None = TagTypeEnum.POST_TAG
 
 
@@ -23,8 +21,6 @@ class TagQueryDTO(BaseModel):
     name: str | None = None
     type: TagTypeEnum | None = None
     deleted: bool | None = False
-    page_index: int | None = None
-    page_size: int | None = None
 
 
 class TagVO(BaseModel):

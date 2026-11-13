@@ -17,7 +17,7 @@ async def create_tag_api(tag_create: TagRO) -> TagVO:
 
 @tag_api.post('/all', response_model=list[TagVO])
 async def get_tags_api(get_tag: TagRequestRO) -> list[TagVO]:
-    return [TagVO.model_validate(tag) for tag in await tag_db.find_by_criteria(TagQueryDTO(type=get_tag.type, page_index=get_tag.page_index, page_size=get_tag.page_size))]
+    return [TagVO.model_validate(tag) for tag in await tag_db.find_by_criteria(TagQueryDTO(type=get_tag.type))]
 
 
 @tag_api.post('/update', response_model=TagVO)
