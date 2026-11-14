@@ -1,4 +1,5 @@
 import re
+from html import escape
 
 from bs4 import BeautifulSoup
 
@@ -40,12 +41,14 @@ def highlight(text: str, keyword: str, *, radius: int = 40) -> str:
     if low.find(needle) < 0:
         needle = next((t for t in tokens(keyword) if low.find(t) >= 0), '')
     if (pos := low.find(needle)) < 0:
-        return text[:radius * 2]
+        return escape(text[:radius * 2])
     start, end = max(pos - radius, 0), min(pos + len(needle) + radius, len(text))
     fragment = text[start:end]
-    if needle:
-        fragment = re.sub(f'({re.escape(needle)})', rf'{CommonConst.MARK_BEGIN}\1{CommonConst.MARK_END}', fragment, flags=re.IGNORECASE)
-    return f"{ELLIPSIS if start else ''}{fragment}{ELLIPSIS if end < len(text) else ''}"
+    parts = re.split(f'({re.escape(needle)})', fragment, flags=re.IGNORECASE) if needle else [fragment]
+    # odd parts are the captured hits; everything is escaped because the frontend injects the snippet as raw HTML
+    marked = ''.join(escape(p) if i % 2 == 0 else f'{CommonConst.MARK_BEGIN}{escape(p)}{CommonConst.MARK_END}'
+                     for i, p in enumerate(parts))
+    return f"{ELLIPSIS if start else ''}{marked}{ELLIPSIS if end < len(text) else ''}"
 
 
 # \u4e00-\u9fa5 is the Unicode CJK Unified Ideographs block (covers common Chinese characters);
