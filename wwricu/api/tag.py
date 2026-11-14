@@ -5,7 +5,7 @@ from wwricu.database import tag_db
 from wwricu.domain.tag import TagQueryDTO, TagRequestRO, TagRO, TagVO
 from wwricu.service import common_service, security_service, tag_service
 
-tag_api = APIRouter(prefix='/admin/tag', tags=['Tag api'], dependencies=[Depends(security_service.require_admin)])
+tag_api = APIRouter(prefix='/admin/tag', dependencies=[Depends(security_service.require_admin)])
 
 
 @tag_api.post('/create', dependencies=[Depends(common_service.reset_sys_config)], response_model=TagVO)

@@ -9,7 +9,7 @@ from wwricu.domain.post import PostDetailVO, PostPreviewVO, PostRequestRO, PostS
 from wwricu.domain.tag import TagQueryDTO, TagVO
 from wwricu.service import manage_service, post_service
 
-open_api = APIRouter(prefix='/open',  tags=['Open API'])
+open_api = APIRouter(prefix='/open')
 
 
 @open_api.post('/post/all', response_model=PageVO[PostPreviewVO])
