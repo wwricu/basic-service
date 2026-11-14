@@ -60,6 +60,11 @@ class EnvironmentVariable(BaseSettings):
         return f'res.{self.BASE_DOMAIN}'
 
     @property
+    def admin_origins(self) -> set[str]:
+        # btp fronts the same SPA through the DIRECT_HOST catch-all, see deploy/README.md
+        return {f'https://admin.{self.BASE_DOMAIN}', f'https://btp.{self.BASE_DOMAIN}'}
+
+    @property
     def is_dev(self) -> bool:
         return __debug__ or self.ENV != EnvironmentEnum.PRODUCTION
 

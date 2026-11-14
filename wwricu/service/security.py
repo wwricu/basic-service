@@ -51,6 +51,16 @@ async def authenticate(login_request: LoginRO, request: Request, response: Respo
     return LoginVO()
 
 
+async def verify_origin(request: Request):
+    # SameSite=strict still lets any subdomain of BASE_DOMAIN send the cookie, so the Origin
+    # has to be one of the two admin front doors. No Origin means a non-browser caller.
+    if env.is_dev or (origin := request.headers.get('origin')) is None:
+        return
+    if origin not in env.admin_origins:
+        log.warning(f'Cross-origin admin request from {origin} to {request.url.path}')
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+
+
 async def require_admin(request: Request, response: Response):
     if not await is_admin(request, response):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
