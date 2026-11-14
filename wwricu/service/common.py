@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
 
         await refresh_counts()
 
-        log.info(f'{app.title} startup')
+        log.info(f'{app.title} startup v{env.VERSION}')
         yield
     finally:
         scheduler.shutdown()
@@ -104,6 +104,9 @@ async def upload_database(key: str = app_config.database.name):
         async with await open_file(backup_path, mode='rb') as f:
             await storage.put(key, await f.read())
             log.info(f'Upload database to {key} success')
+    except Exception:
+        log.exception(f'Upload database to {key} failed')
+        raise
     finally:
         Path(backup_path).unlink(missing_ok=True)
 
@@ -112,15 +115,17 @@ async def upload_database(key: str = app_config.database.name):
 async def restore_database():
     if env.is_dev:
         return
+    log.info(f'Restore database from {app_config.database.name} begin')
     file = Path(backup_path := uuid.uuid4().hex)
-    await download_database(backup_path)
     try:
+        await download_database(backup_path)
         await database_manager.close()
         file.replace(app_config.database.name)
         await database_manager.init()
         await refresh_counts()
-    except Exception as e:
-        log.error(e)
+        log.info(f'Restore database from {app_config.database.name} success')
+    except Exception:
+        log.exception(f'Restore database from {app_config.database.name} failed')
         file.unlink(missing_ok=True)
         sys.exit(1)
 

@@ -54,6 +54,7 @@ class EnvironmentVariable(BaseSettings):
     BASE_DOMAIN: str = 'wwr.icu'
     LOG_PATH: str = 'logs'
     CONFIG_FILE: str = 'dev.config.json'
+    VERSION: str = 'unknown'
 
     @property
     def resource_domain(self) -> str:
