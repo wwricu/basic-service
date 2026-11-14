@@ -20,11 +20,6 @@ class RelationTypeEnum(StrEnum):
     POST_TAG = 'post_tag'
 
 
-class DatabaseActionEnum(StrEnum):
-    BACKUP = 'backup'
-    RESTORE = 'restore'
-
-
 class EnvironmentEnum(StrEnum):
     DEVELOPMENT = 'dev'
     PRODUCTION = 'prod'
@@ -50,6 +45,8 @@ class ManageCommandEnum(StrEnum):
     CONFIRM_TOTP = 'confirm_totp'
     DISABLE_TOTP = 'disable_totp'
     REBUILD_SEARCH_INDEX = 'rebuild_search_index'
+    BACKUP = 'backup'
+    RESTORE = 'restore'
 
 
 class CacheKeyEnum(StrEnum):
