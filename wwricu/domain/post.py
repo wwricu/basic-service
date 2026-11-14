@@ -40,15 +40,14 @@ class PostResourceVO(BaseModel):
 
 class PostPreviewVO(BaseModel):
     id: int
-    title: str | None = None
+    title: str
     cover: PostResourceVO | None = None
     preview: str = ''
-    tags: list[TagVO] | None = None
     tag_list: list[TagVO] = Field(default_factory=list)
     category: TagVO | None = None
     status: PostStatusEnum | None = None
-    create_time: datetime | None = None
-    update_time: datetime | None = None
+    create_time: datetime
+    update_time: datetime
 
 
 class PostDetailVO(PostPreviewVO):
@@ -61,6 +60,7 @@ class PostSearchVO(PostPreviewVO):
 
 class PostQueryDTO(BaseModel):
     post_ids: list[int] | None = None
+    defer: bool = True
     category_id: int | None = None
     deleted: bool | None = False
     status: PostStatusEnum | None = None

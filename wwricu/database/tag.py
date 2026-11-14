@@ -1,10 +1,10 @@
 from collections import defaultdict
 
-from sqlalchemy import select, update, func, case, delete, desc, Select
+from sqlalchemy import Select, delete, desc, func, select, update
 
 from wwricu.component.database import get_session
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
-from wwricu.domain.enum import RelationTypeEnum, TagTypeEnum
+from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
 from wwricu.domain.tag import TagQueryDTO
 
 
@@ -24,9 +24,6 @@ async def build_criteria(query: TagQueryDTO) -> Select:
 async def find_by_criteria(query: TagQueryDTO) -> list[PostTag]:
     stmt = await build_criteria(query)
     stmt = stmt.order_by(desc(PostTag.create_time))
-    if query.page_size and query.page_size > 0 and query.page_index and query.page_index > 0:
-        query.page_size = min(query.page_size, 100)
-        stmt = stmt.limit(query.page_size).offset((query.page_index - 1) * query.page_size)
     async with get_session() as s:
         return list((await s.scalars(stmt)).all())
 
@@ -38,18 +35,17 @@ async def count(query: TagQueryDTO) -> int:
         return await s.scalar(count_stmt) or 0
 
 
-async def update_post_count(bef_tag_ids: set[int], aft_tag_ids: set[int], tag_type: TagTypeEnum):
-    if bef_tag_ids == aft_tag_ids:
-        return
-    stmt = update(PostTag).where(PostTag.type == tag_type).where(PostTag.id.in_(bef_tag_ids | aft_tag_ids)).values(
-        count=case(
-            (PostTag.id.in_(bef_tag_ids - aft_tag_ids), PostTag.count - 1),
-            (PostTag.id.in_(aft_tag_ids - bef_tag_ids), PostTag.count + 1),
-            else_=PostTag.count
-        )
-    )
+async def refresh_tag_counts():
+    published = select(func.count()).select_from(BlogPost).where(BlogPost.deleted == False,
+                                                                 BlogPost.status == PostStatusEnum.PUBLISHED)
+    tag_count = published.join(EntityRelation, EntityRelation.src_id == BlogPost.id).where(
+        EntityRelation.dst_id == PostTag.id,
+        EntityRelation.type == RelationTypeEnum.POST_TAG,
+        EntityRelation.deleted == False).correlate(PostTag).scalar_subquery()
+    category_count = published.where(BlogPost.category_id == PostTag.id).correlate(PostTag).scalar_subquery()
     async with get_session() as s:
-        await s.execute(stmt)
+        await s.execute(update(PostTag).where(PostTag.type == TagTypeEnum.POST_TAG).values(count=tag_count))
+        await s.execute(update(PostTag).where(PostTag.type == TagTypeEnum.POST_CAT).values(count=category_count))
 
 
 async def find_tags_by_posts(post_list: list[BlogPost]) -> dict[int, list[PostTag]]:

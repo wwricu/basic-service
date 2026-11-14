@@ -1,9 +1,10 @@
 from __future__ import annotations
+
 import asyncio
 import shelve
 import time
 from collections import OrderedDict
-from typing import Protocol, Any
+from typing import Any, ClassVar, Protocol
 
 from loguru import logger as log
 
@@ -22,12 +23,11 @@ class LocalCache:
     expiration: dict[str, int]
 
     heartbeat: asyncio.Task | None = None
-    all_caches: dict[str, LocalCache] = {}
+    all_caches: ClassVar[dict[str, LocalCache]] = {}
 
     def __init__(self, name: str, max_size: int = 10000, persist: bool = False):
         self.name = name
         self.max_size = max_size
-        self.heartbeat = None
         self.persist = persist and not env.is_dev
 
         if LocalCache.all_caches.get(self.name) is not None:
@@ -122,8 +122,6 @@ class Cache[T](Protocol):
     async def delete(self, key: str | None):...
 
     async def delete_all(self):...
-
-    async def close(self):...
 
 
 sys_cache: Cache[Any] = LocalCache(name='sys', persist=True)

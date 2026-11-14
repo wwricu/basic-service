@@ -1,9 +1,9 @@
 from typing import Annotated
 
-from pydantic import StringConstraints, Field
+from pydantic import Field, StringConstraints
 
 from wwricu.domain.common import BaseModel
-from wwricu.domain.enum import TagTypeEnum, PostStatusEnum
+from wwricu.domain.enum import PostStatusEnum, TagTypeEnum
 
 
 class TagRO(BaseModel):
@@ -13,8 +13,6 @@ class TagRO(BaseModel):
 
 
 class TagRequestRO(BaseModel):
-    page_size: int | None = 0
-    page_index: int | None = 0
     type: TagTypeEnum | None = TagTypeEnum.POST_TAG
 
 
@@ -23,15 +21,13 @@ class TagQueryDTO(BaseModel):
     name: str | None = None
     type: TagTypeEnum | None = None
     deleted: bool | None = False
-    page_index: int | None = None
-    page_size: int | None = None
 
 
 class TagVO(BaseModel):
     id: int
     name: str
     type: TagTypeEnum
-    count: int | None = None
+    count: int = 0
 
 
 class TagUpdateDTO(BaseModel):

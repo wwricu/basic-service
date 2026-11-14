@@ -1,26 +1,28 @@
+import json
+import sqlite3
+
+import pyotp
 from fastapi import status
 
-from test.api.utils import create_post_and_delete
+from test.api.utils import create_post
 from test.test_utils import client
-from wwricu.domain.common import TrashBinVO
-from wwricu.domain.enum import ConfigKeyEnum, EntityTypeEnum
+from wwricu.config import app_config
+from wwricu.domain.enum import ConfigKeyEnum, EntityTypeEnum, ManageCommandEnum
 
 
-def test_config_set_and_get():
-    about = f'/admin/manage/config/get?key={ConfigKeyEnum.ABOUT_CONTENT}'
-    original = client.get(about).json()
+def test_command_set_and_get():
+    original = _read(ConfigKeyEnum.ABOUT_CONTENT).json()
     try:
-        set_response = client.post('/admin/manage/config/set', json={'key': ConfigKeyEnum.ABOUT_CONTENT, 'value': 'test about content'})
-        assert set_response.status_code == status.HTTP_200_OK
-        get_response = client.get(about)
-        assert get_response.status_code == status.HTTP_200_OK
-        assert get_response.json() == 'test about content'
+        assert _command(ManageCommandEnum.SET_ABOUT, 'test about content').status_code == status.HTTP_200_OK
+        assert _read(ConfigKeyEnum.ABOUT_CONTENT).json() == 'test about content'
+        assert _read(ConfigKeyEnum.PASSWORD).status_code == status.HTTP_403_FORBIDDEN
     finally:
-        client.post('/admin/manage/config/set', json={'key': ConfigKeyEnum.ABOUT_CONTENT, 'value': original})
+        _command(ManageCommandEnum.SET_ABOUT, original)
 
 
 def test_trash_recover_and_hard_delete():
-    post_id = create_post_and_delete()
+    post_id = create_post().id
+    client.delete(f'/admin/post/delete/{post_id}')
     assert post_id in _trashed_post_ids()
 
     # recover pulls it out of the trash, which is also what takes it out of reach of a later hard delete
@@ -39,4 +41,39 @@ def test_trash_recover_and_hard_delete():
 def _trashed_post_ids() -> list[int]:
     response = client.get('/admin/manage/trash/all')
     assert response.status_code == status.HTTP_200_OK
-    return [item.id for item in map(TrashBinVO.model_validate, response.json()) if item.type == EntityTypeEnum.BLOG_POST]
+    return [item['id'] for item in response.json() if item['type'] == EntityTypeEnum.BLOG_POST]
+
+
+def test_set_login_and_reset_clears_both_rows():
+    credentials = {'username': 'command_user', 'password': 'Command#12345'}
+    assert _command(ManageCommandEnum.SET_LOGIN, json.dumps(credentials)).status_code == status.HTTP_200_OK
+    assert _read(ConfigKeyEnum.USERNAME).json() == 'command_user'
+    assert {ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD} <= _config_keys()
+    assert client.post('/admin/login', json=credentials).status_code == status.HTTP_200_OK
+
+    assert _command(ManageCommandEnum.RESET_LOGIN).status_code == status.HTTP_200_OK
+    assert not ({ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD} & _config_keys())
+
+
+def test_totp_enroll_confirm_and_disable():
+    secret = _command(ManageCommandEnum.ENROLL_TOTP).json()
+    assert ConfigKeyEnum.TOTP_SECRET in _config_keys()
+
+    assert _command(ManageCommandEnum.CONFIRM_TOTP, pyotp.TOTP(secret).now()).status_code == status.HTTP_200_OK
+    assert _read(ConfigKeyEnum.TOTP_ENFORCE).json() is not None
+
+    assert _command(ManageCommandEnum.DISABLE_TOTP).status_code == status.HTTP_200_OK
+    assert not ({ConfigKeyEnum.TOTP_ENFORCE, ConfigKeyEnum.TOTP_SECRET} & _config_keys())
+
+
+def _read(key: ConfigKeyEnum):
+    return client.get(f'/admin/manage/config/get?key={key}')
+
+
+def _command(command: ManageCommandEnum, value: str = ''):
+    return client.post('/admin/manage/command', json={'command': command, 'value': value})
+
+
+def _config_keys() -> set[ConfigKeyEnum]:
+    with sqlite3.connect(app_config.database.name) as conn:
+        return {row[0] for row in conn.execute('select key from wwr_sys_config where deleted = 0')}

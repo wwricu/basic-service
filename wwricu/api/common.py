@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, Response, status, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
 from loguru import logger as log
 
@@ -6,8 +6,8 @@ from wwricu.domain.common import LoginRO, LoginVO
 from wwricu.domain.enum import PostStatusEnum
 from wwricu.service import common_service, post_service, security_service
 
-common_api = APIRouter(prefix='/admin', tags=['Common API'])
-image_api = APIRouter(tags=['Image API'])
+common_api = APIRouter(prefix='/admin')
+image_api = APIRouter()
 
 
 @common_api.post('/login', response_model=LoginVO)

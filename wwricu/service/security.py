@@ -25,10 +25,10 @@ async def authenticate(login_request: LoginRO, request: Request, response: Respo
     secret = await manage_service.get_config(ConfigKeyEnum.TOTP_SECRET)
     enforce = await manage_service.get_config(ConfigKeyEnum.TOTP_ENFORCE)
 
-    if session_2fa_id and (not enforce or not login_request.totp):
+    if session_2fa_id and (enforce is None or not login_request.totp):
         await sys_cache.delete(session_2fa_id)
         response.delete_cookie(CommonConst.SESSION_ID_2FA)
-    elif session_2fa_id and enforce and secret and login_request.totp and await sys_cache.get(session_2fa_id):
+    elif session_2fa_id and enforce is not None and secret and login_request.totp and await sys_cache.get(session_2fa_id):
         if not pyotp.TOTP(secret).verify(login_request.totp, valid_window=1):
             log.warning(f'{login_request.username} wrong totp')
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
@@ -41,7 +41,7 @@ async def authenticate(login_request: LoginRO, request: Request, response: Respo
         log.warning(f'{login_request.username} login failure')
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_PASSWORD)
 
-    if await manage_service.get_config(ConfigKeyEnum.TOTP_ENFORCE):
+    if enforce is not None:
         await sys_cache.set(session_id, True, TimeConst.TOTP_EXPIRATION)
         response.set_cookie(CommonConst.SESSION_ID_2FA, session_id, max_age=TimeConst.TOTP_EXPIRATION, secure=True, httponly=True, samesite='strict')
         response.status_code = status.HTTP_401_UNAUTHORIZED
@@ -49,6 +49,16 @@ async def authenticate(login_request: LoginRO, request: Request, response: Respo
 
     await login(session_id, response)
     return LoginVO()
+
+
+async def verify_origin(request: Request):
+    # SameSite=strict still lets any subdomain of BASE_DOMAIN send the cookie, so the Origin
+    # has to be one of the two admin front doors. No Origin means a non-browser caller.
+    if env.is_dev or (origin := request.headers.get('origin')) is None:
+        return
+    if origin not in env.admin_origins:
+        log.warning(f'Cross-origin admin request from {origin} to {request.url.path}')
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
 
 async def require_admin(request: Request, response: Response):

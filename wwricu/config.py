@@ -48,8 +48,7 @@ class Config(BaseSettings):
 
 class EnvironmentVariable(BaseSettings):
     CF_ACCOUNT_ID: str
-    CF_KV_NAMESPACE_ID: str
-    CF_KV_API_TOKEN: str
+    CF_API_TOKEN: str
 
     ENV: EnvironmentEnum = EnvironmentEnum.DEVELOPMENT
     BASE_DOMAIN: str = 'wwr.icu'
@@ -59,6 +58,11 @@ class EnvironmentVariable(BaseSettings):
     @property
     def resource_domain(self) -> str:
         return f'res.{self.BASE_DOMAIN}'
+
+    @property
+    def admin_origins(self) -> set[str]:
+        # btp fronts the same SPA through the DIRECT_HOST catch-all, see deploy/README.md
+        return {f'https://admin.{self.BASE_DOMAIN}', f'https://btp.{self.BASE_DOMAIN}'}
 
     @property
     def is_dev(self) -> bool:
@@ -94,16 +98,12 @@ def init_config() -> Config:
             return Config.model_validate_json(f.read())
 
     log.info(f'Getting config from Cloudflare KV key={config_file.name}')
-    if not (env.CF_ACCOUNT_ID and env.CF_KV_NAMESPACE_ID and env.CF_KV_API_TOKEN):
+    if not env.CF_ACCOUNT_ID or not env.CF_API_TOKEN:
         raise RuntimeError('Cloudflare KV credentials are not configured')
 
-    url = CloudflareConst.KV_ENDPOINT.format(
-        account_id=env.CF_ACCOUNT_ID,
-        namespace_id=env.CF_KV_NAMESPACE_ID,
-        key=config_file.name,
-    )
+    url = CloudflareConst.KV_ENDPOINT.format(account_id=env.CF_ACCOUNT_ID, key=config_file.name)
     try:
-        response = httpx2.get(url, headers={'Authorization': f'Bearer {env.CF_KV_API_TOKEN}'})
+        response = httpx2.get(url, headers=dict(Authorization=f'Bearer {env.CF_API_TOKEN}'))
         response.raise_for_status()
         content = response.text
     except httpx2.HTTPError:

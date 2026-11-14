@@ -1,16 +1,17 @@
 import secrets
 
-from fastapi import APIRouter, Body, Depends, Form, UploadFile, HTTPException, status as http_status
+from fastapi import APIRouter, Body, Depends, Form, HTTPException, UploadFile
+from fastapi import status as http_status
 
-from wwricu.component.cache import query_cache, post_cache, post_status_cache
+from wwricu.component.cache import post_cache, post_status_cache, query_cache
 from wwricu.database import common_db, post_db
 from wwricu.domain.common import FileUploadVO, PageVO
 from wwricu.domain.entity import BlogPost
-from wwricu.domain.enum import PostStatusEnum, CacheKeyEnum, PostResourceTypeEnum
+from wwricu.domain.enum import CacheKeyEnum, PostResourceTypeEnum, PostStatusEnum
 from wwricu.domain.post import PostDetailVO, PostPreviewVO, PostRequestRO, PostUpdateRO
 from wwricu.service import common_service, post_service, security_service
 
-post_api = APIRouter(prefix='/admin/post', tags=['Post Management'], dependencies=[Depends(security_service.require_admin)])
+post_api = APIRouter(prefix='/admin/post', dependencies=[Depends(security_service.require_admin)])
 
 
 @post_api.post('/create', response_model=PostDetailVO)
