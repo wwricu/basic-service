@@ -1,13 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
 from wwricu.api.common import common_api, image_api
 from wwricu.api.manage import manage_api
 from wwricu.api.open import open_api
 from wwricu.api.post import post_api
 from wwricu.api.tag import tag_api
-from wwricu.service import security_service
 
-admin_api = APIRouter(dependencies=[Depends(security_service.verify_origin)])
+admin_api = APIRouter(prefix='/admin')
 admin_api.include_router(common_api)
 admin_api.include_router(manage_api)
 admin_api.include_router(post_api)

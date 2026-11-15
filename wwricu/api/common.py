@@ -6,7 +6,7 @@ from wwricu.domain.common import LoginRO, LoginVO
 from wwricu.domain.enum import PostStatusEnum
 from wwricu.service import common_service, post_service, security_service
 
-common_api = APIRouter(prefix='/admin')
+common_api = APIRouter()
 image_api = APIRouter()
 
 

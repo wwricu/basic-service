@@ -5,7 +5,7 @@ from wwricu.domain.common import TrashBinRO, TrashBinVO
 from wwricu.domain.enum import ConfigKeyEnum, EntityTypeEnum, ManageCommandEnum
 from wwricu.service import common_service, manage_service, post_service, security_service, tag_service
 
-manage_api = APIRouter(prefix='/admin/manage', dependencies=[Depends(security_service.require_admin)])
+manage_api = APIRouter(prefix='/manage', dependencies=[Depends(security_service.require_admin)])
 
 
 @manage_api.get('/trash/all', response_model=list[TrashBinVO])
