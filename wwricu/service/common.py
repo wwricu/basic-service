@@ -115,19 +115,15 @@ async def upload_database(key: str = app_config.database.name):
 async def restore_database():
     if env.is_dev:
         return
-    log.info(f'Restore database from {app_config.database.name} begin')
     file = Path(backup_path := uuid.uuid4().hex)
     try:
         await download_database(backup_path)
         await database_manager.close()
         file.replace(app_config.database.name)
-        await database_manager.init()
-        await refresh_counts()
-        log.info(f'Restore database from {app_config.database.name} success')
-    except Exception:
-        log.exception(f'Restore database from {app_config.database.name} failed')
+    finally:
         file.unlink(missing_ok=True)
-        sys.exit(1)
+    log.info(f'Database restored from {app_config.database.name}, restarting')
+    sys.exit(1)
 
 
 database_lock = asyncio.Lock()
