@@ -19,6 +19,7 @@ dependencies = [
     "python-dotenv~=1.2.1",
     "python-multipart~=0.0.22",
     "sqlalchemy[asyncio]~=2.1.6",
+    "uvicorn[standard]~=0.54.0",
 ]
 
 [tool.setuptools.packages.find]
