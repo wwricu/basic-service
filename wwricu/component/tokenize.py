@@ -5,6 +5,9 @@ from bs4 import BeautifulSoup
 
 from wwricu.domain.constant import CommonConst
 
+# A CJK Unified Ideographs run, or a whole latin/digit run kept as one lowercased term.
+_TERM = re.compile(r'[一-龥]+|[a-zA-Z0-9]+')
+
 
 def extract_text(html: str) -> str:
     soup = BeautifulSoup(html or '', CommonConst.HTML_PARSER)
@@ -15,11 +18,11 @@ def extract_text(html: str) -> str:
 
 def tokens(text: str) -> list[str]:
     result: list[str] = []
-    for seg in cjk_pattern.findall(text):
-        if '\u4e00' <= seg[0] <= '\u9fa5':  # run starts with a CJK char; range mirrors cjk_pattern above
-            result += [seg] if len(seg) == 1 else [seg[i:i + 2] for i in range(len(seg) - 1)]
-        else:
-            result.append(seg.lower())
+    for term in _TERM.findall(text):
+        if term[0].isascii():
+            result.append(term.lower())
+        else:  # CJK run: every overlapping bigram, a single char stays whole
+            result += [term[i:i + 2] for i in range(len(term) - 1)] or [term]
     return result
 
 
@@ -32,20 +35,16 @@ def build_match(keyword: str) -> str:
 
 
 def highlight(text: str, keyword: str, *, radius: int = 40) -> str:
-    low, needle = text.lower(), keyword.strip().lower()
-    if low.find(needle) < 0:
-        needle = next((t for t in tokens(keyword) if low.find(t) >= 0), '')
-    if (pos := low.find(needle)) < 0:
+    low = text.lower()
+    needle = keyword.strip().lower()
+    if needle not in low:
+        needle = next((t for t in tokens(keyword) if t in low), '')
+    pos = low.find(needle)
+    if pos < 0:
         return escape(text[:radius * 2])
     start, end = max(pos - radius, 0), min(pos + len(needle) + radius, len(text))
     fragment = text[start:end]
     parts = re.split(f'({re.escape(needle)})', fragment, flags=re.IGNORECASE) if needle else [fragment]
-    # odd parts are the captured hits; everything is escaped because the frontend injects the snippet as raw HTML
-    marked = ''.join(escape(p) if i % 2 == 0 else f'<mark>{escape(p)}</mark>'
-                     for i, p in enumerate(parts))
-    return f"{'\u2026' if start else ''}{marked}{'\u2026' if end < len(text) else ''}"
-
-
-# \u4e00-\u9fa5 is the Unicode CJK Unified Ideographs block (covers common Chinese characters);
-# the | alternation keeps a whole latin/digit run in one match so it can be lowercased as a single term.
-cjk_pattern = re.compile(r'[\u4e00-\u9fa5]+|[a-zA-Z0-9]+')
+    # odd parts are the captured hits; escape everything because the frontend injects the snippet as raw HTML
+    marked = ''.join(f'<mark>{escape(p)}</mark>' if i % 2 else escape(p) for i, p in enumerate(parts))
+    return f"{'…' if start else ''}{marked}{'…' if end < len(text) else ''}"
