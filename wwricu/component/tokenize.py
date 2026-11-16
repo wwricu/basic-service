@@ -5,9 +5,6 @@ from bs4 import BeautifulSoup
 
 from wwricu.domain.constant import CommonConst
 
-# A CJK Unified Ideographs run, or a whole latin/digit run kept as one lowercased term.
-cjk_pattern = re.compile(r'[\u4e00-\u9fa5]+|[a-zA-Z0-9]+')
-
 
 def extract_text(html: str) -> str:
     soup = BeautifulSoup(html or '', CommonConst.HTML_PARSER)
@@ -48,3 +45,6 @@ def highlight(text: str, keyword: str, *, radius: int = 40) -> str:
     # odd parts are the captured hits; escape everything because the frontend injects the snippet as raw HTML
     marked = ''.join(f'<mark>{escape(p)}</mark>' if i % 2 else escape(p) for i, p in enumerate(parts))
     return f"{'\u2026' if start else ''}{marked}{'\u2026' if end < len(text) else ''}"
+
+
+cjk_pattern = re.compile(r'[\u4e00-\u9fa5]+|[a-zA-Z0-9]+')
