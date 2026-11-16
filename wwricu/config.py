@@ -51,10 +51,10 @@ class EnvironmentVariable(BaseSettings):
     CF_API_TOKEN: str
 
     ENV: EnvironmentEnum = EnvironmentEnum.DEVELOPMENT
+    VERSION: str = ENV
     BASE_DOMAIN: str = 'wwr.icu'
     LOG_PATH: str = 'logs'
     CONFIG_FILE: str = 'dev.config.json'
-    VERSION: str = 'unknown'
 
     @property
     def resource_domain(self) -> str:
@@ -74,7 +74,7 @@ def init_log():
         log.warning('APP RUNNING IN DEV')
 
     os.makedirs(env.LOG_PATH, exist_ok=True)
-    log.add(f'{env.LOG_PATH}/audit.log', level=logging.WARNING, rotation='1 MB', retention=10, backtrace=False)
+    log.add(f'{env.LOG_PATH}/audit.log', level=logging.WARNING, rotation='10 MB', retention=10, backtrace=False)
     log.add(f'{env.LOG_PATH}/server.log', level=logging.DEBUG, rotation='10 MB', retention=10, backtrace=False)
     log.add(
         f'{env.LOG_PATH}/access.log',
@@ -112,6 +112,7 @@ def init_config() -> Config:
     return Config.model_validate_json(content)
 
 
+load_dotenv('.env.local')
 load_dotenv()
 env = EnvironmentVariable.model_validate(os.environ, extra='ignore')
 init_log()
