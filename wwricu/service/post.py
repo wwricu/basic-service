@@ -93,8 +93,8 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
     bef_keys = {res.key for res in resources if res.id != new_post.cover_id}
     aft_keys = set()
     soup = BeautifulSoup(new_post.content, CommonConst.HTML_PARSER)
-    for img in soup.find_all(CommonConst.IMG_TAG):
-        src = img.get(CommonConst.SRC_PROP)
+    for img in soup.find_all('img'):
+        src = img.get('src')
         if isinstance(src, str) and (key := storage.get_key_from_url(src)):
             aft_keys.add(key)
 

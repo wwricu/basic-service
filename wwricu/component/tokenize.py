@@ -41,7 +41,7 @@ def highlight(text: str, keyword: str, *, radius: int = 40) -> str:
     fragment = text[start:end]
     parts = re.split(f'({re.escape(needle)})', fragment, flags=re.IGNORECASE) if needle else [fragment]
     # odd parts are the captured hits; everything is escaped because the frontend injects the snippet as raw HTML
-    marked = ''.join(escape(p) if i % 2 == 0 else f'{CommonConst.MARK_BEGIN}{escape(p)}{CommonConst.MARK_END}'
+    marked = ''.join(escape(p) if i % 2 == 0 else f'<mark>{escape(p)}</mark>'
                      for i, p in enumerate(parts))
     return f"{'\u2026' if start else ''}{marked}{'\u2026' if end < len(text) else ''}"
 

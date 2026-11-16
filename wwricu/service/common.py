@@ -4,6 +4,7 @@ import sys
 import uuid
 from collections.abc import Callable
 from contextlib import asynccontextmanager
+from datetime import datetime
 from pathlib import Path
 
 from anyio import open_file
@@ -17,7 +18,7 @@ from wwricu.component.cache import LocalCache, image_cache, sys_cache
 from wwricu.component.storage import storage
 from wwricu.config import app_config, env
 from wwricu.database import post_db, tag_db
-from wwricu.domain.constant import CommonConst, TimeConst
+from wwricu.domain.constant import TimeConst
 from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum, TagTypeEnum
 from wwricu.domain.post import PostQueryDTO
 from wwricu.domain.tag import TagQueryDTO
@@ -92,7 +93,8 @@ def lock_database(func: Callable) -> Callable:
 
 
 async def backup_database():
-    await upload_database(CommonConst.DATABASE_BACKUP_KEY)
+    now = datetime.now()
+    return await upload_database(f'backup/{now:%Y%m%d%H%M%S}.sqlite3')
 
 
 @lock_database

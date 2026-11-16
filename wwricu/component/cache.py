@@ -106,12 +106,10 @@ class LocalCache:
 
     @classmethod
     async def shutdown(cls):
-        cls.heartbeat.cancel()
+        if cls.heartbeat:
+            cls.heartbeat.cancel()
         for cache in cls.all_caches.values():
-            try:
-                await cache.close()
-            except Exception as e:
-                log.error(f'Failed to close cache {cache.name} {e}')
+            await cache.close()
 
 
 class Cache[T](Protocol):

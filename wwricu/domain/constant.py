@@ -9,16 +9,11 @@ class HttpErrorDetail(StrEnum):
 
 
 class CommonConst(StrEnum):
-    DATABASE_BACKUP_KEY = 'backup.sqlite3'
     SESSION_ID_2FA = '2fa_session_id'
     SESSION_ID = 'session_id'
     COOKIE_SIGN = 'sign'
-    IMG_TAG = 'img'
-    SRC_PROP = 'src'
     HTML_PARSER = 'html.parser'
     TOKEN_SEPARATOR = '\x01'
-    MARK_BEGIN = '<mark>'
-    MARK_END = '</mark>'
 
 
 class TimeConst(IntEnum):

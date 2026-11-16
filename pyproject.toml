@@ -32,7 +32,7 @@ wwricu = 'wwricu'
 ignore_missing_imports = true
 
 [tool.ruff.lint]
-ignore = ['E712']
+ignore = ['B008', 'C408', 'E712', 'I001']
 
 [dependency-groups]
 dev = [
