@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from wwricu.domain.constant import CommonConst
 
 # A CJK Unified Ideographs run, or a whole latin/digit run kept as one lowercased term.
-_TERM = re.compile(r'[一-龥]+|[a-zA-Z0-9]+')
+cjk_pattern = re.compile(r'[一-龥]+|[a-zA-Z0-9]+')
 
 
 def extract_text(html: str) -> str:
@@ -18,7 +18,7 @@ def extract_text(html: str) -> str:
 
 def tokens(text: str) -> list[str]:
     result: list[str] = []
-    for term in _TERM.findall(text):
+    for term in cjk_pattern.findall(text):
         if term[0].isascii():
             result.append(term.lower())
         else:  # CJK run: every overlapping bigram, a single char stays whole
