@@ -43,9 +43,21 @@ async def refresh_tag_counts():
         EntityRelation.type == RelationTypeEnum.POST_TAG,
         EntityRelation.deleted == False).correlate(PostTag).scalar_subquery()
     category_count = published.where(BlogPost.category_id == PostTag.id).correlate(PostTag).scalar_subquery()
+
+    update_tag = update(PostTag).where(
+        PostTag.type == TagTypeEnum.POST_TAG,
+        PostTag.deleted == False,
+        PostTag.count != tag_count
+    ).values(count=tag_count)
+    update_cat = update(PostTag).where(
+        PostTag.type == TagTypeEnum.POST_CAT,
+        PostTag.deleted == False,
+        PostTag.count != category_count
+    ).values(count=category_count)
+
     async with get_session() as s:
-        await s.execute(update(PostTag).where(PostTag.type == TagTypeEnum.POST_TAG).values(count=tag_count))
-        await s.execute(update(PostTag).where(PostTag.type == TagTypeEnum.POST_CAT).values(count=category_count))
+        await s.execute(update_tag)
+        await s.execute(update_cat)
 
 
 async def find_tags_by_posts(post_list: list[BlogPost]) -> dict[int, list[PostTag]]:
