@@ -112,7 +112,6 @@ def init_config() -> Config:
     return Config.model_validate_json(content)
 
 
-load_dotenv('.env.local')
 load_dotenv()
 env = EnvironmentVariable.model_validate(os.environ, extra='ignore')
 init_log()
