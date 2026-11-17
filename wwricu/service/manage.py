@@ -121,9 +121,9 @@ write_commands: dict[ManageCommandEnum, Callable[[str], Awaitable[str | None]]] 
     ManageCommandEnum.ENROLL_TOTP: enroll_totp,
     ManageCommandEnum.CONFIRM_TOTP: confirm_totp,
     ManageCommandEnum.DISABLE_TOTP: lambda value: delete_config([ConfigKeyEnum.TOTP_ENFORCE, ConfigKeyEnum.TOTP_SECRET]),
-    ManageCommandEnum.REBUILD_SEARCH_INDEX: lambda value: rebuild_search_index(),
-    ManageCommandEnum.BACKUP: lambda value: backup_database(),
-    ManageCommandEnum.RESTORE: lambda value: restore_database()
+    ManageCommandEnum.REBUILD_SEARCH_INDEX: rebuild_search_index,
+    ManageCommandEnum.BACKUP: backup_database,
+    ManageCommandEnum.RESTORE: restore_database
 }
 
 
