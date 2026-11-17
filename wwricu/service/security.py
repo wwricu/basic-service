@@ -11,7 +11,7 @@ from fastapi import HTTPException, Request, Response, status
 from loguru import logger as log
 
 import wwricu.service.manage as manage_service
-from wwricu.component.cache import sys_cache
+from wwricu.component.cache import session_cache
 from wwricu.config import app_config, env
 from wwricu.domain.common import LoginRO, LoginVO
 from wwricu.domain.constant import CommonConst, HttpErrorDetail, TimeConst
@@ -26,13 +26,13 @@ async def authenticate(login_request: LoginRO, request: Request, response: Respo
     enforce = await manage_service.get_config(ConfigKeyEnum.TOTP_ENFORCE)
 
     if session_2fa_id and (enforce is None or not login_request.totp):
-        await sys_cache.delete(session_2fa_id)
+        await session_cache.delete(session_2fa_id)
         response.delete_cookie(CommonConst.SESSION_ID_2FA)
-    elif session_2fa_id and enforce is not None and secret and login_request.totp and await sys_cache.get(session_2fa_id):
+    elif session_2fa_id and enforce is not None and secret and login_request.totp and await session_cache.get(session_2fa_id):
         if not pyotp.TOTP(secret).verify(login_request.totp, valid_window=1):
             log.warning(f'{login_request.username} wrong totp')
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_TOTP)
-        await sys_cache.delete(session_2fa_id)
+        await session_cache.delete(session_2fa_id)
         response.delete_cookie(CommonConst.SESSION_ID_2FA)
         await login(session_id, response)
         return LoginVO()
@@ -42,7 +42,7 @@ async def authenticate(login_request: LoginRO, request: Request, response: Respo
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=HttpErrorDetail.WRONG_PASSWORD)
 
     if enforce is not None:
-        await sys_cache.set(session_id, True, TimeConst.TOTP_EXPIRATION)
+        await session_cache.set(session_id, True, TimeConst.TOTP_EXPIRATION)
         response.set_cookie(CommonConst.SESSION_ID_2FA, session_id, max_age=TimeConst.TOTP_EXPIRATION, secure=True, httponly=True, samesite='strict')
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return LoginVO(detail=HttpErrorDetail.NEED_TOTP)
@@ -66,7 +66,7 @@ async def is_admin(request: Request, response: Response) -> bool:
         return False
 
     if (
-        not isinstance(issue_time := await sys_cache.get(session_id), int) or
+        not isinstance(issue_time := await session_cache.get(session_id), int) or
         issue_time < 0 or
         int(time.time()) - issue_time >= TimeConst.COOKIE_MAX_AGE or
         hmac_sign(session_id) != cookie_sign
@@ -85,7 +85,7 @@ def hmac_sign(plain: str) -> str:
 
 
 async def login(session_id: str, response: Response):
-    await sys_cache.set(session_id, int(time.time()), TimeConst.COOKIE_MAX_AGE)
+    await session_cache.set(session_id, int(time.time()), TimeConst.COOKIE_MAX_AGE)
     response.set_cookie(CommonConst.SESSION_ID, session_id, TimeConst.COOKIE_MAX_AGE, domain=env.BASE_DOMAIN, secure=True, httponly=True, samesite='strict')
     response.set_cookie(CommonConst.COOKIE_SIGN, hmac_sign(session_id), TimeConst.COOKIE_MAX_AGE, domain=env.BASE_DOMAIN, secure=True, httponly=True, samesite='strict')
 
@@ -105,4 +105,4 @@ async def logout(request: Request, response: Response):
         return
     response.delete_cookie(CommonConst.SESSION_ID, domain=env.BASE_DOMAIN)
     response.delete_cookie(CommonConst.COOKIE_SIGN, domain=env.BASE_DOMAIN)
-    await sys_cache.delete(session_id)
+    await session_cache.delete(session_id)

@@ -122,8 +122,9 @@ class Cache[T](Protocol):
     async def delete_all(self):...
 
 
-sys_cache: Cache[Any] = LocalCache(name='sys', persist=True)
+sys_cache: Cache[Any] = LocalCache(name='sys')
+session_cache: Cache[int | bool] = LocalCache(name='session', persist=True)
 query_cache: Cache[Any] = LocalCache(name='query')
 post_cache: Cache[BlogPost] = LocalCache(name='post')
 post_status_cache: Cache[PostStatusEnum] = LocalCache(name='post_status')
-image_cache: Cache[str] = LocalCache(name='image', max_size=10000)
+image_cache: Cache[str] = LocalCache(name='image')
