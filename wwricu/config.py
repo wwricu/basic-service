@@ -88,10 +88,9 @@ def init_log():
 def init_config() -> Config:
     log.info(f'{sys.version=}')
     config_file = Path(env.CONFIG_FILE)
-    if config_file.exists() and config_file.is_file():
+    if env.is_dev and config_file.is_file():
         log.info(f'Getting config from {config_file.absolute()}')
-        with config_file.open() as f:
-            return Config.model_validate_json(f.read())
+        return Config.model_validate_json(config_file.read_text())
 
     log.info(f'Getting config from Cloudflare KV key={config_file.name}')
     if not env.CF_ACCOUNT_ID or not env.CF_API_TOKEN:
@@ -106,9 +105,10 @@ def init_config() -> Config:
         log.error('Failed to get config from Cloudflare KV')
         raise
 
-    config_file.parent.mkdir(parents=True, exist_ok=True)
-    with config_file.open('wt+') as f:
-        f.write(content)
+    # Prod containers are recreated on deploy, so a cached file would only go stale against KV.
+    if env.is_dev:
+        config_file.parent.mkdir(parents=True, exist_ok=True)
+        config_file.write_text(content)
     return Config.model_validate_json(content)
 
 
