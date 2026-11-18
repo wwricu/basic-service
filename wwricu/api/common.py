@@ -36,5 +36,5 @@ async def post_image_api(post_id: int, key: str, is_admin: bool = Depends(securi
     return RedirectResponse(
         url=await common_service.get_image_url(f'post/{post_id}/{key}'),
         status_code=status.HTTP_302_FOUND,
-        headers={'private, no-store' if private else 'Cache-Control': 'public, max-age=1800, s-maxage=1200, must-revalidate'},
+        headers={'Cache-Control': 'private,no-store' if private else 'public,max-age=1800,s-maxage=1200,must-revalidate'},
     )

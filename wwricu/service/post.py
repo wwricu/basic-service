@@ -163,7 +163,7 @@ async def batch_get_category(post_list: list[BlogPost]) -> dict[int, PostTag]:
         return {}
     categories = await tag_db.find_by_criteria(TagQueryDTO(tag_ids=category_ids, type=TagTypeEnum.POST_CAT))
     category_dict = {cat.id: cat for cat in categories}
-    return {post.id: tag for post in post_list if (tag := category_dict.get(post.category_id))}
+    return {post.id: tag for post in post_list if (tag := category_dict.get(post.category_id or 0))}
 
 
 async def upload_file(file: UploadFile, post_id: int, file_type: PostResourceTypeEnum) -> FileUploadVO:
