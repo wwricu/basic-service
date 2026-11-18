@@ -45,6 +45,7 @@ class ManageCommandEnum(StrEnum):
     CONFIRM_TOTP = 'confirm_totp'
     DISABLE_TOTP = 'disable_totp'
     REBUILD_SEARCH_INDEX = 'rebuild_search_index'
+    LOGOUT = 'logout'
     BACKUP = 'backup'
     RESTORE = 'restore'
 
@@ -57,6 +58,7 @@ class CacheKeyEnum(StrEnum):
     POST = 'post:{id}'
     ALL_POSTS = 'all_posts:{page_index}:{page_size}:{category}:{tag_list}'
     ALL_TAGS = 'all_tags:{type}'
+    SESSION_IDS = 'login_sessions'
 
 
 class EntityTypeEnum(StrEnum):

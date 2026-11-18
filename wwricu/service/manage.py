@@ -9,7 +9,7 @@ import pyotp
 from fastapi import HTTPException, status as http_status
 from pydantic import ValidationError
 
-from wwricu.component.cache import sys_cache
+from wwricu.component.cache import session_cache, sys_cache
 from wwricu.component.database import transaction
 from wwricu.database import conf_db, post_db, tag_db, res_db
 from wwricu.domain.common import LoginRO, TrashBinVO
@@ -118,11 +118,12 @@ write_commands: dict[ManageCommandEnum, Callable[[str], Awaitable[str | None]]] 
     ManageCommandEnum.SET_SITE_TAGLINE: lambda value: set_config(ConfigKeyEnum.SITE_TAGLINE, value),
     ManageCommandEnum.SET_LOGIN: set_login,
     ManageCommandEnum.RESET_LOGIN: lambda value: delete_config([ConfigKeyEnum.USERNAME, ConfigKeyEnum.PASSWORD]),
+    ManageCommandEnum.LOGOUT: lambda value: session_cache.delete(value),
     ManageCommandEnum.ENROLL_TOTP: enroll_totp,
     ManageCommandEnum.CONFIRM_TOTP: confirm_totp,
     ManageCommandEnum.DISABLE_TOTP: lambda value: delete_config([ConfigKeyEnum.TOTP_ENFORCE, ConfigKeyEnum.TOTP_SECRET]),
-    ManageCommandEnum.REBUILD_SEARCH_INDEX: rebuild_search_index,
-    ManageCommandEnum.BACKUP: backup_database,
+    ManageCommandEnum.REBUILD_SEARCH_INDEX: lambda value: rebuild_search_index(),
+    ManageCommandEnum.BACKUP: lambda value: backup_database(),
     ManageCommandEnum.RESTORE: restore_database
 }
 

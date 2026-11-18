@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 
 from pydantic import BaseModel as PydanticBaseModel
@@ -55,3 +56,10 @@ class TrashBinVO(BaseModel):
 
 class LoginVO(BaseModel):
     detail: str | None = None
+
+
+class SessionVO(BaseModel):
+    id: str
+    ua: str = ''
+    last_active: datetime = Field(default_factory=datetime.now)
+    issue_time: int = Field(default_factory=lambda: int(time.time()))

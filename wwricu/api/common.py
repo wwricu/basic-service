@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
 from loguru import logger as log
 
-from wwricu.domain.common import LoginRO, LoginVO
-from wwricu.domain.enum import PostStatusEnum
+from wwricu.component.cache import session_cache
+from wwricu.domain.common import LoginRO, LoginVO, SessionVO
+from wwricu.domain.enum import CacheKeyEnum, PostStatusEnum
 from wwricu.service import common_service, post_service, security_service
 
 common_api = APIRouter()
@@ -20,9 +21,10 @@ async def logout_api(request: Request, response: Response):
     await security_service.logout(request, response)
 
 
-@common_api.get('/info', dependencies=[Depends(security_service.require_admin)], response_model=None)
-async def info_api():
-    return
+@common_api.get('/info', dependencies=[Depends(security_service.require_admin)], response_model=list[SessionVO])
+async def info_api() -> list[SessionVO]:
+    return [session for sid in await session_cache.get(CacheKeyEnum.SESSION_IDS) or []
+            if (session := await session_cache.get(sid)) is not None]
 
 
 @image_api.get('/image/post/{post_id}/{key}')
