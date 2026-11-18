@@ -29,12 +29,12 @@ async def info_api() -> list[SessionVO]:
 
 @image_api.get('/image/post/{post_id}/{key}')
 async def post_image_api(post_id: int, key: str, is_admin: bool = Depends(security_service.is_admin)):
-    if not is_admin and await post_service.get_status(post_id) != PostStatusEnum.PUBLISHED:
+    if (private := await post_service.get_status(post_id) != PostStatusEnum.PUBLISHED) and not is_admin:
         log.warning(f'{post_id=} {key=}')
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
     return RedirectResponse(
         url=await common_service.get_image_url(f'post/{post_id}/{key}'),
         status_code=status.HTTP_302_FOUND,
-        headers={'Cache-Control': 'public, max-age=1800, s-maxage=1200, must-revalidate'},
+        headers={'private, no-store' if private else 'Cache-Control': 'public, max-age=1800, s-maxage=1200, must-revalidate'},
     )
