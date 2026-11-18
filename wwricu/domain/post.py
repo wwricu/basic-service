@@ -34,8 +34,8 @@ class PostResourceVO(BaseModel):
     id: int
     name: str | None = None
     key: str
-    url: str
-    type: PostResourceTypeEnum
+    url: str | None = None
+    type: PostResourceTypeEnum | None = None
 
 
 class PostPreviewVO(BaseModel):

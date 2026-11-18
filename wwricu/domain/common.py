@@ -43,12 +43,12 @@ class SiteVO(BaseModel):
 class TrashBinRO(BaseModel):
     id: int
     type: EntityTypeEnum
-    delete: bool | None = False
+    delete: bool = False
 
 
 class TrashBinVO(BaseModel):
     id: int
-    name: str
+    name: str | None = None
     info: str | None = None
     type: EntityTypeEnum
     delete_time: datetime

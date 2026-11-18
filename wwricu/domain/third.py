@@ -19,7 +19,7 @@ class CloudflareConst:
 class AWSResponseMetaData(BaseModel):
     RequestId: str = ''  # Cloudflare R2 omits RequestId in ResponseMetadata on some operations
     HTTPStatusCode: int
-    HTTPHeaders: dict
+    HTTPHeaders: dict[str, str]
     HostId: str | None = None  # S3
     RetryAttempts: int | None = None # SSM
 

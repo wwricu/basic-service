@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import TEXT, Boolean, DateTime, Integer, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum
+from wwricu.domain.enum import PostStatusEnum
 
 
 class AbstractBase(DeclarativeBase):
@@ -22,11 +22,11 @@ class Base(AbstractBase):
 class BlogPost(Base):
     __tablename__ = 'wwr_blog_post'
     title: Mapped[str] = mapped_column(String, default='', index=True)
-    cover_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    cover_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     content: Mapped[str] = mapped_column(TEXT, default='')
     preview: Mapped[str] = mapped_column(TEXT, default='')
     status: Mapped[str] = mapped_column(String, default=PostStatusEnum.DRAFT.value, index=True)
-    category_id: Mapped[int] = mapped_column(Integer, nullable=True, index=True)
+    category_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
 
 
 class PostTag(Base):
@@ -47,22 +47,22 @@ class EntityRelation(Base):
     '''
     src_id: Mapped[int] = mapped_column(Integer, index=True)
     dst_id: Mapped[int] = mapped_column(Integer, index=True)
-    type: Mapped[RelationTypeEnum] = mapped_column(String, index=True)
+    type: Mapped[str] = mapped_column(String, index=True)
 
 
 class PostResource(Base):
     __tablename__ = 'wwr_post_resource'
     post_id: Mapped[int] = mapped_column(Integer, index=True)
-    name: Mapped[str] = mapped_column(String, nullable=True)
+    name: Mapped[str | None] = mapped_column(String, nullable=True)
     key: Mapped[str] = mapped_column(String, unique=True)
-    type: Mapped[str] = mapped_column(String, nullable=True, index=True)
-    url: Mapped[str] = mapped_column(TEXT, nullable=True)
+    type: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    url: Mapped[str | None] = mapped_column(TEXT, nullable=True)
 
 
 class SysConfig(Base):
     __tablename__ = 'wwr_sys_config'
     key: Mapped[str] = mapped_column(String, unique=True)
-    value: Mapped[str] = mapped_column(TEXT, nullable=True)
+    value: Mapped[str | None] = mapped_column(TEXT, nullable=True)
 
 
 class BlogPostSearch(AbstractBase):
