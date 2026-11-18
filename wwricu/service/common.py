@@ -1,6 +1,7 @@
 import asyncio
 import functools
-import sys
+import os
+import signal
 import uuid
 from collections.abc import Callable
 from contextlib import asynccontextmanager
@@ -125,7 +126,14 @@ async def restore_database():
     finally:
         file.unlink(missing_ok=True)
     log.info(f'Database restored from {app_config.database.name}, restarting')
-    sys.exit(1)
+    await restart_service()
+
+
+async def restart_service():
+    if env.is_dev:
+        return
+    log.info('Restart requested, shutting down gracefully')
+    os.kill(os.getpid(), signal.SIGTERM)
 
 
 database_lock = asyncio.Lock()

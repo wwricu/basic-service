@@ -48,6 +48,7 @@ class ManageCommandEnum(StrEnum):
     LOGOUT = 'logout'
     BACKUP = 'backup'
     RESTORE = 'restore'
+    RESTART = 'restart'
 
 
 class CacheKeyEnum(StrEnum):

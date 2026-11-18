@@ -17,7 +17,7 @@ from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, EntityTypeEnum, ManageCommandEnum, TagTypeEnum, PostResourceTypeEnum
 from wwricu.domain.post import PostQueryDTO
 from wwricu.domain.tag import TagQueryDTO
-from wwricu.service.common import backup_database, restore_database
+from wwricu.service.common import backup_database, restore_database, restart_service
 
 
 async def set_config(key: ConfigKeyEnum, value: str):
@@ -124,7 +124,8 @@ write_commands: dict[ManageCommandEnum, Callable[[str], Awaitable[str | None]]] 
     ManageCommandEnum.DISABLE_TOTP: lambda value: delete_config([ConfigKeyEnum.TOTP_ENFORCE, ConfigKeyEnum.TOTP_SECRET]),
     ManageCommandEnum.REBUILD_SEARCH_INDEX: lambda value: rebuild_search_index(),
     ManageCommandEnum.BACKUP: lambda value: backup_database(),
-    ManageCommandEnum.RESTORE: restore_database
+    ManageCommandEnum.RESTORE: lambda value: restore_database(),
+    ManageCommandEnum.RESTART: lambda value: restart_service()
 }
 
 
