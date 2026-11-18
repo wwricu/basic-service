@@ -48,7 +48,7 @@ async def get_detail(blog_post: BlogPost | None) -> PostDetailVO:
         raise ValueError
     category = await tag_db.find_category(category_id=blog_post.category_id)
     tags = await get_tags(blog_post)
-    cover = await res_db.find_by_id(blog_post.cover_id, PostResourceTypeEnum.COVER_IMAGE) if blog_post.cover_id is not None else None
+    cover = await res_db.find_by_id(blog_post.cover_id, PostResourceTypeEnum.COVER_IMAGE)
     post_detail = PostDetailVO.model_validate(blog_post)
     post_detail.tag_list = list(map(TagVO.model_validate, tags))
 

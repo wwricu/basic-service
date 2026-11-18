@@ -5,7 +5,9 @@ from wwricu.domain.entity import BlogPost, PostResource
 from wwricu.domain.enum import PostResourceTypeEnum
 
 
-async def find_by_id(resource_id: int, resource_type: PostResourceTypeEnum | None = None, deleted: bool = False) -> PostResource | None:
+async def find_by_id(resource_id: int | None, resource_type: PostResourceTypeEnum | None = None, deleted: bool = False) -> PostResource | None:
+    if resource_id is None:
+        return None
     stmt = select(PostResource).where(PostResource.deleted == deleted).where(PostResource.id == resource_id)
     if resource_type is not None:
         stmt = stmt.where(PostResource.type == resource_type)
