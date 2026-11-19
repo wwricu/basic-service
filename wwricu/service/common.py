@@ -62,7 +62,7 @@ async def refresh_counts():
     await sys_cache.set(CacheKeyEnum.TAG_COUNT, tag_count, 0)
 
 
-async def reset_sys_config():
+async def after_write():
     yield
     await refresh_counts()
 

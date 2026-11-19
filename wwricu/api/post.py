@@ -34,7 +34,7 @@ async def get_post(post_id: int) -> PostDetailVO | None:
     return await post_service.get_detail(post)
 
 
-@post_api.post('/update', dependencies=[Depends(common_service.reset_sys_config)], response_model=PostDetailVO)
+@post_api.post('/update', dependencies=[Depends(common_service.after_write)], response_model=PostDetailVO)
 async def update_post_api(post_update: PostUpdateRO) -> PostDetailVO:
     detail = await post_service.update(post_update)
     await post_cache.delete(CacheKeyEnum.POST.format(id=post_update.id))
@@ -42,7 +42,7 @@ async def update_post_api(post_update: PostUpdateRO) -> PostDetailVO:
     return detail
 
 
-@post_api.post('/status/{post_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=None)
+@post_api.post('/status/{post_id}', dependencies=[Depends(common_service.after_write)], response_model=None)
 async def update_post_status_api(post_id: int, status: PostStatusEnum = Body(embed=True)):
     await post_service.update_status(post_id, status=status)
     await post_status_cache.delete(CacheKeyEnum.POST.format(id=post_id))
@@ -50,7 +50,7 @@ async def update_post_status_api(post_id: int, status: PostStatusEnum = Body(emb
     await query_cache.delete_all()
 
 
-@post_api.delete('/delete/{post_id}', dependencies=[Depends(common_service.reset_sys_config)], response_model=None)
+@post_api.delete('/delete/{post_id}', dependencies=[Depends(common_service.after_write)], response_model=None)
 async def delete_post_draft_api(post_id: int):
     if (post := await post_db.find_by_id(post_id)) is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND)
