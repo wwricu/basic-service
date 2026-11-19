@@ -1,15 +1,15 @@
 from fastapi import APIRouter, HTTPException, Query, status
 
-from wwricu.component.cache import sys_cache, query_cache, post_cache
+from wwricu.component.cache import post_cache, query_cache, sys_cache
 from wwricu.database import post_db, tag_db
-from wwricu.domain.common import AboutPageVO, PageVO
+from wwricu.domain.common import PageVO, SiteVO
 from wwricu.domain.constant import HttpErrorDetail
 from wwricu.domain.enum import CacheKeyEnum, ConfigKeyEnum, TagTypeEnum
 from wwricu.domain.post import PostDetailVO, PostPreviewVO, PostRequestRO, PostSearchVO
-from wwricu.domain.tag import TagVO, TagQueryDTO
+from wwricu.domain.tag import TagQueryDTO, TagVO
 from wwricu.service import manage_service, post_service
 
-open_api = APIRouter(prefix='/open',  tags=['Open API'])
+open_api = APIRouter(prefix='/open')
 
 
 @open_api.post('/post/all', response_model=PageVO[PostPreviewVO])
@@ -54,12 +54,13 @@ async def open_get_tags_api(tag_type: TagTypeEnum) -> list[TagVO]:
     return response
 
 
-@open_api.get('/about', response_model=AboutPageVO)
-async def open_get_about_api() -> AboutPageVO:
-    return AboutPageVO(
+@open_api.get('/about', response_model=SiteVO)
+async def open_get_about_api() -> SiteVO:
+    return SiteVO(
+        title=await manage_service.get_config(ConfigKeyEnum.SITE_TITLE) or '',
+        tagline=await manage_service.get_config(ConfigKeyEnum.SITE_TAGLINE) or '',
         content=await manage_service.get_config(ConfigKeyEnum.ABOUT_CONTENT) or '',
         post_count=await sys_cache.get(CacheKeyEnum.POST_COUNT) or 0,
         category_count=await sys_cache.get(CacheKeyEnum.CATEGORY_COUNT) or 0,
-        tag_count=await sys_cache.get(CacheKeyEnum.TAG_COUNT) or 0,
-        startup_timestamp=await sys_cache.get(CacheKeyEnum.STARTUP_TIMESTAMP)
+        tag_count=await sys_cache.get(CacheKeyEnum.TAG_COUNT) or 0
     )

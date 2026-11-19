@@ -2,23 +2,25 @@
 name = 'wwricu'
 description = 'wwr.icu api service'
 requires-python = '>=3.13'
-dynamic = ['version']
+version = '0.0.0'
 
 dependencies = [
     'aiosqlite~=0.22.1',
     "apscheduler~=3.11.3",
     'bcrypt~=5.0.0',
     "beautifulsoup4~=4.15.0",
-    'boto3==1.43.118',
-    "boto3-stubs[s3]==1.43.118",
-    "fastapi[standard-no-fastapi-cloud-cli]==0.162.0",
-    'loguru~=0.7.3',
-    "pyotp~=2.10.0",
-    "sqlalchemy[asyncio]~=2.1.6",
+    'boto3~=1.43.127',
+    "boto3-stubs[s3]~=1.43.127",
+    "fastapi==0.165.0",
+    "httpx2~=2.16.2",
+    'loguru~=0.8.0',
+    "pydantic_settings~=2.16.3",
+    "pyotp~=2.12.1",
+    "python-dotenv~=1.2.4",
+    "python-multipart~=0.0.34",
+    "sqlalchemy[asyncio]~=2.1.9",
+    "uvicorn[standard]~=0.54.0",
 ]
-
-[tool.setuptools.dynamic]
-version = { file = 'version.txt' }
 
 [tool.setuptools.packages.find]
 include = ['wwricu*']
@@ -30,12 +32,13 @@ wwricu = 'wwricu'
 ignore_missing_imports = true
 
 [tool.ruff.lint]
-ignore = ['E712']
+ignore = ['B008', 'C408', 'E712', 'I001']
 
 [dependency-groups]
 dev = [
-    "mypy==2.4.0",
-    'pytest==9.1.1',
-    'pytest-asyncio==1.4.0',
-    "ruff==0.17.2",
+    "fastapi-cli==0.0.34",
+    "mypy==2.4.1",
+    'pytest==9.2.0',
+    'pytest-asyncio==1.5.0',
+    "ruff==0.17.6",
 ]

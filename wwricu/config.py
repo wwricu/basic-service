@@ -48,10 +48,10 @@ class Config(BaseSettings):
 
 class EnvironmentVariable(BaseSettings):
     CF_ACCOUNT_ID: str
-    CF_KV_NAMESPACE_ID: str
-    CF_KV_API_TOKEN: str
+    CF_API_TOKEN: str
 
     ENV: EnvironmentEnum = EnvironmentEnum.DEVELOPMENT
+    VERSION: str = ENV
     BASE_DOMAIN: str = 'wwr.icu'
     LOG_PATH: str = 'logs'
     CONFIG_FILE: str = 'dev.config.json'
@@ -74,7 +74,7 @@ def init_log():
         log.warning('APP RUNNING IN DEV')
 
     os.makedirs(env.LOG_PATH, exist_ok=True)
-    log.add(f'{env.LOG_PATH}/audit.log', level=logging.WARNING, rotation='1 MB', retention=10, backtrace=False)
+    log.add(f'{env.LOG_PATH}/audit.log', level=logging.WARNING, rotation='10 MB', retention=10, backtrace=False)
     log.add(f'{env.LOG_PATH}/server.log', level=logging.DEBUG, rotation='10 MB', retention=10, backtrace=False)
     log.add(
         f'{env.LOG_PATH}/access.log',
@@ -88,31 +88,27 @@ def init_log():
 def init_config() -> Config:
     log.info(f'{sys.version=}')
     config_file = Path(env.CONFIG_FILE)
-    if config_file.exists() and config_file.is_file():
+    if env.is_dev and config_file.is_file():
         log.info(f'Getting config from {config_file.absolute()}')
-        with config_file.open() as f:
-            return Config.model_validate_json(f.read())
+        return Config.model_validate_json(config_file.read_text())
 
     log.info(f'Getting config from Cloudflare KV key={config_file.name}')
-    if not (env.CF_ACCOUNT_ID and env.CF_KV_NAMESPACE_ID and env.CF_KV_API_TOKEN):
+    if not env.CF_ACCOUNT_ID or not env.CF_API_TOKEN:
         raise RuntimeError('Cloudflare KV credentials are not configured')
 
-    url = CloudflareConst.KV_ENDPOINT.format(
-        account_id=env.CF_ACCOUNT_ID,
-        namespace_id=env.CF_KV_NAMESPACE_ID,
-        key=config_file.name,
-    )
+    url = CloudflareConst.KV_ENDPOINT.format(account_id=env.CF_ACCOUNT_ID, key=config_file.name)
     try:
-        response = httpx2.get(url, headers={'Authorization': f'Bearer {env.CF_KV_API_TOKEN}'})
+        response = httpx2.get(url, headers=dict(Authorization=f'Bearer {env.CF_API_TOKEN}'))
         response.raise_for_status()
         content = response.text
     except httpx2.HTTPError:
         log.error('Failed to get config from Cloudflare KV')
         raise
 
-    config_file.parent.mkdir(parents=True, exist_ok=True)
-    with config_file.open('wt+') as f:
-        f.write(content)
+    # Prod containers are recreated on deploy, so a cached file would only go stale against KV.
+    if env.is_dev:
+        config_file.parent.mkdir(parents=True, exist_ok=True)
+        config_file.write_text(content)
     return Config.model_validate_json(content)
 
 

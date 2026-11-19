@@ -1,7 +1,8 @@
 from sqlalchemy import ColumnClause, Select, delete, desc, func, literal_column, select, update
 from sqlalchemy.orm import defer
 
-from wwricu.component.database import get_session
+from wwricu.component.database import get_session, transaction
+from wwricu.component.tokenize import extract_text, segment
 from wwricu.domain.entity import BlogPost, BlogPostSearch, EntityRelation, PostTag
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
 from wwricu.domain.post import PostQueryDTO
@@ -48,9 +49,8 @@ async def find_published(post_id: int) -> BlogPost | None:
 
 async def find_by_criteria(query: PostQueryDTO) -> list[BlogPost]:
     stmt = await build_criteria(query)
-    stmt = stmt.order_by(desc(BlogPost.create_time))
-    if query.page_size and query.page_size > 0 and query.page_index and query.page_index > 0:
-        query.page_size = min(query.page_size, 100)
+    stmt = stmt.order_by(desc(BlogPost.create_time), desc(BlogPost.id))
+    if query.page_size and query.page_index:
         stmt = stmt.limit(query.page_size).offset((query.page_index - 1) * query.page_size)
     async with get_session() as s:
         posts_result = await s.scalars(stmt)
@@ -72,14 +72,22 @@ async def delete_tags(post_id: int):
         await s.execute(stmt)
 
 
-async def upsert_search_index(post_id: int, title: str, preview: str, search_content: str):
+async def remove_search_index(post_id: int):
     async with get_session() as s:
         await s.execute(delete(BlogPostSearch).where(BlogPostSearch.rowid == post_id))
+
+
+@transaction
+async def sync_search_index(post: BlogPost):
+    await remove_search_index(post.id)
+    if post.status != PostStatusEnum.PUBLISHED:
+        return
+    async with get_session() as s:
         s.add(BlogPostSearch(
-            rowid=post_id,
-            title=title,
-            preview=preview,
-            search_content=search_content
+            rowid=post.id,
+            title=segment(post.title),
+            preview=segment(post.preview),
+            search_content=segment(extract_text(post.content))
         ))
 
 
@@ -106,7 +114,9 @@ async def count_by_stmt(stmt: Select) -> int:
 
 
 async def build_criteria(query: PostQueryDTO) -> Select:
-    stmt = select(BlogPost).options(defer(BlogPost.content, raiseload=True))
+    stmt = select(BlogPost)
+    if query.defer:
+        stmt = stmt.options(defer(BlogPost.content, raiseload=True))
     if query.status is not None:
         stmt = stmt.where(BlogPost.status == query.status.value)
     if query.deleted is not None:

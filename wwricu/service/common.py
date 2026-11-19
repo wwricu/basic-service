@@ -1,10 +1,11 @@
 import asyncio
 import functools
-import sys
-import time
+import os
+import signal
 import uuid
 from collections.abc import Callable
 from contextlib import asynccontextmanager
+from datetime import datetime
 from pathlib import Path
 
 from anyio import open_file
@@ -33,25 +34,25 @@ async def lifespan(app: FastAPI):
         await database_manager.init()
         LocalCache.init()
 
-        scheduler.add_job(upload_database, trigger=CronTrigger(day_of_week=0, hour=3))
+        scheduler.add_job(backup_database, trigger=CronTrigger(day_of_week=0, hour=3))
         scheduler.add_job(tag_db.delete_unlink_relation, trigger=CronTrigger(day_of_week=0, hour=4))
         scheduler.start()
 
-        await sys_cache.set(CacheKeyEnum.STARTUP_TIMESTAMP, int(time.time()), 0)
+        await refresh_counts()
 
-        log.info(f'{app.title} startup')
+        log.info(f'{app.title} {env.VERSION} startup')
         yield
     finally:
         scheduler.shutdown()
         await LocalCache.shutdown()
         await upload_database()
         await database_manager.close()
-        log.info(f'{app.title} Exit')
+        log.info(f'{app.title} {env.VERSION} exit')
         await log.complete()
 
 
-async def reset_sys_config():
-    yield
+async def refresh_counts():
+    await tag_db.refresh_tag_counts()
     post_count = await post_db.count(PostQueryDTO(status=PostStatusEnum.PUBLISHED))
     category_count = await tag_db.count(TagQueryDTO(type=TagTypeEnum.POST_CAT))
     tag_count = await tag_db.count(TagQueryDTO(type=TagTypeEnum.POST_TAG))
@@ -59,6 +60,11 @@ async def reset_sys_config():
     await sys_cache.set(CacheKeyEnum.POST_COUNT, post_count, 0)
     await sys_cache.set(CacheKeyEnum.CATEGORY_COUNT, category_count, 0)
     await sys_cache.set(CacheKeyEnum.TAG_COUNT, tag_count, 0)
+
+
+async def after_write():
+    yield
+    await refresh_counts()
 
 
 async def get_image_url(key: str) -> str:
@@ -87,15 +93,20 @@ def lock_database(func: Callable) -> Callable:
     return wrapper
 
 
+async def backup_database():
+    now = datetime.now()
+    return await upload_database(f'backup/{now:%Y%m%d%H%M%S}.sqlite3')
+
+
 @lock_database
-async def upload_database():
-    if env.is_dev or not Path(app_config.database.name).exists():
+async def upload_database(key: str = app_config.database.name):
+    if env.is_dev:
         return
     await database_manager.backup(backup_path := uuid.uuid4().hex)
     try:
         async with await open_file(backup_path, mode='rb') as f:
-            await storage.put(app_config.database.name, await f.read())
-            log.info('Upload database backup success')
+            await storage.put(key, await f.read())
+            log.info(f'Upload database to {key} success')
     finally:
         Path(backup_path).unlink(missing_ok=True)
 
@@ -105,15 +116,21 @@ async def restore_database():
     if env.is_dev:
         return
     file = Path(backup_path := uuid.uuid4().hex)
-    await download_database(backup_path)
     try:
+        await download_database(backup_path)
         await database_manager.close()
         file.replace(app_config.database.name)
-        await database_manager.init()
-    except Exception as e:
-        log.error(e)
+    finally:
         file.unlink(missing_ok=True)
-        sys.exit(1)
+    log.info(f'Database restored from {app_config.database.name}, restarting')
+    await restart_service()
+
+
+async def restart_service():
+    if env.is_dev:
+        return
+    log.info('Restart requested, shutting down gracefully')
+    os.kill(os.getpid(), signal.SIGTERM)
 
 
 database_lock = asyncio.Lock()

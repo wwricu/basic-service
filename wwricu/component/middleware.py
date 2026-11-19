@@ -1,9 +1,9 @@
 import time
 from typing import override
 
-from fastapi import HTTPException, status, Request, Response
-from fastapi.responses import JSONResponse
+from fastapi import HTTPException, Request, Response, status
 from fastapi.middleware import Middleware
+from fastapi.responses import JSONResponse
 from loguru import logger as log
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 

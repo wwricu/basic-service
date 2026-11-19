@@ -8,7 +8,7 @@ from loguru import logger as log
 from wwricu.component.cache import post_status_cache
 from wwricu.component.database import transaction
 from wwricu.component.storage import storage
-from wwricu.component.tokenize import build_match, extract_text, highlight, segment
+from wwricu.component.tokenize import build_match, extract_text, highlight
 from wwricu.config import app_config
 from wwricu.database import common_db, post_db, res_db, tag_db
 from wwricu.domain.common import FileUploadVO, PageVO, TrashBinRO
@@ -33,6 +33,7 @@ async def build_query(post: PostRequestRO, *, public: bool = False) -> PostQuery
 
 
 async def list_by_query(query: PostQueryDTO) -> PageVO[PostPreviewVO]:
+    assert query.page_index is not None and query.page_size is not None
     posts = await post_db.find_by_criteria(query)
     return PageVO[PostPreviewVO](
         page_size=query.page_size,
@@ -92,8 +93,8 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
     bef_keys = {res.key for res in resources if res.id != new_post.cover_id}
     aft_keys = set()
     soup = BeautifulSoup(new_post.content, CommonConst.HTML_PARSER)
-    for img in soup.find_all(CommonConst.IMG_TAG):
-        src = img.get(CommonConst.SRC_PROP)
+    for img in soup.find_all('img'):
+        src = img.get('src')
         if isinstance(src, str) and (key := storage.get_key_from_url(src)):
             aft_keys.add(key)
 
@@ -101,7 +102,7 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
         await res_db.delete_by_keys(delete_keys)
         log.info(f'delete resource {delete_keys}')
 
-    tag_update = TagUpdateDTO(category_id=new_post.category_id, tag_id_list=new_post.tag_id_list, status=post.status)
+    tag_update = TagUpdateDTO(category_id=new_post.category_id, tag_id_list=new_post.tag_id_list, status=PostStatusEnum(post.status))
     await update_category(post, tag_update)
     await update_tags(post, tag_update)
 
@@ -110,15 +111,9 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
         title=new_post.title,
         content=new_post.content,
         preview=new_post.preview,
-        cover_id=new_post.cover_id,
-        category_id=new_post.category_id
+        cover_id=new_post.cover_id
     )
-    await post_db.upsert_search_index(
-        new_post.id,
-        segment(new_post.title),
-        segment(new_post.preview),
-        segment(extract_text(new_post.content))
-    )
+    await post_db.sync_search_index(post)
 
     post = await post_db.find_by_id(new_post.id)
     return await get_detail(post)
@@ -138,6 +133,7 @@ async def update_status(post_id: int, status: PostStatusEnum):
     await update_category(blog_post, tag_update)
     await update_tags(blog_post, tag_update)
     await post_db.update_selective(blog_post.id, status=tag_update.status)
+    await post_db.sync_search_index(blog_post)
 
 
 async def update_tags(post: BlogPost, tag_update: TagUpdateDTO):
@@ -149,30 +145,16 @@ async def update_tags(post: BlogPost, tag_update: TagUpdateDTO):
         relations = [EntityRelation(src_id=post.id, dst_id=t.id, type=RelationTypeEnum.POST_TAG) for t in tags]
         await common_db.insert_all(relations)
 
-    bef_tag_ids, aft_tag_ids = set(), set()
-    if post.status == PostStatusEnum.PUBLISHED:
-        bef_tag_ids = tag_ids
-    if tag_update.status == PostStatusEnum.PUBLISHED:
-        aft_tag_ids = update_tag_ids
-    await tag_db.update_post_count(bef_tag_ids, aft_tag_ids, TagTypeEnum.POST_TAG)
-
 
 async def get_tags(post: BlogPost) -> list[PostTag]:
     tag_ids = await tag_db.find_ids_by_post_id(post.id)
     return await tag_db.find_by_criteria(TagQueryDTO(tag_ids=tag_ids, type=TagTypeEnum.POST_TAG))
 
 
-async def update_category(post: BlogPost, count_update: TagUpdateDTO):
-    if post.category_id != count_update.category_id:
-        category = await tag_db.find_category(category_id=count_update.category_id)
+async def update_category(post: BlogPost, tag_update: TagUpdateDTO):
+    if post.category_id != tag_update.category_id:
+        category = await tag_db.find_category(category_id=tag_update.category_id)
         await post_db.update_selective(post.id, category_id=category.id if category else None)
-
-    bef_category_id, aft_category_id = set(), set()
-    if post.status == PostStatusEnum.PUBLISHED and post.category_id:
-        bef_category_id.add(post.category_id)
-    if count_update.status == PostStatusEnum.PUBLISHED and count_update.category_id:
-        aft_category_id.add(count_update.category_id)
-    await tag_db.update_post_count(bef_category_id, aft_category_id, TagTypeEnum.POST_CAT)
 
 
 async def batch_get_category(post_list: list[BlogPost]) -> dict[int, PostTag]:
@@ -180,7 +162,7 @@ async def batch_get_category(post_list: list[BlogPost]) -> dict[int, PostTag]:
         return {}
     categories = await tag_db.find_by_criteria(TagQueryDTO(tag_ids=category_ids, type=TagTypeEnum.POST_CAT))
     category_dict = {cat.id: cat for cat in categories}
-    return {post.id: tag for post in post_list if (tag := category_dict.get(post.category_id))}
+    return {post.id: tag for post in post_list if (tag := category_dict.get(post.category_id or 0))}
 
 
 async def upload_file(file: UploadFile, post_id: int, file_type: PostResourceTypeEnum) -> FileUploadVO:
@@ -203,6 +185,7 @@ async def process_trash(trash_bin: TrashBinRO):
         resources = await res_db.find_by_post_id(trash_bin.id)
         await res_db.delete_by_keys([res.key for res in resources])
         await common_db.hard_delete(BlogPost, trash_bin.id)
+        await post_db.remove_search_index(trash_bin.id)
     else:
         await common_db.recover(BlogPost, trash_bin.id)
 

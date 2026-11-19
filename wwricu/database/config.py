@@ -1,4 +1,4 @@
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
 
 from wwricu.component.database import get_session
 from wwricu.domain.entity import SysConfig
