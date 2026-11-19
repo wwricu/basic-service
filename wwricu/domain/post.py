@@ -8,8 +8,8 @@ from wwricu.domain.tag import TagVO
 
 
 class PageRequestRO(BaseModel):
-    page_index: int
-    page_size: int
+    page_index: int = Field(ge=1)
+    page_size: int = Field(ge=1, le=100)
 
 
 class PostRequestRO(PageRequestRO):

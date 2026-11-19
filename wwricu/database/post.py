@@ -49,9 +49,8 @@ async def find_published(post_id: int) -> BlogPost | None:
 
 async def find_by_criteria(query: PostQueryDTO) -> list[BlogPost]:
     stmt = await build_criteria(query)
-    stmt = stmt.order_by(desc(BlogPost.create_time))
-    if query.page_size and query.page_size > 0 and query.page_index and query.page_index > 0:
-        query.page_size = min(query.page_size, 100)
+    stmt = stmt.order_by(desc(BlogPost.create_time), desc(BlogPost.id))
+    if query.page_size and query.page_index:
         stmt = stmt.limit(query.page_size).offset((query.page_index - 1) * query.page_size)
     async with get_session() as s:
         posts_result = await s.scalars(stmt)

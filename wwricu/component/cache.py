@@ -125,6 +125,6 @@ class Cache[T](Protocol):
 session_cache: Cache[Any] = LocalCache(name='session', persist=True)
 sys_cache: Cache[Any] = LocalCache(name='sys')
 query_cache: Cache[Any] = LocalCache(name='query')
-post_cache: Cache[BlogPost] = LocalCache(name='post')
+post_cache: Cache[BlogPost] = LocalCache(name='post', max_size=1000)
 post_status_cache: Cache[PostStatusEnum] = LocalCache(name='post_status')
 image_cache: Cache[str] = LocalCache(name='image')
