@@ -107,9 +107,6 @@ async def upload_database(key: str = app_config.database.name):
         async with await open_file(backup_path, mode='rb') as f:
             await storage.put(key, await f.read())
             log.info(f'Upload database to {key} success')
-    except Exception:
-        log.exception(f'Upload database to {key} failed')
-        raise
     finally:
         Path(backup_path).unlink(missing_ok=True)
 
