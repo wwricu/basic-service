@@ -8,7 +8,7 @@ from wwricu.domain.enum import PostStatusEnum, TagTypeEnum
 
 class TagRO(BaseModel):
     id: int | None = None
-    name: Annotated[str, StringConstraints(max_length=32)]
+    name: Annotated[str, StringConstraints(min_length=1, max_length=32, strip_whitespace=True)]
     type: TagTypeEnum = TagTypeEnum.POST_TAG
 
 
