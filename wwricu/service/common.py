@@ -43,8 +43,7 @@ async def lifespan(app: FastAPI):
         log.info(f'{app.title} {env.VERSION} startup')
         yield
     finally:
-        if scheduler.running:
-            scheduler.shutdown()
+        scheduler.shutdown()
         await LocalCache.shutdown()
         await upload_database()
         await database_manager.close()
