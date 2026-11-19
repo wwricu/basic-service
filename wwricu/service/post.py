@@ -111,8 +111,7 @@ async def update(new_post: PostUpdateRO) -> PostDetailVO:
         title=new_post.title,
         content=new_post.content,
         preview=new_post.preview,
-        cover_id=new_post.cover_id,
-        category_id=new_post.category_id
+        cover_id=new_post.cover_id
     )
     await post_db.sync_search_index(post)
 
