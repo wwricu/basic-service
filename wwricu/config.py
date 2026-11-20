@@ -62,7 +62,7 @@ class EnvironmentVariable(BaseSettings):
 
     @property
     def is_dev(self) -> bool:
-        return __debug__ and self.ENV != EnvironmentEnum.PRODUCTION
+        return self.ENV != EnvironmentEnum.PRODUCTION
 
 
 def init_log():
