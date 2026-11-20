@@ -95,7 +95,7 @@ def lock_database(func: Callable) -> Callable:
 
 async def backup_database():
     now = datetime.now()
-    return await upload_database(f'backup/{now:%Y%m%d%H%M%S}.sqlite3')
+    await upload_database(f'backup/{now:%Y%m%d%H%M%S}.sqlite3')
 
 
 @lock_database
