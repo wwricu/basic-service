@@ -4,6 +4,7 @@ from fastapi import status as http_status
 from wwricu.database import common_db, tag_db
 from wwricu.domain.common import TrashBinRO
 from wwricu.domain.entity import PostTag
+from wwricu.domain.enum import TagTypeEnum
 from wwricu.domain.tag import TagQueryDTO, TagRO, TagVO
 
 
@@ -22,8 +23,8 @@ async def update(tag_update: TagRO) -> TagVO:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail=f'{tag_update.type} not found')
     if tag.name == tag_update.name:
         return TagVO.model_validate(tag)
-    if await tag_db.count(TagQueryDTO(name=tag_update.name, type=tag_update.type)) > 0:
-        raise HTTPException(http_status.HTTP_409_CONFLICT, f'{tag_update.type} {tag_update.name} already exists')
+    if await tag_db.count(TagQueryDTO(name=tag_update.name, type=TagTypeEnum(tag.type))) > 0:
+        raise HTTPException(http_status.HTTP_409_CONFLICT, f'{tag.type} {tag_update.name} already exists')
     tag.name = tag_update.name
     await tag_db.update_selective(tag_update.id, name=tag_update.name)
     return TagVO.model_validate(tag)
