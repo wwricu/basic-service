@@ -66,7 +66,7 @@ async def is_admin(request: Request, response: Response) -> bool:
         return False
 
     session: SessionVO | None = await session_cache.get(session_id)
-    if session is None or hmac_sign(session_id) != cookie_sign:
+    if session is None or not hmac.compare_digest(hmac_sign(session_id), cookie_sign):
         log.warning(f'Unauthorized access to {request.url.path}')
         return False
 
