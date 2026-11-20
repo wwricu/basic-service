@@ -3,6 +3,7 @@ from collections import defaultdict
 from sqlalchemy import Select, delete, desc, func, select, update
 
 from wwricu.component.database import get_session
+from wwricu.config import env
 from wwricu.domain.entity import BlogPost, EntityRelation, PostTag
 from wwricu.domain.enum import PostStatusEnum, RelationTypeEnum, TagTypeEnum
 from wwricu.domain.tag import TagQueryDTO
@@ -96,6 +97,8 @@ async def find_ids_by_post_id(post_id: int) -> list[int]:
 
 
 async def delete_unlink_relation():
+    if env.is_dev:
+        return
     post_query = ~select(BlogPost.id).where(BlogPost.id == EntityRelation.src_id).exists()
     tag_query = ~select(PostTag.id).where(PostTag.id == EntityRelation.dst_id).exists()
     stmt = delete(EntityRelation).where(post_query | tag_query)

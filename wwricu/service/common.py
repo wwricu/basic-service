@@ -94,6 +94,8 @@ def lock_database(func: Callable) -> Callable:
 
 
 async def backup_database():
+    if env.is_dev:
+        return
     now = datetime.now()
     await upload_database(f'backup/{now:%Y%m%d%H%M%S}.sqlite3')
 
