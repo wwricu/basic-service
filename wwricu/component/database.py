@@ -1,12 +1,12 @@
 import contextlib
 import functools
 import os
-import sqlite3
 import sys
 from asyncio import current_task
 from collections.abc import AsyncGenerator, Callable
 from typing import cast
 
+import aiosqlite
 from loguru import logger as log
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -58,8 +58,8 @@ async def backup(path: str):
     if not os.path.exists(app_config.database.name):
         raise FileNotFoundError(f'Database file {app_config.database.name} not found')
     log.info(f'Backup database {app_config.database.name} begin')
-    with contextlib.closing(sqlite3.connect(app_config.database.name)) as source:
-        source.execute('VACUUM INTO ?', (path,))
+    async with aiosqlite.connect(app_config.database.name) as source:
+        await source.execute('VACUUM INTO ?', (path,))
     log.info(f'Backup database {app_config.database.name} success')
 
 
