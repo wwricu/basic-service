@@ -23,8 +23,11 @@ async def logout_api(request: Request, response: Response):
 
 @common_api.get('/info', dependencies=[Depends(security_service.require_admin)], response_model=list[SessionVO])
 async def info_api() -> list[SessionVO]:
-    return [session for sid in await session_cache.get(CacheKeyEnum.SESSION_IDS) or []
-            if (session := await session_cache.get(sid)) is not None]
+    return [
+        session
+        for sid in await session_cache.get(CacheKeyEnum.SESSION_IDS) or []
+        if (session := await session_cache.get(sid)) is not None
+    ]
 
 
 @image_api.get('/image/post/{post_id}/{key}')

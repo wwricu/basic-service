@@ -215,5 +215,7 @@ async def get_status(post_id: int) -> PostStatusEnum:
 async def search(keyword: str) -> list[PostSearchVO]:
     posts = await post_db.search(build_match(keyword))
     details = await get_preview(posts)
-    return [PostSearchVO(**detail.model_dump(), snippet=highlight(extract_text(post.content), keyword))
-            for post, detail in zip(posts, details)]
+    return [
+        PostSearchVO(**detail.model_dump(), snippet=highlight(extract_text(post.content), keyword))
+        for post, detail in zip(posts, details)
+    ]
