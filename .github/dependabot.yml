@@ -1,0 +1,57 @@
+# Version ranges do not gate Dependabot; `ignore` does.
+# `ignore` also filters security update PRs, so a blocked fix shows up as an
+# alert without a PR instead of silently disappearing.
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    versioning-strategy: increase-if-necessary
+    groups:
+      boto3:
+        patterns: ["boto3", "boto3-stubs*"]
+      routine:
+        patterns: ["*"]
+        update-types: [patch]
+    ignore:
+      # Patch releases only: every runtime and dev dependency except boto3.
+      - dependency-name: aiosqlite
+        update-types: [version-update:semver-minor, version-update:semver-major]
+      - dependency-name: apscheduler
+        update-types: [version-update:semver-minor, version-update:semver-major]
+      - dependency-name: bcrypt
+        update-types: [version-update:semver-minor, version-update:semver-major]
+      - dependency-name: beautifulsoup4
+        update-types: [version-update:semver-minor, version-update:semver-major]
+      - dependency-name: fastapi
+        update-types: [version-update:semver-minor, version-update:semver-major]
+      - dependency-name: httpx2
+        update-types: [version-update:semver-minor, version-update:semver-major]
+      - dependency-name: loguru
+        update-types: [version-update:semver-minor, version-update:semver-major]
+      - dependency-name: pydantic-settings
+        update-types: [version-update:semver-minor, version-update:semver-major]
+      - dependency-name: pyotp
+        update-types: [version-update:semver-minor, version-update:semver-major]
+      - dependency-name: python-multipart
+        update-types: [version-update:semver-minor, version-update:semver-major]
+      - dependency-name: sqlalchemy
+        update-types: [version-update:semver-minor, version-update:semver-major]
+      - dependency-name: uvicorn
+        update-types: [version-update:semver-minor, version-update:semver-major]
+      - dependency-name: fastapi-cli
+        update-types: [version-update:semver-minor, version-update:semver-major]
+      - dependency-name: mypy
+        update-types: [version-update:semver-minor, version-update:semver-major]
+      - dependency-name: pytest
+        update-types: [version-update:semver-minor, version-update:semver-major]
+      - dependency-name: pytest-asyncio
+        update-types: [version-update:semver-minor, version-update:semver-major]
+      - dependency-name: ruff
+        update-types: [version-update:semver-minor, version-update:semver-major]
+      # boto3 only ships model updates in new minors; majors stay manual.
+      - dependency-name: boto3
+        update-types: [version-update:semver-major]
+      - dependency-name: boto3-stubs
+        update-types: [version-update:semver-major]
