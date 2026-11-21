@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    versioning-strategy: increase-if-necessary
+    groups:
+      routine:
+        patterns: ["*"]
+    allow:
+      - dependency-name: "*"
+        update-types: [version-update:semver-patch]
