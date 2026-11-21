@@ -37,8 +37,10 @@ async def count(query: TagQueryDTO) -> int:
 
 
 async def refresh_tag_counts():
-    published = select(func.count()).select_from(BlogPost).where(BlogPost.deleted == False,
-                                                                 BlogPost.status == PostStatusEnum.PUBLISHED)
+    published = select(func.count()).select_from(BlogPost).where(
+        BlogPost.deleted == False,
+        BlogPost.status == PostStatusEnum.PUBLISHED
+    )
     tag_count = published.join(EntityRelation, EntityRelation.src_id == BlogPost.id).where(
         EntityRelation.dst_id == PostTag.id,
         EntityRelation.type == RelationTypeEnum.POST_TAG,
