@@ -66,12 +66,14 @@ class EnvironmentVariable(BaseSettings):
 
 
 def init_log():
-    logging.Logger.manager.loggerDict.clear()
     log.remove()
 
     if env.is_dev:
+        logging.getLogger('apscheduler.executors.default').setLevel(logging.DEBUG)
         log.add(sys.stdout, level=logging.NOTSET, backtrace=False)
         log.warning('APP RUNNING IN DEV')
+    else:
+        logging.disable()
 
     os.makedirs(env.LOG_PATH, exist_ok=True)
     log.add(f'{env.LOG_PATH}/audit.log', level=logging.WARNING, rotation='10 MB', retention=10, backtrace=False)
@@ -105,7 +107,6 @@ def init_config() -> Config:
         log.error('Failed to get config from Cloudflare KV')
         raise
 
-    # Prod containers are recreated on deploy, so a cached file would only go stale against KV.
     if env.is_dev:
         config_file.parent.mkdir(parents=True, exist_ok=True)
         config_file.write_text(content)
@@ -114,5 +115,5 @@ def init_config() -> Config:
 
 load_dotenv()
 env = EnvironmentVariable.model_validate(os.environ, extra='ignore')
-init_log()
+# init_log()
 app_config = init_config()

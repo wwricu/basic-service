@@ -5,7 +5,7 @@ import signal
 import uuid
 from collections.abc import Callable
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 
 from anyio import open_file
@@ -27,15 +27,15 @@ from wwricu.domain.tag import TagQueryDTO
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    scheduler = AsyncIOScheduler()
+    scheduler = AsyncIOScheduler(timezone=UTC)
     try:
 
         await download_database()
         await database_manager.init()
         LocalCache.init()
 
-        scheduler.add_job(backup_database, trigger=CronTrigger(day_of_week=0, hour=3))
-        scheduler.add_job(tag_db.delete_unlink_relation, trigger=CronTrigger(day_of_week=0, hour=4))
+        scheduler.add_job(tag_db.delete_unlink_relation, trigger=CronTrigger(day_of_week=0, hour=19))
+        scheduler.add_job(backup_database, trigger=CronTrigger(day_of_week=0, hour=20))
         scheduler.start()
 
         await refresh_counts()
@@ -97,7 +97,8 @@ async def backup_database():
     if env.is_dev:
         return
     now = datetime.now()
-    await upload_database(f'backup/{now:%Y%m%d%H%M%S}.sqlite3')
+    await upload_database(key := f'backup/{now:%Y%m%d%H%M%S}.sqlite3')
+    log.info(f'Backup database to {key} success')
 
 
 @lock_database
