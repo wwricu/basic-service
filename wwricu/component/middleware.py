@@ -29,7 +29,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         b = time.time()
         response = await call_next(request)
-        log.trace(f'{request.method} {request.url.path} {response.status_code} {int((time.time() - b) * 1000)} ms')
+        log.debug(f'{request.method} {request.url.path} {response.status_code} {int((time.time() - b) * 1000)} ms')
         return response
 
 

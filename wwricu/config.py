@@ -77,7 +77,7 @@ def init_log():
     log.add(f'{env.LOG_PATH}/server.log', level=logging.INFO, rotation='10 MB', retention=10, backtrace=False)
     log.add(
         f'{env.LOG_PATH}/access.log',
-        filter=lambda record: record.level.no <= logging.DEBUG,
+        filter=lambda record: record['level'].no == logging.DEBUG,
         rotation='20 MB',
         retention=10
     )
