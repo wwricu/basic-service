@@ -53,7 +53,7 @@ class EnvironmentVariable(BaseSettings):
     ENV: EnvironmentEnum = EnvironmentEnum.DEVELOPMENT
     VERSION: str = ENV
     BASE_DOMAIN: str = 'wwr.icu'
-    LOG_PATH: str = 'logs'
+    LOG_PATH: str = 'log'
     CONFIG_FILE: str = 'dev.config.json'
 
     @property
@@ -66,22 +66,18 @@ class EnvironmentVariable(BaseSettings):
 
 
 def init_log():
-    log.remove()
-
     if env.is_dev:
-        logging.getLogger('apscheduler.executors.default').setLevel(logging.DEBUG)
-        log.add(sys.stdout, level=logging.NOTSET, backtrace=False)
         log.warning('APP RUNNING IN DEV')
-    else:
-        logging.disable()
+        return
 
+    logging.disable()
+    log.remove()
     os.makedirs(env.LOG_PATH, exist_ok=True)
     log.add(f'{env.LOG_PATH}/audit.log', level=logging.WARNING, rotation='10 MB', retention=10, backtrace=False)
-    log.add(f'{env.LOG_PATH}/server.log', level=logging.DEBUG, rotation='10 MB', retention=10, backtrace=False)
+    log.add(f'{env.LOG_PATH}/server.log', level=logging.INFO, rotation='10 MB', retention=10, backtrace=False)
     log.add(
         f'{env.LOG_PATH}/access.log',
-        level=logging.NOTSET,
-        filter=lambda record: record.get('level').no < logging.DEBUG,
+        filter=lambda record: record.level.no <= logging.DEBUG,
         rotation='20 MB',
         retention=10
     )
@@ -115,5 +111,5 @@ def init_config() -> Config:
 
 load_dotenv()
 env = EnvironmentVariable.model_validate(os.environ, extra='ignore')
-# init_log()
+init_log()
 app_config = init_config()
